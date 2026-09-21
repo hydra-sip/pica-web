@@ -11,13 +11,11 @@ import {
 
 export const authApi = {
   login: async (identificador: string, password: string): Promise<User> => {
-    // 1. Post credentials to /auth/login (returns only tokens according to OpenAPI contract)
     const tokens = await httpClient.post<LoginResponse>('/auth/login', { identificador, password });
     
     setAccessToken(tokens.accessToken);
     setRefreshToken(tokens.refreshToken);
 
-    // 2. Fetch logged-in user profile from GET /me
     return await authApi.getMe();
   },
 
@@ -38,30 +36,30 @@ export const authApi = {
 
   getMe: async (): Promise<User> => {
     const rawUser = await httpClient.get<any>('/me');
-
-    // Adapt openapi.yaml response structure to User interface with UI compatibility helpers
     const persona = rawUser.persona || {};
-    const nombres = persona.nombres || rawUser.usuario?.username || rawUser.username || '';
+    const nombres = persona.nombres || '';
     const apellidos = persona.apellidos || '';
-    const fullName = `${nombres} ${apellidos}`.trim() || rawUser.username || rawUser.email || 'Usuario';
-    const mainRole = rawUser.roles?.[0]?.nombre || rawUser.roles?.[0]?.nombreAmigable || 'PARTICIPANTE';
+    const fullName = `${nombres} ${apellidos}`.trim() || rawUser.usuario?.username || rawUser.email || '';
+    const roles = rawUser.roles || [];
+    const mainRole = roles[0]?.nombre || roles[0]?.nombreAmigable || '';
 
     const user: User = {
-      id: rawUser.usuario?.id || rawUser.id || 'usr_000',
-      username: rawUser.usuario?.username || rawUser.username || '',
-      email: rawUser.usuario?.email || rawUser.email || '',
-      estado: rawUser.usuario?.estado || rawUser.estado || 'ACTIVO',
-      tieneContrasena: rawUser.usuario?.tieneContrasena ?? true,
+      id: rawUser.usuario?.id ?? rawUser.id,
+      username: rawUser.usuario?.username ?? rawUser.username,
+      email: rawUser.usuario?.email ?? rawUser.email,
+      estado: rawUser.usuario?.estado ?? rawUser.estado,
+      tieneContrasena: rawUser.usuario?.tieneContrasena ?? rawUser.tieneContrasena,
       persona: rawUser.persona,
-      roles: rawUser.roles || [{ id: 'r1', nombre: mainRole, nombreAmigable: mainRole }],
+      roles: rawUser.roles,
       permisos: rawUser.permisos || [],
-      datosCompletos: rawUser.datosCompletos ?? Boolean(persona.nroDoc && persona.telefono),
+      datosCompletos: rawUser.datosCompletos,
       
-      // Helpers
+      // UI Helpers
       name: fullName,
       role: mainRole,
-      documento: persona.nroDoc || rawUser.documento || '',
-      telefono: persona.telefono || rawUser.telefono || '',
+      documento: persona.nroDoc,
+      telefono: persona.telefono,
+      domicilioPostal: persona.domicilioPostal,
     };
 
     return user;
@@ -73,7 +71,8 @@ export const authApi = {
   },
 
   changePassword: async (data: ChangePasswordData): Promise<{ message: string }> => {
-    return await httpClient.post<{ message: string }>('/auth/change-password', data);
+    // Contrato OpenAPI oficial: PUT /me/password
+    return await httpClient.put<{ message: string }>('/me/password', data);
   },
 
   refreshToken: async (): Promise<RefreshResponse> => {

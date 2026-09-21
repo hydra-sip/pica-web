@@ -78,21 +78,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const hasPermission = (permisosReq: string | string[]): boolean => {
     if (!user) return false;
 
-    // Check if user is ADMIN / SUPER_USUARIO
-    const userRoleNames = user.roles ? user.roles.map((r) => r.nombre) : [user.role || ''];
-    if (userRoleNames.includes('SUPER_USUARIO') || userRoleNames.includes('ADMINISTRADOR') || userRoleNames.includes('ADMIN')) {
-      return true;
-    }
-
+    // Check permissions array directly from GET /me
     if (!user.permisos) return false;
     const requiredList = Array.isArray(permisosReq) ? permisosReq : [permisosReq];
     return requiredList.some((perm) => user.permisos.includes(perm));
   };
 
   const hasRole = (rolesReq: RoleName | RoleName[]): boolean => {
-    if (!user) return false;
+    if (!user || !user.roles) return false;
     const requiredRoles = Array.isArray(rolesReq) ? rolesReq : [rolesReq];
-    const userRoleNames = user.roles ? user.roles.map((r) => r.nombre) : [user.role || ''];
+    const userRoleNames = user.roles.map((r) => r.nombre);
     return requiredRoles.some((r) => userRoleNames.includes(r));
   };
 

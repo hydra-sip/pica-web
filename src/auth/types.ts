@@ -16,7 +16,7 @@ export interface ProblemErrorItem {
 export interface ProblemDetail {
   status: number;
   detail?: string;
-  codigo: string; // ej: 'EMAIL_NO_VERIFICADO', 'USUARIO_BLOQUEADO', 'CREDENCIALES_INVALIDAS', 'USERNAME_DUPLICADO', 'EMAIL_DUPLICADO', 'VALIDACION'
+  codigo: string;
   errores?: ProblemErrorItem[];
 }
 
@@ -26,17 +26,18 @@ export interface PersonaInfo {
   tipoDoc?: string;
   nroDoc?: string;
   fechaNacimiento?: string;
+  domicilioPostal?: string;
   telefono?: string;
 }
 
 export interface RolInfo {
-  id: string;
+  id: number | string;
   nombre: RoleName;
   nombreAmigable: string;
 }
 
 export interface User {
-  id: string;
+  id: number | string;
   username: string;
   email: string;
   estado?: string;
@@ -46,11 +47,12 @@ export interface User {
   permisos: string[];
   datosCompletos: boolean;
 
-  // Helpers de compatibilidad para UI
+  // Visual/form helpers for components
   name: string;
   role?: string;
   documento?: string;
   telefono?: string;
+  domicilioPostal?: string;
 }
 
 export interface AuthState {
@@ -94,7 +96,7 @@ export interface RegisterData {
 }
 
 export interface RegisterResponse {
-  id: string;
+  id: number | string;
 }
 
 export interface FieldErrors {
@@ -107,6 +109,7 @@ export interface FieldErrors {
   tipoDoc?: string;
   nroDoc?: string;
   fechaNacimiento?: string;
+  domicilioPostal?: string;
   telefono?: string;
 }
 
@@ -116,6 +119,7 @@ export interface UpdateProfileData {
   tipoDoc?: string;
   nroDoc?: string;
   fechaNacimiento?: string;
+  domicilioPostal?: string;
   telefono?: string;
 }
 

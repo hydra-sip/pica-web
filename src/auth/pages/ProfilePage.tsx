@@ -12,6 +12,7 @@ export const ProfilePage: React.FC = () => {
   const [tipoDoc, setTipoDoc] = useState(user?.persona?.tipoDoc || 'DNI');
   const [nroDoc, setNroDoc] = useState(user?.persona?.nroDoc || user?.documento || '');
   const [fechaNacimiento, setFechaNacimiento] = useState(user?.persona?.fechaNacimiento || '');
+  const [domicilioPostal, setDomicilioPostal] = useState(user?.persona?.domicilioPostal || user?.domicilioPostal || '');
   const [telefono, setTelefono] = useState(user?.persona?.telefono || user?.telefono || '');
 
   const [savingProfile, setSavingProfile] = useState(false);
@@ -34,6 +35,7 @@ export const ProfilePage: React.FC = () => {
       setTipoDoc(user.persona?.tipoDoc || 'DNI');
       setNroDoc(user.persona?.nroDoc || user.documento || '');
       setFechaNacimiento(user.persona?.fechaNacimiento || '');
+      setDomicilioPostal(user.persona?.domicilioPostal || user.domicilioPostal || '');
       setTelefono(user.persona?.telefono || user.telefono || '');
     }
   }, [user]);
@@ -51,6 +53,7 @@ export const ProfilePage: React.FC = () => {
         tipoDoc,
         nroDoc,
         fechaNacimiento,
+        domicilioPostal,
         telefono,
       });
       updateUser(updatedUser);
@@ -114,7 +117,7 @@ export const ProfilePage: React.FC = () => {
             lineHeight: 1.5,
           }}
         >
-          <strong>⚠️ Completá tu perfil:</strong> Por favor, ingresá tu <strong>Número de Documento</strong> y <strong>Teléfono de contacto</strong> para habilitar todas las funciones operativas de la plataforma.
+          <strong>⚠️ Completá tu perfil:</strong> Por favor, ingresá tu <strong>Documento</strong>, <strong>Fecha de Nacimiento</strong>, <strong>Domicilio Postal</strong> y <strong>Teléfono</strong> para habilitar todas las funciones operativas de la plataforma.
         </div>
       )}
 
@@ -247,17 +250,40 @@ export const ProfilePage: React.FC = () => {
 
             <div>
               <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem', color: 'var(--text-secondary)' }}>
-                Fecha de Nacimiento
+                Fecha de Nacimiento <span style={{ color: '#facc15' }}>*</span>
               </label>
               <input
                 type="date"
+                required
                 value={fechaNacimiento}
                 onChange={(e) => setFechaNacimiento(e.target.value)}
                 style={{
                   width: '100%',
                   padding: '0.75rem',
                   borderRadius: 'var(--radius-sm)',
-                  border: '1px solid var(--border-color)',
+                  border: !fechaNacimiento ? '1px solid rgba(234, 179, 8, 0.5)' : '1px solid var(--border-color)',
+                  backgroundColor: 'rgba(15, 23, 42, 0.7)',
+                  color: 'var(--text-primary)',
+                  outline: 'none',
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem', color: 'var(--text-secondary)' }}>
+                Domicilio Postal <span style={{ color: '#facc15' }}>*</span>
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="ej: Av. Constitución 1234, Luján"
+                value={domicilioPostal}
+                onChange={(e) => setDomicilioPostal(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  borderRadius: 'var(--radius-sm)',
+                  border: !domicilioPostal ? '1px solid rgba(234, 179, 8, 0.5)' : '1px solid var(--border-color)',
                   backgroundColor: 'rgba(15, 23, 42, 0.7)',
                   color: 'var(--text-primary)',
                   outline: 'none',

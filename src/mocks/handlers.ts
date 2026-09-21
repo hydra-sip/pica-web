@@ -5,7 +5,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 // In-memory mock store for current user profile state according to openapi.yaml
 let mockCurrentUserState = {
   usuario: {
-    id: 'usr_001',
+    id: 1,
     username: 'admin',
     email: 'admin@pica.edu.ar',
     estado: 'ACTIVO',
@@ -17,10 +17,11 @@ let mockCurrentUserState = {
     tipoDoc: 'DNI',
     nroDoc: '30111222',
     fechaNacimiento: '1990-01-01',
+    domicilioPostal: 'Av. Constitución 1234, Luján',
     telefono: '1122334455',
   },
   roles: [
-    { id: 'r1', nombre: 'ADMINISTRADOR', nombreAmigable: 'Administrador del Sistema' },
+    { id: 1, nombre: 'ADMINISTRADOR', nombreAmigable: 'Administrador del Sistema' },
   ],
   permisos: ['USUARIO_VER', 'USUARIO_CREAR', 'PERSONA_VER', 'ROL_VER', 'ROL_ASIGNAR'],
   datosCompletos: true,
@@ -72,7 +73,7 @@ export const handlers = [
     }
 
     return new HttpResponse(
-      JSON.stringify({ id: `usr_new_${Date.now()}` }),
+      JSON.stringify({ id: Date.now() }),
       { status: 201, headers: { 'Content-Type': 'application/json' } }
     );
   }),
@@ -129,9 +130,9 @@ export const handlers = [
 
     if ((id === 'admin@pica.edu.ar' || id === 'admin') && body.password === 'admin123') {
       mockCurrentUserState = {
-        usuario: { id: 'usr_001', username: 'admin', email: 'admin@pica.edu.ar', estado: 'ACTIVO', tieneContrasena: true },
-        persona: { nombres: 'Administrador', apellidos: 'PICA', tipoDoc: 'DNI', nroDoc: '30111222', fechaNacimiento: '1990-01-01', telefono: '1122334455' },
-        roles: [{ id: 'r1', nombre: 'ADMINISTRADOR', nombreAmigable: 'Administrador del Sistema' }],
+        usuario: { id: 1, username: 'admin', email: 'admin@pica.edu.ar', estado: 'ACTIVO', tieneContrasena: true },
+        persona: { nombres: 'Administrador', apellidos: 'PICA', tipoDoc: 'DNI', nroDoc: '30111222', fechaNacimiento: '1990-01-01', domicilioPostal: 'Av. Constitución 1234, Luján', telefono: '1122334455' },
+        roles: [{ id: 1, nombre: 'ADMINISTRADOR', nombreAmigable: 'Administrador del Sistema' }],
         permisos: ['USUARIO_VER', 'USUARIO_CREAR', 'PERSONA_VER', 'ROL_VER', 'ROL_ASIGNAR'],
         datosCompletos: true,
       };
@@ -146,9 +147,9 @@ export const handlers = [
 
     if ((id === 'user@pica.edu.ar' || id === 'usuario') && body.password === 'user123') {
       mockCurrentUserState = {
-        usuario: { id: 'usr_002', username: 'usuario', email: 'user@pica.edu.ar', estado: 'ACTIVO', tieneContrasena: true },
-        persona: { nombres: 'Usuario', apellidos: 'PICA', tipoDoc: 'DNI', nroDoc: '38123456', fechaNacimiento: '1995-05-15', telefono: '1144556677' },
-        roles: [{ id: 'r2', nombre: 'PARTICIPANTE', nombreAmigable: 'Participante Estándar' }],
+        usuario: { id: 2, username: 'usuario', email: 'user@pica.edu.ar', estado: 'ACTIVO', tieneContrasena: true },
+        persona: { nombres: 'Usuario', apellidos: 'PICA', tipoDoc: 'DNI', nroDoc: '38123456', fechaNacimiento: '1995-05-15', domicilioPostal: 'San Martín 500, Luján', telefono: '1144556677' },
+        roles: [{ id: 2, nombre: 'PARTICIPANTE', nombreAmigable: 'Participante Estándar' }],
         permisos: ['PERSONA_VER'],
         datosCompletos: true,
       };
@@ -163,9 +164,9 @@ export const handlers = [
 
     if (id && body.password) {
       mockCurrentUserState = {
-        usuario: { id: 'usr_003', username: id.split('@')[0], email: id.includes('@') ? id : `${id}@pica.edu.ar`, estado: 'ACTIVO', tieneContrasena: true },
-        persona: { nombres: id.split('@')[0], apellidos: 'Usuario', tipoDoc: 'DNI', nroDoc: '', fechaNacimiento: '', telefono: '' },
-        roles: [{ id: 'r2', nombre: 'PARTICIPANTE', nombreAmigable: 'Participante' }],
+        usuario: { id: 3, username: id.split('@')[0], email: id.includes('@') ? id : `${id}@pica.edu.ar`, estado: 'ACTIVO', tieneContrasena: true },
+        persona: { nombres: id.split('@')[0], apellidos: 'Usuario', tipoDoc: 'DNI', nroDoc: '', fechaNacimiento: '', domicilioPostal: '', telefono: '' },
+        roles: [{ id: 2, nombre: 'PARTICIPANTE', nombreAmigable: 'Participante' }],
         permisos: ['PERSONA_VER'],
         datosCompletos: false,
       };
@@ -203,10 +204,11 @@ export const handlers = [
       );
     }
 
+    // Usuario Google que nace sin datos completos (requiere nroDoc, fechaNacimiento, domicilioPostal, telefono)
     mockCurrentUserState = {
-      usuario: { id: 'usr_google_001', username: 'google_user', email: 'google.user@pica.edu.ar', estado: 'ACTIVO', tieneContrasena: false },
-      persona: { nombres: 'Usuario Google', apellidos: 'PICA', tipoDoc: '', nroDoc: '', fechaNacimiento: '', telefono: '' },
-      roles: [{ id: 'r2', nombre: 'PARTICIPANTE', nombreAmigable: 'Participante' }],
+      usuario: { id: 10, username: 'google_user', email: 'google.user@pica.edu.ar', estado: 'ACTIVO', tieneContrasena: false },
+      persona: { nombres: 'Usuario Google', apellidos: 'PICA', tipoDoc: 'DNI', nroDoc: '', fechaNacimiento: '', domicilioPostal: '', telefono: '' },
+      roles: [{ id: 2, nombre: 'PARTICIPANTE', nombreAmigable: 'Participante' }],
       permisos: ['PERSONA_VER'],
       datosCompletos: false,
     };
@@ -245,6 +247,7 @@ export const handlers = [
       tipoDoc?: string;
       nroDoc?: string;
       fechaNacimiento?: string;
+      domicilioPostal?: string;
       telefono?: string;
     };
 
@@ -254,19 +257,21 @@ export const handlers = [
     };
 
     const hasDoc = Boolean(newPersona.nroDoc && newPersona.nroDoc.trim().length > 0);
+    const hasFecha = Boolean(newPersona.fechaNacimiento && newPersona.fechaNacimiento.trim().length > 0);
+    const hasDom = Boolean(newPersona.domicilioPostal && newPersona.domicilioPostal.trim().length > 0);
     const hasTel = Boolean(newPersona.telefono && newPersona.telefono.trim().length > 0);
 
     mockCurrentUserState = {
       ...mockCurrentUserState,
       persona: newPersona,
-      datosCompletos: hasDoc && hasTel,
+      datosCompletos: hasDoc && hasFecha && hasDom && hasTel,
     };
 
     return HttpResponse.json(mockCurrentUserState);
   }),
 
-  // Auth: Change Password (POST /auth/change-password)
-  http.post(`${API_URL}/auth/change-password`, async ({ request }) => {
+  // Auth: Change Password (PUT /me/password según contrato OpenAPI)
+  http.put(`${API_URL}/me/password`, async ({ request }) => {
     const body = (await request.json().catch(() => ({}))) as {
       passwordActual?: string;
       passwordNueva?: string;
