@@ -362,6 +362,30 @@ export const handlers = [
     }
     return new HttpResponse(null, { status: 204 });
   }),
+
+  // Admin Role Permissions Update (PUT /admin/roles/{id}/permisos)
+  http.put(`${API_URL}/admin/roles/:id/permisos`, async ({ params, request }) => {
+    const body = (await request.json().catch(() => ({}))) as { permisos?: string[] };
+    const { id } = params;
+
+    if (id === '1') {
+      return new HttpResponse(
+        JSON.stringify({
+          status: 403,
+          codigo: 'ROLE_READONLY',
+          detail: 'No se pueden modificar los permisos del Super Usuario Administrador.',
+        }),
+        { status: 403, headers: { 'Content-Type': 'application/problem+json' } }
+      );
+    }
+
+    return HttpResponse.json({
+      id: Number(id),
+      permisos: body.permisos || [],
+      message: 'Permisos del rol actualizados exitosamente.',
+    });
+  }),
 ];
+
 
 
