@@ -2,7 +2,7 @@ export type Role = 'ADMIN' | 'USER' | 'GESTOR' | string;
 
 export interface Permission {
   id: string;
-  code: string; // ej: 'admin:access', 'users:read', 'users:write'
+  code: string;
   description?: string;
 }
 
@@ -36,4 +36,28 @@ export interface LoginResponse {
 export interface RefreshResponse {
   accessToken: string;
   refreshToken?: string;
+}
+
+export interface RegisterData {
+  name: string;
+  email: string;
+  password: string;
+}
+
+export interface RegisterResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface VerifyEmailResponse {
+  success: boolean;
+  message: string;
+  error?: string;
+}
+
+export interface FieldErrors {
+  name?: string;
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
 }

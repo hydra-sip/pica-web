@@ -14,6 +14,54 @@ export const handlers = [
     });
   }),
 
+  // Auth: Register Endpoint
+  http.post(`${API_URL}/auth/register`, async ({ request }) => {
+    const body = (await request.json().catch(() => ({}))) as {
+      name?: string;
+      email?: string;
+      password?: string;
+    };
+
+    if (body.email === 'existente@pica.edu.ar' || body.email === 'admin@pica.edu.ar') {
+      return new HttpResponse(
+        JSON.stringify({
+          error: 'Conflict',
+          field: 'email',
+          message: 'Este correo electrónico ya se encuentra registrado',
+        }),
+        { status: 409, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    return new HttpResponse(
+      JSON.stringify({
+        success: true,
+        message: 'Usuario registrado exitosamente. Se envió un correo de verificación.',
+      }),
+      { status: 201, headers: { 'Content-Type': 'application/json' } }
+    );
+  }),
+
+  // Auth: Verify Email Token Endpoint
+  http.post(`${API_URL}/auth/verify-email`, async ({ request }) => {
+    const body = (await request.json().catch(() => ({}))) as { token?: string };
+
+    if (!body.token || body.token === 'expired-token' || body.token === 'invalid-token') {
+      return new HttpResponse(
+        JSON.stringify({
+          success: false,
+          error: 'El enlace de verificación es inválido o ha expirado.',
+        }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    return HttpResponse.json({
+      success: true,
+      message: 'Tu cuenta ha sido verificada correctamente. Ya podés iniciar sesión.',
+    });
+  }),
+
   // Auth: Login Endpoint
   http.post(`${API_URL}/auth/login`, async ({ request }) => {
     const body = (await request.json()) as { email?: string; password?: string };
