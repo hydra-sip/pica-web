@@ -2,6 +2,18 @@ import { http, HttpResponse } from 'msw';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
+// In-memory mock store for current user profile state
+let mockCurrentUser = {
+  id: 'usr_002',
+  name: 'Usuario Google PICA',
+  email: 'google.user@pica.edu.ar',
+  role: 'USER',
+  permissions: ['dashboard:read'],
+  documento: '',
+  telefono: '',
+  datosCompletos: false,
+};
+
 export const handlers = [
   // Public Info Endpoint
   http.get(`${API_URL}/info`, () => {
@@ -102,35 +114,48 @@ export const handlers = [
           email: 'admin@pica.edu.ar',
           role: 'ADMIN',
           permissions: ['admin:access', 'users:read', 'users:write'],
+          documento: '30111222',
+          telefono: '1122334455',
+          datosCompletos: true,
         },
       });
     }
 
     if ((id === 'user@pica.edu.ar' || id === 'usuario') && body.password === 'user123') {
+      mockCurrentUser = {
+        id: 'usr_002',
+        name: 'Usuario PICA',
+        email: 'user@pica.edu.ar',
+        role: 'USER',
+        permissions: ['dashboard:read'],
+        documento: '38123456',
+        telefono: '1144556677',
+        datosCompletos: true,
+      };
+
       return HttpResponse.json({
         accessToken: 'mock-jwt-access-token-user-12345',
         refreshToken: 'mock-jwt-refresh-token-user-67890',
-        user: {
-          id: 'usr_002',
-          name: 'Usuario PICA',
-          email: 'user@pica.edu.ar',
-          role: 'USER',
-          permissions: ['dashboard:read'],
-        },
+        user: mockCurrentUser,
       });
     }
 
     if (id && body.password) {
+      mockCurrentUser = {
+        id: 'usr_003',
+        name: id.split('@')[0],
+        email: id.includes('@') ? id : `${id}@pica.edu.ar`,
+        role: 'USER',
+        permissions: ['dashboard:read'],
+        documento: '',
+        telefono: '',
+        datosCompletos: false,
+      };
+
       return HttpResponse.json({
         accessToken: `mock-jwt-access-token-${Date.now()}`,
         refreshToken: `mock-jwt-refresh-token-${Date.now()}`,
-        user: {
-          id: 'usr_003',
-          name: id.split('@')[0],
-          email: id.includes('@') ? id : `${id}@pica.edu.ar`,
-          role: 'USER',
-          permissions: ['dashboard:read'],
-        },
+        user: mockCurrentUser,
       });
     }
 
@@ -151,31 +176,62 @@ export const handlers = [
       );
     }
 
-    if (body.code.includes('admin')) {
-      return HttpResponse.json({
-        accessToken: 'mock-oauth-access-token-admin-999',
-        refreshToken: 'mock-oauth-refresh-token-admin-999',
-        user: {
-          id: 'usr_001',
-          name: 'Administrador PICA (Google)',
-          email: 'admin@pica.edu.ar',
-          role: 'ADMIN',
-          permissions: ['admin:access', 'users:read', 'users:write'],
-        },
-      });
-    }
+    // Usuario Google que nace con datosCompletos: false para cumplir DoD
+    mockCurrentUser = {
+      id: 'usr_google_001',
+      name: 'Usuario Google PICA',
+      email: 'google.user@pica.edu.ar',
+      role: 'USER',
+      permissions: ['dashboard:read'],
+      documento: '',
+      telefono: '',
+      datosCompletos: false,
+    };
 
     return HttpResponse.json({
-      accessToken: 'mock-oauth-access-token-user-888',
-      refreshToken: 'mock-oauth-refresh-token-user-888',
-      user: {
-        id: 'usr_002',
-        name: 'Usuario Google PICA',
-        email: 'google.user@pica.edu.ar',
-        role: 'USER',
-        permissions: ['dashboard:read'],
-      },
+      accessToken: 'mock-oauth-access-token-google-888',
+      refreshToken: 'mock-oauth-refresh-token-google-888',
+      user: mockCurrentUser,
     });
+  }),
+
+  // Auth: Update Profile Endpoint (PUT /auth/me)
+  http.put(`${API_URL}/auth/me`, async ({ request }) => {
+    const body = (await request.json().catch(() => ({}))) as {
+      name?: string;
+      documento?: string;
+      telefono?: string;
+    };
+
+    const hasDoc = Boolean(body.documento && body.documento.trim().length > 0);
+    const hasTel = Boolean(body.telefono && body.telefono.trim().length > 0);
+
+    mockCurrentUser = {
+      ...mockCurrentUser,
+      name: body.name || mockCurrentUser.name,
+      documento: body.documento !== undefined ? body.documento : mockCurrentUser.documento,
+      telefono: body.telefono !== undefined ? body.telefono : mockCurrentUser.telefono,
+      datosCompletos: hasDoc && hasTel,
+    };
+
+    return HttpResponse.json(mockCurrentUser);
+  }),
+
+  // Auth: Change Password Endpoint (POST /auth/change-password)
+  http.post(`${API_URL}/auth/change-password`, async ({ request }) => {
+    const body = (await request.json().catch(() => ({}))) as {
+      currentPassword?: string;
+      newPassword?: string;
+    };
+
+    if (body.currentPassword === 'wrong') {
+      return new HttpResponse(
+        JSON.stringify({ error: 'La contraseña actual es incorrecta' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    return HttpResponse.json({ message: 'Contraseña actualizada exitosamente' });
   }),
 
   // Auth: Refresh Token Endpoint
@@ -206,25 +262,7 @@ export const handlers = [
       );
     }
 
-    const token = authHeader.replace('Bearer ', '');
-
-    if (token.includes('admin')) {
-      return HttpResponse.json({
-        id: 'usr_001',
-        name: 'Administrador PICA',
-        email: 'admin@pica.edu.ar',
-        role: 'ADMIN',
-        permissions: ['admin:access', 'users:read', 'users:write'],
-      });
-    }
-
-    return HttpResponse.json({
-      id: 'usr_002',
-      name: 'Usuario PICA',
-      email: 'user@pica.edu.ar',
-      role: 'USER',
-      permissions: ['dashboard:read'],
-    });
+    return HttpResponse.json(mockCurrentUser);
   }),
 
   // Auth: Logout Endpoint

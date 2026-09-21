@@ -61,6 +61,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(userData);
   };
 
+  const updateUser = (updatedFields: Partial<User>) => {
+    setUser((prev) => (prev ? { ...prev, ...updatedFields } : null));
+  };
+
   const logout = async () => {
     setIsLoading(true);
     try {
@@ -89,6 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isAuthenticated: !!user,
     login,
     loginWithTokens,
+    updateUser,
     logout,
     hasPermission,
     hasRole,

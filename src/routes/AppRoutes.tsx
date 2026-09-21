@@ -7,6 +7,7 @@ import { RegisterPage } from '../auth/pages/RegisterPage';
 import { CheckEmailPage } from '../auth/pages/CheckEmailPage';
 import { VerifyEmailPage } from '../auth/pages/VerifyEmailPage';
 import { OAuthCallbackPage } from '../auth/pages/OAuthCallbackPage';
+import { ProfilePage } from '../auth/pages/ProfilePage';
 import { AdminDashboardPage } from '../admin/pages/AdminDashboardPage';
 import { NotFoundPage } from '../shared/pages/NotFoundPage';
 import { UnauthorizedPage } from '../shared/pages/UnauthorizedPage';
@@ -26,8 +27,11 @@ export const AppRoutes: React.FC = () => {
         <Route path="oauth/callback" element={<OAuthCallbackPage />} />
         <Route path="unauthorized" element={<UnauthorizedPage />} />
 
-        {/* Rutas Protegidas que requieren Autenticación y Rol ADMIN */}
+        {/* Rutas Protegidas que requieren Autenticación */}
         <Route element={<RequireAuth />}>
+          <Route path="mi-perfil" element={<ProfilePage />} />
+
+          {/* Sub-protección para Rol ADMIN */}
           <Route element={<RequirePermiso roles="ADMIN" />}>
             <Route path="admin" element={<AdminDashboardPage />} />
           </Route>

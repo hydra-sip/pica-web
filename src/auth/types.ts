@@ -12,6 +12,9 @@ export interface User {
   email: string;
   role: Role;
   permissions?: string[];
+  documento?: string;
+  telefono?: string;
+  datosCompletos?: boolean;
 }
 
 export interface AuthState {
@@ -23,6 +26,7 @@ export interface AuthState {
 export interface AuthContextType extends AuthState {
   login: (identifier: string, password: string) => Promise<User>;
   loginWithTokens: (accessToken: string, refreshToken: string, user: User) => void;
+  updateUser: (updatedFields: Partial<User>) => void;
   logout: () => Promise<void>;
   hasPermission: (permiso: string | string[]) => boolean;
   hasRole: (role: Role | Role[]) => boolean;
@@ -61,6 +65,19 @@ export interface FieldErrors {
   email?: string;
   password?: string;
   confirmPassword?: string;
+  documento?: string;
+  telefono?: string;
+}
+
+export interface UpdateProfileData {
+  name: string;
+  documento?: string;
+  telefono?: string;
+}
+
+export interface ChangePasswordData {
+  currentPassword: string;
+  newPassword: string;
 }
 
 export type LoginErrorCode = 'unverified_email' | 'account_locked' | 'invalid_credentials' | string;
