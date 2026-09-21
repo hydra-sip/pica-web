@@ -145,6 +145,23 @@ export const handlers = [
       });
     }
 
+    if ((id === 'organizador@pica.edu.ar' || id === 'organizador') && body.password === 'org123') {
+      mockCurrentUserState = {
+        usuario: { id: 4, username: 'organizador', email: 'organizador@pica.edu.ar', estado: 'ACTIVO', tieneContrasena: true },
+        persona: { nombres: 'Organizador', apellidos: 'Eventos', tipoDoc: 'DNI', nroDoc: '34555666', fechaNacimiento: '1987-03-20', domicilioPostal: 'Mitre 200, Luján', telefono: '1133221100' },
+        roles: [{ id: 4, nombre: 'ORGANIZADOR', nombreAmigable: 'Organizador de Eventos' }],
+        permisos: ['USUARIO_VER', 'PERSONA_VER'],
+        datosCompletos: true,
+      };
+
+      return HttpResponse.json({
+        accessToken: 'mock-jwt-access-token-organizador-12345',
+        refreshToken: 'mock-jwt-refresh-token-organizador-67890',
+        tokenType: 'Bearer',
+        expiresIn: 3600,
+      });
+    }
+
     if ((id === 'user@pica.edu.ar' || id === 'usuario') && body.password === 'user123') {
       mockCurrentUserState = {
         usuario: { id: 2, username: 'usuario', email: 'user@pica.edu.ar', estado: 'ACTIVO', tieneContrasena: true },
