@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../../auth/hooks/useAuth';
 import './Navbar.css';
 
 export const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { user, isAuthenticated, logout } = useAuth();
 
   const toggleMenu = () => {
     setIsMobileMenuOpen((prev) => !prev);
@@ -12,6 +14,11 @@ export const Navbar: React.FC = () => {
 
   const closeMenu = () => {
     setIsMobileMenuOpen(false);
+  };
+
+  const handleLogout = async () => {
+    closeMenu();
+    await logout();
   };
 
   const isActive = (path: string) => location.pathname === path;
@@ -54,20 +61,33 @@ export const Navbar: React.FC = () => {
           </Link>
 
           <div className="nav-actions">
-            <Link
-              to="/auth/login"
-              className={`btn btn-secondary ${isActive('/auth/login') ? 'active' : ''}`}
-              onClick={closeMenu}
-            >
-              Iniciar Sesión
-            </Link>
-            <Link
-              to="/auth/register"
-              className="btn btn-primary"
-              onClick={closeMenu}
-            >
-              Registrarse
-            </Link>
+            {isAuthenticated && user ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  👤 {user.name} <strong style={{ color: 'var(--accent-teal)', fontSize: '0.75rem', border: '1px solid var(--accent-teal)', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>{user.role}</strong>
+                </span>
+                <button onClick={handleLogout} className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>
+                  Cerrar Sesión
+                </button>
+              </div>
+            ) : (
+              <>
+                <Link
+                  to="/auth/login"
+                  className={`btn btn-secondary ${isActive('/auth/login') ? 'active' : ''}`}
+                  onClick={closeMenu}
+                >
+                  Iniciar Sesión
+                </Link>
+                <Link
+                  to="/auth/register"
+                  className="btn btn-primary"
+                  onClick={closeMenu}
+                >
+                  Registrarse
+                </Link>
+              </>
+            )}
           </div>
         </nav>
       </div>

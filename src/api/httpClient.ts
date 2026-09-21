@@ -1,0 +1,197 @@
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const REFRESH_TOKEN_KEY = 'pica_refresh_token';
+
+// Access Token strictly in memory
+let inMemoryAccessToken: string | null = null;
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (value?: any) => void;
+  reject: (reason?: any) => void;
+}> = [];
+
+type UnauthorizedCallback = () => void;
+const unauthorizedCallbacks: Set<UnauthorizedCallback> = new Set();
+
+export const onUnauthorized = (callback: UnauthorizedCallback) => {
+  unauthorizedCallbacks.add(callback);
+  return () => {
+    unauthorizedCallbacks.delete(callback);
+  };
+};
+
+const notifyUnauthorized = () => {
+  unauthorizedCallbacks.forEach((cb) => cb());
+};
+
+export const getAccessToken = (): string | null => inMemoryAccessToken;
+
+export const setAccessToken = (token: string | null) => {
+  inMemoryAccessToken = token;
+};
+
+export const getRefreshToken = (): string | null => {
+  return localStorage.getItem(REFRESH_TOKEN_KEY);
+};
+
+export const setRefreshToken = (token: string | null) => {
+  if (token) {
+    localStorage.setItem(REFRESH_TOKEN_KEY, token);
+  } else {
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+  }
+};
+
+export const clearSessionTokens = () => {
+  inMemoryAccessToken = null;
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
+};
+
+interface RequestOptions extends RequestInit {
+  _retry?: boolean;
+}
+
+const processQueue = (error: Error | null, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+export async function customFetch<T = any>(
+  endpoint: string,
+  options: RequestOptions = {}
+): Promise<T> {
+  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
+
+  const headers = new Headers(options.headers || {});
+  if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
+    headers.set('Content-Type', 'application/json');
+  }
+
+  // Inject Bearer token if available
+  if (inMemoryAccessToken && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${inMemoryAccessToken}`);
+  }
+
+  const config: RequestOptions = {
+    ...options,
+    headers,
+  };
+
+  try {
+    let response = await fetch(url, config);
+
+    // Check for 401 Unauthorized (and avoid refresh loop on /auth/login or /auth/refresh)
+    const isAuthRoute = endpoint.includes('/auth/login') || endpoint.includes('/auth/refresh');
+
+    if (response.status === 401 && !isAuthRoute && !config._retry) {
+      const refreshToken = getRefreshToken();
+
+      if (!refreshToken) {
+        clearSessionTokens();
+        notifyUnauthorized();
+        const errorData = await response.json().catch(() => ({ message: 'No autorizado' }));
+        throw new Error(errorData.error || errorData.message || 'Sesión no válida');
+      }
+
+      if (isRefreshing) {
+        // Queue request while token is being refreshed
+        return new Promise<T>((resolve, reject) => {
+          failedQueue.push({
+            resolve: () => {
+              // Retry with new token in memory
+              const newHeaders = new Headers(config.headers);
+              if (inMemoryAccessToken) {
+                newHeaders.set('Authorization', `Bearer ${inMemoryAccessToken}`);
+              }
+              fetch(url, { ...config, headers: newHeaders })
+                .then(async (res) => {
+                  if (!res.ok) throw await res.json();
+                  return res.json();
+                })
+                .then(resolve)
+                .catch(reject);
+            },
+            reject: (err) => reject(err),
+          });
+        });
+      }
+
+      config._retry = true;
+      isRefreshing = true;
+
+      try {
+        const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken }),
+        });
+
+        if (!refreshResponse.ok) {
+          throw new Error('Refresh token expirado o inválido');
+        }
+
+        const refreshData = await refreshResponse.json();
+        const newAccessToken = refreshData.accessToken;
+        const newRefreshToken = refreshData.refreshToken;
+
+        setAccessToken(newAccessToken);
+        if (newRefreshToken) {
+          setRefreshToken(newRefreshToken);
+        }
+
+        processQueue(null, newAccessToken);
+
+        // Retry original failed request
+        const retryHeaders = new Headers(config.headers);
+        retryHeaders.set('Authorization', `Bearer ${newAccessToken}`);
+
+        response = await fetch(url, { ...config, headers: retryHeaders });
+      } catch (refreshErr: any) {
+        processQueue(refreshErr, null);
+        clearSessionTokens();
+        notifyUnauthorized();
+        throw new Error('Sesión expirada. Por favor, iniciá sesión nuevamente.');
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Error en la petición HTTP' }));
+      throw new Error(errorData.error || errorData.message || `Error HTTP ${response.status}`);
+    }
+
+    // Return json or empty object if 204
+    if (response.status === 204) {
+      return {} as T;
+    }
+
+    return await response.json();
+  } catch (err: any) {
+    throw err;
+  }
+}
+
+export const httpClient = {
+  get: <T = any>(endpoint: string, options?: RequestOptions) =>
+    customFetch<T>(endpoint, { ...options, method: 'GET' }),
+  post: <T = any>(endpoint: string, body?: any, options?: RequestOptions) =>
+    customFetch<T>(endpoint, {
+      ...options,
+      method: 'POST',
+      body: body ? JSON.stringify(body) : undefined,
+    }),
+  put: <T = any>(endpoint: string, body?: any, options?: RequestOptions) =>
+    customFetch<T>(endpoint, {
+      ...options,
+      method: 'PUT',
+      body: body ? JSON.stringify(body) : undefined,
+    }),
+  delete: <T = any>(endpoint: string, options?: RequestOptions) =>
+    customFetch<T>(endpoint, { ...options, method: 'DELETE' }),
+};
