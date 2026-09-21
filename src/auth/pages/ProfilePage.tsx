@@ -5,19 +5,22 @@ import { authApi } from '../../api/authApi';
 export const ProfilePage: React.FC = () => {
   const { user, updateUser } = useAuth();
 
-  // Profile data form state
-  const [name, setName] = useState(user?.name || '');
+  // Profile data form state according to openapi.yaml
+  const [nombres, setNombres] = useState(user?.persona?.nombres || user?.name || '');
+  const [apellidos, setApellidos] = useState(user?.persona?.apellidos || '');
   const [email] = useState(user?.email || '');
-  const [documento, setDocumento] = useState(user?.documento || '');
-  const [telefono, setTelefono] = useState(user?.telefono || '');
+  const [tipoDoc, setTipoDoc] = useState(user?.persona?.tipoDoc || 'DNI');
+  const [nroDoc, setNroDoc] = useState(user?.persona?.nroDoc || user?.documento || '');
+  const [fechaNacimiento, setFechaNacimiento] = useState(user?.persona?.fechaNacimiento || '');
+  const [telefono, setTelefono] = useState(user?.persona?.telefono || user?.telefono || '');
 
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSuccessMsg, setProfileSuccessMsg] = useState<string | null>(null);
   const [profileErrorMsg, setProfileErrorMsg] = useState<string | null>(null);
 
-  // Password change form state
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
+  // Password change form state according to openapi.yaml
+  const [passwordActual, setPasswordActual] = useState('');
+  const [passwordNueva, setPasswordNueva] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const [changingPassword, setChangingPassword] = useState(false);
@@ -26,9 +29,12 @@ export const ProfilePage: React.FC = () => {
 
   useEffect(() => {
     if (user) {
-      setName(user.name || '');
-      setDocumento(user.documento || '');
-      setTelefono(user.telefono || '');
+      setNombres(user.persona?.nombres || user.name || '');
+      setApellidos(user.persona?.apellidos || '');
+      setTipoDoc(user.persona?.tipoDoc || 'DNI');
+      setNroDoc(user.persona?.nroDoc || user.documento || '');
+      setFechaNacimiento(user.persona?.fechaNacimiento || '');
+      setTelefono(user.persona?.telefono || user.telefono || '');
     }
   }, [user]);
 
@@ -39,7 +45,14 @@ export const ProfilePage: React.FC = () => {
     setProfileErrorMsg(null);
 
     try {
-      const updatedUser = await authApi.updateProfile({ name, documento, telefono });
+      const updatedUser = await authApi.updateProfile({
+        nombres,
+        apellidos,
+        tipoDoc,
+        nroDoc,
+        fechaNacimiento,
+        telefono,
+      });
       updateUser(updatedUser);
       setProfileSuccessMsg('¡Datos de perfil guardados correctamente!');
     } catch (err: any) {
@@ -54,12 +67,12 @@ export const ProfilePage: React.FC = () => {
     setPasswordSuccessMsg(null);
     setPasswordErrorMsg(null);
 
-    if (newPassword.length < 8) {
+    if (passwordNueva.length < 8) {
       setPasswordErrorMsg('La nueva contraseña debe tener al menos 8 caracteres.');
       return;
     }
 
-    if (newPassword !== confirmPassword) {
+    if (passwordNueva !== confirmPassword) {
       setPasswordErrorMsg('La confirmación de la nueva contraseña no coincide.');
       return;
     }
@@ -67,10 +80,10 @@ export const ProfilePage: React.FC = () => {
     setChangingPassword(true);
 
     try {
-      const res = await authApi.changePassword({ currentPassword, newPassword });
+      const res = await authApi.changePassword({ passwordActual, passwordNueva });
       setPasswordSuccessMsg(res.message || 'Contraseña actualizada exitosamente.');
-      setCurrentPassword('');
-      setNewPassword('');
+      setPasswordActual('');
+      setPasswordNueva('');
       setConfirmPassword('');
     } catch (err: any) {
       setPasswordErrorMsg(err.message || 'Error al cambiar la contraseña. Verificá tu contraseña actual.');
@@ -85,7 +98,7 @@ export const ProfilePage: React.FC = () => {
         <span className="badge">Configuración de Cuenta</span>
         <h1 style={{ marginTop: '0.5rem' }}>Mi Perfil</h1>
         <p style={{ color: 'var(--text-secondary)' }}>
-          Gestioná tu información personal y la seguridad de tu acceso.
+          Gestioná tu información personal y la seguridad de tu acceso según la especificación del sistema.
         </p>
       </div>
 
@@ -101,7 +114,7 @@ export const ProfilePage: React.FC = () => {
             lineHeight: 1.5,
           }}
         >
-          <strong>⚠️ Completá tu perfil:</strong> Por favor, ingresá tu <strong>Documento (DNI/CUIL)</strong> y <strong>Teléfono de contacto</strong> para habilitar todas las funciones operativas de la plataforma.
+          <strong>⚠️ Completá tu perfil:</strong> Por favor, ingresá tu <strong>Número de Documento</strong> y <strong>Teléfono de contacto</strong> para habilitar todas las funciones operativas de la plataforma.
         </div>
       )}
 
@@ -127,13 +140,34 @@ export const ProfilePage: React.FC = () => {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.1rem' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem', color: 'var(--text-secondary)' }}>
-                Nombre Completo
+                Nombres
               </label>
               <input
                 type="text"
                 required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={nombres}
+                onChange={(e) => setNombres(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-color)',
+                  backgroundColor: 'rgba(15, 23, 42, 0.7)',
+                  color: 'var(--text-primary)',
+                  outline: 'none',
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem', color: 'var(--text-secondary)' }}>
+                Apellidos
+              </label>
+              <input
+                type="text"
+                required
+                value={apellidos}
+                onChange={(e) => setApellidos(e.target.value)}
                 style={{
                   width: '100%',
                   padding: '0.75rem',
@@ -168,19 +202,62 @@ export const ProfilePage: React.FC = () => {
 
             <div>
               <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem', color: 'var(--text-secondary)' }}>
-                Documento / DNI <span style={{ color: '#facc15' }}>*</span>
+                Tipo de Documento
+              </label>
+              <select
+                value={tipoDoc}
+                onChange={(e) => setTipoDoc(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-color)',
+                  backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                  color: 'var(--text-primary)',
+                  outline: 'none',
+                }}
+              >
+                <option value="DNI">DNI</option>
+                <option value="CUIL">CUIL</option>
+                <option value="PASAPORTE">Pasaporte</option>
+              </select>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem', color: 'var(--text-secondary)' }}>
+                Nro Documento <span style={{ color: '#facc15' }}>*</span>
               </label>
               <input
                 type="text"
                 required
                 placeholder="ej: 38123456"
-                value={documento}
-                onChange={(e) => setDocumento(e.target.value)}
+                value={nroDoc}
+                onChange={(e) => setNroDoc(e.target.value)}
                 style={{
                   width: '100%',
                   padding: '0.75rem',
                   borderRadius: 'var(--radius-sm)',
-                  border: !documento ? '1px solid rgba(234, 179, 8, 0.5)' : '1px solid var(--border-color)',
+                  border: !nroDoc ? '1px solid rgba(234, 179, 8, 0.5)' : '1px solid var(--border-color)',
+                  backgroundColor: 'rgba(15, 23, 42, 0.7)',
+                  color: 'var(--text-primary)',
+                  outline: 'none',
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem', color: 'var(--text-secondary)' }}>
+                Fecha de Nacimiento
+              </label>
+              <input
+                type="date"
+                value={fechaNacimiento}
+                onChange={(e) => setFechaNacimiento(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-color)',
                   backgroundColor: 'rgba(15, 23, 42, 0.7)',
                   color: 'var(--text-primary)',
                   outline: 'none',
@@ -246,8 +323,8 @@ export const ProfilePage: React.FC = () => {
               type="password"
               required
               placeholder="••••••••"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
+              value={passwordActual}
+              onChange={(e) => setPasswordActual(e.target.value)}
               style={{
                 width: '100%',
                 padding: '0.75rem',
@@ -269,8 +346,8 @@ export const ProfilePage: React.FC = () => {
                 type="password"
                 required
                 placeholder="Mínimo 8 caracteres"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
+                value={passwordNueva}
+                onChange={(e) => setPasswordNueva(e.target.value)}
                 style={{
                   width: '100%',
                   padding: '0.75rem',

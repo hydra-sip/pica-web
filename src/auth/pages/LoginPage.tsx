@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { ApiError } from '../../api/httpClient';
 
 export const LoginPage: React.FC = () => {
-  const [identifier, setIdentifier] = useState('');
+  const [identificador, setIdentificador] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -18,11 +19,17 @@ export const LoginPage: React.FC = () => {
 
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname;
 
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      const isAdmin = user.role === 'ADMIN' || user.permissions?.includes('admin:access');
+      const userRoleNames = user.roles ? user.roles.map((r) => r.nombre) : [user.role || ''];
+      const isAdmin =
+        userRoleNames.includes('ADMINISTRADOR') ||
+        userRoleNames.includes('SUPER_USUARIO') ||
+        user.permisos?.includes('USUARIO_VER') ||
+        user.permisos?.includes('admin:access');
+
       const targetPath = from || (isAdmin ? '/admin' : '/');
       navigate(targetPath, { replace: true });
     }
@@ -36,28 +43,39 @@ export const LoginPage: React.FC = () => {
     setSuccessMsg(null);
 
     try {
-      const loggedUser = await login(identifier, password);
+      const loggedUser = await login(identificador, password);
       setSuccessMsg(`¡Bienvenido ${loggedUser.name}! Iniciando sesión...`);
 
-      const isAdmin = loggedUser.role === 'ADMIN' || loggedUser.permissions?.includes('admin:access');
+      const userRoleNames = loggedUser.roles ? loggedUser.roles.map((r) => r.nombre) : [loggedUser.role || ''];
+      const isAdmin =
+        userRoleNames.includes('ADMINISTRADOR') ||
+        userRoleNames.includes('SUPER_USUARIO') ||
+        loggedUser.permisos?.includes('USUARIO_VER') ||
+        loggedUser.permisos?.includes('admin:access');
+
       const targetPath = from || (isAdmin ? '/admin' : '/');
 
       setTimeout(() => {
         navigate(targetPath, { replace: true });
       }, 500);
     } catch (err: any) {
-      const msg = err.message || '';
-      const lower = msg.toLowerCase();
+      let code = '';
+      let detail = err.message || '';
 
-      if (lower.includes('verificad') || lower.includes('unverified')) {
+      if (err instanceof ApiError && err.problemDetail) {
+        code = err.problemDetail.codigo || '';
+        detail = err.problemDetail.detail || detail;
+      }
+
+      if (code === 'EMAIL_NO_VERIFICADO' || detail.toLowerCase().includes('verificad')) {
         setErrorType('unverified');
         setErrorMessage('Tu cuenta aún no ha sido verificada. Revisá tu casilla de correo para activarla.');
-      } else if (lower.includes('bloquead') || lower.includes('locked')) {
+      } else if (code === 'USUARIO_BLOQUEADO' || detail.toLowerCase().includes('bloquead')) {
         setErrorType('locked');
         setErrorMessage('Tu cuenta ha sido bloqueada. Por favor, contactá al administrador.');
       } else {
         setErrorType('invalid');
-        setErrorMessage(msg || 'Usuario/email o contraseña incorrectos.');
+        setErrorMessage(detail || 'Usuario/email o contraseña incorrectos.');
       }
     } finally {
       setLoading(false);
@@ -65,7 +83,6 @@ export const LoginPage: React.FC = () => {
   };
 
   const handleGoogleLogin = () => {
-    // Redirección OAuth2 estándar al backend Spring / Node
     window.location.href = `${API_BASE_URL}/oauth2/authorization/google`;
   };
 
@@ -76,10 +93,10 @@ export const LoginPage: React.FC = () => {
         Ingresá tus credenciales para acceder a PICA Web
       </p>
 
-      {/* Alertas Contextuales por tipo de error */}
+      {/* Alertas Contextuales según ProblemDetail del contrato OpenAPI */}
       {errorType === 'unverified' && (
         <div style={{ background: 'rgba(234, 179, 8, 0.15)', border: '1px solid rgba(234, 179, 8, 0.4)', color: '#facc15', padding: '0.85rem', borderRadius: 'var(--radius-sm)', marginBottom: '1.25rem', fontSize: '0.88rem', lineHeight: 1.4 }}>
-          <strong>⚠️ Cuenta no verificada:</strong> {errorMessage}
+          <strong>⚠️ EMAIL_NO_VERIFICADO (403):</strong> {errorMessage}
           <div style={{ marginTop: '0.5rem' }}>
             <Link to="/auth/check-email" style={{ color: 'var(--accent-teal)', fontWeight: 500, textDecoration: 'underline' }}>
               👉 Ir a pantalla de verificación
@@ -90,13 +107,13 @@ export const LoginPage: React.FC = () => {
 
       {errorType === 'locked' && (
         <div style={{ background: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.5)', color: '#fca5a5', padding: '0.85rem', borderRadius: 'var(--radius-sm)', marginBottom: '1.25rem', fontSize: '0.88rem', lineHeight: 1.4 }}>
-          <strong>🚫 Cuenta Bloqueada:</strong> {errorMessage}
+          <strong>🚫 USUARIO_BLOQUEADO (403):</strong> {errorMessage}
         </div>
       )}
 
       {errorType === 'invalid' && (
         <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171', padding: '0.85rem', borderRadius: 'var(--radius-sm)', marginBottom: '1.25rem', fontSize: '0.88rem' }}>
-          ❌ {errorMessage}
+          ❌ CREDENCIALES_INVALIDAS: {errorMessage}
         </div>
       )}
 
@@ -109,14 +126,14 @@ export const LoginPage: React.FC = () => {
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <div>
           <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem', color: 'var(--text-secondary)' }}>
-            Usuario o Correo Electrónico
+            Usuario o Correo Electrónico (identificador)
           </label>
           <input
             type="text"
             required
             placeholder="admin@pica.edu.ar o admin"
-            value={identifier}
-            onChange={(e) => setIdentifier(e.target.value)}
+            value={identificador}
+            onChange={(e) => setIdentificador(e.target.value)}
             style={{
               width: '100%',
               padding: '0.75rem',
@@ -193,23 +210,6 @@ export const LoginPage: React.FC = () => {
         </svg>
         Continuar con Google
       </button>
-
-      {/* Seccion de Ayuda / Credenciales de prueba */}
-      <div style={{ marginTop: '1.5rem', fontSize: '0.8rem', color: 'var(--text-muted)', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
-        <p style={{ margin: '0 0 0.4rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Pruebas de Estado de Cuenta (MSW Mocks):</p>
-        <ul style={{ paddingLeft: '1.2rem', margin: 0, display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-          <li><code>admin@pica.edu.ar</code> / <code>admin123</code> (Admin $\rightarrow$ `/admin`)</li>
-          <li><code>user@pica.edu.ar</code> / <code>user123</code> (Usuario $\rightarrow$ `/`)</li>
-          <li><code>noverificado@pica.edu.ar</code> / <code>cualquiera</code> (No Verificado)</li>
-          <li><code>bloqueado@pica.edu.ar</code> / <code>cualquiera</code> (Bloqueado)</li>
-        </ul>
-        <div style={{ marginTop: '0.6rem' }}>
-          <p style={{ margin: '0 0 0.2rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Prueba rápida OAuth Callback:</p>
-          <Link to="/oauth/callback?code=mock-google-code-admin" style={{ color: 'var(--accent-teal)', textDecoration: 'underline' }}>
-            Canjear Código Google (Admin)
-          </Link>
-        </div>
-      </div>
     </div>
   );
 };

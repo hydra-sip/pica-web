@@ -8,7 +8,6 @@ export const VerifyEmailPage: React.FC = () => {
 
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState(false);
-  const [message, setMessage] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
@@ -21,14 +20,8 @@ export const VerifyEmailPage: React.FC = () => {
     setLoading(true);
     authApi
       .verifyEmail(token)
-      .then((res) => {
-        if (res.success) {
-          setSuccess(true);
-          setMessage(res.message || '¡Tu dirección de correo electrónico ha sido verificada exitosamente!');
-        } else {
-          setSuccess(false);
-          setErrorMsg(res.error || 'No se pudo verificar la cuenta.');
-        }
+      .then(() => {
+        setSuccess(true);
       })
       .catch((err) => {
         setSuccess(false);
@@ -46,7 +39,7 @@ export const VerifyEmailPage: React.FC = () => {
           <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>⏳</div>
           <h2>Verificando tu cuenta...</h2>
           <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-            Por favor aguardá unos instantes mientras validamos tu token de seguridad.
+            Por favor aguardá unos instantes mientras validamos tu token de seguridad con el servidor.
           </p>
         </div>
       ) : success ? (
@@ -54,7 +47,7 @@ export const VerifyEmailPage: React.FC = () => {
           <div style={{ fontSize: '3.5rem', marginBottom: '1rem', color: '#10b981' }}>🎉</div>
           <h2 style={{ marginBottom: '0.75rem', color: '#34d399' }}>¡Verificación Exitosa!</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '1.75rem' }}>
-            {message}
+            Tu dirección de correo electrónico ha sido confirmada correctamente (HTTP 204). Ya podés iniciar sesión en PICA Web.
           </p>
           <Link to="/auth/login" className="btn btn-primary">
             Iniciar Sesión Ahora

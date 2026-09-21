@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
-import { User, Role, AuthContextType } from '../types';
+import { User, RoleName, AuthContextType } from '../types';
 import { authApi } from '../../api/authApi';
 import { getRefreshToken, onUnauthorized, clearSessionTokens, setAccessToken, setRefreshToken } from '../../api/httpClient';
 
@@ -44,12 +44,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return unsubscribe;
   }, []);
 
-  const login = async (identifier: string, password: string): Promise<User> => {
+  const login = async (identificador: string, password: string): Promise<User> => {
     setIsLoading(true);
     try {
-      const response = await authApi.login(identifier, password);
-      setUser(response.user);
-      return response.user;
+      const loggedUser = await authApi.login(identificador, password);
+      setUser(loggedUser);
+      return loggedUser;
     } finally {
       setIsLoading(false);
     }
@@ -76,15 +76,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const hasPermission = (permisosReq: string | string[]): boolean => {
-    if (!user || !user.permissions) return false;
+    if (!user) return false;
+
+    // Check if user is ADMIN / SUPER_USUARIO
+    const userRoleNames = user.roles ? user.roles.map((r) => r.nombre) : [user.role || ''];
+    if (userRoleNames.includes('SUPER_USUARIO') || userRoleNames.includes('ADMINISTRADOR') || userRoleNames.includes('ADMIN')) {
+      return true;
+    }
+
+    if (!user.permisos) return false;
     const requiredList = Array.isArray(permisosReq) ? permisosReq : [permisosReq];
-    return requiredList.some((perm) => user.permissions?.includes(perm));
+    return requiredList.some((perm) => user.permisos.includes(perm));
   };
 
-  const hasRole = (rolesReq: Role | Role[]): boolean => {
-    if (!user || !user.role) return false;
+  const hasRole = (rolesReq: RoleName | RoleName[]): boolean => {
+    if (!user) return false;
     const requiredRoles = Array.isArray(rolesReq) ? rolesReq : [rolesReq];
-    return requiredRoles.includes(user.role);
+    const userRoleNames = user.roles ? user.roles.map((r) => r.nombre) : [user.role || ''];
+    return requiredRoles.some((r) => userRoleNames.includes(r));
   };
 
   const value: AuthContextType = {

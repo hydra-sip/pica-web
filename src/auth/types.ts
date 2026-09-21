@@ -1,20 +1,56 @@
-export type Role = 'ADMIN' | 'USER' | 'GESTOR' | string;
+export type RoleName =
+  | 'SUPER_USUARIO'
+  | 'ADMINISTRADOR'
+  | 'ORGANIZADOR'
+  | 'ARBITRO'
+  | 'SOPORTE'
+  | 'PARTICIPANTE'
+  | string;
 
-export interface Permission {
+export interface ProblemErrorItem {
+  campo: string;
+  codigo: string;
+  mensaje: string;
+}
+
+export interface ProblemDetail {
+  status: number;
+  detail?: string;
+  codigo: string; // ej: 'EMAIL_NO_VERIFICADO', 'USUARIO_BLOQUEADO', 'CREDENCIALES_INVALIDAS', 'USERNAME_DUPLICADO', 'EMAIL_DUPLICADO', 'VALIDACION'
+  errores?: ProblemErrorItem[];
+}
+
+export interface PersonaInfo {
+  nombres?: string;
+  apellidos?: string;
+  tipoDoc?: string;
+  nroDoc?: string;
+  fechaNacimiento?: string;
+  telefono?: string;
+}
+
+export interface RolInfo {
   id: string;
-  code: string;
-  description?: string;
+  nombre: RoleName;
+  nombreAmigable: string;
 }
 
 export interface User {
   id: string;
-  name: string;
+  username: string;
   email: string;
-  role: Role;
-  permissions?: string[];
+  estado?: string;
+  tieneContrasena?: boolean;
+  persona?: PersonaInfo;
+  roles: RolInfo[];
+  permisos: string[];
+  datosCompletos: boolean;
+
+  // Helpers de compatibilidad para UI
+  name: string;
+  role?: string;
   documento?: string;
   telefono?: string;
-  datosCompletos?: boolean;
 }
 
 export interface AuthState {
@@ -24,60 +60,66 @@ export interface AuthState {
 }
 
 export interface AuthContextType extends AuthState {
-  login: (identifier: string, password: string) => Promise<User>;
+  login: (identificador: string, password: string) => Promise<User>;
   loginWithTokens: (accessToken: string, refreshToken: string, user: User) => void;
   updateUser: (updatedFields: Partial<User>) => void;
   logout: () => Promise<void>;
   hasPermission: (permiso: string | string[]) => boolean;
-  hasRole: (role: Role | Role[]) => boolean;
+  hasRole: (role: RoleName | RoleName[]) => boolean;
 }
 
 export interface LoginResponse {
   accessToken: string;
   refreshToken: string;
-  user: User;
+  tokenType?: string;
+  expiresIn?: number;
 }
 
 export interface RefreshResponse {
   accessToken: string;
-  refreshToken?: string;
+  refreshToken: string;
+  tokenType?: string;
+  expiresIn?: number;
 }
 
 export interface RegisterData {
-  name: string;
+  username: string;
   email: string;
   password: string;
+  nombres: string;
+  apellidos: string;
+  tipoDoc?: string;
+  nroDoc?: string;
+  fechaNacimiento?: string;
 }
 
 export interface RegisterResponse {
-  success: boolean;
-  message: string;
-}
-
-export interface VerifyEmailResponse {
-  success: boolean;
-  message: string;
-  error?: string;
+  id: string;
 }
 
 export interface FieldErrors {
-  name?: string;
+  username?: string;
   email?: string;
   password?: string;
   confirmPassword?: string;
-  documento?: string;
+  nombres?: string;
+  apellidos?: string;
+  tipoDoc?: string;
+  nroDoc?: string;
+  fechaNacimiento?: string;
   telefono?: string;
 }
 
 export interface UpdateProfileData {
-  name: string;
-  documento?: string;
+  nombres?: string;
+  apellidos?: string;
+  tipoDoc?: string;
+  nroDoc?: string;
+  fechaNacimiento?: string;
   telefono?: string;
 }
 
 export interface ChangePasswordData {
-  currentPassword: string;
-  newPassword: string;
+  passwordActual: string;
+  passwordNueva: string;
 }
-
-export type LoginErrorCode = 'unverified_email' | 'account_locked' | 'invalid_credentials' | string;
