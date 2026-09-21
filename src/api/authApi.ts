@@ -2,8 +2,15 @@ import { httpClient, setAccessToken, setRefreshToken, getRefreshToken, clearSess
 import { LoginResponse, RefreshResponse, User, RegisterData, RegisterResponse, VerifyEmailResponse } from '../auth/types';
 
 export const authApi = {
-  login: async (email: string, password: string): Promise<LoginResponse> => {
-    const data = await httpClient.post<LoginResponse>('/auth/login', { email, password });
+  login: async (identifier: string, password: string): Promise<LoginResponse> => {
+    const data = await httpClient.post<LoginResponse>('/auth/login', { identifier, email: identifier, password });
+    setAccessToken(data.accessToken);
+    setRefreshToken(data.refreshToken);
+    return data;
+  },
+
+  exchangeOAuthCode: async (code: string): Promise<LoginResponse> => {
+    const data = await httpClient.post<LoginResponse>('/auth/exchange', { code });
     setAccessToken(data.accessToken);
     setRefreshToken(data.refreshToken);
     return data;

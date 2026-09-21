@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { User, Role, AuthContextType } from '../types';
 import { authApi } from '../../api/authApi';
-import { getRefreshToken, onUnauthorized, clearSessionTokens } from '../../api/httpClient';
+import { getRefreshToken, onUnauthorized, clearSessionTokens, setAccessToken, setRefreshToken } from '../../api/httpClient';
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -21,9 +21,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
-      // 1. Fetch new access token with existing refresh token
       await authApi.refreshToken();
-      // 2. Load current user data from /auth/me
       const userData = await authApi.getMe();
       setUser(userData);
     } catch {
@@ -46,14 +44,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return unsubscribe;
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (identifier: string, password: string): Promise<User> => {
     setIsLoading(true);
     try {
-      const response = await authApi.login(email, password);
+      const response = await authApi.login(identifier, password);
       setUser(response.user);
+      return response.user;
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const loginWithTokens = (accessToken: string, refreshToken: string, userData: User) => {
+    setAccessToken(accessToken);
+    setRefreshToken(refreshToken);
+    setUser(userData);
   };
 
   const logout = async () => {
@@ -83,6 +88,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isLoading,
     isAuthenticated: !!user,
     login,
+    loginWithTokens,
     logout,
     hasPermission,
     hasRole,
