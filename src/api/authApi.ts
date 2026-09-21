@@ -1,5 +1,5 @@
 import { httpClient, setAccessToken, setRefreshToken, getRefreshToken, clearSessionTokens } from './httpClient';
-import { LoginResponse, RefreshResponse, User } from '../auth/types';
+import { LoginResponse, RefreshResponse, User, RegisterData, RegisterResponse, VerifyEmailResponse } from '../auth/types';
 
 export const authApi = {
   login: async (email: string, password: string): Promise<LoginResponse> => {
@@ -7,6 +7,14 @@ export const authApi = {
     setAccessToken(data.accessToken);
     setRefreshToken(data.refreshToken);
     return data;
+  },
+
+  register: async (registerData: RegisterData): Promise<RegisterResponse> => {
+    return await httpClient.post<RegisterResponse>('/auth/register', registerData);
+  },
+
+  verifyEmail: async (token: string): Promise<VerifyEmailResponse> => {
+    return await httpClient.post<VerifyEmailResponse>('/auth/verify-email', { token });
   },
 
   refreshToken: async (): Promise<RefreshResponse> => {
