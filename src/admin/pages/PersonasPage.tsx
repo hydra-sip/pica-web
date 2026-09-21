@@ -10,18 +10,26 @@ export interface Persona {
   nroDoc: string;
   email: string;
   telefono: string;
+  fechaNacimiento?: string;
+  domicilioPostal?: string;
+  usuarioUsername?: string;
+  usuarioRol?: string;
   estado: 'ACTIVO' | 'INACTIVO' | 'ELIMINADO';
 }
 
 const MOCK_PERSONAS: Persona[] = [
   {
     id: 1,
-    nombres: 'Carlos Alberto',
-    apellidos: 'Gómez',
+    nombres: 'Administrador',
+    apellidos: 'PICA',
     tipoDoc: 'DNI',
-    nroDoc: '32456789',
-    email: 'cgomez@pica.edu.ar',
-    telefono: '1145678901',
+    nroDoc: '30111222',
+    email: 'admin@pica.edu.ar',
+    telefono: '1122334455',
+    fechaNacimiento: '1990-01-01',
+    domicilioPostal: 'Av. Constitución 1234, Luján',
+    usuarioUsername: 'admin',
+    usuarioRol: 'ADMINISTRADOR',
     estado: 'ACTIVO',
   },
   {
@@ -29,50 +37,64 @@ const MOCK_PERSONAS: Persona[] = [
     nombres: 'María Elena',
     apellidos: 'Rodríguez',
     tipoDoc: 'DNI',
-    nroDoc: '29876543',
+    nroDoc: '32999888',
     email: 'mrodriguez@pica.edu.ar',
     telefono: '1134567890',
+    fechaNacimiento: '1988-04-12',
+    domicilioPostal: 'San Martín 500, Luján',
+    usuarioUsername: 'mrodriguez',
+    usuarioRol: 'INVESTIGADOR',
     estado: 'ACTIVO',
   },
   {
     id: 3,
+    nombres: 'Carlos Alberto',
+    apellidos: 'Gómez',
+    tipoDoc: 'DNI',
+    nroDoc: '35444555',
+    email: 'cgomez@pica.edu.ar',
+    telefono: '1145678901',
+    fechaNacimiento: '1993-09-25',
+    domicilioPostal: 'Mitre 120, Luján',
+    usuarioUsername: 'cgomez',
+    usuarioRol: 'PARTICIPANTE',
+    estado: 'INACTIVO',
+  },
+  {
+    id: 4,
     nombres: 'Jorge Luis',
     apellidos: 'González',
     tipoDoc: 'DNI',
     nroDoc: '35123456',
     email: 'jgonzalez@pica.edu.ar',
     telefono: '1123456789',
-    estado: 'INACTIVO',
+    fechaNacimiento: '1991-11-03',
+    domicilioPostal: 'Belgrano 450, Luján',
+    estado: 'ACTIVO',
   },
   {
-    id: 4,
+    id: 5,
     nombres: 'Laura Sofía',
     apellidos: 'Martínez',
     tipoDoc: 'PASAPORTE',
     nroDoc: 'A09876543',
     email: 'lmartinez@pica.edu.ar',
     telefono: '1167890123',
+    fechaNacimiento: '1996-02-18',
+    domicilioPostal: 'Las Heras 890, Luján',
     estado: 'ELIMINADO',
   },
   {
-    id: 5,
+    id: 6,
     nombres: 'Fernando Daniel',
     apellidos: 'Fernández',
     tipoDoc: 'DNI',
     nroDoc: '31987654',
     email: 'ffernandez@pica.edu.ar',
     telefono: '1156789012',
+    fechaNacimiento: '1985-07-30',
+    domicilioPostal: 'Rivadavia 310, Luján',
     estado: 'ACTIVO',
-  },
-  {
-    id: 6,
-    nombres: 'Silvia Beatriz',
-    apellidos: 'Pérez',
-    tipoDoc: 'DNI',
-    nroDoc: '27654321',
-    email: 'sperez@pica.edu.ar',
-    telefono: '1178901234',
-    estado: 'INACTIVO',
   },
 ];
 
@@ -87,14 +109,28 @@ export const PersonasPage: React.FC = () => {
     mode: 'create',
   });
 
+  // Modal State for User Profile Card (Ficha de Usuario vinculado)
+  const [selectedUserCard, setSelectedUserCard] = useState<{
+    username: string;
+    email: string;
+    rol?: string;
+    personaNombre: string;
+    doc: string;
+  } | null>(null);
+
   const columns: ColumnDef<Persona>[] = [
     {
       key: 'apellidos',
-      label: 'Nombre Completo',
+      label: 'Apellido y Nombres',
       sortable: true,
       render: (p) => (
         <div>
           <strong style={{ color: 'var(--text-primary)' }}>{p.apellidos}, {p.nombres}</strong>
+          {p.fechaNacimiento && (
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+              Nac.: {p.fechaNacimiento}
+            </div>
+          )}
         </div>
       ),
     },
@@ -103,10 +139,12 @@ export const PersonasPage: React.FC = () => {
       label: 'Documento',
       sortable: true,
       render: (p) => (
-        <span>
-          <small style={{ color: 'var(--text-secondary)', marginRight: '0.25rem' }}>{p.tipoDoc}:</small>
-          {p.nroDoc}
-        </span>
+        <div>
+          <span style={{ fontWeight: 600 }}>
+            <small style={{ color: 'var(--text-secondary)', marginRight: '0.25rem' }}>{p.tipoDoc}:</small>
+            {p.nroDoc}
+          </span>
+        </div>
       ),
     },
     {
@@ -116,7 +154,48 @@ export const PersonasPage: React.FC = () => {
       render: (p) => (
         <div style={{ fontSize: '0.85rem' }}>
           <div>{p.email}</div>
-          <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>{p.telefono || 'Sin tel.'}</div>
+          <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>{p.telefono || 'Sin teléfono'}</div>
+        </div>
+      ),
+    },
+    {
+      key: 'usuarioUsername',
+      label: 'Usuario Vinculado',
+      sortable: true,
+      render: (p) => (
+        <div>
+          {p.usuarioUsername ? (
+            <button
+              type="button"
+              onClick={() =>
+                setSelectedUserCard({
+                  username: p.usuarioUsername!,
+                  email: p.email,
+                  rol: p.usuarioRol || 'PARTICIPANTE',
+                  personaNombre: `${p.nombres} ${p.apellidos}`,
+                  doc: `${p.tipoDoc}: ${p.nroDoc}`,
+                })
+              }
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                padding: '0.2rem 0.6rem',
+                borderRadius: 'var(--radius-sm)',
+                fontSize: '0.775rem',
+                fontWeight: 600,
+                backgroundColor: 'rgba(99, 102, 241, 0.15)',
+                color: 'var(--accent-secondary)',
+                border: '1px solid rgba(99, 102, 241, 0.3)',
+                cursor: 'pointer',
+              }}
+              title="Ver ficha del usuario vinculado"
+            >
+              👤 @{p.usuarioUsername}
+            </button>
+          ) : (
+            <span style={{ fontSize: '0.775rem', color: 'var(--text-muted)' }}>Sin usuario vinculado</span>
+          )}
         </div>
       ),
     },
@@ -128,13 +207,13 @@ export const PersonasPage: React.FC = () => {
       name: 'nombres',
       label: 'Nombres',
       required: true,
-      placeholder: 'ej. Juan Carlos',
+      placeholder: 'ej. Carlos Alberto',
     },
     {
       name: 'apellidos',
       label: 'Apellidos',
       required: true,
-      placeholder: 'ej. Pérez',
+      placeholder: 'ej. Gómez',
     },
     {
       name: 'tipoDoc',
@@ -152,19 +231,29 @@ export const PersonasPage: React.FC = () => {
       name: 'nroDoc',
       label: 'Número de Documento',
       required: true,
-      placeholder: 'ej. 30123456',
+      placeholder: 'ej. 32456789',
     },
     {
       name: 'email',
       label: 'Correo Electrónico de Contacto',
       type: 'email',
       required: true,
-      placeholder: 'ej. persona@ejemplo.com',
+      placeholder: 'ej. persona@pica.edu.ar',
     },
     {
       name: 'telefono',
       label: 'Teléfono de Contacto',
       placeholder: 'ej. 1122334455',
+    },
+    {
+      name: 'fechaNacimiento',
+      label: 'Fecha de Nacimiento',
+      type: 'date',
+    },
+    {
+      name: 'domicilioPostal',
+      label: 'Domicilio Postal / Dirección',
+      placeholder: 'ej. San Martín 500, Luján',
     },
     {
       name: 'estado',
@@ -225,6 +314,8 @@ export const PersonasPage: React.FC = () => {
         nroDoc: formData.nroDoc || '',
         email: formData.email || '',
         telefono: formData.telefono || '',
+        fechaNacimiento: formData.fechaNacimiento || '',
+        domicilioPostal: formData.domicilioPostal || '',
         estado: (formData.estado as 'ACTIVO' | 'INACTIVO' | 'ELIMINADO') || 'ACTIVO',
       };
       setPersonas((prev) => [newPersona, ...prev]);
@@ -240,6 +331,8 @@ export const PersonasPage: React.FC = () => {
                 nroDoc: formData.nroDoc || p.nroDoc,
                 email: formData.email || p.email,
                 telefono: formData.telefono || p.telefono,
+                fechaNacimiento: formData.fechaNacimiento || p.fechaNacimiento,
+                domicilioPostal: formData.domicilioPostal || p.domicilioPostal,
                 estado: (formData.estado as 'ACTIVO' | 'INACTIVO' | 'ELIMINADO') || p.estado,
               }
             : p
@@ -254,16 +347,16 @@ export const PersonasPage: React.FC = () => {
         <span className="badge">Permiso: PERSONA_VER</span>
         <h1 style={{ marginTop: '0.5rem' }}>Gestión de Personas</h1>
         <p style={{ color: 'var(--text-secondary)' }}>
-          Registro y datos personales de miembros y participantes.
+          Registro de integrantes, padrón personal y relación con cuentas de usuario del sistema.
         </p>
       </div>
 
       <DataTable<Persona>
-        title="Padrón de Personas"
-        description="Listado general de integrantes y fichas personales en el sistema."
+        title="Padrón de Personas Registradas"
+        description="Filtro de búsqueda por documento o apellido. Permite realizar el alta, edición, baja lógica, reactivación y consulta del usuario vinculado."
         data={personas}
         columns={columns}
-        searchFields={['nombres', 'apellidos', 'nroDoc', 'email', 'telefono', 'estado']}
+        searchFields={['apellidos', 'nombres', 'nroDoc', 'email', 'telefono', 'usuarioUsername']}
         statusField="estado"
         idField="id"
         onCreate={handleCreate}
@@ -274,6 +367,7 @@ export const PersonasPage: React.FC = () => {
         createButtonText="Registrar Persona"
       />
 
+      {/* Form Modal for Create / Edit Persona */}
       <FormModal<Persona>
         isOpen={modalState.isOpen}
         title={
@@ -289,6 +383,90 @@ export const PersonasPage: React.FC = () => {
         onClose={() => setModalState({ isOpen: false, mode: 'create' })}
         onSubmit={handleSubmitForm}
       />
+
+      {/* User Profile Card Modal (Ficha de Usuario vinculado) */}
+      {selectedUserCard && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.8)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '1rem',
+          }}
+          onClick={() => setSelectedUserCard(null)}
+        >
+          <div
+            className="glass-card"
+            style={{ width: '100%', maxWidth: '440px', padding: '1.75rem' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+              <div>
+                <span className="badge">Ficha de Usuario</span>
+                <h3 style={{ fontSize: '1.25rem', marginTop: '0.4rem' }}>@{selectedUserCard.username}</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedUserCard(null)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', cursor: 'pointer' }}
+              >
+                &times;
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.875rem' }}>
+              <div>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Titular Vinculado:</span>
+                <div style={{ fontWeight: 600 }}>{selectedUserCard.personaNombre}</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{selectedUserCard.doc}</div>
+              </div>
+
+              <div>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Correo Electrónico:</span>
+                <div>{selectedUserCard.email}</div>
+              </div>
+
+              <div>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Rol Principal:</span>
+                <div>
+                  <span
+                    style={{
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      padding: '0.15rem 0.5rem',
+                      borderRadius: 'var(--radius-sm)',
+                      backgroundColor: 'rgba(99, 102, 241, 0.15)',
+                      color: 'var(--accent-secondary)',
+                      border: '1px solid rgba(99, 102, 241, 0.3)',
+                    }}
+                  >
+                    {selectedUserCard.rol}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setSelectedUserCard(null)}
+                style={{ fontSize: '0.85rem' }}
+              >
+                Cerrar Ficha
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
