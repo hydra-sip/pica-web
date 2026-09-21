@@ -24,6 +24,9 @@ interface DataTableProps<T extends Record<string, any>> {
   onReactivate?: (item: T) => Promise<void> | void;
   isLoading?: boolean;
   createButtonText?: string;
+  // Extra filters & custom actions
+  extraFilters?: React.ReactNode;
+  customActions?: (item: T) => React.ReactNode;
 
   // Server-side control props
   serverSide?: boolean;
@@ -53,6 +56,8 @@ export function DataTable<T extends Record<string, any>>({
   onReactivate,
   isLoading = false,
   createButtonText = 'Nuevo Registro',
+  extraFilters,
+  customActions,
   serverSide = false,
   page: propPage,
   pageSize: propPageSize,
@@ -349,6 +354,9 @@ export function DataTable<T extends Record<string, any>>({
               <option value="ELIMINADO">Eliminados</option>
             </select>
           </div>
+
+          {/* Extra filters */}
+          {extraFilters}
         </div>
 
         {/* Page size selector */}
@@ -415,7 +423,7 @@ export function DataTable<T extends Record<string, any>>({
                   </div>
                 </th>
               ))}
-              {(onView || onEdit || onDelete || onReactivate) && (
+              {(onView || onEdit || onDelete || onReactivate || customActions) && (
                 <th
                   style={{
                     padding: '0.85rem 1rem',
@@ -433,7 +441,7 @@ export function DataTable<T extends Record<string, any>>({
             {isLoading ? (
               <tr>
                 <td
-                  colSpan={columns.length + (onView || onEdit || onDelete || onReactivate ? 1 : 0)}
+                  colSpan={columns.length + (onView || onEdit || onDelete || onReactivate || customActions ? 1 : 0)}
                   style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}
                 >
                   Cargando información...
@@ -442,7 +450,7 @@ export function DataTable<T extends Record<string, any>>({
             ) : paginatedData.length === 0 ? (
               <tr>
                 <td
-                  colSpan={columns.length + (onView || onEdit || onDelete || onReactivate ? 1 : 0)}
+                  colSpan={columns.length + (onView || onEdit || onDelete || onReactivate || customActions ? 1 : 0)}
                   style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}
                 >
                   No se encontraron registros que coincidan con la búsqueda.
@@ -474,9 +482,11 @@ export function DataTable<T extends Record<string, any>>({
                     ))}
 
                     {/* Action buttons */}
-                    {(onView || onEdit || onDelete || onReactivate) && (
+                    {(onView || onEdit || onDelete || onReactivate || customActions) && (
                       <td style={{ padding: '0.85rem 1rem', textAlign: 'right', whiteSpace: 'nowrap' }}>
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                          {customActions && customActions(item)}
+
                           {onView && (
                             <button
                               type="button"

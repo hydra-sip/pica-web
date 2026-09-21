@@ -328,5 +328,38 @@ export const handlers = [
       lastBackup: new Date().toISOString(),
     });
   }),
+
+  // Admin User Roles Update (PUT /admin/usuarios/{id}/roles)
+  http.put(`${API_URL}/admin/usuarios/:id/roles`, async ({ params, request }) => {
+    const body = (await request.json().catch(() => ({}))) as { roles?: string[] };
+    const { id } = params;
+
+    if (id === '1') {
+      return new HttpResponse(
+        JSON.stringify({
+          status: 403,
+          codigo: 'ADMIN_READONLY',
+          detail: 'No se pueden modificar los roles del Administrador principal.',
+        }),
+        { status: 403, headers: { 'Content-Type': 'application/problem+json' } }
+      );
+    }
+
+    return HttpResponse.json({
+      id: Number(id),
+      roles: body.roles || [],
+      message: 'Roles asignados correctamente.',
+    });
+  }),
+
+  // Admin User Reset Password (POST /admin/usuarios/{id}/reset-password)
+  http.post(`${API_URL}/admin/usuarios/:id/reset-password`, async ({ params }) => {
+    const { id } = params;
+    return HttpResponse.json({
+      id: Number(id),
+      message: 'La contraseña ha sido blanqueada exitosamente.',
+    });
+  }),
 ];
+
 
