@@ -62,11 +62,37 @@ export const handlers = [
     });
   }),
 
-  // Auth: Login Endpoint
+  // Auth: Login Endpoint (Username / Email + Password)
   http.post(`${API_URL}/auth/login`, async ({ request }) => {
-    const body = (await request.json()) as { email?: string; password?: string };
+    const body = (await request.json().catch(() => ({}))) as {
+      identifier?: string;
+      email?: string;
+      password?: string;
+    };
 
-    if (body.email === 'admin@pica.edu.ar' && body.password === 'admin123') {
+    const id = body.identifier || body.email || '';
+
+    if (id === 'noverificado@pica.edu.ar') {
+      return new HttpResponse(
+        JSON.stringify({
+          error: 'unverified_email',
+          message: 'Tu cuenta aún no ha sido verificada. Revisá tu casilla de correo para activarla.',
+        }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (id === 'bloqueado@pica.edu.ar') {
+      return new HttpResponse(
+        JSON.stringify({
+          error: 'account_locked',
+          message: 'Tu cuenta ha sido bloqueada. Por favor, contactá al administrador.',
+        }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if ((id === 'admin@pica.edu.ar' || id === 'admin') && body.password === 'admin123') {
       return HttpResponse.json({
         accessToken: 'mock-jwt-access-token-admin-12345',
         refreshToken: 'mock-jwt-refresh-token-admin-67890',
@@ -80,7 +106,7 @@ export const handlers = [
       });
     }
 
-    if (body.email === 'user@pica.edu.ar' && body.password === 'user123') {
+    if ((id === 'user@pica.edu.ar' || id === 'usuario') && body.password === 'user123') {
       return HttpResponse.json({
         accessToken: 'mock-jwt-access-token-user-12345',
         refreshToken: 'mock-jwt-refresh-token-user-67890',
@@ -94,14 +120,14 @@ export const handlers = [
       });
     }
 
-    if (body.email && body.password) {
+    if (id && body.password) {
       return HttpResponse.json({
         accessToken: `mock-jwt-access-token-${Date.now()}`,
         refreshToken: `mock-jwt-refresh-token-${Date.now()}`,
         user: {
           id: 'usr_003',
-          name: body.email.split('@')[0],
-          email: body.email,
+          name: id.split('@')[0],
+          email: id.includes('@') ? id : `${id}@pica.edu.ar`,
           role: 'USER',
           permissions: ['dashboard:read'],
         },
@@ -109,9 +135,47 @@ export const handlers = [
     }
 
     return new HttpResponse(
-      JSON.stringify({ error: 'Credenciales inválidas' }),
+      JSON.stringify({ error: 'invalid_credentials', message: 'Usuario/email o contraseña incorrectos.' }),
       { status: 401, headers: { 'Content-Type': 'application/json' } }
     );
+  }),
+
+  // Auth: OAuth2 Code Exchange Endpoint (/auth/exchange)
+  http.post(`${API_URL}/auth/exchange`, async ({ request }) => {
+    const body = (await request.json().catch(() => ({}))) as { code?: string };
+
+    if (!body.code || body.code === 'invalid-code') {
+      return new HttpResponse(
+        JSON.stringify({ error: 'invalid_code', message: 'El código de autorización OAuth es inválido o ha expirado.' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (body.code.includes('admin')) {
+      return HttpResponse.json({
+        accessToken: 'mock-oauth-access-token-admin-999',
+        refreshToken: 'mock-oauth-refresh-token-admin-999',
+        user: {
+          id: 'usr_001',
+          name: 'Administrador PICA (Google)',
+          email: 'admin@pica.edu.ar',
+          role: 'ADMIN',
+          permissions: ['admin:access', 'users:read', 'users:write'],
+        },
+      });
+    }
+
+    return HttpResponse.json({
+      accessToken: 'mock-oauth-access-token-user-888',
+      refreshToken: 'mock-oauth-refresh-token-user-888',
+      user: {
+        id: 'usr_002',
+        name: 'Usuario Google PICA',
+        email: 'google.user@pica.edu.ar',
+        role: 'USER',
+        permissions: ['dashboard:read'],
+      },
+    });
   }),
 
   // Auth: Refresh Token Endpoint

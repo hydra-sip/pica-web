@@ -6,6 +6,7 @@ import { LoginPage } from '../auth/pages/LoginPage';
 import { RegisterPage } from '../auth/pages/RegisterPage';
 import { CheckEmailPage } from '../auth/pages/CheckEmailPage';
 import { VerifyEmailPage } from '../auth/pages/VerifyEmailPage';
+import { OAuthCallbackPage } from '../auth/pages/OAuthCallbackPage';
 import { AdminDashboardPage } from '../admin/pages/AdminDashboardPage';
 import { NotFoundPage } from '../shared/pages/NotFoundPage';
 import { UnauthorizedPage } from '../shared/pages/UnauthorizedPage';
@@ -22,6 +23,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="auth/register" element={<RegisterPage />} />
         <Route path="auth/check-email" element={<CheckEmailPage />} />
         <Route path="verificar" element={<VerifyEmailPage />} />
+        <Route path="oauth/callback" element={<OAuthCallbackPage />} />
         <Route path="unauthorized" element={<UnauthorizedPage />} />
 
         {/* Rutas Protegidas que requieren Autenticación y Rol ADMIN */}

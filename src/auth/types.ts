@@ -21,7 +21,8 @@ export interface AuthState {
 }
 
 export interface AuthContextType extends AuthState {
-  login: (email: string, password: string) => Promise<void>;
+  login: (identifier: string, password: string) => Promise<User>;
+  loginWithTokens: (accessToken: string, refreshToken: string, user: User) => void;
   logout: () => Promise<void>;
   hasPermission: (permiso: string | string[]) => boolean;
   hasRole: (role: Role | Role[]) => boolean;
@@ -61,3 +62,5 @@ export interface FieldErrors {
   password?: string;
   confirmPassword?: string;
 }
+
+export type LoginErrorCode = 'unverified_email' | 'account_locked' | 'invalid_credentials' | string;
