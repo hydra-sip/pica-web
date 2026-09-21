@@ -19,7 +19,7 @@ Módulo Frontend Web para la Plataforma de Gestión de Torneos **PICA** (Trabajo
 
 ## 🐳 Despliegue con Docker
 
-El proyecto cuenta con un `Dockerfile` multi-stage optimizado (Node.js para build + Nginx Alpine para servir estáticos con soporte de rutas SPA).
+El proyecto cuenta con un `Dockerfile`
 
 ### Construir la imagen Docker:
 ```bash
