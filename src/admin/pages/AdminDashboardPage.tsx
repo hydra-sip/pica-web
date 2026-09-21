@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { httpClient } from '../../api/httpClient';
 
 interface AdminStats {
   totalUsers: number;
@@ -10,21 +11,21 @@ interface AdminStats {
 export const AdminDashboardPage: React.FC = () => {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${apiUrl}/admin/stats`)
-      .then((res) => res.json())
+    httpClient
+      .get<AdminStats>('/admin/stats')
       .then((data) => {
         setStats(data);
         setLoading(false);
       })
       .catch((err) => {
-        console.error(err);
+        console.error('Error al cargar métricas:', err);
+        setError(err.message || 'Error de conexión');
         setLoading(false);
       });
-  }, [apiUrl]);
+  }, []);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -35,6 +36,12 @@ export const AdminDashboardPage: React.FC = () => {
           Resumen operativo del sistema y métricas globales.
         </p>
       </div>
+
+      {error && (
+        <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171', padding: '0.75rem', borderRadius: 'var(--radius-sm)' }}>
+          {error}
+        </div>
+      )}
 
       <div
         style={{
@@ -68,7 +75,7 @@ export const AdminDashboardPage: React.FC = () => {
       <div className="glass-card">
         <h3>Actividad Reciente y Respaldos</h3>
         <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem', fontSize: '0.95rem' }}>
-          Última copia de seguridad procesada por MSW Mock Server: {' '}
+          Última copia de seguridad procesada por MSW Mock Server:{' '}
           <strong style={{ color: 'var(--text-primary)' }}>
             {stats?.lastBackup ? new Date(stats.lastBackup).toLocaleString() : 'Cargando...'}
           </strong>

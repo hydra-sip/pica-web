@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -8,8 +9,17 @@ export const LoginPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
+  const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+  const location = useLocation();
+
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/admin';
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, navigate, from]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,22 +28,11 @@ export const LoginPage: React.FC = () => {
     setSuccessMsg(null);
 
     try {
-      const res = await fetch(`${apiUrl}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Falló la autenticación');
-      }
-
-      setSuccessMsg(`¡Bienvenido ${data.user.name}! Token JWT recibido.`);
+      await login(email, password);
+      setSuccessMsg('¡Autenticación exitosa! Redirigiendo...');
       setTimeout(() => {
-        navigate('/admin');
-      }, 1200);
+        navigate(from, { replace: true });
+      }, 500);
     } catch (err: any) {
       setError(err.message || 'Error al iniciar sesión');
     } finally {
@@ -111,7 +110,10 @@ export const LoginPage: React.FC = () => {
       </form>
 
       <div style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-        Para probar el mock de MSW: usa <code>admin@pica.edu.ar</code> / <code>admin123</code>
+        <p style={{ marginBottom: '0.25rem' }}>Para probar MSW con rol ADMIN:</p>
+        <code>admin@pica.edu.ar</code> / <code>admin123</code>
+        <p style={{ margin: '0.5rem 0 0.25rem' }}>Para probar rol USER (Sin permiso Admin):</p>
+        <code>user@pica.edu.ar</code> / <code>user123</code>
       </div>
     </div>
   );
