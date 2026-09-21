@@ -1,4 +1,6 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+import { ProblemDetail } from '../auth/types';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 const REFRESH_TOKEN_KEY = 'pica_refresh_token';
 
 // Access Token strictly in memory
@@ -11,6 +13,18 @@ let failedQueue: Array<{
 
 type UnauthorizedCallback = () => void;
 const unauthorizedCallbacks: Set<UnauthorizedCallback> = new Set();
+
+export class ApiError extends Error {
+  problemDetail?: ProblemDetail;
+  status: number;
+
+  constructor(message: string, status: number, problemDetail?: ProblemDetail) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.problemDetail = problemDetail;
+  }
+}
 
 export const onUnauthorized = (callback: UnauthorizedCallback) => {
   unauthorizedCallbacks.add(callback);
@@ -85,8 +99,11 @@ export async function customFetch<T = any>(
   try {
     let response = await fetch(url, config);
 
-    // Check for 401 Unauthorized (and avoid refresh loop on /auth/login or /auth/refresh)
-    const isAuthRoute = endpoint.includes('/auth/login') || endpoint.includes('/auth/refresh');
+    // Check for 401 Unauthorized (and avoid refresh loop on /auth/login, /auth/verificar, or /auth/refresh)
+    const isAuthRoute =
+      endpoint.includes('/auth/login') ||
+      endpoint.includes('/auth/verificar') ||
+      endpoint.includes('/auth/refresh');
 
     if (response.status === 401 && !isAuthRoute && !config._retry) {
       const refreshToken = getRefreshToken();
@@ -94,16 +111,17 @@ export async function customFetch<T = any>(
       if (!refreshToken) {
         clearSessionTokens();
         notifyUnauthorized();
-        const errorData = await response.json().catch(() => ({ message: 'No autorizado' }));
-        throw new Error(errorData.error || errorData.message || 'Sesión no válida');
+        throw new ApiError('No autorizado', 401, {
+          status: 401,
+          codigo: 'CREDENCIALES_INVALIDAS',
+          detail: 'No autorizado',
+        });
       }
 
       if (isRefreshing) {
-        // Queue request while token is being refreshed
         return new Promise<T>((resolve, reject) => {
           failedQueue.push({
             resolve: () => {
-              // Retry with new token in memory
               const newHeaders = new Headers(config.headers);
               if (inMemoryAccessToken) {
                 newHeaders.set('Authorization', `Bearer ${inMemoryAccessToken}`);
@@ -155,20 +173,36 @@ export async function customFetch<T = any>(
         processQueue(refreshErr, null);
         clearSessionTokens();
         notifyUnauthorized();
-        throw new Error('Sesión expirada. Por favor, iniciá sesión nuevamente.');
+        throw new ApiError('Sesión expirada. Por favor, iniciá sesión nuevamente.', 401);
       } finally {
         isRefreshing = false;
       }
     }
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: 'Error en la petición HTTP' }));
-      throw new Error(errorData.error || errorData.message || `Error HTTP ${response.status}`);
-    }
-
-    // Return json or empty object if 204
     if (response.status === 204) {
       return {} as T;
+    }
+
+    if (!response.ok) {
+      let problemDetail: ProblemDetail | undefined;
+      let errorMsg = `Error HTTP ${response.status}`;
+
+      try {
+        const data = await response.json();
+        if (data && typeof data === 'object') {
+          problemDetail = {
+            status: data.status || response.status,
+            codigo: data.codigo || data.error || 'ERROR_DESCONOCIDO',
+            detail: data.detail || data.message || data.error,
+            errores: data.errores,
+          };
+          errorMsg = problemDetail.detail || problemDetail.codigo || errorMsg;
+        }
+      } catch {
+        // Body couldn't be parsed as JSON
+      }
+
+      throw new ApiError(errorMsg, response.status, problemDetail);
     }
 
     return await response.json();

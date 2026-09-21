@@ -1,11 +1,11 @@
 import React from 'react';
 import { Navigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { Role } from '../types';
+import { RoleName } from '../types';
 
 interface RequirePermisoProps {
   permisos?: string | string[];
-  roles?: Role | Role[];
+  roles?: RoleName | RoleName[];
   children?: React.ReactNode;
 }
 
@@ -28,7 +28,7 @@ export const RequirePermiso: React.FC<RequirePermisoProps> = ({ permisos, roles,
   const hasPerm = permisos ? hasPermission(permisos) : true;
   const hasR = roles ? hasRole(roles) : true;
 
-  if (!hasPerm || !hasR) {
+  if (!hasPerm && !hasR) {
     return <Navigate to="/unauthorized" replace />;
   }
 

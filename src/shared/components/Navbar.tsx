@@ -60,12 +60,24 @@ export const Navbar: React.FC = () => {
             Administración
           </Link>
 
+          {isAuthenticated && (
+            <Link
+              to="/mi-perfil"
+              className={`nav-link ${isActive('/mi-perfil') ? 'active' : ''}`}
+              onClick={closeMenu}
+            >
+              Mi Perfil
+            </Link>
+          )}
+
           <div className="nav-actions">
             {isAuthenticated && user ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                  👤 {user.name} <strong style={{ color: 'var(--accent-teal)', fontSize: '0.75rem', border: '1px solid var(--accent-teal)', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>{user.role}</strong>
-                </span>
+                <Link to="/mi-perfil" onClick={closeMenu} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                    👤 {user.name} <strong style={{ color: 'var(--accent-teal)', fontSize: '0.75rem', border: '1px solid var(--accent-teal)', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>{user.role}</strong>
+                  </span>
+                </Link>
                 <button onClick={handleLogout} className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>
                   Cerrar Sesión
                 </button>

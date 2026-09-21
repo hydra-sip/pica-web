@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
-import { User, Role, AuthContextType } from '../types';
+import { User, RoleName, AuthContextType } from '../types';
 import { authApi } from '../../api/authApi';
 import { getRefreshToken, onUnauthorized, clearSessionTokens, setAccessToken, setRefreshToken } from '../../api/httpClient';
 
@@ -44,12 +44,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return unsubscribe;
   }, []);
 
-  const login = async (identifier: string, password: string): Promise<User> => {
+  const login = async (identificador: string, password: string): Promise<User> => {
     setIsLoading(true);
     try {
-      const response = await authApi.login(identifier, password);
-      setUser(response.user);
-      return response.user;
+      const loggedUser = await authApi.login(identificador, password);
+      setUser(loggedUser);
+      return loggedUser;
     } finally {
       setIsLoading(false);
     }
@@ -59,6 +59,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setAccessToken(accessToken);
     setRefreshToken(refreshToken);
     setUser(userData);
+  };
+
+  const updateUser = (updatedFields: Partial<User>) => {
+    setUser((prev) => (prev ? { ...prev, ...updatedFields } : null));
   };
 
   const logout = async () => {
@@ -72,15 +76,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const hasPermission = (permisosReq: string | string[]): boolean => {
-    if (!user || !user.permissions) return false;
+    if (!user) return false;
+
+    // Check permissions array directly from GET /me
+    if (!user.permisos) return false;
     const requiredList = Array.isArray(permisosReq) ? permisosReq : [permisosReq];
-    return requiredList.some((perm) => user.permissions?.includes(perm));
+    return requiredList.some((perm) => user.permisos.includes(perm));
   };
 
-  const hasRole = (rolesReq: Role | Role[]): boolean => {
-    if (!user || !user.role) return false;
+  const hasRole = (rolesReq: RoleName | RoleName[]): boolean => {
+    if (!user || !user.roles) return false;
     const requiredRoles = Array.isArray(rolesReq) ? rolesReq : [rolesReq];
-    return requiredRoles.includes(user.role);
+    const userRoleNames = user.roles.map((r) => r.nombre);
+    return requiredRoles.some((r) => userRoleNames.includes(r));
   };
 
   const value: AuthContextType = {
@@ -89,6 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isAuthenticated: !!user,
     login,
     loginWithTokens,
+    updateUser,
     logout,
     hasPermission,
     hasRole,
