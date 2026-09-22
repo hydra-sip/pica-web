@@ -101,14 +101,21 @@ export function FormModal<T extends Record<string, any>>({
       onClose();
     } catch (err: any) {
       console.error('Error al guardar:', err);
-      if (err?.errores && Array.isArray(err.errores)) {
+      const validationErrors = err?.problemDetail?.errores || err?.errores;
+      if (validationErrors && Array.isArray(validationErrors)) {
         const fieldErrs: Record<string, string> = {};
-        err.errores.forEach((item: { campo: string; mensaje: string }) => {
+        validationErrors.forEach((item: { campo: string; mensaje: string }) => {
           if (item.campo) fieldErrs[item.campo] = item.mensaje;
         });
         setErrors((prev) => ({ ...prev, ...fieldErrs }));
       }
-      setServerError(err?.detail || err?.message || 'Ocurrió un error al guardar los datos.');
+      setServerError(
+        err?.problemDetail?.detail ||
+        err?.problemDetail?.title ||
+        err?.detail ||
+        err?.message ||
+        'Ocurrió un error al guardar los datos.'
+      );
     } finally {
       setIsSubmitting(false);
     }

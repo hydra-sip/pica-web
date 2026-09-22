@@ -24,6 +24,18 @@ interface DataTableProps<T extends Record<string, any>> {
   onReactivate?: (item: T) => Promise<void> | void;
   isLoading?: boolean;
   createButtonText?: string;
+
+  // Server-side control props
+  serverSide?: boolean;
+  page?: number;
+  pageSize?: number;
+  totalElements?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (size: number) => void;
+  onSortChange?: (sortColumn: string, sortDirection: 'asc' | 'desc') => void;
+  onSearchChange?: (searchTerm: string) => void;
+  onStatusFilterChange?: (status: string) => void;
 }
 
 export function DataTable<T extends Record<string, any>>({
@@ -41,13 +53,33 @@ export function DataTable<T extends Record<string, any>>({
   onReactivate,
   isLoading = false,
   createButtonText = 'Nuevo Registro',
+  serverSide = false,
+  page: propPage,
+  pageSize: propPageSize,
+  totalElements: propTotalElements,
+  totalPages: propTotalPages,
+  onPageChange,
+  onPageSizeChange,
+  onSortChange,
+  onSearchChange,
+  onStatusFilterChange,
 }: DataTableProps<T>) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('TODOS');
-  const [sortColumn, setSortColumn] = useState<string | null>(null);
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [pageSize, setPageSize] = useState<number>(5);
+  const [internalSearchTerm, setInternalSearchTerm] = useState('');
+  const [internalStatusFilter, setInternalStatusFilter] = useState<string>('TODOS');
+  const [internalSortColumn, setInternalSortColumn] = useState<string | null>(null);
+  const [internalSortDirection, setInternalSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [internalCurrentPage, setInternalCurrentPage] = useState<number>(1);
+  const [internalPageSize, setInternalPageSize] = useState<number>(5);
+
+  const isServer = serverSide || !!onPageChange;
+
+  const searchTerm = internalSearchTerm;
+  const selectedStatusFilter = internalStatusFilter;
+  const sortColumn = internalSortColumn;
+  const sortDirection = internalSortDirection;
+
+  const currentPage = isServer ? (propPage ?? 1) : internalCurrentPage;
+  const pageSize = isServer ? (propPageSize ?? 20) : internalPageSize;
 
   // Modals for confirmation (Baja / Reactivar)
   const [confirmModalState, setConfirmModalState] = useState<{
@@ -65,21 +97,53 @@ export function DataTable<T extends Record<string, any>>({
   // Handle sort column click
   const handleSort = (colKey: string, sortable?: boolean) => {
     if (!sortable) return;
+    let nextDir: 'asc' | 'desc' = 'asc';
+    let nextCol: string | null = colKey;
+
     if (sortColumn === colKey) {
       if (sortDirection === 'asc') {
-        setSortDirection('desc');
+        nextDir = 'desc';
       } else {
-        setSortColumn(null);
-        setSortDirection('asc');
+        nextCol = null;
+        nextDir = 'asc';
       }
-    } else {
-      setSortColumn(colKey);
-      setSortDirection('asc');
+    }
+
+    setInternalSortColumn(nextCol);
+    setInternalSortDirection(nextDir);
+    if (onSortChange) {
+      onSortChange(nextCol || '', nextDir);
     }
   };
 
-  // Filtered and sorted data
+  const handleSearchChange = (term: string) => {
+    setInternalSearchTerm(term);
+    if (!isServer) setInternalCurrentPage(1);
+    if (onSearchChange) onSearchChange(term);
+  };
+
+  const handleStatusChange = (status: string) => {
+    setInternalStatusFilter(status);
+    if (!isServer) setInternalCurrentPage(1);
+    if (onStatusFilterChange) onStatusFilterChange(status);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    if (!isServer) setInternalCurrentPage(newPage);
+    if (onPageChange) onPageChange(newPage);
+  };
+
+  const handlePageSizeChange = (newSize: number) => {
+    if (!isServer) {
+      setInternalPageSize(newSize);
+      setInternalCurrentPage(1);
+    }
+    if (onPageSizeChange) onPageSizeChange(newSize);
+  };
+
+  // Filtered and sorted data (for client-side mode)
   const filteredAndSortedData = useMemo(() => {
+    if (isServer) return data;
     let result = [...data];
 
     // Status Filter
@@ -102,7 +166,6 @@ export function DataTable<T extends Record<string, any>>({
             return String(val).toLowerCase().includes(term);
           });
         }
-        // Fallback: search across all string/number properties
         return Object.values(item).some((val) => {
           if (val === null || val === undefined) return false;
           if (typeof val === 'object') return JSON.stringify(val).toLowerCase().includes(term);
@@ -133,17 +196,18 @@ export function DataTable<T extends Record<string, any>>({
     }
 
     return result;
-  }, [data, selectedStatusFilter, searchTerm, searchFields, statusField, sortColumn, sortDirection]);
+  }, [data, selectedStatusFilter, searchTerm, searchFields, statusField, sortColumn, sortDirection, isServer]);
 
-  // Reset page to 1 when filters change
-  const totalItems = filteredAndSortedData.length;
-  const totalPages = Math.ceil(totalItems / pageSize) || 1;
-  const safeCurrentPage = Math.min(currentPage, totalPages);
+  // Page calculations
+  const totalItems = isServer ? (propTotalElements ?? data.length) : filteredAndSortedData.length;
+  const totalPages = isServer ? (propTotalPages ?? 1) : (Math.ceil(totalItems / pageSize) || 1);
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), Math.max(1, totalPages));
 
   const paginatedData = useMemo(() => {
+    if (isServer) return data;
     const start = (safeCurrentPage - 1) * pageSize;
     return filteredAndSortedData.slice(start, start + pageSize);
-  }, [filteredAndSortedData, safeCurrentPage, pageSize]);
+  }, [isServer, data, filteredAndSortedData, safeCurrentPage, pageSize]);
 
   // Action modal triggers
   const triggerDelete = (item: T) => {
@@ -235,10 +299,7 @@ export function DataTable<T extends Record<string, any>>({
               type="text"
               placeholder="Buscar en la tabla..."
               value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
+              onChange={(e) => handleSearchChange(e.target.value)}
               style={{
                 width: '100%',
                 padding: '0.5rem 0.75rem 0.5rem 2.2rem',
@@ -270,10 +331,7 @@ export function DataTable<T extends Record<string, any>>({
             <span style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Estado:</span>
             <select
               value={selectedStatusFilter}
-              onChange={(e) => {
-                setSelectedStatusFilter(e.target.value);
-                setCurrentPage(1);
-              }}
+              onChange={(e) => handleStatusChange(e.target.value)}
               style={{
                 padding: '0.5rem 0.75rem',
                 borderRadius: 'var(--radius-sm)',
@@ -298,10 +356,7 @@ export function DataTable<T extends Record<string, any>>({
           <span style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>Filas por página:</span>
           <select
             value={pageSize}
-            onChange={(e) => {
-              setPageSize(Number(e.target.value));
-              setCurrentPage(1);
-            }}
+            onChange={(e) => handlePageSizeChange(Number(e.target.value))}
             style={{
               padding: '0.4rem 0.6rem',
               borderRadius: 'var(--radius-sm)',
@@ -530,7 +585,7 @@ export function DataTable<T extends Record<string, any>>({
           <button
             type="button"
             disabled={safeCurrentPage <= 1}
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            onClick={() => handlePageChange(Math.max(1, safeCurrentPage - 1))}
             style={{
               padding: '0.35rem 0.75rem',
               borderRadius: 'var(--radius-sm)',
@@ -547,7 +602,7 @@ export function DataTable<T extends Record<string, any>>({
             <button
               key={pg}
               type="button"
-              onClick={() => setCurrentPage(pg)}
+              onClick={() => handlePageChange(pg)}
               style={{
                 padding: '0.35rem 0.65rem',
                 borderRadius: 'var(--radius-sm)',
@@ -565,7 +620,7 @@ export function DataTable<T extends Record<string, any>>({
           <button
             type="button"
             disabled={safeCurrentPage >= totalPages}
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            onClick={() => handlePageChange(Math.min(totalPages, safeCurrentPage + 1))}
             style={{
               padding: '0.35rem 0.75rem',
               borderRadius: 'var(--radius-sm)',

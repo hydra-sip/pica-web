@@ -47,7 +47,9 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         zIndex: 1000,
         padding: '1rem',
       }}
-      onClick={onClose}
+      onClick={() => {
+        if (!isLoading) onClose();
+      }}
     >
       <div
         className="glass-card"
