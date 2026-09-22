@@ -1,17 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { DataTable, ColumnDef } from '../components/DataTable';
 import { FormModal, FormFieldSchema } from '../components/FormModal';
-import { httpClient } from '../../api/httpClient';
-
-export interface Rol {
-  id: number;
-  nombre: string;
-  nombreAmigable: string;
-  descripcion: string;
-  permisos: string[];
-  estado: 'ACTIVO' | 'INACTIVO' | 'ELIMINADO';
-  isSuperUserReadOnly?: boolean;
-}
+import { rolApi, RolResumen, RolDetalle } from '../../api/rolApi';
 
 export interface PermisoItem {
   id: string;
@@ -84,77 +74,64 @@ const ALL_READONLY_PERMISSIONS = [
   'CONVOCATORIA_VER',
 ];
 
-const INITIAL_ROLES: Rol[] = [
-  {
-    id: 1,
-    nombre: 'ADMINISTRADOR',
-    nombreAmigable: 'Super Usuario Administrador',
-    descripcion: 'Control total de la plataforma, configuración global y matriz de seguridad.',
-    permisos: [
-      'USUARIO_VER', 'USUARIO_CREAR', 'USUARIO_EDITAR', 'USUARIO_ELIMINAR',
-      'ROL_VER', 'ROL_CREAR', 'ROL_EDITAR', 'ROL_ELIMINAR', 'ROL_ASIGNAR',
-      'PERSONA_VER', 'PERSONA_CREAR', 'PERSONA_EDITAR', 'PERSONA_ELIMINAR',
-      'PROYECTO_VER', 'PROYECTO_CREAR', 'PROYECTO_EDITAR', 'PROYECTO_EVALUAR',
-      'CONVOCATORIA_VER', 'CONVOCATORIA_EDITAR'
-    ],
-    estado: 'ACTIVO',
-    isSuperUserReadOnly: true,
-  },
-  {
-    id: 2,
-    nombre: 'INVESTIGADOR',
-    nombreAmigable: 'Investigador Principal',
-    descripcion: 'Gestión de proyectos de investigación, carga de avances y resultados.',
-    permisos: ['PROYECTO_VER', 'PROYECTO_CREAR', 'PROYECTO_EDITAR', 'PERSONA_VER'],
-    estado: 'ACTIVO',
-  },
-  {
-    id: 3,
-    nombre: 'EVALUADOR',
-    nombreAmigable: 'Evaluador Externo',
-    descripcion: 'Revisión técnica y asignación de puntajes a proyectos.',
-    permisos: ['PROYECTO_VER', 'PROYECTO_EVALUAR', 'CONVOCATORIA_VER'],
-    estado: 'ACTIVO',
-  },
-  {
-    id: 4,
-    nombre: 'PARTICIPANTE',
-    nombreAmigable: 'Participante Estándar',
-    descripcion: 'Consulta de convocatorias e inscripción a actividades.',
-    permisos: ['CONVOCATORIA_VER', 'PERSONA_VER'],
-    estado: 'ACTIVO',
-  },
-  {
-    id: 5,
-    nombre: 'AUDITOR_LEGADO',
-    nombreAmigable: 'Auditor Antiguo',
-    descripcion: 'Rol en proceso de reemplazo por Veedor.',
-    permisos: ['ROL_VER', 'USUARIO_VER'],
-    estado: 'INACTIVO',
-  },
-];
-
 export const RolesPage: React.FC = () => {
-  const [roles, setRoles] = useState<Rol[]>(INITIAL_ROLES);
+  const [roles, setRoles] = useState<RolResumen[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Pagination & Server Control
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalElements, setTotalElements] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('TODOS');
+  const [sortParam, setSortParam] = useState('id,asc');
+
+  // Fetch Roles from API
+  const fetchRoles = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const res = await rolApi.getRoles({
+        q: searchTerm || undefined,
+        estado: statusFilter !== 'TODOS' ? statusFilter : undefined,
+        incluirEliminados: statusFilter === 'ELIMINADO' || statusFilter === 'TODOS',
+        page: page - 1,
+        size: pageSize,
+        sort: sortParam,
+      });
+
+      setRoles(res.content || []);
+      setTotalElements(res.page?.totalElements || res.content.length);
+      setTotalPages(res.page?.totalPages || 1);
+    } catch (err) {
+      console.error('Error al cargar roles:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [searchTerm, statusFilter, page, pageSize, sortParam]);
+
+  useEffect(() => {
+    fetchRoles();
+  }, [fetchRoles]);
 
   // Form Modal State (Crear / Editar Rol)
   const [formModalState, setFormModalState] = useState<{
     isOpen: boolean;
     mode: 'view' | 'edit' | 'create';
-    selectedRol?: Partial<Rol>;
+    selectedRol?: Partial<RolResumen>;
   }>({
     isOpen: false,
     mode: 'create',
   });
 
   // Permisos Modal State (PUT /admin/roles/{id}/permisos)
-  const [permisosModalRol, setPermisosModalRol] = useState<Rol | null>(null);
+  const [permisosModalRol, setPermisosModalRol] = useState<RolDetalle | null>(null);
   const [selectedPermisos, setSelectedPermisos] = useState<string[]>([]);
   const [isSavingPermisos, setIsSavingPermisos] = useState(false);
   const [permisosFeedback, setPermisosFeedback] = useState<string | null>(null);
 
   // Columns for DataTable
-  const columns: ColumnDef<Rol>[] = [
+  const columns: ColumnDef<RolResumen>[] = [
     {
       key: 'nombre',
       label: 'Código de Rol',
@@ -163,7 +140,7 @@ export const RolesPage: React.FC = () => {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <code>{r.nombre}</code>
-            {r.isSuperUserReadOnly && (
+            {r.esSistema && (
               <span
                 style={{
                   fontSize: '0.65rem',
@@ -174,7 +151,7 @@ export const RolesPage: React.FC = () => {
                   border: '1px solid rgba(239, 68, 68, 0.4)',
                 }}
               >
-                🔒 Super Usuario
+                🔒 Rol del Sistema
               </span>
             )}
           </div>
@@ -189,8 +166,8 @@ export const RolesPage: React.FC = () => {
     },
     { key: 'descripcion', label: 'Descripción' },
     {
-      key: 'permisos',
-      label: 'Permisos Asignados',
+      key: 'cantidadUsuarios',
+      label: 'Usuarios Asignados',
       sortable: true,
       render: (r) => (
         <span
@@ -204,7 +181,7 @@ export const RolesPage: React.FC = () => {
             border: '1px solid rgba(99, 102, 241, 0.3)',
           }}
         >
-          {r.permisos.length} permisos
+          {r.cantidadUsuarios ?? 0} usuarios
         </span>
       ),
     },
@@ -219,8 +196,8 @@ export const RolesPage: React.FC = () => {
       placeholder: 'ej. VEEDOR',
       readOnlyInEdit: true,
       validate: (val) => {
-        if (val && !/^[A-Z0-9_]+$/.test(String(val))) {
-          return 'El código debe ser en mayúsculas y guiones bajos (ej. VEEDOR).';
+        if (val && !/^[A-Z][A-Z0-9_]{2,49}$/.test(String(val))) {
+          return 'El código debe comenzar en mayúscula y contener solo letras mayúsculas, números y guiones bajos (ej. VEEDOR).';
         }
         return null;
       },
@@ -245,7 +222,6 @@ export const RolesPage: React.FC = () => {
       options: [
         { value: 'ACTIVO', label: 'Activo' },
         { value: 'INACTIVO', label: 'Inactivo' },
-        { value: 'ELIMINADO', label: 'Eliminado' },
       ],
     },
   ];
@@ -259,17 +235,26 @@ export const RolesPage: React.FC = () => {
     });
   };
 
-  const handleView = (rol: Rol) => {
-    setFormModalState({
-      isOpen: true,
-      mode: 'view',
-      selectedRol: rol,
-    });
+  const handleView = async (rol: RolResumen) => {
+    try {
+      const detail = await rolApi.getRol(rol.id);
+      setFormModalState({
+        isOpen: true,
+        mode: 'view',
+        selectedRol: detail,
+      });
+    } catch {
+      setFormModalState({
+        isOpen: true,
+        mode: 'view',
+        selectedRol: rol,
+      });
+    }
   };
 
-  const handleEdit = (rol: Rol) => {
-    if (rol.isSuperUserReadOnly) {
-      alert('El Super Usuario Administrador está protegido en sólo lectura.');
+  const handleEdit = (rol: RolResumen) => {
+    if (rol.esSistema) {
+      alert('Los roles del sistema (esSistema: true) están protegidos contra ediciones.');
       return;
     }
     setFormModalState({
@@ -279,54 +264,66 @@ export const RolesPage: React.FC = () => {
     });
   };
 
-  const handleDelete = (rol: Rol) => {
-    if (rol.isSuperUserReadOnly) {
-      alert('El Super Usuario Administrador no puede ser eliminado.');
+  const handleDelete = async (rol: RolResumen) => {
+    if (rol.esSistema) {
+      alert('Los roles del sistema (esSistema: true) no pueden ser eliminados.');
       return;
     }
-    setRoles((prev) =>
-      prev.map((r) => (r.id === rol.id ? { ...r, estado: 'ELIMINADO' as const } : r))
-    );
-  };
-
-  const handleReactivate = (rol: Rol) => {
-    setRoles((prev) =>
-      prev.map((r) => (r.id === rol.id ? { ...r, estado: 'ACTIVO' as const } : r))
-    );
-  };
-
-  const handleSubmitForm = (formData: Partial<Rol>) => {
-    if (formModalState.mode === 'create') {
-      const newRol: Rol = {
-        id: Date.now(),
-        nombre: (formData.nombre || '').toUpperCase().trim(),
-        nombreAmigable: formData.nombreAmigable || '',
-        descripcion: formData.descripcion || '',
-        permisos: [],
-        estado: (formData.estado as 'ACTIVO' | 'INACTIVO' | 'ELIMINADO') || 'ACTIVO',
-      };
-      setRoles((prev) => [newRol, ...prev]);
-    } else if (formModalState.mode === 'edit' && formModalState.selectedRol?.id) {
-      setRoles((prev) =>
-        prev.map((r) =>
-          r.id === formModalState.selectedRol?.id
-            ? {
-                ...r,
-                nombreAmigable: formData.nombreAmigable || r.nombreAmigable,
-                descripcion: formData.descripcion || r.descripcion,
-                estado: (formData.estado as 'ACTIVO' | 'INACTIVO' | 'ELIMINADO') || r.estado,
-              }
-            : r
-        )
-      );
+    try {
+      await rolApi.eliminar(rol.id);
+      fetchRoles();
+    } catch (err: any) {
+      alert('Error al dar de baja el rol: ' + (err?.problemDetail?.detail || err?.message));
     }
   };
 
-  // Open Permisos Modal
-  const handleOpenPermisos = (rol: Rol) => {
-    setPermisosModalRol(rol);
-    setSelectedPermisos([...rol.permisos]);
-    setPermisosFeedback(null);
+  const handleReactivate = async (rol: RolResumen) => {
+    try {
+      await rolApi.reactivar(rol.id);
+      fetchRoles();
+    } catch (err: any) {
+      alert('Error al reactivar el rol: ' + (err?.problemDetail?.detail || err?.message));
+    }
+  };
+
+  const handleSubmitForm = async (formData: Partial<RolResumen>) => {
+    try {
+      if (formModalState.mode === 'create') {
+        await rolApi.crear({
+          nombre: (formData.nombre || '').toUpperCase().trim(),
+          nombreAmigable: formData.nombreAmigable || '',
+          descripcion: formData.descripcion || null,
+          estado: (formData.estado as 'ACTIVO' | 'INACTIVO') || 'ACTIVO',
+        });
+      } else if (formModalState.mode === 'edit' && formModalState.selectedRol?.id) {
+        await rolApi.actualizar(formModalState.selectedRol.id, {
+          nombre: formModalState.selectedRol.nombre || '',
+          nombreAmigable: formData.nombreAmigable || formModalState.selectedRol.nombreAmigable || '',
+          descripcion: formData.descripcion || null,
+          estado: (formData.estado as 'ACTIVO' | 'INACTIVO') || formModalState.selectedRol.estado || 'ACTIVO',
+        });
+      }
+      setFormModalState({ isOpen: false, mode: 'create' });
+      fetchRoles();
+    } catch (err: any) {
+      throw err;
+    }
+  };
+
+  // Open Permisos Modal (fetches full RolDetalle with permisos list)
+  const handleOpenPermisos = async (rol: RolResumen) => {
+    if (rol.esSistema) {
+      alert('Los roles del sistema (esSistema: true) tienen matriz protegida en solo lectura.');
+      return;
+    }
+    try {
+      const detail = await rolApi.getRol(rol.id);
+      setPermisosModalRol(detail);
+      setSelectedPermisos(detail.permisos || []);
+      setPermisosFeedback(null);
+    } catch (err: any) {
+      alert('Error al cargar permisos del rol: ' + (err?.problemDetail?.detail || err?.message));
+    }
   };
 
   // Quick Action: Select Only Read-Only Permisos (*_VER)
@@ -352,36 +349,36 @@ export const RolesPage: React.FC = () => {
     setPermisosFeedback(null);
 
     try {
-      await httpClient.put(`/admin/roles/${permisosModalRol.id}/permisos`, { permisos: selectedPermisos });
-      setRoles((prev) =>
-        prev.map((r) => (r.id === permisosModalRol.id ? { ...r, permisos: selectedPermisos } : r))
-      );
+      await rolApi.updatePermisos(permisosModalRol.id, selectedPermisos);
       setPermisosFeedback('¡Matriz de permisos guardada exitosamente!');
-      setTimeout(() => setPermisosModalRol(null), 1200);
+      setTimeout(() => {
+        setPermisosModalRol(null);
+        fetchRoles();
+      }, 1200);
     } catch (err: any) {
       console.error('Error al guardar permisos:', err);
-      setPermisosFeedback(err.detail || 'Error al guardar permisos.');
+      setPermisosFeedback(err?.problemDetail?.detail || err?.message || 'Error al guardar permisos.');
     } finally {
       setIsSavingPermisos(false);
     }
   };
 
   // Render Custom Action: "🔑 Permisos" button
-  const renderCustomActions = (rol: Rol) => (
+  const renderCustomActions = (rol: RolResumen) => (
     <button
       type="button"
       title="Configurar matriz de permisos (PUT /admin/roles/{id}/permisos)"
       onClick={() => handleOpenPermisos(rol)}
-      disabled={rol.isSuperUserReadOnly}
+      disabled={rol.esSistema}
       style={{
         background: 'rgba(99, 102, 241, 0.15)',
         border: '1px solid rgba(99, 102, 241, 0.3)',
         color: 'var(--accent-primary)',
         padding: '0.35rem 0.6rem',
         borderRadius: 'var(--radius-sm)',
-        cursor: rol.isSuperUserReadOnly ? 'not-allowed' : 'pointer',
+        cursor: rol.esSistema ? 'not-allowed' : 'pointer',
         fontSize: '0.8rem',
-        opacity: rol.isSuperUserReadOnly ? 0.5 : 1,
+        opacity: rol.esSistema ? 0.5 : 1,
       }}
     >
       🔑 Permisos
@@ -394,18 +391,41 @@ export const RolesPage: React.FC = () => {
         <span className="badge">Permiso: ROL_VER</span>
         <h1 style={{ marginTop: '0.5rem' }}>Gestión de Roles y Permisos</h1>
         <p style={{ color: 'var(--text-secondary)' }}>
-          Definición de roles del sistema y matriz de permisos por módulos con guardado dinámico.
+          Definición de roles del sistema y matriz de permisos por módulos conectada al backend REST.
         </p>
       </div>
 
-      <DataTable<Rol>
+      <DataTable<RolResumen>
         title="Matriz de Roles y Permisos"
-        description="Gestión centralizada de perfiles de acceso. El Super Usuario Administrador se mantiene en sólo lectura por protección de seguridad."
+        description="Gestión centralizada de perfiles de acceso. Los roles del sistema (esSistema: true) se mantienen en sólo lectura."
         data={roles}
         columns={columns}
-        searchFields={['nombre', 'nombreAmigable', 'descripcion', 'estado']}
+        searchFields={['nombre', 'nombreAmigable', 'descripcion']}
         statusField="estado"
         idField="id"
+        isLoading={isLoading}
+        serverSide
+        page={page}
+        pageSize={pageSize}
+        totalElements={totalElements}
+        totalPages={totalPages}
+        onPageChange={(newPage) => setPage(newPage)}
+        onPageSizeChange={(newSize) => {
+          setPageSize(newSize);
+          setPage(1);
+        }}
+        onSearchChange={(term) => {
+          setSearchTerm(term);
+          setPage(1);
+        }}
+        onStatusFilterChange={(st) => {
+          setStatusFilter(st);
+          setPage(1);
+        }}
+        onSortChange={(col, dir) => {
+          if (col) setSortParam(`${col},${dir}`);
+          else setSortParam('id,asc');
+        }}
         onCreate={handleCreate}
         onView={handleView}
         onEdit={handleEdit}
@@ -416,7 +436,7 @@ export const RolesPage: React.FC = () => {
       />
 
       {/* Form Modal for Create / Edit Rol */}
-      <FormModal<Rol>
+      <FormModal<RolResumen>
         isOpen={formModalState.isOpen}
         title={
           formModalState.mode === 'create'
