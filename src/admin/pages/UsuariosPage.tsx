@@ -1,99 +1,74 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { DataTable, ColumnDef } from '../components/DataTable';
-import { httpClient } from '../../api/httpClient';
-
-export interface Usuario {
-  id: number;
-  username: string;
-  email: string;
-  roles: string[];
-  estado: 'ACTIVO' | 'INACTIVO' | 'ELIMINADO';
-  personaId?: number;
-  personaNombre?: string;
-  personaDoc?: string;
-  fechaRegistro: string;
-  isAdminReadOnly?: boolean;
-}
-
-interface PersonaMock {
-  id: number;
-  nombres: string;
-  apellidos: string;
-  tipoDoc: string;
-  nroDoc: string;
-  email: string;
-  telefono: string;
-}
-
-const MOCK_PERSONAS_PADRON: PersonaMock[] = [
-  { id: 101, nombres: 'Juan Carlos', apellidos: 'Pérez', tipoDoc: 'DNI', nroDoc: '30111222', email: 'jperez@pica.edu.ar', telefono: '1122334455' },
-  { id: 102, nombres: 'María Elena', apellidos: 'Rodríguez', tipoDoc: 'DNI', nroDoc: '32999888', email: 'mrodriguez@pica.edu.ar', telefono: '1133445566' },
-  { id: 103, nombres: 'Carlos Alberto', apellidos: 'Gómez', tipoDoc: 'DNI', nroDoc: '35444555', email: 'cgomez@pica.edu.ar', telefono: '1144556677' },
-];
-
-const INITIAL_USUARIOS: Usuario[] = [
-  {
-    id: 1,
-    username: 'admin',
-    email: 'admin@pica.edu.ar',
-    roles: ['ADMINISTRADOR'],
-    estado: 'ACTIVO',
-    personaId: 1,
-    personaNombre: 'Administrador PICA',
-    personaDoc: 'DNI: 30111222',
-    fechaRegistro: '2026-01-01',
-    isAdminReadOnly: true,
-  },
-  {
-    id: 2,
-    username: 'mrodriguez',
-    email: 'mrodriguez@pica.edu.ar',
-    roles: ['INVESTIGADOR'],
-    estado: 'ACTIVO',
-    personaId: 102,
-    personaNombre: 'María Elena Rodríguez',
-    personaDoc: 'DNI: 32999888',
-    fechaRegistro: '2026-02-10',
-  },
-  {
-    id: 3,
-    username: 'cgomez',
-    email: 'cgomez@pica.edu.ar',
-    roles: ['PARTICIPANTE'],
-    estado: 'INACTIVO',
-    personaId: 103,
-    personaNombre: 'Carlos Alberto Gómez',
-    personaDoc: 'DNI: 35444555',
-    fechaRegistro: '2026-03-05',
-  },
-];
-
-const SYSTEM_ROLES = [
-  { id: 'ADMINISTRADOR', label: 'Administrador del Sistema', desc: 'Acceso total a la plataforma' },
-  { id: 'ORGANIZADOR', label: 'Organizador de Eventos', desc: 'Gestión de convocatorias y talleres' },
-  { id: 'INVESTIGADOR', label: 'Investigador Principal', desc: 'Carga de proyectos e hitos' },
-  { id: 'EVALUADOR', label: 'Evaluador Externo', desc: 'Dictamen de convocatorias' },
-  { id: 'PARTICIPANTE', label: 'Participante Estándar', desc: 'Consulta e inscripción' },
-];
+import { usuarioApi, UsuarioResumen } from '../../api/usuarioApi';
+import { personaApi, PersonaResumen } from '../../api/personaApi';
+import { rolApi, RolResumen } from '../../api/rolApi';
 
 export const UsuariosPage: React.FC = () => {
-  const [usuarios, setUsuarios] = useState<Usuario[]>(INITIAL_USUARIOS);
-  const [selectedRolFilter, setSelectedRolFilter] = useState<string>('TODOS');
+  const [usuarios, setUsuarios] = useState<UsuarioResumen[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Pagination & Filters (Spring Data REST)
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalElements, setTotalElements] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('TODOS');
+  const [sortParam, setSortParam] = useState('id,asc');
+
+  // Catalogue of available Roles (loaded from server)
+  const [availableRoles, setAvailableRoles] = useState<RolResumen[]>([]);
+
+  // Fetch users from API
+  const fetchUsuarios = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const res = await usuarioApi.getUsuarios({
+        q: searchTerm || undefined,
+        estado: statusFilter !== 'TODOS' ? statusFilter : undefined,
+        incluirEliminados: statusFilter === 'ELIMINADO' || statusFilter === 'TODOS',
+        page: page - 1, // Spring Data 0-indexed
+        size: pageSize,
+        sort: sortParam,
+      });
+
+      setUsuarios(res.content || []);
+      setTotalElements(res.page?.totalElements || res.content.length);
+      setTotalPages(res.page?.totalPages || 1);
+    } catch (err) {
+      console.error('Error al cargar usuarios:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [searchTerm, statusFilter, page, pageSize, sortParam]);
+
+  // Load available roles list
+  useEffect(() => {
+    rolApi.getRoles({ size: 100 }).then((res) => {
+      setAvailableRoles(res.content || []);
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetchUsuarios();
+  }, [fetchUsuarios]);
 
   // Modal State: Create User
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [docSearchInput, setDocSearchInput] = useState('');
-  const [foundPersona, setFoundPersona] = useState<PersonaMock | null>(null);
+  const [foundPersonas, setFoundPersonas] = useState<PersonaResumen[]>([]);
+  const [selectedPersona, setSelectedPersona] = useState<PersonaResumen | null>(null);
+  const [isSearchingPersona, setIsSearchingPersona] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
 
-  // Inline persona creation toggle
+  // Inline persona creation
   const [isInlinePersona, setIsInlinePersona] = useState(false);
   const [inlinePersonaData, setInlinePersonaData] = useState({
     nombres: '',
     apellidos: '',
     tipoDoc: 'DNI',
     nroDoc: '',
-    email: '',
     telefono: '',
   });
 
@@ -101,53 +76,54 @@ export const UsuariosPage: React.FC = () => {
   const [createUserForm, setCreateUserForm] = useState({
     username: '',
     email: '',
-    password: '',
-    initialRole: 'PARTICIPANTE',
+    passwordTemporal: '',
+    initialRoleId: 0,
   });
   const [createFormErrors, setCreateFormErrors] = useState<Record<string, string>>({});
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
 
   // Modal State: Edit User
-  const [editingUser, setEditingUser] = useState<Usuario | null>(null);
-  const [editForm, setEditForm] = useState({ email: '' });
+  const [editingUser, setEditingUser] = useState<UsuarioResumen | null>(null);
+  const [editForm, setEditForm] = useState({ email: '', estado: 'ACTIVO' as 'ACTIVO' | 'BLOQUEADO' });
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
-  // Modal State: Roles Tab (PUT /admin/usuarios/{id}/roles)
-  const [rolesModalUser, setRolesModalUser] = useState<Usuario | null>(null);
-  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+  // Modal State: Roles Assignment (numeric IDs)
+  const [rolesModalUser, setRolesModalUser] = useState<UsuarioResumen | null>(null);
+  const [selectedRoleIds, setSelectedRoleIds] = useState<number[]>([]);
   const [isSavingRoles, setIsSavingRoles] = useState(false);
   const [rolesMessage, setRolesMessage] = useState<string | null>(null);
 
   // Modal State: Reset Password
-  const [resetPassUser, setResetPassUser] = useState<Usuario | null>(null);
+  const [resetPassUser, setResetPassUser] = useState<UsuarioResumen | null>(null);
   const [newPassword, setNewPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [resetSuccess, setResetSuccess] = useState<string | null>(null);
+  const [isResettingPass, setIsResettingPass] = useState(false);
 
-  // Filtered dataset for Rol filter
-  const filteredData = useMemo(() => {
-    if (selectedRolFilter === 'TODOS') return usuarios;
-    return usuarios.filter((u) => u.roles.includes(selectedRolFilter));
-  }, [usuarios, selectedRolFilter]);
-
-  // Handle Search Persona by Document
-  const handleSearchPersona = () => {
+  // Handle Search Persona by Document / Query using API
+  const handleSearchPersona = async () => {
     setSearchError(null);
     if (!docSearchInput.trim()) {
-      setSearchError('Ingrese un número de documento.');
+      setSearchError('Ingrese un término de búsqueda o número de documento.');
       return;
     }
 
-    const matched = MOCK_PERSONAS_PADRON.find((p) => p.nroDoc.trim() === docSearchInput.trim());
-    if (matched) {
-      setFoundPersona(matched);
-      setIsInlinePersona(false);
-      setCreateUserForm((prev) => ({ ...prev, email: prev.email || matched.email }));
-    } else {
-      setFoundPersona(null);
-      setSearchError(`No se encontró persona con documento ${docSearchInput}. Podés crearla en línea a continuación.`);
+    setIsSearchingPersona(true);
+    try {
+      const res = await personaApi.getPersonas({ q: docSearchInput.trim() });
+      setFoundPersonas(res.content || []);
+      if ((res.content || []).length === 0) {
+        setSearchError(`No se encontraron personas con el criterio "${docSearchInput}". Podés crearla en línea a continuación.`);
+      }
+    } catch (err: any) {
+      setSearchError(err?.problemDetail?.detail || 'Error al buscar personas.');
+    } finally {
+      setIsSearchingPersona(false);
     }
   };
 
-  // Handle Create User Submit
-  const handleCreateSubmit = (e: React.FormEvent) => {
+  // Handle Create User Submit (Real API)
+  const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errors: Record<string, string> = {};
 
@@ -157,14 +133,18 @@ export const UsuariosPage: React.FC = () => {
     if (!createUserForm.email.trim()) {
       errors.email = 'El correo electrónico es obligatorio.';
     }
-    if (!createUserForm.password || createUserForm.password.length < 6) {
-      errors.password = 'La contraseña debe tener al menos 6 caracteres.';
+    if (!createUserForm.passwordTemporal || createUserForm.passwordTemporal.length < 8) {
+      errors.passwordTemporal = 'La contraseña temporal debe tener al menos 8 caracteres.';
+    }
+
+    if (!isInlinePersona && !selectedPersona) {
+      errors.persona = 'Debe seleccionar una persona vinculada.';
     }
 
     if (isInlinePersona) {
       if (!inlinePersonaData.nombres.trim()) errors.inlineNombres = 'El nombre es obligatorio.';
       if (!inlinePersonaData.apellidos.trim()) errors.inlineApellidos = 'El apellido es obligatorio.';
-      if (!inlinePersonaData.nroDoc.trim()) errors.inlineDoc = 'El documento es obligatorio.';
+      if (!inlinePersonaData.nroDoc.trim()) errors.inlineDoc = 'El número de documento es obligatorio.';
     }
 
     if (Object.keys(errors).length > 0) {
@@ -172,120 +152,184 @@ export const UsuariosPage: React.FC = () => {
       return;
     }
 
-    let personaId = foundPersona?.id;
-    let personaNombre = foundPersona ? `${foundPersona.nombres} ${foundPersona.apellidos}` : undefined;
-    let personaDoc = foundPersona ? `${foundPersona.tipoDoc}: ${foundPersona.nroDoc}` : undefined;
+    setIsCreatingUser(true);
+    try {
+      let targetPersonaId = selectedPersona?.id;
 
-    if (isInlinePersona) {
-      personaId = Date.now();
-      personaNombre = `${inlinePersonaData.nombres} ${inlinePersonaData.apellidos}`;
-      personaDoc = `${inlinePersonaData.tipoDoc}: ${inlinePersonaData.nroDoc}`;
+      // 1. Create persona online if inline mode is selected
+      if (isInlinePersona) {
+        const createdPersona = await personaApi.crear({
+          nombres: inlinePersonaData.nombres.trim(),
+          apellidos: inlinePersonaData.apellidos.trim(),
+          tipoDoc: inlinePersonaData.tipoDoc,
+          nroDoc: inlinePersonaData.nroDoc.trim(),
+          telefono: inlinePersonaData.telefono.trim() || undefined,
+        });
+        targetPersonaId = createdPersona.id;
+      }
+
+      if (!targetPersonaId) {
+        throw new Error('No se pudo determinar la persona a vincular.');
+      }
+
+      // 2. Create User via POST /admin/usuarios
+      await usuarioApi.crear({
+        username: createUserForm.username.toLowerCase().trim(),
+        email: createUserForm.email.trim(),
+        passwordTemporal: createUserForm.passwordTemporal,
+        personaId: targetPersonaId,
+        roles: createUserForm.initialRoleId ? [createUserForm.initialRoleId] : [],
+      });
+
+      setIsCreateOpen(false);
+      resetCreateForm();
+      fetchUsuarios();
+    } catch (err: any) {
+      console.error('Error al crear usuario:', err);
+      setCreateFormErrors({
+        server: err?.problemDetail?.detail || err?.message || 'Error al procesar la alta de usuario.',
+      });
+    } finally {
+      setIsCreatingUser(false);
     }
-
-    const newUser: Usuario = {
-      id: Date.now(),
-      username: createUserForm.username.toLowerCase().trim(),
-      email: createUserForm.email.trim(),
-      roles: [createUserForm.initialRole],
-      estado: 'ACTIVO',
-      personaId,
-      personaNombre: personaNombre || 'Persona no vinculada',
-      personaDoc,
-      fechaRegistro: new Date().toISOString().split('T')[0],
-    };
-
-    setUsuarios((prev) => [newUser, ...prev]);
-    setIsCreateOpen(false);
-    resetCreateForm();
   };
 
   const resetCreateForm = () => {
-    setCreateUserForm({ username: '', email: '', password: '', initialRole: 'PARTICIPANTE' });
+    setCreateUserForm({ username: '', email: '', passwordTemporal: '', initialRoleId: 0 });
     setDocSearchInput('');
-    setFoundPersona(null);
+    setFoundPersonas([]);
+    setSelectedPersona(null);
     setSearchError(null);
     setIsInlinePersona(false);
-    setInlinePersonaData({ nombres: '', apellidos: '', tipoDoc: 'DNI', nroDoc: '', email: '', telefono: '' });
+    setInlinePersonaData({ nombres: '', apellidos: '', tipoDoc: 'DNI', nroDoc: '', telefono: '' });
     setCreateFormErrors({});
   };
 
   // Handle Edit Submit
-  const handleEditSubmit = (e: React.FormEvent) => {
+  const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingUser) return;
 
-    setUsuarios((prev) =>
-      prev.map((u) => (u.id === editingUser.id ? { ...u, email: editForm.email } : u))
-    );
-    setEditingUser(null);
-  };
-
-  // Handle Soft-Delete (Bloquear)
-  const handleDeleteUser = (user: Usuario) => {
-    if (user.isAdminReadOnly) {
-      alert('El usuario Administrador principal no puede ser bloqueado.');
+    if (editingUser.protegido) {
+      alert('El usuario Administrador del sistema está protegido contra ediciones.');
       return;
     }
-    setUsuarios((prev) =>
-      prev.map((u) => (u.id === user.id ? { ...u, estado: 'ELIMINADO' } : u))
-    );
+
+    setIsSavingEdit(true);
+    try {
+      await usuarioApi.actualizar(editingUser.id, {
+        username: editingUser.username,
+        email: editForm.email,
+        estado: editForm.estado,
+        personaId: editingUser.persona.id,
+      });
+      setEditingUser(null);
+      fetchUsuarios();
+    } catch (err: any) {
+      alert('Error al actualizar usuario: ' + (err?.problemDetail?.detail || err?.message || 'Falla al guardar.'));
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+  // Handle Soft-Delete
+  const handleDeleteUser = async (user: UsuarioResumen) => {
+    if (user.protegido) {
+      alert('El usuario Administrador del sistema está protegido (protegido: true) y no puede ser dado de baja.');
+      return;
+    }
+    try {
+      await usuarioApi.eliminar(user.id);
+      fetchUsuarios();
+    } catch (err: any) {
+      alert('Error al dar de baja el usuario: ' + (err?.problemDetail?.detail || err?.message));
+    }
   };
 
   // Handle Reactivate User
-  const handleReactivateUser = (user: Usuario) => {
-    setUsuarios((prev) =>
-      prev.map((u) => (u.id === user.id ? { ...u, estado: 'ACTIVO' } : u))
-    );
+  const handleReactivateUser = async (user: UsuarioResumen) => {
+    try {
+      await usuarioApi.reactivar(user.id);
+      fetchUsuarios();
+    } catch (err: any) {
+      alert('Error al reactivar el usuario: ' + (err?.problemDetail?.detail || err?.message));
+    }
   };
 
   // Handle Open Roles Modal
-  const handleOpenRoles = (user: Usuario) => {
+  const handleOpenRoles = (user: UsuarioResumen) => {
+    if (user.protegido) {
+      alert('El usuario Administrador del sistema está protegido (protegido: true) y no se le pueden alterar los roles.');
+      return;
+    }
     setRolesModalUser(user);
-    setSelectedRoles([...user.roles]);
+    setSelectedRoleIds(user.roles.map((r) => r.id));
     setRolesMessage(null);
   };
 
-  // Save Roles via PUT /admin/usuarios/{id}/roles
+  // Save Roles via PUT /admin/usuarios/{id}/roles (numeric IDs payload { roles: [number] })
   const handleSaveRoles = async () => {
     if (!rolesModalUser) return;
     setIsSavingRoles(true);
     setRolesMessage(null);
 
     try {
-      await httpClient.put(`/admin/usuarios/${rolesModalUser.id}/roles`, { roles: selectedRoles });
-      setUsuarios((prev) =>
-        prev.map((u) => (u.id === rolesModalUser.id ? { ...u, roles: selectedRoles } : u))
-      );
+      await usuarioApi.updateRoles(rolesModalUser.id, selectedRoleIds);
       setRolesMessage('¡Roles asignados exitosamente!');
-      setTimeout(() => setRolesModalUser(null), 1000);
+      setTimeout(() => {
+        setRolesModalUser(null);
+        fetchUsuarios();
+      }, 1000);
     } catch (err: any) {
       console.error('Error al guardar roles:', err);
-      setRolesMessage(err.detail || 'Error al actualizar roles.');
+      setRolesMessage(err?.problemDetail?.detail || err?.message || 'Error al actualizar roles.');
     } finally {
       setIsSavingRoles(false);
     }
   };
 
-  // Save Reset Password
+  // Strong password validation regex: >=8 chars, >=1 uppercase, >=1 number
+  const validateStrongPassword = (pass: string): boolean => {
+    const regex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
+    return regex.test(pass);
+  };
+
+  // Save Reset Password (PUT /admin/usuarios/{id}/password with payload { password: "..." })
   const handleResetPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setPasswordError(null);
+
     if (!resetPassUser || !newPassword) return;
 
+    if (resetPassUser.protegido) {
+      alert('El usuario Administrador del sistema está protegido y no se puede resetear su clave.');
+      return;
+    }
+
+    if (!validateStrongPassword(newPassword)) {
+      setPasswordError('La contraseña debe tener al menos 8 caracteres, al menos una letra mayúscula y al menos un número.');
+      return;
+    }
+
+    setIsResettingPass(true);
     try {
-      await httpClient.post(`/admin/usuarios/${resetPassUser.id}/reset-password`, { passwordNueva: newPassword });
-      setResetSuccess(`La contraseña para ${resetPassUser.username} fue actualizada correctamente.`);
+      await usuarioApi.updatePassword(resetPassUser.id, newPassword);
+      setResetSuccess(`La contraseña para ${resetPassUser.username} fue restablecida exitosamente.`);
       setTimeout(() => {
         setResetPassUser(null);
         setNewPassword('');
         setResetSuccess(null);
+        setPasswordError(null);
       }, 1500);
     } catch (err: any) {
-      alert('Error al resetear contraseña: ' + (err.message || 'Intente nuevamente.'));
+      setPasswordError('Error al resetear contraseña: ' + (err?.problemDetail?.detail || err?.message || 'Intente nuevamente.'));
+    } finally {
+      setIsResettingPass(false);
     }
   };
 
   // Table Columns Definition
-  const columns: ColumnDef<Usuario>[] = [
+  const columns: ColumnDef<UsuarioResumen>[] = [
     {
       key: 'username',
       label: 'Usuario',
@@ -294,7 +338,7 @@ export const UsuariosPage: React.FC = () => {
         <div>
           <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             {u.username}
-            {u.isAdminReadOnly && (
+            {u.protegido && (
               <span
                 style={{
                   fontSize: '0.65rem',
@@ -305,7 +349,7 @@ export const UsuariosPage: React.FC = () => {
                   border: '1px solid rgba(245, 158, 11, 0.4)',
                 }}
               >
-                🔒 Admin Principal
+                🔒 Admin Sistema
               </span>
             )}
           </div>
@@ -314,14 +358,16 @@ export const UsuariosPage: React.FC = () => {
       ),
     },
     {
-      key: 'personaNombre',
+      key: 'persona',
       label: 'Persona Vinculada',
       sortable: true,
       render: (u) => (
         <div>
-          <div style={{ fontSize: '0.875rem' }}>{u.personaNombre || 'Sin vincular'}</div>
-          {u.personaDoc && (
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{u.personaDoc}</div>
+          <div style={{ fontSize: '0.875rem' }}>{u.persona?.nombreCompleto || 'Sin vincular'}</div>
+          {u.persona?.nroDoc && (
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+              {u.persona.tipoDoc || 'DOC'}: {u.persona.nroDoc}
+            </div>
           )}
         </div>
       ),
@@ -333,82 +379,59 @@ export const UsuariosPage: React.FC = () => {
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
           {u.roles.map((r) => (
             <span
-              key={r}
+              key={r.id}
               style={{
                 fontSize: '0.7rem',
                 fontWeight: 600,
                 padding: '0.15rem 0.5rem',
                 borderRadius: 'var(--radius-sm)',
                 backgroundColor:
-                  r === 'ADMINISTRADOR'
+                  r.nombre === 'SUPER_USUARIO' || r.nombre === 'ADMINISTRADOR'
                     ? 'rgba(239, 68, 68, 0.15)'
-                    : r === 'ORGANIZADOR'
+                    : r.nombre === 'ORGANIZADOR'
                     ? 'rgba(6, 182, 212, 0.15)'
                     : 'rgba(99, 102, 241, 0.15)',
                 color:
-                  r === 'ADMINISTRADOR'
+                  r.nombre === 'SUPER_USUARIO' || r.nombre === 'ADMINISTRADOR'
                     ? '#f87171'
-                    : r === 'ORGANIZADOR'
+                    : r.nombre === 'ORGANIZADOR'
                     ? 'var(--accent-secondary)'
                     : 'var(--accent-primary)',
                 border: '1px solid var(--border-color)',
               }}
             >
-              {r}
+              {r.nombreAmigable || r.nombre}
             </span>
           ))}
         </div>
       ),
     },
     { key: 'estado', label: 'Estado', sortable: true },
-    { key: 'fechaRegistro', label: 'Fecha Registro', sortable: true },
+    {
+      key: 'creadoEn',
+      label: 'Fecha Registro',
+      sortable: true,
+      render: (u) => (u.creadoEn ? new Date(u.creadoEn).toLocaleDateString() : '-'),
+    },
   ];
 
-  // Render Rol Filter select next to Status filter
-  const extraFilterComponent = (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-      <span style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Rol:</span>
-      <select
-        value={selectedRolFilter}
-        onChange={(e) => setSelectedRolFilter(e.target.value)}
-        style={{
-          padding: '0.5rem 0.75rem',
-          borderRadius: 'var(--radius-sm)',
-          border: '1px solid var(--border-color)',
-          backgroundColor: 'rgba(15, 23, 42, 0.6)',
-          color: 'var(--text-primary)',
-          fontSize: '0.85rem',
-          outline: 'none',
-          cursor: 'pointer',
-        }}
-      >
-        <option value="TODOS">Todos los Roles</option>
-        <option value="ADMINISTRADOR">ADMINISTRADOR</option>
-        <option value="ORGANIZADOR">ORGANIZADOR</option>
-        <option value="INVESTIGADOR">INVESTIGADOR</option>
-        <option value="EVALUADOR">EVALUADOR</option>
-        <option value="PARTICIPANTE">PARTICIPANTE</option>
-      </select>
-    </div>
-  );
-
-  // Render Custom Row Actions (Roles tab & Reset password)
-  const renderCustomRowActions = (user: Usuario) => (
+  // Custom Row Actions: Roles & Password Reset
+  const renderCustomRowActions = (user: UsuarioResumen) => (
     <>
       <button
         type="button"
         title="Gestionar Roles (PUT /admin/usuarios/{id}/roles)"
         onClick={() => handleOpenRoles(user)}
-        disabled={user.isAdminReadOnly}
+        disabled={user.protegido}
         style={{
           background: 'rgba(6, 182, 212, 0.15)',
           border: '1px solid rgba(6, 182, 212, 0.3)',
           color: 'var(--accent-secondary)',
           padding: '0.35rem 0.6rem',
           borderRadius: 'var(--radius-sm)',
-          cursor: user.isAdminReadOnly ? 'not-allowed' : 'pointer',
+          cursor: user.protegido ? 'not-allowed' : 'pointer',
           fontSize: '0.8rem',
-          opacity: user.isAdminReadOnly ? 0.5 : 1,
+          opacity: user.protegido ? 0.5 : 1,
         }}
       >
         🛡️ Roles
@@ -416,22 +439,27 @@ export const UsuariosPage: React.FC = () => {
 
       <button
         type="button"
-        title="Resetear Contraseña"
+        title="Resetear Contraseña (PUT /admin/usuarios/{id}/password)"
         onClick={() => {
+          if (user.protegido) {
+            alert('El usuario Administrador está protegido contra reseteos de contraseña.');
+            return;
+          }
           setResetPassUser(user);
           setNewPassword('');
+          setPasswordError(null);
           setResetSuccess(null);
         }}
-        disabled={user.isAdminReadOnly}
+        disabled={user.protegido}
         style={{
           background: 'rgba(245, 158, 11, 0.15)',
           border: '1px solid rgba(245, 158, 11, 0.3)',
           color: '#f59e0b',
           padding: '0.35rem 0.6rem',
           borderRadius: 'var(--radius-sm)',
-          cursor: user.isAdminReadOnly ? 'not-allowed' : 'pointer',
+          cursor: user.protegido ? 'not-allowed' : 'pointer',
           fontSize: '0.8rem',
-          opacity: user.isAdminReadOnly ? 0.5 : 1,
+          opacity: user.protegido ? 0.5 : 1,
         }}
       >
         🔑 Reset
@@ -445,38 +473,60 @@ export const UsuariosPage: React.FC = () => {
         <span className="badge">Permiso: USUARIO_VER</span>
         <h1 style={{ marginTop: '0.5rem' }}>Gestión de Cuentas de Usuario</h1>
         <p style={{ color: 'var(--text-secondary)' }}>
-          Buscador con filtros por rol/estado, alta con vinculación de persona por documento, asignación de roles y reseteo de claves.
+          Administración centralizada conectada al contrato OpenAPI del backend (`pica-back`).
         </p>
       </div>
 
-      <DataTable<Usuario>
+      <DataTable<UsuarioResumen>
         title="Directorio de Usuarios"
-        description="Filtros dinámicos de texto, estado y rol. Acciones de edición, bloqueo, asignación de roles y reset de clave."
-        data={filteredData}
+        description="Listado paginado desde el servidor con búsqueda, filtros, roles numéricos y reseteo de claves."
+        data={usuarios}
         columns={columns}
-        searchFields={['username', 'email', 'personaNombre', 'personaDoc', 'roles']}
+        searchFields={['username', 'email']}
         statusField="estado"
         idField="id"
+        isLoading={isLoading}
+        serverSide
+        page={page}
+        pageSize={pageSize}
+        totalElements={totalElements}
+        totalPages={totalPages}
+        onPageChange={(newPage) => setPage(newPage)}
+        onPageSizeChange={(newSize) => {
+          setPageSize(newSize);
+          setPage(1);
+        }}
+        onSearchChange={(term) => {
+          setSearchTerm(term);
+          setPage(1);
+        }}
+        onStatusFilterChange={(st) => {
+          setStatusFilter(st);
+          setPage(1);
+        }}
+        onSortChange={(col, dir) => {
+          if (col) setSortParam(`${col},${dir}`);
+          else setSortParam('id,asc');
+        }}
         onCreate={() => {
           resetCreateForm();
           setIsCreateOpen(true);
         }}
         onEdit={(u) => {
-          if (u.isAdminReadOnly) {
-            alert('El usuario Administrador principal no puede ser modificado.');
+          if (u.protegido) {
+            alert('El usuario Administrador está protegido.');
             return;
           }
           setEditingUser(u);
-          setEditForm({ email: u.email });
+          setEditForm({ email: u.email, estado: u.estado === 'BLOQUEADO' ? 'BLOQUEADO' : 'ACTIVO' });
         }}
         onDelete={handleDeleteUser}
         onReactivate={handleReactivateUser}
-        extraFilters={extraFilterComponent}
         customActions={renderCustomRowActions}
         createButtonText="Alta de Usuario"
       />
 
-      {/* MODAL 1: ALTA DE USUARIO (Buscador persona por documento + Opción Crear en Línea) */}
+      {/* MODAL 1: ALTA DE USUARIO */}
       {isCreateOpen && (
         <div
           style={{
@@ -517,8 +567,14 @@ export const UsuariosPage: React.FC = () => {
               </button>
             </div>
 
+            {createFormErrors.server && (
+              <div style={{ backgroundColor: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', padding: '0.6rem 0.8rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem', fontSize: '0.85rem' }}>
+                {createFormErrors.server}
+              </div>
+            )}
+
             <form onSubmit={handleCreateSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              {/* Sección Buscador de Persona */}
+              {/* Sección Buscador de Persona con la API */}
               <div
                 style={{
                   backgroundColor: 'rgba(15, 23, 42, 0.5)',
@@ -528,7 +584,7 @@ export const UsuariosPage: React.FC = () => {
                 }}
               >
                 <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--accent-secondary)' }}>
-                  1. Vinculación con Persona (Búsqueda por Documento)
+                  1. Vinculación con Persona (Búsqueda API GET /admin/personas)
                 </label>
 
                 {!isInlinePersona ? (
@@ -536,14 +592,14 @@ export const UsuariosPage: React.FC = () => {
                     <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                       <input
                         type="text"
-                        placeholder="Ingrese DNI o Nro Documento (ej. 30111222)..."
+                        placeholder="Ingrese apellido o nro documento..."
                         value={docSearchInput}
                         onChange={(e) => setDocSearchInput(e.target.value)}
                         style={{
                           flex: 1,
                           padding: '0.5rem 0.75rem',
                           borderRadius: 'var(--radius-sm)',
-                          border: '1px solid var(--border-color)',
+                          border: createFormErrors.persona ? '1px solid #ef4444' : '1px solid var(--border-color)',
                           backgroundColor: 'rgba(15, 23, 42, 0.6)',
                           color: 'var(--text-primary)',
                           fontSize: '0.85rem',
@@ -553,9 +609,10 @@ export const UsuariosPage: React.FC = () => {
                         type="button"
                         className="btn btn-secondary"
                         onClick={handleSearchPersona}
+                        disabled={isSearchingPersona}
                         style={{ padding: '0.5rem 0.9rem', fontSize: '0.85rem' }}
                       >
-                        🔍 Buscar
+                        {isSearchingPersona ? 'Buscando...' : '🔍 Buscar'}
                       </button>
                     </div>
 
@@ -563,20 +620,48 @@ export const UsuariosPage: React.FC = () => {
                       <p style={{ color: '#f87171', fontSize: '0.8rem', marginTop: '0.4rem' }}>{searchError}</p>
                     )}
 
-                    {foundPersona && (
-                      <div
-                        style={{
-                          marginTop: '0.6rem',
-                          padding: '0.6rem 0.8rem',
-                          backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                          border: '1px solid rgba(16, 185, 129, 0.3)',
-                          borderRadius: 'var(--radius-sm)',
-                          fontSize: '0.85rem',
-                          color: '#10b981',
-                        }}
-                      >
-                        ✓ <strong>Persona vinculada:</strong> {foundPersona.nombres} {foundPersona.apellidos} ({foundPersona.tipoDoc}: {foundPersona.nroDoc})
+                    {foundPersonas.length > 0 && (
+                      <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', maxHeight: '180px', overflowY: 'auto' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Seleccione una persona del padrón:</span>
+                        {foundPersonas.map((p) => {
+                          const isSelected = selectedPersona?.id === p.id;
+                          return (
+                            <div
+                              key={p.id}
+                              onClick={() => {
+                                if (p.tieneUsuario) return;
+                                setSelectedPersona(p);
+                                setCreateUserForm((prev) => ({ ...prev, email: prev.email || `${p.nombres.toLowerCase().replace(/\s+/g, '')}@pica.edu.ar` }));
+                              }}
+                              style={{
+                                padding: '0.5rem 0.75rem',
+                                borderRadius: 'var(--radius-sm)',
+                                border: isSelected ? '1px solid var(--accent-primary)' : '1px solid var(--border-color)',
+                                backgroundColor: isSelected ? 'rgba(99,102,241,0.2)' : p.tieneUsuario ? 'rgba(239,68,68,0.1)' : 'rgba(15,23,42,0.4)',
+                                cursor: p.tieneUsuario ? 'not-allowed' : 'pointer',
+                                opacity: p.tieneUsuario ? 0.6 : 1,
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                fontSize: '0.85rem',
+                              }}
+                            >
+                              <div>
+                                <strong>{p.nombres} {p.apellidos}</strong> ({p.tipoDoc || 'DOC'}: {p.nroDoc || 'Sin doc'})
+                              </div>
+                              {p.tieneUsuario ? (
+                                <span style={{ color: '#ef4444', fontSize: '0.75rem', fontWeight: 600 }}>⚠️ Ya tiene usuario</span>
+                              ) : isSelected ? (
+                                <span style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: 600 }}>✓ Seleccionada</span>
+                              ) : null}
+                            </div>
+                          );
+                        })}
                       </div>
+                    )}
+
+                    {createFormErrors.persona && (
+                      <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.3rem', display: 'block' }}>{createFormErrors.persona}</span>
                     )}
 
                     <div style={{ marginTop: '0.75rem' }}>
@@ -584,7 +669,8 @@ export const UsuariosPage: React.FC = () => {
                         type="button"
                         onClick={() => {
                           setIsInlinePersona(true);
-                          setFoundPersona(null);
+                          setSelectedPersona(null);
+                          setFoundPersonas([]);
                         }}
                         style={{
                           background: 'none',
@@ -595,7 +681,7 @@ export const UsuariosPage: React.FC = () => {
                           textDecoration: 'underline',
                         }}
                       >
-                        + ¿La persona no existe? Crear persona en línea
+                        + ¿La persona no existe? Crear persona en línea (POST /admin/personas)
                       </button>
                     </div>
                   </>
@@ -603,7 +689,7 @@ export const UsuariosPage: React.FC = () => {
                   /* Formulario en Línea para Crear Persona */
                   <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 600 }}>Registro de Persona en Línea</span>
+                      <span style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 600 }}>Registro de Persona en Línea (POST /admin/personas)</span>
                       <button
                         type="button"
                         onClick={() => setIsInlinePersona(false)}
@@ -614,40 +700,36 @@ export const UsuariosPage: React.FC = () => {
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                      <div>
-                        <input
-                          type="text"
-                          placeholder="Nombres *"
-                          value={inlinePersonaData.nombres}
-                          onChange={(e) => setInlinePersonaData({ ...inlinePersonaData, nombres: e.target.value })}
-                          style={{
-                            width: '100%',
-                            padding: '0.45rem',
-                            borderRadius: 'var(--radius-sm)',
-                            border: createFormErrors.inlineNombres ? '1px solid #ef4444' : '1px solid var(--border-color)',
-                            backgroundColor: 'rgba(15, 23, 42, 0.6)',
-                            color: 'var(--text-primary)',
-                            fontSize: '0.8rem',
-                          }}
-                        />
-                      </div>
-                      <div>
-                        <input
-                          type="text"
-                          placeholder="Apellidos *"
-                          value={inlinePersonaData.apellidos}
-                          onChange={(e) => setInlinePersonaData({ ...inlinePersonaData, apellidos: e.target.value })}
-                          style={{
-                            width: '100%',
-                            padding: '0.45rem',
-                            borderRadius: 'var(--radius-sm)',
-                            border: createFormErrors.inlineApellidos ? '1px solid #ef4444' : '1px solid var(--border-color)',
-                            backgroundColor: 'rgba(15, 23, 42, 0.6)',
-                            color: 'var(--text-primary)',
-                            fontSize: '0.8rem',
-                          }}
-                        />
-                      </div>
+                      <input
+                        type="text"
+                        placeholder="Nombres *"
+                        value={inlinePersonaData.nombres}
+                        onChange={(e) => setInlinePersonaData({ ...inlinePersonaData, nombres: e.target.value })}
+                        style={{
+                          width: '100%',
+                          padding: '0.45rem',
+                          borderRadius: 'var(--radius-sm)',
+                          border: createFormErrors.inlineNombres ? '1px solid #ef4444' : '1px solid var(--border-color)',
+                          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+                          color: 'var(--text-primary)',
+                          fontSize: '0.8rem',
+                        }}
+                      />
+                      <input
+                        type="text"
+                        placeholder="Apellidos *"
+                        value={inlinePersonaData.apellidos}
+                        onChange={(e) => setInlinePersonaData({ ...inlinePersonaData, apellidos: e.target.value })}
+                        style={{
+                          width: '100%',
+                          padding: '0.45rem',
+                          borderRadius: 'var(--radius-sm)',
+                          border: createFormErrors.inlineApellidos ? '1px solid #ef4444' : '1px solid var(--border-color)',
+                          backgroundColor: 'rgba(15, 23, 42, 0.6)',
+                          color: 'var(--text-primary)',
+                          fontSize: '0.8rem',
+                        }}
+                      />
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.5rem' }}>
@@ -689,7 +771,7 @@ export const UsuariosPage: React.FC = () => {
               {/* Sección Datos de Cuenta de Usuario */}
               <div>
                 <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--accent-secondary)' }}>
-                  2. Credenciales y Datos de Usuario
+                  2. Credenciales de Usuario (POST /admin/usuarios)
                 </label>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem' }}>
@@ -738,32 +820,32 @@ export const UsuariosPage: React.FC = () => {
                   </div>
 
                   <div>
-                    <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Contraseña Inicial *</label>
+                    <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Contraseña Temporal *</label>
                     <input
                       type="password"
                       placeholder="Contraseña inicial..."
-                      value={createUserForm.password}
-                      onChange={(e) => setCreateUserForm({ ...createUserForm, password: e.target.value })}
+                      value={createUserForm.passwordTemporal}
+                      onChange={(e) => setCreateUserForm({ ...createUserForm, passwordTemporal: e.target.value })}
                       style={{
                         width: '100%',
                         padding: '0.55rem',
                         borderRadius: 'var(--radius-sm)',
-                        border: createFormErrors.password ? '1px solid #ef4444' : '1px solid var(--border-color)',
+                        border: createFormErrors.passwordTemporal ? '1px solid #ef4444' : '1px solid var(--border-color)',
                         backgroundColor: 'rgba(15, 23, 42, 0.6)',
                         color: 'var(--text-primary)',
                         fontSize: '0.875rem',
                       }}
                     />
-                    {createFormErrors.password && (
-                      <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>{createFormErrors.password}</span>
+                    {createFormErrors.passwordTemporal && (
+                      <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>{createFormErrors.passwordTemporal}</span>
                     )}
                   </div>
 
                   <div>
-                    <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Rol Inicial</label>
+                    <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Rol Inicial (Opcional)</label>
                     <select
-                      value={createUserForm.initialRole}
-                      onChange={(e) => setCreateUserForm({ ...createUserForm, initialRole: e.target.value })}
+                      value={createUserForm.initialRoleId}
+                      onChange={(e) => setCreateUserForm({ ...createUserForm, initialRoleId: Number(e.target.value) })}
                       style={{
                         width: '100%',
                         padding: '0.55rem',
@@ -774,11 +856,12 @@ export const UsuariosPage: React.FC = () => {
                         fontSize: '0.875rem',
                       }}
                     >
-                      <option value="PARTICIPANTE">PARTICIPANTE</option>
-                      <option value="ORGANIZADOR">ORGANIZADOR</option>
-                      <option value="INVESTIGADOR">INVESTIGADOR</option>
-                      <option value="EVALUADOR">EVALUADOR</option>
-                      <option value="ADMINISTRADOR">ADMINISTRADOR</option>
+                      <option value={0}>Sin Rol Inicial</option>
+                      {availableRoles.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.nombreAmigable} (ID: {r.id})
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -789,11 +872,12 @@ export const UsuariosPage: React.FC = () => {
                   type="button"
                   className="btn btn-secondary"
                   onClick={() => setIsCreateOpen(false)}
+                  disabled={isCreatingUser}
                 >
                   Cancelar
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  Crear Usuario
+                <button type="submit" className="btn btn-primary" disabled={isCreatingUser}>
+                  {isCreatingUser ? 'Procesando...' : 'Crear Usuario'}
                 </button>
               </div>
             </form>
@@ -835,7 +919,7 @@ export const UsuariosPage: React.FC = () => {
                 <input
                   type="email"
                   value={editForm.email}
-                  onChange={(e) => setEditForm({ email: e.target.value })}
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
                   style={{
                     width: '100%',
                     padding: '0.55rem',
@@ -848,16 +932,37 @@ export const UsuariosPage: React.FC = () => {
                 />
               </div>
 
+              <div>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Estado</label>
+                <select
+                  value={editForm.estado}
+                  onChange={(e) => setEditForm({ ...editForm, estado: e.target.value as any })}
+                  style={{
+                    width: '100%',
+                    padding: '0.55rem',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-color)',
+                    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.875rem',
+                  }}
+                >
+                  <option value="ACTIVO">ACTIVO</option>
+                  <option value="BLOQUEADO">BLOQUEADO</option>
+                </select>
+              </div>
+
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1rem' }}>
                 <button
                   type="button"
                   className="btn btn-secondary"
                   onClick={() => setEditingUser(null)}
+                  disabled={isSavingEdit}
                 >
                   Cancelar
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  Guardar Cambios
+                <button type="submit" className="btn btn-primary" disabled={isSavingEdit}>
+                  {isSavingEdit ? 'Guardando...' : 'Guardar Cambios'}
                 </button>
               </div>
             </form>
@@ -865,7 +970,7 @@ export const UsuariosPage: React.FC = () => {
         </div>
       )}
 
-      {/* MODAL 3: PESTAÑA / MODAL ROLES CON CHECKBOXES (PUT /admin/usuarios/{id}/roles) */}
+      {/* MODAL 3: ROLES CON CHECKBOXES E IDS NUMÉRICOS (PUT /admin/usuarios/{id}/roles) */}
       {rolesModalUser && (
         <div
           style={{
@@ -906,7 +1011,7 @@ export const UsuariosPage: React.FC = () => {
             </div>
 
             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-              Llama al endpoint <code>PUT /admin/usuarios/{rolesModalUser.id}/roles</code> enviando la matriz de checkboxes seleccionada.
+              Llama a <code>PUT /admin/usuarios/{rolesModalUser.id}/roles</code> enviando array de IDs numéricos <code>{`{ roles: [number] }`}</code>.
             </p>
 
             {rolesMessage && (
@@ -925,9 +1030,9 @@ export const UsuariosPage: React.FC = () => {
               </div>
             )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
-              {SYSTEM_ROLES.map((r) => {
-                const isChecked = selectedRoles.includes(r.id);
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem', maxHeight: '300px', overflowY: 'auto' }}>
+              {availableRoles.map((r) => {
+                const isChecked = selectedRoleIds.includes(r.id);
                 return (
                   <label
                     key={r.id}
@@ -947,18 +1052,18 @@ export const UsuariosPage: React.FC = () => {
                       checked={isChecked}
                       onChange={(e) => {
                         if (e.target.checked) {
-                          setSelectedRoles([...selectedRoles, r.id]);
+                          setSelectedRoleIds([...selectedRoleIds, r.id]);
                         } else {
-                          setSelectedRoles(selectedRoles.filter((item) => item !== r.id));
+                          setSelectedRoleIds(selectedRoleIds.filter((id) => id !== r.id));
                         }
                       }}
                       style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)' }}
                     />
                     <div>
                       <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                        {r.label} <code>({r.id})</code>
+                        {r.nombreAmigable} <code>(ID: {r.id}, {r.nombre})</code>
                       </div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{r.desc}</div>
+                      {r.descripcion && <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{r.descripcion}</div>}
                     </div>
                   </label>
                 );
@@ -980,14 +1085,14 @@ export const UsuariosPage: React.FC = () => {
                 onClick={handleSaveRoles}
                 disabled={isSavingRoles}
               >
-                {isSavingRoles ? 'Guardando...' : 'Guardar Roles (PUT)'}
+                {isSavingRoles ? 'Guardando...' : 'Guardar Roles'}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL 4: RESET DE CONTRASEÑA */}
+      {/* MODAL 4: RESET DE CONTRASEÑA (PUT /admin/usuarios/{id}/password con { password: "..." } y clave fuerte) */}
       {resetPassUser && (
         <div
           style={{
@@ -1012,7 +1117,7 @@ export const UsuariosPage: React.FC = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>
-              Resetear Contraseña
+              Resetear Contraseña (PUT /password)
             </h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
               Usuario: <strong>{resetPassUser.username}</strong>
@@ -1034,34 +1139,60 @@ export const UsuariosPage: React.FC = () => {
               </div>
             )}
 
+            {passwordError && (
+              <div
+                style={{
+                  padding: '0.65rem 0.85rem',
+                  borderRadius: 'var(--radius-sm)',
+                  backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                  color: '#f87171',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  marginBottom: '1rem',
+                  fontSize: '0.85rem',
+                }}
+              >
+                {passwordError}
+              </div>
+            )}
+
             <form onSubmit={handleResetPasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
-                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Nueva Contraseña</label>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Nueva Contraseña Fuerte *</label>
                 <input
                   type="password"
-                  placeholder="Ingrese nueva clave..."
+                  placeholder="Mínimo 8 caracteres, 1 mayúscula y 1 número..."
                   value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
+                  onChange={(e) => {
+                    setNewPassword(e.target.value);
+                    setPasswordError(null);
+                  }}
                   required
                   style={{
                     width: '100%',
                     padding: '0.55rem',
                     borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--border-color)',
+                    border: passwordError ? '1px solid #ef4444' : '1px solid var(--border-color)',
                     backgroundColor: 'rgba(15, 23, 42, 0.6)',
                     color: 'var(--text-primary)',
                     fontSize: '0.875rem',
                   }}
                 />
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem', display: 'block' }}>
+                  Requisito: Mínimo 8 caracteres, al menos 1 letra mayúscula y 1 número.
+                </span>
               </div>
 
               <button
                 type="button"
                 className="btn btn-secondary"
-                onClick={() => setNewPassword(`Temp#${Math.floor(100000 + Math.random() * 900000)}`)}
+                onClick={() => {
+                  const randomPass = `Pica2026#${Math.floor(1000 + Math.random() * 9000)}`;
+                  setNewPassword(randomPass);
+                  setPasswordError(null);
+                }}
                 style={{ fontSize: '0.8rem', padding: '0.4rem' }}
               >
-                ⚡ Generar Clave Temporal Aleatoria
+                ⚡ Generar Clave Temporal Válida (ej: Pica2026#1234)
               </button>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
@@ -1069,11 +1200,12 @@ export const UsuariosPage: React.FC = () => {
                   type="button"
                   className="btn btn-secondary"
                   onClick={() => setResetPassUser(null)}
+                  disabled={isResettingPass}
                 >
                   Cancelar
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  Blanquear Clave
+                <button type="submit" className="btn btn-primary" disabled={isResettingPass}>
+                  {isResettingPass ? 'Guardando...' : 'Cambiar Clave (PUT)'}
                 </button>
               </div>
             </form>
