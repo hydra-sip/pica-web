@@ -1,109 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { DataTable, ColumnDef } from '../components/DataTable';
 import { FormModal, FormFieldSchema } from '../components/FormModal';
-
-export interface Persona {
-  id: number;
-  nombres: string;
-  apellidos: string;
-  tipoDoc: string;
-  nroDoc: string;
-  email: string;
-  telefono: string;
-  fechaNacimiento?: string;
-  domicilioPostal?: string;
-  usuarioUsername?: string;
-  usuarioRol?: string;
-  estado: 'ACTIVO' | 'INACTIVO' | 'ELIMINADO';
-}
-
-const MOCK_PERSONAS: Persona[] = [
-  {
-    id: 1,
-    nombres: 'Administrador',
-    apellidos: 'PICA',
-    tipoDoc: 'DNI',
-    nroDoc: '30111222',
-    email: 'admin@pica.edu.ar',
-    telefono: '1122334455',
-    fechaNacimiento: '1990-01-01',
-    domicilioPostal: 'Av. Constitución 1234, Luján',
-    usuarioUsername: 'admin',
-    usuarioRol: 'ADMINISTRADOR',
-    estado: 'ACTIVO',
-  },
-  {
-    id: 2,
-    nombres: 'María Elena',
-    apellidos: 'Rodríguez',
-    tipoDoc: 'DNI',
-    nroDoc: '32999888',
-    email: 'mrodriguez@pica.edu.ar',
-    telefono: '1134567890',
-    fechaNacimiento: '1988-04-12',
-    domicilioPostal: 'San Martín 500, Luján',
-    usuarioUsername: 'mrodriguez',
-    usuarioRol: 'INVESTIGADOR',
-    estado: 'ACTIVO',
-  },
-  {
-    id: 3,
-    nombres: 'Carlos Alberto',
-    apellidos: 'Gómez',
-    tipoDoc: 'DNI',
-    nroDoc: '35444555',
-    email: 'cgomez@pica.edu.ar',
-    telefono: '1145678901',
-    fechaNacimiento: '1993-09-25',
-    domicilioPostal: 'Mitre 120, Luján',
-    usuarioUsername: 'cgomez',
-    usuarioRol: 'PARTICIPANTE',
-    estado: 'INACTIVO',
-  },
-  {
-    id: 4,
-    nombres: 'Jorge Luis',
-    apellidos: 'González',
-    tipoDoc: 'DNI',
-    nroDoc: '35123456',
-    email: 'jgonzalez@pica.edu.ar',
-    telefono: '1123456789',
-    fechaNacimiento: '1991-11-03',
-    domicilioPostal: 'Belgrano 450, Luján',
-    estado: 'ACTIVO',
-  },
-  {
-    id: 5,
-    nombres: 'Laura Sofía',
-    apellidos: 'Martínez',
-    tipoDoc: 'PASAPORTE',
-    nroDoc: 'A09876543',
-    email: 'lmartinez@pica.edu.ar',
-    telefono: '1167890123',
-    fechaNacimiento: '1996-02-18',
-    domicilioPostal: 'Las Heras 890, Luján',
-    estado: 'ELIMINADO',
-  },
-  {
-    id: 6,
-    nombres: 'Fernando Daniel',
-    apellidos: 'Fernández',
-    tipoDoc: 'DNI',
-    nroDoc: '31987654',
-    email: 'ffernandez@pica.edu.ar',
-    telefono: '1156789012',
-    fechaNacimiento: '1985-07-30',
-    domicilioPostal: 'Rivadavia 310, Luján',
-    estado: 'ACTIVO',
-  },
-];
+import { personaApi, PersonaResumen, PersonaPayload } from '../../api/personaApi';
 
 export const PersonasPage: React.FC = () => {
-  const [personas, setPersonas] = useState<Persona[]>(MOCK_PERSONAS);
+  const [personas, setPersonas] = useState<PersonaResumen[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Pagination & Server Control
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalElements, setTotalElements] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('TODOS');
+  const [sortParam, setSortParam] = useState('id,asc');
+
+  // Fetch Personas from API
+  const fetchPersonas = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const res = await personaApi.getPersonas({
+        q: searchTerm || undefined,
+        estado: statusFilter !== 'TODOS' ? statusFilter : undefined,
+        incluirEliminados: statusFilter === 'ELIMINADO' || statusFilter === 'TODOS',
+        page: page - 1,
+        size: pageSize,
+        sort: sortParam,
+      });
+
+      setPersonas(res.content || []);
+      setTotalElements(res.page?.totalElements || res.content.length);
+      setTotalPages(res.page?.totalPages || 1);
+    } catch (err) {
+      console.error('Error al cargar personas:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [searchTerm, statusFilter, page, pageSize, sortParam]);
+
+  useEffect(() => {
+    fetchPersonas();
+  }, [fetchPersonas]);
+
+  // Modal State for Form (Create / Edit / View)
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
     mode: 'view' | 'edit' | 'create';
-    selectedPersona?: Partial<Persona>;
+    selectedPersona?: Partial<PersonaResumen>;
   }>({
     isOpen: false,
     mode: 'create',
@@ -111,14 +55,12 @@ export const PersonasPage: React.FC = () => {
 
   // Modal State for User Profile Card (Ficha de Usuario vinculado)
   const [selectedUserCard, setSelectedUserCard] = useState<{
-    username: string;
-    email: string;
-    rol?: string;
     personaNombre: string;
     doc: string;
+    tieneUsuario: boolean;
   } | null>(null);
 
-  const columns: ColumnDef<Persona>[] = [
+  const columns: ColumnDef<PersonaResumen>[] = [
     {
       key: 'apellidos',
       label: 'Apellido y Nombres',
@@ -126,11 +68,6 @@ export const PersonasPage: React.FC = () => {
       render: (p) => (
         <div>
           <strong style={{ color: 'var(--text-primary)' }}>{p.apellidos}, {p.nombres}</strong>
-          {p.fechaNacimiento && (
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-              Nac.: {p.fechaNacimiento}
-            </div>
-          )}
         </div>
       ),
     },
@@ -141,39 +78,26 @@ export const PersonasPage: React.FC = () => {
       render: (p) => (
         <div>
           <span style={{ fontWeight: 600 }}>
-            <small style={{ color: 'var(--text-secondary)', marginRight: '0.25rem' }}>{p.tipoDoc}:</small>
-            {p.nroDoc}
+            <small style={{ color: 'var(--text-secondary)', marginRight: '0.25rem' }}>{p.tipoDoc || 'DNI'}:</small>
+            {p.nroDoc || 'Sin doc'}
           </span>
         </div>
       ),
     },
     {
-      key: 'email',
-      label: 'Contacto',
-      sortable: true,
-      render: (p) => (
-        <div style={{ fontSize: '0.85rem' }}>
-          <div>{p.email}</div>
-          <div style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>{p.telefono || 'Sin teléfono'}</div>
-        </div>
-      ),
-    },
-    {
-      key: 'usuarioUsername',
+      key: 'tieneUsuario',
       label: 'Usuario Vinculado',
       sortable: true,
       render: (p) => (
         <div>
-          {p.usuarioUsername ? (
+          {p.tieneUsuario ? (
             <button
               type="button"
               onClick={() =>
                 setSelectedUserCard({
-                  username: p.usuarioUsername!,
-                  email: p.email,
-                  rol: p.usuarioRol || 'PARTICIPANTE',
                   personaNombre: `${p.nombres} ${p.apellidos}`,
-                  doc: `${p.tipoDoc}: ${p.nroDoc}`,
+                  doc: `${p.tipoDoc || 'DNI'}: ${p.nroDoc || 'N/A'}`,
+                  tieneUsuario: p.tieneUsuario,
                 })
               }
               style={{
@@ -189,9 +113,9 @@ export const PersonasPage: React.FC = () => {
                 border: '1px solid rgba(99, 102, 241, 0.3)',
                 cursor: 'pointer',
               }}
-              title="Ver ficha del usuario vinculado"
+              title="Ver estado de vinculación"
             >
-              👤 @{p.usuarioUsername}
+              👤 Vinculado
             </button>
           ) : (
             <span style={{ fontSize: '0.775rem', color: 'var(--text-muted)' }}>Sin usuario vinculado</span>
@@ -202,6 +126,7 @@ export const PersonasPage: React.FC = () => {
     { key: 'estado', label: 'Estado', sortable: true },
   ];
 
+  // Form Fields Schema with Future Date Validation
   const formFields: FormFieldSchema[] = [
     {
       name: 'nombres',
@@ -234,13 +159,6 @@ export const PersonasPage: React.FC = () => {
       placeholder: 'ej. 32456789',
     },
     {
-      name: 'email',
-      label: 'Correo Electrónico de Contacto',
-      type: 'email',
-      required: true,
-      placeholder: 'ej. persona@pica.edu.ar',
-    },
-    {
       name: 'telefono',
       label: 'Teléfono de Contacto',
       placeholder: 'ej. 1122334455',
@@ -249,6 +167,16 @@ export const PersonasPage: React.FC = () => {
       name: 'fechaNacimiento',
       label: 'Fecha de Nacimiento',
       type: 'date',
+      validate: (val) => {
+        if (val) {
+          const birthDate = new Date(val);
+          const today = new Date();
+          if (birthDate > today) {
+            return 'La fecha de nacimiento no puede ser una fecha futura.';
+          }
+        }
+        return null;
+      },
     },
     {
       name: 'domicilioPostal',
@@ -263,7 +191,6 @@ export const PersonasPage: React.FC = () => {
       options: [
         { value: 'ACTIVO', label: 'Activo' },
         { value: 'INACTIVO', label: 'Inactivo' },
-        { value: 'ELIMINADO', label: 'Eliminado' },
       ],
     },
   ];
@@ -276,15 +203,24 @@ export const PersonasPage: React.FC = () => {
     });
   };
 
-  const handleView = (persona: Persona) => {
-    setModalState({
-      isOpen: true,
-      mode: 'view',
-      selectedPersona: persona,
-    });
+  const handleView = async (persona: PersonaResumen) => {
+    try {
+      const detail = await personaApi.getPersona(persona.id);
+      setModalState({
+        isOpen: true,
+        mode: 'view',
+        selectedPersona: detail,
+      });
+    } catch {
+      setModalState({
+        isOpen: true,
+        mode: 'view',
+        selectedPersona: persona,
+      });
+    }
   };
 
-  const handleEdit = (persona: Persona) => {
+  const handleEdit = (persona: PersonaResumen) => {
     setModalState({
       isOpen: true,
       mode: 'edit',
@@ -292,52 +228,56 @@ export const PersonasPage: React.FC = () => {
     });
   };
 
-  const handleDelete = (persona: Persona) => {
-    setPersonas((prev) =>
-      prev.map((p) => (p.id === persona.id ? { ...p, estado: 'ELIMINADO' as const } : p))
-    );
+  const handleDelete = async (persona: PersonaResumen) => {
+    if (persona.tieneUsuario) {
+      alert('Error (409 PERSONA_CON_USUARIO): No se puede dar de baja una persona que posee un usuario activo. Primero debe dar de baja el usuario.');
+      return;
+    }
+
+    try {
+      await personaApi.eliminar(persona.id);
+      fetchPersonas();
+    } catch (err: any) {
+      const msg = err?.problemDetail?.detail || err?.message || 'Error al eliminar persona.';
+      if (err?.problemDetail?.codigo === 'PERSONA_CON_USUARIO' || msg.includes('PERSONA_CON_USUARIO')) {
+        alert('Conflicto (409): La persona posee un usuario activo. Dé de baja al usuario previamente.');
+      } else {
+        alert('Error: ' + msg);
+      }
+    }
   };
 
-  const handleReactivate = (persona: Persona) => {
-    setPersonas((prev) =>
-      prev.map((p) => (p.id === persona.id ? { ...p, estado: 'ACTIVO' as const } : p))
-    );
+  const handleReactivate = async (persona: PersonaResumen) => {
+    try {
+      await personaApi.reactivar(persona.id);
+      fetchPersonas();
+    } catch (err: any) {
+      alert('Error al reactivar la persona: ' + (err?.problemDetail?.detail || err?.message));
+    }
   };
 
-  const handleSubmitForm = (formData: Partial<Persona>) => {
-    if (modalState.mode === 'create') {
-      const newPersona: Persona = {
-        id: Date.now(),
-        nombres: formData.nombres || '',
-        apellidos: formData.apellidos || '',
-        tipoDoc: formData.tipoDoc || 'DNI',
-        nroDoc: formData.nroDoc || '',
-        email: formData.email || '',
-        telefono: formData.telefono || '',
-        fechaNacimiento: formData.fechaNacimiento || '',
-        domicilioPostal: formData.domicilioPostal || '',
-        estado: (formData.estado as 'ACTIVO' | 'INACTIVO' | 'ELIMINADO') || 'ACTIVO',
-      };
-      setPersonas((prev) => [newPersona, ...prev]);
-    } else if (modalState.mode === 'edit' && modalState.selectedPersona?.id) {
-      setPersonas((prev) =>
-        prev.map((p) =>
-          p.id === modalState.selectedPersona?.id
-            ? {
-                ...p,
-                nombres: formData.nombres || p.nombres,
-                apellidos: formData.apellidos || p.apellidos,
-                tipoDoc: formData.tipoDoc || p.tipoDoc,
-                nroDoc: formData.nroDoc || p.nroDoc,
-                email: formData.email || p.email,
-                telefono: formData.telefono || p.telefono,
-                fechaNacimiento: formData.fechaNacimiento || p.fechaNacimiento,
-                domicilioPostal: formData.domicilioPostal || p.domicilioPostal,
-                estado: (formData.estado as 'ACTIVO' | 'INACTIVO' | 'ELIMINADO') || p.estado,
-              }
-            : p
-        )
-      );
+  const handleSubmitForm = async (formData: Partial<PersonaResumen>) => {
+    const payload: PersonaPayload = {
+      nombres: formData.nombres || '',
+      apellidos: formData.apellidos || '',
+      tipoDoc: formData.tipoDoc || 'DNI',
+      nroDoc: formData.nroDoc || '',
+      fechaNacimiento: (formData as any).fechaNacimiento || null,
+      domicilioPostal: (formData as any).domicilioPostal || null,
+      telefono: (formData as any).telefono || null,
+      estado: (formData.estado as 'ACTIVO' | 'INACTIVO') || 'ACTIVO',
+    };
+
+    try {
+      if (modalState.mode === 'create') {
+        await personaApi.crear(payload);
+      } else if (modalState.mode === 'edit' && modalState.selectedPersona?.id) {
+        await personaApi.actualizar(modalState.selectedPersona.id, payload);
+      }
+      setModalState({ isOpen: false, mode: 'create' });
+      fetchPersonas();
+    } catch (err: any) {
+      throw err;
     }
   };
 
@@ -347,18 +287,41 @@ export const PersonasPage: React.FC = () => {
         <span className="badge">Permiso: PERSONA_VER</span>
         <h1 style={{ marginTop: '0.5rem' }}>Gestión de Personas</h1>
         <p style={{ color: 'var(--text-secondary)' }}>
-          Registro de integrantes, padrón personal y relación con cuentas de usuario del sistema.
+          Registro de integrantes y padrón personal conectado al backend REST `pica-back`.
         </p>
       </div>
 
-      <DataTable<Persona>
+      <DataTable<PersonaResumen>
         title="Padrón de Personas Registradas"
-        description="Filtro de búsqueda por documento o apellido. Permite realizar el alta, edición, baja lógica, reactivación y consulta del usuario vinculado."
+        description="Filtro de búsqueda por documento o apellido. Paginado desde el servidor con validación de fecha no futura y control de baja con usuario activo (409)."
         data={personas}
         columns={columns}
-        searchFields={['apellidos', 'nombres', 'nroDoc', 'email', 'telefono', 'usuarioUsername']}
+        searchFields={['apellidos', 'nombres', 'nroDoc']}
         statusField="estado"
         idField="id"
+        isLoading={isLoading}
+        serverSide
+        page={page}
+        pageSize={pageSize}
+        totalElements={totalElements}
+        totalPages={totalPages}
+        onPageChange={(newPage) => setPage(newPage)}
+        onPageSizeChange={(newSize) => {
+          setPageSize(newSize);
+          setPage(1);
+        }}
+        onSearchChange={(term) => {
+          setSearchTerm(term);
+          setPage(1);
+        }}
+        onStatusFilterChange={(st) => {
+          setStatusFilter(st);
+          setPage(1);
+        }}
+        onSortChange={(col, dir) => {
+          if (col) setSortParam(`${col},${dir}`);
+          else setSortParam('id,asc');
+        }}
         onCreate={handleCreate}
         onView={handleView}
         onEdit={handleEdit}
@@ -368,7 +331,7 @@ export const PersonasPage: React.FC = () => {
       />
 
       {/* Form Modal for Create / Edit Persona */}
-      <FormModal<Persona>
+      <FormModal<PersonaResumen>
         isOpen={modalState.isOpen}
         title={
           modalState.mode === 'create'
@@ -384,7 +347,7 @@ export const PersonasPage: React.FC = () => {
         onSubmit={handleSubmitForm}
       />
 
-      {/* User Profile Card Modal (Ficha de Usuario vinculado) */}
+      {/* User Profile Card Modal */}
       {selectedUserCard && (
         <div
           style={{
@@ -410,8 +373,8 @@ export const PersonasPage: React.FC = () => {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
               <div>
-                <span className="badge">Ficha de Usuario</span>
-                <h3 style={{ fontSize: '1.25rem', marginTop: '0.4rem' }}>@{selectedUserCard.username}</h3>
+                <span className="badge">Estado de Vinculación</span>
+                <h3 style={{ fontSize: '1.25rem', marginTop: '0.4rem' }}>{selectedUserCard.personaNombre}</h3>
               </div>
               <button
                 type="button"
@@ -424,33 +387,13 @@ export const PersonasPage: React.FC = () => {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.875rem' }}>
               <div>
-                <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Titular Vinculado:</span>
-                <div style={{ fontWeight: 600 }}>{selectedUserCard.personaNombre}</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{selectedUserCard.doc}</div>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Documento:</span>
+                <div style={{ fontWeight: 600 }}>{selectedUserCard.doc}</div>
               </div>
 
               <div>
-                <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Correo Electrónico:</span>
-                <div>{selectedUserCard.email}</div>
-              </div>
-
-              <div>
-                <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Rol Principal:</span>
-                <div>
-                  <span
-                    style={{
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      padding: '0.15rem 0.5rem',
-                      borderRadius: 'var(--radius-sm)',
-                      backgroundColor: 'rgba(99, 102, 241, 0.15)',
-                      color: 'var(--accent-secondary)',
-                      border: '1px solid rgba(99, 102, 241, 0.3)',
-                    }}
-                  >
-                    {selectedUserCard.rol}
-                  </span>
-                </div>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Posee Cuenta de Usuario Activa:</span>
+                <div style={{ color: '#10b981', fontWeight: 600 }}>Sí (`tieneUsuario: true`)</div>
               </div>
             </div>
 
