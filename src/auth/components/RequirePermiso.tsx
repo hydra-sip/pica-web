@@ -28,7 +28,7 @@ export const RequirePermiso: React.FC<RequirePermisoProps> = ({ permisos, roles,
   const hasPerm = permisos ? hasPermission(permisos) : true;
   const hasR = roles ? hasRole(roles) : true;
 
-  if (!hasPerm && !hasR) {
+  if ((permisos && !hasPerm) || (roles && !hasR)) {
     return <Navigate to="/unauthorized" replace />;
   }
 

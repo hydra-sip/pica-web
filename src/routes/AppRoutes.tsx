@@ -41,33 +41,41 @@ export const AppRoutes: React.FC = () => {
 
       {/* Layout de Administración Protegido (AdminLayout) */}
       <Route element={<RequireAuth />}>
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AdminDashboardPage />} />
-          
-          <Route
-            path="usuarios"
-            element={
-              <RequirePermiso permisos="USUARIO_VER">
-                <UsuariosPage />
-              </RequirePermiso>
-            }
-          />
-          <Route
-            path="roles"
-            element={
-              <RequirePermiso permisos="ROL_VER">
-                <RolesPage />
-              </RequirePermiso>
-            }
-          />
-          <Route
-            path="personas"
-            element={
-              <RequirePermiso permisos="PERSONA_VER">
-                <PersonasPage />
-              </RequirePermiso>
-            }
-          />
+        <Route
+          element={
+            <RequirePermiso permisos={['USUARIO_VER', 'ROL_VER', 'PERSONA_VER']}>
+              <AdminLayout />
+            </RequirePermiso>
+          }
+        >
+          <Route path="/admin">
+            <Route index element={<AdminDashboardPage />} />
+            
+            <Route
+              path="usuarios"
+              element={
+                <RequirePermiso permisos="USUARIO_VER">
+                  <UsuariosPage />
+                </RequirePermiso>
+              }
+            />
+            <Route
+              path="roles"
+              element={
+                <RequirePermiso permisos="ROL_VER">
+                  <RolesPage />
+                </RequirePermiso>
+              }
+            />
+            <Route
+              path="personas"
+              element={
+                <RequirePermiso permisos="PERSONA_VER">
+                  <PersonasPage />
+                </RequirePermiso>
+              }
+            />
+          </Route>
         </Route>
       </Route>
     </Routes>
