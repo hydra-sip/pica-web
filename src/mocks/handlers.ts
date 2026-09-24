@@ -167,7 +167,7 @@ export const handlers = [
         usuario: { id: 2, username: 'usuario', email: 'user@pica.edu.ar', estado: 'ACTIVO', tieneContrasena: true },
         persona: { nombres: 'Usuario', apellidos: 'PICA', tipoDoc: 'DNI', nroDoc: '38123456', fechaNacimiento: '1995-05-15', domicilioPostal: 'San Martín 500, Luján', telefono: '1144556677' },
         roles: [{ id: 2, nombre: 'PARTICIPANTE', nombreAmigable: 'Participante Estándar' }],
-        permisos: ['PERSONA_VER'],
+        permisos: [],
         datosCompletos: true,
       };
 
@@ -184,7 +184,7 @@ export const handlers = [
         usuario: { id: 3, username: id.split('@')[0], email: id.includes('@') ? id : `${id}@pica.edu.ar`, estado: 'ACTIVO', tieneContrasena: true },
         persona: { nombres: id.split('@')[0], apellidos: 'Usuario', tipoDoc: 'DNI', nroDoc: '', fechaNacimiento: '', domicilioPostal: '', telefono: '' },
         roles: [{ id: 2, nombre: 'PARTICIPANTE', nombreAmigable: 'Participante' }],
-        permisos: ['PERSONA_VER'],
+        permisos: [],
         datosCompletos: false,
       };
 
@@ -226,7 +226,7 @@ export const handlers = [
       usuario: { id: 10, username: 'google_user', email: 'google.user@pica.edu.ar', estado: 'ACTIVO', tieneContrasena: false },
       persona: { nombres: 'Usuario Google', apellidos: 'PICA', tipoDoc: 'DNI', nroDoc: '', fechaNacimiento: '', domicilioPostal: '', telefono: '' },
       roles: [{ id: 2, nombre: 'PARTICIPANTE', nombreAmigable: 'Participante' }],
-      permisos: ['PERSONA_VER'],
+      permisos: [],
       datosCompletos: false,
     };
 

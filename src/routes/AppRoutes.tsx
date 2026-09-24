@@ -44,7 +44,6 @@ export const AppRoutes: React.FC = () => {
         <Route
           element={
             <RequirePermiso
-              roles={['ADMINISTRADOR', 'SUPER_USUARIO', 'ORGANIZADOR']}
               permisos={['USUARIO_VER', 'ROL_VER', 'PERSONA_VER']}
             >
               <AdminLayout />

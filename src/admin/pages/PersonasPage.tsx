@@ -6,6 +6,7 @@ import { personaApi, PersonaResumen, PersonaPayload } from '../../api/personaApi
 export const PersonasPage: React.FC = () => {
   const [personas, setPersonas] = useState<PersonaResumen[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [aviso, setAviso] = useState<string | null>(null);
 
   // Pagination & Server Control
   const [page, setPage] = useState(1);
@@ -22,7 +23,8 @@ export const PersonasPage: React.FC = () => {
     try {
       const res = await personaApi.getPersonas({
         q: searchTerm || undefined,
-        estado: statusFilter !== 'TODOS' ? statusFilter : undefined,
+        // ELIMINADO no es un estado del contrato: se pide con incluirEliminados
+        estado: statusFilter !== 'TODOS' && statusFilter !== 'ELIMINADO' ? statusFilter : undefined,
         incluirEliminados: statusFilter === 'ELIMINADO' || statusFilter === 'TODOS',
         page: page - 1,
         size: pageSize,
@@ -230,7 +232,7 @@ export const PersonasPage: React.FC = () => {
 
   const handleDelete = async (persona: PersonaResumen) => {
     if (persona.tieneUsuario) {
-      alert('Error (409 PERSONA_CON_USUARIO): No se puede dar de baja una persona que posee un usuario activo. Primero debe dar de baja el usuario.');
+      setAviso('No se puede dar de baja una persona que tiene usuario: primero hay que dar de baja el usuario.');
       return;
     }
 
@@ -240,9 +242,9 @@ export const PersonasPage: React.FC = () => {
     } catch (err: any) {
       const msg = err?.problemDetail?.detail || err?.message || 'Error al eliminar persona.';
       if (err?.problemDetail?.codigo === 'PERSONA_CON_USUARIO' || msg.includes('PERSONA_CON_USUARIO')) {
-        alert('Conflicto (409): La persona posee un usuario activo. Dé de baja al usuario previamente.');
+        setAviso('No se puede dar de baja una persona que tiene usuario: primero hay que dar de baja el usuario.');
       } else {
-        alert('Error: ' + msg);
+        setAviso('Error: ' + msg);
       }
     }
   };
@@ -252,7 +254,7 @@ export const PersonasPage: React.FC = () => {
       await personaApi.reactivar(persona.id);
       fetchPersonas();
     } catch (err: any) {
-      alert('Error al reactivar la persona: ' + (err?.problemDetail?.detail || err?.message));
+      setAviso('Error al reactivar la persona: ' + (err?.problemDetail?.detail || err?.message));
     }
   };
 
@@ -268,17 +270,13 @@ export const PersonasPage: React.FC = () => {
       estado: (formData.estado as 'ACTIVO' | 'INACTIVO') || 'ACTIVO',
     };
 
-    try {
-      if (modalState.mode === 'create') {
-        await personaApi.crear(payload);
-      } else if (modalState.mode === 'edit' && modalState.selectedPersona?.id) {
-        await personaApi.actualizar(modalState.selectedPersona.id, payload);
-      }
-      setModalState({ isOpen: false, mode: 'create' });
-      fetchPersonas();
-    } catch (err: any) {
-      throw err;
+    if (modalState.mode === 'create') {
+      await personaApi.crear(payload);
+    } else if (modalState.mode === 'edit' && modalState.selectedPersona?.id) {
+      await personaApi.actualizar(modalState.selectedPersona.id, payload);
     }
+    setModalState({ isOpen: false, mode: 'create' });
+    fetchPersonas();
   };
 
   return (
@@ -290,6 +288,18 @@ export const PersonasPage: React.FC = () => {
           Registro de integrantes y padrón personal conectado al backend REST `pica-back`.
         </p>
       </div>
+
+      {aviso && (
+        <div
+          role="alert"
+          style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171', padding: '0.75rem', borderRadius: 'var(--radius-sm)' }}
+        >
+          <span>{aviso}</span>
+          <button type="button" onClick={() => setAviso(null)} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}>
+            ✕
+          </button>
+        </div>
+      )}
 
       <DataTable<PersonaResumen>
         title="Padrón de Personas Registradas"
