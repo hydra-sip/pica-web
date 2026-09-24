@@ -16,6 +16,12 @@ export interface RolDetalle extends RolResumen {
   permisos: string[];
 }
 
+/** GET /admin/permisos: el catálogo del seed V4, agrupado por módulo. */
+export interface ModuloPermisosApi {
+  modulo: 'USUARIOS' | 'PERSONAS' | 'ROLES';
+  permisos: { codigo: string; descripcion: string }[];
+}
+
 export interface RolPayload {
   nombre: string;
   nombreAmigable: string;
@@ -59,7 +65,7 @@ export const rolApi = {
     return httpClient.put<RolDetalle>(`/admin/roles/${id}/permisos`, { permisos });
   },
 
-  getPermisosCatalogo: async (): Promise<any[]> => {
-    return httpClient.get<any[]>('/admin/permisos');
+  getPermisosCatalogo: async (): Promise<ModuloPermisosApi[]> => {
+    return httpClient.get<ModuloPermisosApi[]>('/admin/permisos');
   },
 };

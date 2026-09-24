@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { DataTable, ColumnDef } from '../components/DataTable';
 import { FormModal, FormFieldSchema } from '../components/FormModal';
-import { rolApi, RolResumen, RolDetalle } from '../../api/rolApi';
+import { rolApi, RolResumen, RolDetalle, ModuloPermisosApi } from '../../api/rolApi';
 
 export interface PermisoItem {
   id: string;
@@ -14,69 +14,27 @@ export interface ModuloPermisos {
   permisos: PermisoItem[];
 }
 
-const MODULOS_PERMISOS: ModuloPermisos[] = [
-  {
-    modulo: 'Módulo Usuarios',
-    icono: '👥',
-    permisos: [
-      { id: 'USUARIO_VER', label: 'Ver listado y perfiles de usuarios' },
-      { id: 'USUARIO_CREAR', label: 'Crear nuevos usuarios en el sistema' },
-      { id: 'USUARIO_EDITAR', label: 'Editar información de usuarios' },
-      { id: 'USUARIO_ELIMINAR', label: 'Bloquear / dar de baja usuarios' },
-    ],
-  },
-  {
-    modulo: 'Módulo Roles y Seguridad',
-    icono: '🛡️',
-    permisos: [
-      { id: 'ROL_VER', label: 'Ver catálogo de roles y permisos' },
-      { id: 'ROL_CREAR', label: 'Crear nuevos roles' },
-      { id: 'ROL_EDITAR', label: 'Editar roles existentes' },
-      { id: 'ROL_ELIMINAR', label: 'Dar de baja roles' },
-      { id: 'ROL_ASIGNAR', label: 'Asignar roles a los usuarios' },
-    ],
-  },
-  {
-    modulo: 'Módulo Personas y Padrón',
-    icono: '📇',
-    permisos: [
-      { id: 'PERSONA_VER', label: 'Ver padrón general de personas' },
-      { id: 'PERSONA_CREAR', label: 'Registrar nuevas personas' },
-      { id: 'PERSONA_EDITAR', label: 'Editar datos personales' },
-      { id: 'PERSONA_ELIMINAR', label: 'Dar de baja registros del padrón' },
-    ],
-  },
-  {
-    modulo: 'Módulo Proyectos e Investigación',
-    icono: '🔬',
-    permisos: [
-      { id: 'PROYECTO_VER', label: 'Ver proyectos e hitos' },
-      { id: 'PROYECTO_CREAR', label: 'Cargar nuevos proyectos' },
-      { id: 'PROYECTO_EDITAR', label: 'Modificar proyectos e integrantes' },
-      { id: 'PROYECTO_EVALUAR', label: 'Emitir dictámenes de evaluación' },
-    ],
-  },
-  {
-    modulo: 'Módulo Convocatorias',
-    icono: '📢',
-    permisos: [
-      { id: 'CONVOCATORIA_VER', label: 'Ver convocatorias públicas' },
-      { id: 'CONVOCATORIA_EDITAR', label: 'Configurar términos y aperturas' },
-    ],
-  },
-];
+// Solo presentación: los módulos y permisos salen de GET /admin/permisos
+const MODULO_UI: Record<ModuloPermisosApi['modulo'], { modulo: string; icono: string }> = {
+  USUARIOS: { modulo: 'Módulo Usuarios', icono: '👥' },
+  ROLES: { modulo: 'Módulo Roles y Seguridad', icono: '🛡️' },
+  PERSONAS: { modulo: 'Módulo Personas y Padrón', icono: '📇' },
+};
 
-const ALL_READONLY_PERMISSIONS = [
-  'USUARIO_VER',
-  'ROL_VER',
-  'PERSONA_VER',
-  'PROYECTO_VER',
-  'CONVOCATORIA_VER',
-];
+const aModulosUi = (catalogo: ModuloPermisosApi[]): ModuloPermisos[] =>
+  catalogo.map((m) => ({
+    ...(MODULO_UI[m.modulo] ?? { modulo: m.modulo, icono: '🔑' }),
+    permisos: m.permisos.map((p) => ({ id: p.codigo, label: p.descripcion })),
+  }));
+
+// SUPER_USUARIO tiene todos los permisos y el back no deja cambiárselos (403 ROL_PROTEGIDO)
+const esSuperUsuario = (rol: RolResumen) => rol.esSistema && rol.nombre === 'SUPER_USUARIO';
 
 export const RolesPage: React.FC = () => {
   const [roles, setRoles] = useState<RolResumen[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [aviso, setAviso] = useState<string | null>(null);
+  const [modulosPermisos, setModulosPermisos] = useState<ModuloPermisos[]>([]);
 
   // Pagination & Server Control
   const [page, setPage] = useState(1);
@@ -93,7 +51,8 @@ export const RolesPage: React.FC = () => {
     try {
       const res = await rolApi.getRoles({
         q: searchTerm || undefined,
-        estado: statusFilter !== 'TODOS' ? statusFilter : undefined,
+        // ELIMINADO no es un estado del contrato: se pide con incluirEliminados
+        estado: statusFilter !== 'TODOS' && statusFilter !== 'ELIMINADO' ? statusFilter : undefined,
         incluirEliminados: statusFilter === 'ELIMINADO' || statusFilter === 'TODOS',
         page: page - 1,
         size: pageSize,
@@ -113,6 +72,13 @@ export const RolesPage: React.FC = () => {
   useEffect(() => {
     fetchRoles();
   }, [fetchRoles]);
+
+  useEffect(() => {
+    rolApi
+      .getPermisosCatalogo()
+      .then((catalogo) => setModulosPermisos(aModulosUi(catalogo)))
+      .catch(() => setAviso('No se pudo cargar el catálogo de permisos.'));
+  }, []);
 
   // Form Modal State (Crear / Editar Rol)
   const [formModalState, setFormModalState] = useState<{
@@ -253,10 +219,6 @@ export const RolesPage: React.FC = () => {
   };
 
   const handleEdit = (rol: RolResumen) => {
-    if (rol.esSistema) {
-      alert('Los roles del sistema (esSistema: true) están protegidos contra ediciones.');
-      return;
-    }
     setFormModalState({
       isOpen: true,
       mode: 'edit',
@@ -265,15 +227,11 @@ export const RolesPage: React.FC = () => {
   };
 
   const handleDelete = async (rol: RolResumen) => {
-    if (rol.esSistema) {
-      alert('Los roles del sistema (esSistema: true) no pueden ser eliminados.');
-      return;
-    }
     try {
       await rolApi.eliminar(rol.id);
       fetchRoles();
     } catch (err: any) {
-      alert('Error al dar de baja el rol: ' + (err?.problemDetail?.detail || err?.message));
+      setAviso('Error al dar de baja el rol: ' + (err?.problemDetail?.detail || err?.message));
     }
   };
 
@@ -282,38 +240,33 @@ export const RolesPage: React.FC = () => {
       await rolApi.reactivar(rol.id);
       fetchRoles();
     } catch (err: any) {
-      alert('Error al reactivar el rol: ' + (err?.problemDetail?.detail || err?.message));
+      setAviso('Error al reactivar el rol: ' + (err?.problemDetail?.detail || err?.message));
     }
   };
 
   const handleSubmitForm = async (formData: Partial<RolResumen>) => {
-    try {
-      if (formModalState.mode === 'create') {
-        await rolApi.crear({
-          nombre: (formData.nombre || '').toUpperCase().trim(),
-          nombreAmigable: formData.nombreAmigable || '',
-          descripcion: formData.descripcion || null,
-          estado: (formData.estado as 'ACTIVO' | 'INACTIVO') || 'ACTIVO',
-        });
-      } else if (formModalState.mode === 'edit' && formModalState.selectedRol?.id) {
-        await rolApi.actualizar(formModalState.selectedRol.id, {
-          nombre: formModalState.selectedRol.nombre || '',
-          nombreAmigable: formData.nombreAmigable || formModalState.selectedRol.nombreAmigable || '',
-          descripcion: formData.descripcion || null,
-          estado: (formData.estado as 'ACTIVO' | 'INACTIVO') || formModalState.selectedRol.estado || 'ACTIVO',
-        });
-      }
-      setFormModalState({ isOpen: false, mode: 'create' });
-      fetchRoles();
-    } catch (err: any) {
-      throw err;
+    if (formModalState.mode === 'create') {
+      await rolApi.crear({
+        nombre: (formData.nombre || '').toUpperCase().trim(),
+        nombreAmigable: formData.nombreAmigable || '',
+        descripcion: formData.descripcion || null,
+        estado: (formData.estado as 'ACTIVO' | 'INACTIVO') || 'ACTIVO',
+      });
+    } else if (formModalState.mode === 'edit' && formModalState.selectedRol?.id) {
+      await rolApi.actualizar(formModalState.selectedRol.id, {
+        nombre: formModalState.selectedRol.nombre || '',
+        nombreAmigable: formData.nombreAmigable || formModalState.selectedRol.nombreAmigable || '',
+        descripcion: formData.descripcion || null,
+        estado: (formData.estado as 'ACTIVO' | 'INACTIVO') || formModalState.selectedRol.estado || 'ACTIVO',
+      });
     }
+    setFormModalState({ isOpen: false, mode: 'create' });
+    fetchRoles();
   };
 
   // Open Permisos Modal (fetches full RolDetalle with permisos list)
   const handleOpenPermisos = async (rol: RolResumen) => {
-    if (rol.esSistema) {
-      alert('Los roles del sistema (esSistema: true) tienen matriz protegida en solo lectura.');
+    if (esSuperUsuario(rol)) {
       return;
     }
     try {
@@ -322,18 +275,20 @@ export const RolesPage: React.FC = () => {
       setSelectedPermisos(detail.permisos || []);
       setPermisosFeedback(null);
     } catch (err: any) {
-      alert('Error al cargar permisos del rol: ' + (err?.problemDetail?.detail || err?.message));
+      setAviso('Error al cargar permisos del rol: ' + (err?.problemDetail?.detail || err?.message));
     }
   };
 
   // Quick Action: Select Only Read-Only Permisos (*_VER)
   const handleSelectReadOnlyPermisos = () => {
-    setSelectedPermisos(ALL_READONLY_PERMISSIONS);
+    setSelectedPermisos(
+      modulosPermisos.flatMap((m) => m.permisos.map((p) => p.id)).filter((id) => id.endsWith('_VER'))
+    );
   };
 
   // Quick Action: Select All Permisos
   const handleSelectAllPermisos = () => {
-    const all = MODULOS_PERMISOS.flatMap((m) => m.permisos.map((p) => p.id));
+    const all = modulosPermisos.flatMap((m) => m.permisos.map((p) => p.id));
     setSelectedPermisos(all);
   };
 
@@ -369,16 +324,16 @@ export const RolesPage: React.FC = () => {
       type="button"
       title="Configurar matriz de permisos (PUT /admin/roles/{id}/permisos)"
       onClick={() => handleOpenPermisos(rol)}
-      disabled={rol.esSistema}
+      disabled={esSuperUsuario(rol)}
       style={{
         background: 'rgba(99, 102, 241, 0.15)',
         border: '1px solid rgba(99, 102, 241, 0.3)',
         color: 'var(--accent-primary)',
         padding: '0.35rem 0.6rem',
         borderRadius: 'var(--radius-sm)',
-        cursor: rol.esSistema ? 'not-allowed' : 'pointer',
+        cursor: esSuperUsuario(rol) ? 'not-allowed' : 'pointer',
         fontSize: '0.8rem',
-        opacity: rol.esSistema ? 0.5 : 1,
+        opacity: esSuperUsuario(rol) ? 0.5 : 1,
       }}
     >
       🔑 Permisos
@@ -394,6 +349,18 @@ export const RolesPage: React.FC = () => {
           Definición de roles del sistema y matriz de permisos por módulos conectada al backend REST.
         </p>
       </div>
+
+      {aviso && (
+        <div
+          role="alert"
+          style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171', padding: '0.75rem', borderRadius: 'var(--radius-sm)' }}
+        >
+          <span>{aviso}</span>
+          <button type="button" onClick={() => setAviso(null)} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}>
+            ✕
+          </button>
+        </div>
+      )}
 
       <DataTable<RolResumen>
         title="Matriz de Roles y Permisos"
@@ -432,6 +399,7 @@ export const RolesPage: React.FC = () => {
         onDelete={handleDelete}
         onReactivate={handleReactivate}
         customActions={renderCustomActions}
+        isReadOnly={(rol) => rol.esSistema}
         createButtonText="Crear Nuevo Rol"
       />
 
@@ -566,7 +534,7 @@ export const RolesPage: React.FC = () => {
 
             {/* Módulos de Permisos */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '1.5rem' }}>
-              {MODULOS_PERMISOS.map((mod) => {
+              {modulosPermisos.map((mod) => {
                 const modPermisoIds = mod.permisos.map((p) => p.id);
                 const allModSelected = modPermisoIds.every((id) => selectedPermisos.includes(id));
 

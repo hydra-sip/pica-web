@@ -372,7 +372,7 @@ export const handlers = [
       return new HttpResponse(
         JSON.stringify({
           status: 403,
-          codigo: 'ROLE_READONLY',
+          codigo: 'ROL_PROTEGIDO',
           detail: 'No se pueden modificar los permisos del Super Usuario Administrador.',
         }),
         { status: 403, headers: { 'Content-Type': 'application/problem+json' } }
@@ -385,7 +385,38 @@ export const handlers = [
       message: 'Permisos del rol actualizados exitosamente.',
     });
   }),
+
+  // Catálogo de permisos (GET /admin/permisos), igual al seed V4 del back
+  http.get(`${API_URL}/admin/permisos`, () => {
+    return HttpResponse.json([
+      {
+        modulo: 'USUARIOS',
+        permisos: [
+          { codigo: 'USUARIO_VER', descripcion: 'Ver el listado y el detalle de usuarios' },
+          { codigo: 'USUARIO_CREAR', descripcion: 'Dar de alta usuarios' },
+          { codigo: 'USUARIO_EDITAR', descripcion: 'Modificar usuarios, bloquearlos y resetear su contraseña' },
+          { codigo: 'USUARIO_ELIMINAR', descripcion: 'Dar de baja y reactivar usuarios' },
+        ],
+      },
+      {
+        modulo: 'PERSONAS',
+        permisos: [
+          { codigo: 'PERSONA_VER', descripcion: 'Ver el listado y el detalle de personas' },
+          { codigo: 'PERSONA_CREAR', descripcion: 'Dar de alta personas' },
+          { codigo: 'PERSONA_EDITAR', descripcion: 'Modificar datos de personas' },
+          { codigo: 'PERSONA_ELIMINAR', descripcion: 'Dar de baja y reactivar personas' },
+        ],
+      },
+      {
+        modulo: 'ROLES',
+        permisos: [
+          { codigo: 'ROL_VER', descripcion: 'Ver roles y el catálogo de permisos' },
+          { codigo: 'ROL_CREAR', descripcion: 'Crear roles' },
+          { codigo: 'ROL_EDITAR', descripcion: 'Modificar roles y sus permisos' },
+          { codigo: 'ROL_ELIMINAR', descripcion: 'Dar de baja y reactivar roles' },
+          { codigo: 'ROL_ASIGNAR', descripcion: 'Asignar y quitar roles a usuarios' },
+        ],
+      },
+    ]);
+  }),
 ];
-
-
-
