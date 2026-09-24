@@ -7,6 +7,7 @@ import { rolApi, RolResumen } from '../../api/rolApi';
 export const UsuariosPage: React.FC = () => {
   const [usuarios, setUsuarios] = useState<UsuarioResumen[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [aviso, setAviso] = useState<string | null>(null);
 
   // Pagination & Filters (Spring Data REST)
   const [page, setPage] = useState(1);
@@ -26,7 +27,8 @@ export const UsuariosPage: React.FC = () => {
     try {
       const res = await usuarioApi.getUsuarios({
         q: searchTerm || undefined,
-        estado: statusFilter !== 'TODOS' ? statusFilter : undefined,
+        // ELIMINADO no es un estado del contrato: se pide con incluirEliminados
+        estado: statusFilter !== 'TODOS' && statusFilter !== 'ELIMINADO' ? statusFilter : undefined,
         incluirEliminados: statusFilter === 'ELIMINADO' || statusFilter === 'TODOS',
         page: page - 1, // Spring Data 0-indexed
         size: pageSize,
@@ -133,8 +135,8 @@ export const UsuariosPage: React.FC = () => {
     if (!createUserForm.email.trim()) {
       errors.email = 'El correo electrónico es obligatorio.';
     }
-    if (!createUserForm.passwordTemporal || createUserForm.passwordTemporal.length < 8) {
-      errors.passwordTemporal = 'La contraseña temporal debe tener al menos 8 caracteres.';
+    if (!/^(?=.*[A-Z])(?=.*\d).{8,}$/.test(createUserForm.passwordTemporal)) {
+      errors.passwordTemporal = 'Mínimo 8 caracteres, una mayúscula y un número.';
     }
 
     if (!isInlinePersona && !selectedPersona) {
@@ -211,7 +213,6 @@ export const UsuariosPage: React.FC = () => {
     if (!editingUser) return;
 
     if (editingUser.protegido) {
-      alert('El usuario Administrador del sistema está protegido contra ediciones.');
       return;
     }
 
@@ -226,7 +227,7 @@ export const UsuariosPage: React.FC = () => {
       setEditingUser(null);
       fetchUsuarios();
     } catch (err: any) {
-      alert('Error al actualizar usuario: ' + (err?.problemDetail?.detail || err?.message || 'Falla al guardar.'));
+      setAviso('Error al actualizar usuario: ' + (err?.problemDetail?.detail || err?.message || 'Falla al guardar.'));
     } finally {
       setIsSavingEdit(false);
     }
@@ -235,14 +236,13 @@ export const UsuariosPage: React.FC = () => {
   // Handle Soft-Delete
   const handleDeleteUser = async (user: UsuarioResumen) => {
     if (user.protegido) {
-      alert('El usuario Administrador del sistema está protegido (protegido: true) y no puede ser dado de baja.');
       return;
     }
     try {
       await usuarioApi.eliminar(user.id);
       fetchUsuarios();
     } catch (err: any) {
-      alert('Error al dar de baja el usuario: ' + (err?.problemDetail?.detail || err?.message));
+      setAviso('Error al dar de baja el usuario: ' + (err?.problemDetail?.detail || err?.message));
     }
   };
 
@@ -252,14 +252,13 @@ export const UsuariosPage: React.FC = () => {
       await usuarioApi.reactivar(user.id);
       fetchUsuarios();
     } catch (err: any) {
-      alert('Error al reactivar el usuario: ' + (err?.problemDetail?.detail || err?.message));
+      setAviso('Error al reactivar el usuario: ' + (err?.problemDetail?.detail || err?.message));
     }
   };
 
   // Handle Open Roles Modal
   const handleOpenRoles = (user: UsuarioResumen) => {
     if (user.protegido) {
-      alert('El usuario Administrador del sistema está protegido (protegido: true) y no se le pueden alterar los roles.');
       return;
     }
     setRolesModalUser(user);
@@ -302,7 +301,6 @@ export const UsuariosPage: React.FC = () => {
     if (!resetPassUser || !newPassword) return;
 
     if (resetPassUser.protegido) {
-      alert('El usuario Administrador del sistema está protegido y no se puede resetear su clave.');
       return;
     }
 
@@ -442,7 +440,6 @@ export const UsuariosPage: React.FC = () => {
         title="Resetear Contraseña (PUT /admin/usuarios/{id}/password)"
         onClick={() => {
           if (user.protegido) {
-            alert('El usuario Administrador está protegido contra reseteos de contraseña.');
             return;
           }
           setResetPassUser(user);
@@ -476,6 +473,18 @@ export const UsuariosPage: React.FC = () => {
           Administración centralizada conectada al contrato OpenAPI del backend (`pica-back`).
         </p>
       </div>
+
+      {aviso && (
+        <div
+          role="alert"
+          style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171', padding: '0.75rem', borderRadius: 'var(--radius-sm)' }}
+        >
+          <span>{aviso}</span>
+          <button type="button" onClick={() => setAviso(null)} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}>
+            ✕
+          </button>
+        </div>
+      )}
 
       <DataTable<UsuarioResumen>
         title="Directorio de Usuarios"
@@ -514,7 +523,6 @@ export const UsuariosPage: React.FC = () => {
         }}
         onEdit={(u) => {
           if (u.protegido) {
-            alert('El usuario Administrador está protegido.');
             return;
           }
           setEditingUser(u);
@@ -523,6 +531,7 @@ export const UsuariosPage: React.FC = () => {
         onDelete={handleDeleteUser}
         onReactivate={handleReactivateUser}
         customActions={renderCustomRowActions}
+        isReadOnly={(u) => u.protegido}
         createButtonText="Alta de Usuario"
       />
 

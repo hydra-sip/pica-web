@@ -331,14 +331,14 @@ export const handlers = [
 
   // Admin User Roles Update (PUT /admin/usuarios/{id}/roles)
   http.put(`${API_URL}/admin/usuarios/:id/roles`, async ({ params, request }) => {
-    const body = (await request.json().catch(() => ({}))) as { roles?: string[] };
+    const body = (await request.json().catch(() => ({}))) as { roles?: number[] };
     const { id } = params;
 
     if (id === '1') {
       return new HttpResponse(
         JSON.stringify({
           status: 403,
-          codigo: 'ADMIN_READONLY',
+          codigo: 'USUARIO_PROTEGIDO',
           detail: 'No se pueden modificar los roles del Administrador principal.',
         }),
         { status: 403, headers: { 'Content-Type': 'application/problem+json' } }
@@ -352,13 +352,15 @@ export const handlers = [
     });
   }),
 
-  // Admin User Reset Password (POST /admin/usuarios/{id}/reset-password)
-  http.post(`${API_URL}/admin/usuarios/:id/reset-password`, async ({ params }) => {
-    const { id } = params;
-    return HttpResponse.json({
-      id: Number(id),
-      message: 'La contraseña ha sido blanqueada exitosamente.',
-    });
+  // Admin User Reset Password (PUT /admin/usuarios/{id}/password) -> 204
+  http.put(`${API_URL}/admin/usuarios/:id/password`, async ({ params }) => {
+    if (params.id === '1') {
+      return HttpResponse.json(
+        { status: 403, codigo: 'USUARIO_PROTEGIDO', detail: 'Al admin del sistema no se le puede cambiar la clave desde acá.' },
+        { status: 403, headers: { 'Content-Type': 'application/problem+json' } }
+      );
+    }
+    return new HttpResponse(null, { status: 204 });
   }),
 ];
 

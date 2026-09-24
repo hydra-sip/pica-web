@@ -27,6 +27,8 @@ interface DataTableProps<T extends Record<string, any>> {
   // Extra filters & custom actions
   extraFilters?: React.ReactNode;
   customActions?: (item: T) => React.ReactNode;
+  // Filas que no se pueden editar, dar de baja ni reactivar (ej.: usuario con protegido: true)
+  isReadOnly?: (item: T) => boolean;
 
   // Server-side control props
   serverSide?: boolean;
@@ -58,6 +60,7 @@ export function DataTable<T extends Record<string, any>>({
   createButtonText = 'Nuevo Registro',
   extraFilters,
   customActions,
+  isReadOnly,
   serverSide = false,
   page: propPage,
   pageSize: propPageSize,
@@ -460,7 +463,9 @@ export function DataTable<T extends Record<string, any>>({
               paginatedData.map((item, idx) => {
                 const itemId = item[idField as string] || idx;
                 const itemStatus = String(item[statusField as string] || '').toUpperCase();
-                const isEliminado = itemStatus === 'ELIMINADO';
+                // el contrato marca la baja lógica con eliminado: true; 'ELIMINADO' queda para las pantallas con datos locales
+                const isEliminado = item.eliminado === true || itemStatus === 'ELIMINADO';
+                const soloLectura = isReadOnly ? isReadOnly(item) : false;
 
                 return (
                   <tr
@@ -476,7 +481,7 @@ export function DataTable<T extends Record<string, any>>({
                         {col.render
                           ? col.render(item)
                           : col.key === statusField
-                          ? <StatusChip status={item[statusField as string] as EntityStatus} />
+                          ? <StatusChip status={(isEliminado ? 'ELIMINADO' : item[statusField as string]) as EntityStatus} />
                           : String(item[col.key] ?? '-')}
                       </td>
                     ))}
@@ -506,7 +511,7 @@ export function DataTable<T extends Record<string, any>>({
                             </button>
                           )}
 
-                          {onEdit && !isEliminado && (
+                          {onEdit && !isEliminado && !soloLectura && (
                             <button
                               type="button"
                               title="Editar registro"
@@ -525,7 +530,7 @@ export function DataTable<T extends Record<string, any>>({
                             </button>
                           )}
 
-                          {onDelete && !isEliminado && (
+                          {onDelete && !isEliminado && !soloLectura && (
                             <button
                               type="button"
                               title="Dar de baja"
@@ -544,7 +549,7 @@ export function DataTable<T extends Record<string, any>>({
                             </button>
                           )}
 
-                          {onReactivate && isEliminado && (
+                          {onReactivate && isEliminado && !soloLectura && (
                             <button
                               type="button"
                               title="Reactivar registro"
