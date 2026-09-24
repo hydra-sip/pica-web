@@ -7,7 +7,7 @@ export const OAuthCallbackPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const code = searchParams.get('code');
   const navigate = useNavigate();
-  const { loginWithTokens } = useAuth();
+  const { updateUser } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -22,12 +22,19 @@ export const OAuthCallbackPage: React.FC = () => {
     setLoading(true);
     authApi
       .exchangeOAuthCode(code)
-      .then((data) => {
-        loginWithTokens(data.accessToken, data.refreshToken, data.user);
+      .then((user) => {
+        updateUser(user);
         
         // Redirección post-login según permisos/roles
-        const isAdmin = data.user.role === 'ADMIN' || data.user.permissions?.includes('admin:access');
-        const redirectPath = isAdmin ? '/admin' : '/';
+        const userRoles = user.roles?.map((r) => r.nombre) || [];
+        const hasAdminAccess =
+          userRoles.includes('ADMINISTRADOR') ||
+          userRoles.includes('SUPER_USUARIO') ||
+          user.permisos?.includes('USUARIO_VER') ||
+          user.permisos?.includes('ROL_VER') ||
+          user.permisos?.includes('PERSONA_VER');
+
+        const redirectPath = hasAdminAccess ? '/admin' : '/';
 
         setTimeout(() => {
           navigate(redirectPath, { replace: true });
@@ -39,7 +46,7 @@ export const OAuthCallbackPage: React.FC = () => {
       .finally(() => {
         setLoading(false);
       });
-  }, [code, loginWithTokens, navigate]);
+  }, [code, updateUser, navigate]);
 
   return (
     <div style={{ maxWidth: '480px', margin: '3rem auto', textAlign: 'center' }} className="glass-card">
