@@ -1,4 +1,11 @@
-import { httpClient, setAccessToken, setRefreshToken, getRefreshToken, clearSessionTokens } from './httpClient';
+import {
+  httpClient,
+  setAccessToken,
+  setRefreshToken,
+  getRefreshToken,
+  clearSessionTokens,
+  performRefreshToken,
+} from './httpClient';
 import {
   LoginResponse,
   RefreshResponse,
@@ -76,16 +83,7 @@ export const authApi = {
   },
 
   refreshToken: async (): Promise<RefreshResponse> => {
-    const refreshToken = getRefreshToken();
-    if (!refreshToken) {
-      throw new Error('No existe refresh token guardado');
-    }
-    const data = await httpClient.post<RefreshResponse>('/auth/refresh', { refreshToken });
-    setAccessToken(data.accessToken);
-    if (data.refreshToken) {
-      setRefreshToken(data.refreshToken);
-    }
-    return data;
+    return await performRefreshToken();
   },
 
   logout: async (): Promise<void> => {
