@@ -5,8 +5,8 @@ export interface PersonaResumen {
   id: number;
   nombres: string;
   apellidos: string;
-  tipoDoc?: string;
-  nroDoc?: string;
+  tipoDoc?: string | null;
+  nroDoc?: string | null;
   estado: 'ACTIVO' | 'INACTIVO';
   eliminado: boolean;
   tieneUsuario: boolean;

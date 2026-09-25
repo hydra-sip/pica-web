@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { DataTable, ColumnDef } from '../components/DataTable';
 import { FormModal, FormFieldSchema } from '../components/FormModal';
 import { rolApi, RolResumen, RolDetalle, ModuloPermisosApi } from '../../api/rolApi';
+import { useAuth } from '../../auth/hooks/useAuth';
+import { mensajeDeError } from '../mensajesError';
 
 export interface PermisoItem {
   id: string;
@@ -31,6 +33,11 @@ const aModulosUi = (catalogo: ModuloPermisosApi[]): ModuloPermisos[] =>
 const esSuperUsuario = (rol: RolResumen) => rol.esSistema && rol.nombre === 'SUPER_USUARIO';
 
 export const RolesPage: React.FC = () => {
+  const { hasPermission } = useAuth();
+  const puedeCrear = hasPermission('ROL_CREAR');
+  const puedeEditar = hasPermission('ROL_EDITAR');
+  const puedeEliminar = hasPermission('ROL_ELIMINAR');
+
   const [roles, setRoles] = useState<RolResumen[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -134,7 +141,6 @@ export const RolesPage: React.FC = () => {
     {
       key: 'cantidadUsuarios',
       label: 'Usuarios Asignados',
-      sortable: true,
       render: (r) => (
         <span
           style={{
@@ -230,8 +236,8 @@ export const RolesPage: React.FC = () => {
     try {
       await rolApi.eliminar(rol.id);
       fetchRoles();
-    } catch (err: any) {
-      setAviso('Error al dar de baja el rol: ' + (err?.problemDetail?.detail || err?.message));
+    } catch (err) {
+      setAviso(mensajeDeError(err, 'No se pudo dar de baja el rol.'));
     }
   };
 
@@ -239,8 +245,8 @@ export const RolesPage: React.FC = () => {
     try {
       await rolApi.reactivar(rol.id);
       fetchRoles();
-    } catch (err: any) {
-      setAviso('Error al reactivar el rol: ' + (err?.problemDetail?.detail || err?.message));
+    } catch (err) {
+      setAviso(mensajeDeError(err, 'No se pudo reactivar el rol.'));
     }
   };
 
@@ -274,8 +280,8 @@ export const RolesPage: React.FC = () => {
       setPermisosModalRol(detail);
       setSelectedPermisos(detail.permisos || []);
       setPermisosFeedback(null);
-    } catch (err: any) {
-      setAviso('Error al cargar permisos del rol: ' + (err?.problemDetail?.detail || err?.message));
+    } catch (err) {
+      setAviso(mensajeDeError(err, 'No se pudieron cargar los permisos del rol.'));
     }
   };
 
@@ -310,35 +316,43 @@ export const RolesPage: React.FC = () => {
         setPermisosModalRol(null);
         fetchRoles();
       }, 1200);
-    } catch (err: any) {
-      console.error('Error al guardar permisos:', err);
-      setPermisosFeedback(err?.problemDetail?.detail || err?.message || 'Error al guardar permisos.');
+    } catch (err) {
+      setPermisosFeedback(mensajeDeError(err, 'No se pudieron guardar los permisos.'));
     } finally {
       setIsSavingPermisos(false);
     }
   };
 
   // Render Custom Action: "🔑 Permisos" button
-  const renderCustomActions = (rol: RolResumen) => (
-    <button
-      type="button"
-      title="Configurar matriz de permisos (PUT /admin/roles/{id}/permisos)"
-      onClick={() => handleOpenPermisos(rol)}
-      disabled={esSuperUsuario(rol)}
-      style={{
-        background: 'rgba(99, 102, 241, 0.15)',
-        border: '1px solid rgba(99, 102, 241, 0.3)',
-        color: 'var(--accent-primary)',
-        padding: '0.35rem 0.6rem',
-        borderRadius: 'var(--radius-sm)',
-        cursor: esSuperUsuario(rol) ? 'not-allowed' : 'pointer',
-        fontSize: '0.8rem',
-        opacity: esSuperUsuario(rol) ? 0.5 : 1,
-      }}
-    >
-      🔑 Permisos
-    </button>
-  );
+  // Dado de baja: primero se reactiva (404). Inactivo: el back no deja cambiarle permisos (409 ROL_INACTIVO)
+  const renderCustomActions = (rol: RolResumen) => {
+    if (!puedeEditar || rol.eliminado) return null;
+    const apagado = esSuperUsuario(rol) || rol.estado === 'INACTIVO';
+    return (
+      <button
+        type="button"
+        title={
+          rol.estado === 'INACTIVO'
+            ? 'Rol inactivo: activalo para cambiar sus permisos'
+            : 'Configurar matriz de permisos (PUT /admin/roles/{id}/permisos)'
+        }
+        onClick={() => handleOpenPermisos(rol)}
+        disabled={apagado}
+        style={{
+          background: 'rgba(99, 102, 241, 0.15)',
+          border: '1px solid rgba(99, 102, 241, 0.3)',
+          color: 'var(--accent-primary)',
+          padding: '0.35rem 0.6rem',
+          borderRadius: 'var(--radius-sm)',
+          cursor: apagado ? 'not-allowed' : 'pointer',
+          fontSize: '0.8rem',
+          opacity: apagado ? 0.5 : 1,
+        }}
+      >
+        🔑 Permisos
+      </button>
+    );
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -393,11 +407,11 @@ export const RolesPage: React.FC = () => {
           if (col) setSortParam(`${col},${dir}`);
           else setSortParam('id,asc');
         }}
-        onCreate={handleCreate}
+        onCreate={puedeCrear ? handleCreate : undefined}
         onView={handleView}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onReactivate={handleReactivate}
+        onEdit={puedeEditar ? handleEdit : undefined}
+        onDelete={puedeEliminar ? handleDelete : undefined}
+        onReactivate={puedeEliminar ? handleReactivate : undefined}
         customActions={renderCustomActions}
         isReadOnly={(rol) => rol.esSistema}
         createButtonText="Crear Nuevo Rol"
