@@ -24,6 +24,13 @@ interface DataTableProps<T extends Record<string, any>> {
   onReactivate?: (item: T) => Promise<void> | void;
   isLoading?: boolean;
   createButtonText?: string;
+  // Extra filters & custom actions
+  extraFilters?: React.ReactNode;
+  customActions?: (item: T) => React.ReactNode;
+  // Filas que no se pueden editar, dar de baja ni reactivar (ej.: usuario con protegido: true)
+  isReadOnly?: (item: T) => boolean;
+  // Opciones del filtro de estado; usuarios tiene otros estados que personas y roles
+  statusOptions?: { value: string; label: string }[];
 
   // Server-side control props
   serverSide?: boolean;
@@ -37,6 +44,13 @@ interface DataTableProps<T extends Record<string, any>> {
   onSearchChange?: (searchTerm: string) => void;
   onStatusFilterChange?: (status: string) => void;
 }
+
+const ESTADOS_POR_DEFECTO = [
+  { value: 'TODOS', label: 'Todos' },
+  { value: 'ACTIVO', label: 'Activos' },
+  { value: 'INACTIVO', label: 'Inactivos' },
+  { value: 'ELIMINADO', label: 'Eliminados' },
+];
 
 export function DataTable<T extends Record<string, any>>({
   title,
@@ -53,6 +67,10 @@ export function DataTable<T extends Record<string, any>>({
   onReactivate,
   isLoading = false,
   createButtonText = 'Nuevo Registro',
+  extraFilters,
+  customActions,
+  isReadOnly,
+  statusOptions = ESTADOS_POR_DEFECTO,
   serverSide = false,
   page: propPage,
   pageSize: propPageSize,
@@ -343,12 +361,16 @@ export function DataTable<T extends Record<string, any>>({
                 cursor: 'pointer',
               }}
             >
-              <option value="TODOS">Todos</option>
-              <option value="ACTIVO">Activos</option>
-              <option value="INACTIVO">Inactivos</option>
-              <option value="ELIMINADO">Eliminados</option>
+              {statusOptions.map((op) => (
+                <option key={op.value} value={op.value}>
+                  {op.label}
+                </option>
+              ))}
             </select>
           </div>
+
+          {/* Extra filters */}
+          {extraFilters}
         </div>
 
         {/* Page size selector */}
@@ -415,7 +437,7 @@ export function DataTable<T extends Record<string, any>>({
                   </div>
                 </th>
               ))}
-              {(onView || onEdit || onDelete || onReactivate) && (
+              {(onView || onEdit || onDelete || onReactivate || customActions) && (
                 <th
                   style={{
                     padding: '0.85rem 1rem',
@@ -433,7 +455,7 @@ export function DataTable<T extends Record<string, any>>({
             {isLoading ? (
               <tr>
                 <td
-                  colSpan={columns.length + (onView || onEdit || onDelete || onReactivate ? 1 : 0)}
+                  colSpan={columns.length + (onView || onEdit || onDelete || onReactivate || customActions ? 1 : 0)}
                   style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}
                 >
                   Cargando información...
@@ -442,7 +464,7 @@ export function DataTable<T extends Record<string, any>>({
             ) : paginatedData.length === 0 ? (
               <tr>
                 <td
-                  colSpan={columns.length + (onView || onEdit || onDelete || onReactivate ? 1 : 0)}
+                  colSpan={columns.length + (onView || onEdit || onDelete || onReactivate || customActions ? 1 : 0)}
                   style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}
                 >
                   No se encontraron registros que coincidan con la búsqueda.
@@ -452,7 +474,9 @@ export function DataTable<T extends Record<string, any>>({
               paginatedData.map((item, idx) => {
                 const itemId = item[idField as string] || idx;
                 const itemStatus = String(item[statusField as string] || '').toUpperCase();
-                const isEliminado = itemStatus === 'ELIMINADO';
+                // el contrato marca la baja lógica con eliminado: true; 'ELIMINADO' queda para las pantallas con datos locales
+                const isEliminado = item.eliminado === true || itemStatus === 'ELIMINADO';
+                const soloLectura = isReadOnly ? isReadOnly(item) : false;
 
                 return (
                   <tr
@@ -468,15 +492,17 @@ export function DataTable<T extends Record<string, any>>({
                         {col.render
                           ? col.render(item)
                           : col.key === statusField
-                          ? <StatusChip status={item[statusField as string] as EntityStatus} />
+                          ? <StatusChip status={(isEliminado ? 'ELIMINADO' : item[statusField as string]) as EntityStatus} />
                           : String(item[col.key] ?? '-')}
                       </td>
                     ))}
 
                     {/* Action buttons */}
-                    {(onView || onEdit || onDelete || onReactivate) && (
+                    {(onView || onEdit || onDelete || onReactivate || customActions) && (
                       <td style={{ padding: '0.85rem 1rem', textAlign: 'right', whiteSpace: 'nowrap' }}>
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                          {customActions && customActions(item)}
+
                           {onView && (
                             <button
                               type="button"
@@ -496,7 +522,7 @@ export function DataTable<T extends Record<string, any>>({
                             </button>
                           )}
 
-                          {onEdit && !isEliminado && (
+                          {onEdit && !isEliminado && !soloLectura && (
                             <button
                               type="button"
                               title="Editar registro"
@@ -515,7 +541,7 @@ export function DataTable<T extends Record<string, any>>({
                             </button>
                           )}
 
-                          {onDelete && !isEliminado && (
+                          {onDelete && !isEliminado && !soloLectura && (
                             <button
                               type="button"
                               title="Dar de baja"
@@ -534,7 +560,7 @@ export function DataTable<T extends Record<string, any>>({
                             </button>
                           )}
 
-                          {onReactivate && isEliminado && (
+                          {onReactivate && isEliminado && !soloLectura && (
                             <button
                               type="button"
                               title="Reactivar registro"
