@@ -318,4 +318,15 @@ export const handlers = [
   http.post(`${API_URL}/auth/logout`, () => {
     return HttpResponse.json({ message: 'Sesión cerrada exitosamente' });
   }),
+
+  // Admin Stats
+  http.get(`${API_URL}/admin/stats`, () => {
+    return HttpResponse.json({
+      totalUsers: 24,
+      activeProjects: 8,
+      systemStatus: 'OPERATIVO',
+      lastBackup: new Date().toISOString(),
+    });
+  }),
 ];
+
