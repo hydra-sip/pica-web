@@ -1,6 +1,14 @@
 import { http, HttpResponse } from 'msw';
+import { adminHandlers } from './adminHandlers';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
+
+// El admin es Super Usuario: tiene los 13 permisos del seed V4, como en el back
+const PERMISOS_SUPER_USUARIO = [
+  'USUARIO_VER', 'USUARIO_CREAR', 'USUARIO_EDITAR', 'USUARIO_ELIMINAR',
+  'PERSONA_VER', 'PERSONA_CREAR', 'PERSONA_EDITAR', 'PERSONA_ELIMINAR',
+  'ROL_VER', 'ROL_CREAR', 'ROL_EDITAR', 'ROL_ELIMINAR', 'ROL_ASIGNAR',
+];
 
 // In-memory mock store for current user profile state according to openapi.yaml
 let mockCurrentUserState = {
@@ -20,14 +28,15 @@ let mockCurrentUserState = {
     domicilioPostal: 'Av. Constitución 1234, Luján',
     telefono: '1122334455',
   },
-  roles: [
-    { id: 1, nombre: 'ADMINISTRADOR', nombreAmigable: 'Administrador del Sistema' },
-  ],
-  permisos: ['USUARIO_VER', 'USUARIO_CREAR', 'PERSONA_VER', 'ROL_VER', 'ROL_ASIGNAR'],
+  roles: [{ id: 1, nombre: 'SUPER_USUARIO', nombreAmigable: 'Super Usuario' }],
+  permisos: [...PERMISOS_SUPER_USUARIO],
   datosCompletos: true,
 };
 
 export const handlers = [
+  // Backoffice (usuarios, personas, roles y permisos) según el contrato
+  ...adminHandlers,
+
   // Auth: Registro Endpoint (POST /auth/registro) -> 201 { id }
   http.post(`${API_URL}/auth/registro`, async ({ request }) => {
     const body = (await request.json().catch(() => ({}))) as {
@@ -132,8 +141,8 @@ export const handlers = [
       mockCurrentUserState = {
         usuario: { id: 1, username: 'admin', email: 'admin@pica.edu.ar', estado: 'ACTIVO', tieneContrasena: true },
         persona: { nombres: 'Administrador', apellidos: 'PICA', tipoDoc: 'DNI', nroDoc: '30111222', fechaNacimiento: '1990-01-01', domicilioPostal: 'Av. Constitución 1234, Luján', telefono: '1122334455' },
-        roles: [{ id: 1, nombre: 'ADMINISTRADOR', nombreAmigable: 'Administrador del Sistema' }],
-        permisos: ['USUARIO_VER', 'USUARIO_CREAR', 'PERSONA_VER', 'ROL_VER', 'ROL_ASIGNAR'],
+        roles: [{ id: 1, nombre: 'SUPER_USUARIO', nombreAmigable: 'Super Usuario' }],
+        permisos: [...PERMISOS_SUPER_USUARIO],
         datosCompletos: true,
       };
 
@@ -327,40 +336,6 @@ export const handlers = [
       systemStatus: 'OPERATIVO',
       lastBackup: new Date().toISOString(),
     });
-  }),
-
-  // Admin User Roles Update (PUT /admin/usuarios/{id}/roles)
-  http.put(`${API_URL}/admin/usuarios/:id/roles`, async ({ params, request }) => {
-    const body = (await request.json().catch(() => ({}))) as { roles?: number[] };
-    const { id } = params;
-
-    if (id === '1') {
-      return new HttpResponse(
-        JSON.stringify({
-          status: 403,
-          codigo: 'USUARIO_PROTEGIDO',
-          detail: 'No se pueden modificar los roles del Administrador principal.',
-        }),
-        { status: 403, headers: { 'Content-Type': 'application/problem+json' } }
-      );
-    }
-
-    return HttpResponse.json({
-      id: Number(id),
-      roles: body.roles || [],
-      message: 'Roles asignados correctamente.',
-    });
-  }),
-
-  // Admin User Reset Password (PUT /admin/usuarios/{id}/password) -> 204
-  http.put(`${API_URL}/admin/usuarios/:id/password`, async ({ params }) => {
-    if (params.id === '1') {
-      return HttpResponse.json(
-        { status: 403, codigo: 'USUARIO_PROTEGIDO', detail: 'Al admin del sistema no se le puede cambiar la clave desde acá.' },
-        { status: 403, headers: { 'Content-Type': 'application/problem+json' } }
-      );
-    }
-    return new HttpResponse(null, { status: 204 });
   }),
 ];
 
