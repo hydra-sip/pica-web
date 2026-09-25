@@ -42,6 +42,24 @@ export const StatusChip: React.FC<StatusChipProps> = ({ status }) => {
     };
     dotColor = '#f59e0b';
     label = 'Inactivo';
+  } else if (normalizedStatus === 'PENDIENTE_VERIFICACION') {
+    style = {
+      ...style,
+      backgroundColor: 'rgba(99, 102, 241, 0.15)',
+      color: '#818cf8',
+      border: '1px solid rgba(99, 102, 241, 0.3)',
+    };
+    dotColor = '#818cf8';
+    label = 'Pendiente';
+  } else if (normalizedStatus === 'BLOQUEADO') {
+    style = {
+      ...style,
+      backgroundColor: 'rgba(245, 158, 11, 0.15)',
+      color: '#f59e0b',
+      border: '1px solid rgba(245, 158, 11, 0.3)',
+    };
+    dotColor = '#f59e0b';
+    label = 'Bloqueado';
   } else if (normalizedStatus === 'ELIMINADO') {
     style = {
       ...style,

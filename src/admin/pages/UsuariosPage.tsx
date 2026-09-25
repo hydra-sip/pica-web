@@ -1,10 +1,51 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { DataTable, ColumnDef } from '../components/DataTable';
-import { usuarioApi, UsuarioResumen } from '../../api/usuarioApi';
+import { usuarioApi, UsuarioResumen, UsuarioDetalle } from '../../api/usuarioApi';
 import { personaApi, PersonaResumen } from '../../api/personaApi';
 import { rolApi, RolResumen } from '../../api/rolApi';
+import { useAuth } from '../../auth/hooks/useAuth';
+import { erroresPorCampo, mensajeDeError } from '../mensajesError';
+
+const TIPOS_DOC = ['DNI', 'LC', 'LE', 'CI', 'PASAPORTE'];
+
+// Estados de usuario del contrato; la baja lógica va aparte, con incluirEliminados
+const ESTADOS_USUARIO = [
+  { value: 'TODOS', label: 'Todos' },
+  { value: 'ACTIVO', label: 'Activos' },
+  { value: 'PENDIENTE_VERIFICACION', label: 'Pendientes' },
+  { value: 'BLOQUEADO', label: 'Bloqueados' },
+  { value: 'ELIMINADO', label: 'Eliminados' },
+];
+
+// La columna Persona se ordena por apellido (el back no ordena por el objeto)
+const ORDEN_POR_COLUMNA: Record<string, string> = { persona: 'apellidos' };
+
+// En el alta con persona en línea, los errores de la persona se marcan en sus campos
+const CAMPO_PERSONA_EN_LINEA: Record<string, string> = {
+  nombres: 'inlineNombres',
+  apellidos: 'inlineApellidos',
+  nroDoc: 'inlineDoc',
+};
+
+const selectStyle: React.CSSProperties = {
+  padding: '0.5rem 0.75rem',
+  borderRadius: 'var(--radius-sm)',
+  border: '1px solid var(--border-color)',
+  backgroundColor: 'rgba(15, 23, 42, 0.6)',
+  color: 'var(--text-primary)',
+  fontSize: '0.85rem',
+  outline: 'none',
+  cursor: 'pointer',
+};
 
 export const UsuariosPage: React.FC = () => {
+  const { hasPermission } = useAuth();
+  const puedeCrear = hasPermission('USUARIO_CREAR');
+  const puedeEditar = hasPermission('USUARIO_EDITAR');
+  const puedeEliminar = hasPermission('USUARIO_ELIMINAR');
+  const puedeAsignarRoles = hasPermission('ROL_ASIGNAR');
+  const puedeCrearPersona = hasPermission('PERSONA_CREAR');
+
   const [usuarios, setUsuarios] = useState<UsuarioResumen[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -16,6 +57,7 @@ export const UsuariosPage: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('TODOS');
+  const [rolFilter, setRolFilter] = useState(0);
   const [sortParam, setSortParam] = useState('id,asc');
 
   // Catalogue of available Roles (loaded from server)
@@ -30,6 +72,7 @@ export const UsuariosPage: React.FC = () => {
         // ELIMINADO no es un estado del contrato: se pide con incluirEliminados
         estado: statusFilter !== 'TODOS' && statusFilter !== 'ELIMINADO' ? statusFilter : undefined,
         incluirEliminados: statusFilter === 'ELIMINADO' || statusFilter === 'TODOS',
+        rol: rolFilter || undefined,
         page: page - 1, // Spring Data 0-indexed
         size: pageSize,
         sort: sortParam,
@@ -43,7 +86,7 @@ export const UsuariosPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [searchTerm, statusFilter, page, pageSize, sortParam]);
+  }, [searchTerm, statusFilter, rolFilter, page, pageSize, sortParam]);
 
   // Load available roles list
   useEffect(() => {
@@ -84,9 +127,15 @@ export const UsuariosPage: React.FC = () => {
   const [createFormErrors, setCreateFormErrors] = useState<Record<string, string>>({});
   const [isCreatingUser, setIsCreatingUser] = useState(false);
 
-  // Modal State: Edit User
-  const [editingUser, setEditingUser] = useState<UsuarioResumen | null>(null);
-  const [editForm, setEditForm] = useState({ email: '', estado: 'ACTIVO' as 'ACTIVO' | 'BLOQUEADO' });
+  // Modal State: Edit User (parte del detalle: el PUT reemplaza todos los campos)
+  const [editingUser, setEditingUser] = useState<UsuarioDetalle | null>(null);
+  const [editForm, setEditForm] = useState({
+    username: '',
+    email: '',
+    descripcion: '',
+    estado: 'ACTIVO' as 'ACTIVO' | 'BLOQUEADO',
+  });
+  const [editErrors, setEditErrors] = useState<Record<string, string>>({});
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   // Modal State: Roles Assignment (numeric IDs)
@@ -117,8 +166,8 @@ export const UsuariosPage: React.FC = () => {
       if ((res.content || []).length === 0) {
         setSearchError(`No se encontraron personas con el criterio "${docSearchInput}". Podés crearla en línea a continuación.`);
       }
-    } catch (err: any) {
-      setSearchError(err?.problemDetail?.detail || 'Error al buscar personas.');
+    } catch (err) {
+      setSearchError(mensajeDeError(err, 'Error al buscar personas.'));
     } finally {
       setIsSearchingPersona(false);
     }
@@ -160,14 +209,28 @@ export const UsuariosPage: React.FC = () => {
 
       // 1. Create persona online if inline mode is selected
       if (isInlinePersona) {
-        const createdPersona = await personaApi.crear({
+        const creada = await personaApi.crear({
           nombres: inlinePersonaData.nombres.trim(),
           apellidos: inlinePersonaData.apellidos.trim(),
           tipoDoc: inlinePersonaData.tipoDoc,
           nroDoc: inlinePersonaData.nroDoc.trim(),
           telefono: inlinePersonaData.telefono.trim() || undefined,
         });
-        targetPersonaId = createdPersona.id;
+        // Si después falla el alta del usuario, la persona ya existe: queda elegida para reintentar
+        const persona: PersonaResumen = {
+          id: creada.id,
+          nombres: creada.nombres,
+          apellidos: creada.apellidos,
+          tipoDoc: creada.tipoDoc,
+          nroDoc: creada.nroDoc,
+          estado: creada.estado,
+          eliminado: false,
+          tieneUsuario: false,
+        };
+        setSelectedPersona(persona);
+        setFoundPersonas([persona]);
+        setIsInlinePersona(false);
+        targetPersonaId = persona.id;
       }
 
       if (!targetPersonaId) {
@@ -186,11 +249,12 @@ export const UsuariosPage: React.FC = () => {
       setIsCreateOpen(false);
       resetCreateForm();
       fetchUsuarios();
-    } catch (err: any) {
-      console.error('Error al crear usuario:', err);
-      setCreateFormErrors({
-        server: err?.problemDetail?.detail || err?.message || 'Error al procesar la alta de usuario.',
+    } catch (err) {
+      const errors: Record<string, string> = {};
+      Object.entries(erroresPorCampo(err)).forEach(([campo, mensaje]) => {
+        errors[CAMPO_PERSONA_EN_LINEA[campo] ?? campo] = mensaje;
       });
+      setCreateFormErrors({ ...errors, server: mensajeDeError(err, 'No se pudo dar de alta el usuario.') });
     } finally {
       setIsCreatingUser(false);
     }
@@ -207,6 +271,26 @@ export const UsuariosPage: React.FC = () => {
     setCreateFormErrors({});
   };
 
+  // Open Edit: trae el detalle para no pisar la descripción al guardar
+  const handleOpenEdit = async (u: UsuarioResumen) => {
+    if (u.protegido) {
+      return;
+    }
+    try {
+      const detalle = await usuarioApi.getUsuario(u.id);
+      setEditingUser(detalle);
+      setEditForm({
+        username: detalle.username,
+        email: detalle.email,
+        descripcion: detalle.descripcion ?? '',
+        estado: detalle.estado === 'BLOQUEADO' ? 'BLOQUEADO' : 'ACTIVO',
+      });
+      setEditErrors({});
+    } catch (err) {
+      setAviso(mensajeDeError(err, 'No se pudo abrir el usuario.'));
+    }
+  };
+
   // Handle Edit Submit
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -219,15 +303,16 @@ export const UsuariosPage: React.FC = () => {
     setIsSavingEdit(true);
     try {
       await usuarioApi.actualizar(editingUser.id, {
-        username: editingUser.username,
-        email: editForm.email,
+        username: editForm.username.trim(),
+        email: editForm.email.trim(),
+        descripcion: editForm.descripcion.trim() || null,
         estado: editForm.estado,
         personaId: editingUser.persona.id,
       });
       setEditingUser(null);
       fetchUsuarios();
-    } catch (err: any) {
-      setAviso('Error al actualizar usuario: ' + (err?.problemDetail?.detail || err?.message || 'Falla al guardar.'));
+    } catch (err) {
+      setEditErrors({ ...erroresPorCampo(err), server: mensajeDeError(err, 'No se pudo guardar el usuario.') });
     } finally {
       setIsSavingEdit(false);
     }
@@ -241,8 +326,8 @@ export const UsuariosPage: React.FC = () => {
     try {
       await usuarioApi.eliminar(user.id);
       fetchUsuarios();
-    } catch (err: any) {
-      setAviso('Error al dar de baja el usuario: ' + (err?.problemDetail?.detail || err?.message));
+    } catch (err) {
+      setAviso(mensajeDeError(err, 'No se pudo dar de baja el usuario.'));
     }
   };
 
@@ -251,8 +336,8 @@ export const UsuariosPage: React.FC = () => {
     try {
       await usuarioApi.reactivar(user.id);
       fetchUsuarios();
-    } catch (err: any) {
-      setAviso('Error al reactivar el usuario: ' + (err?.problemDetail?.detail || err?.message));
+    } catch (err) {
+      setAviso(mensajeDeError(err, 'No se pudo reactivar el usuario.'));
     }
   };
 
@@ -279,9 +364,8 @@ export const UsuariosPage: React.FC = () => {
         setRolesModalUser(null);
         fetchUsuarios();
       }, 1000);
-    } catch (err: any) {
-      console.error('Error al guardar roles:', err);
-      setRolesMessage(err?.problemDetail?.detail || err?.message || 'Error al actualizar roles.');
+    } catch (err) {
+      setRolesMessage(mensajeDeError(err, 'No se pudieron guardar los roles.'));
     } finally {
       setIsSavingRoles(false);
     }
@@ -319,8 +403,8 @@ export const UsuariosPage: React.FC = () => {
         setResetSuccess(null);
         setPasswordError(null);
       }, 1500);
-    } catch (err: any) {
-      setPasswordError('Error al resetear contraseña: ' + (err?.problemDetail?.detail || err?.message || 'Intente nuevamente.'));
+    } catch (err) {
+      setPasswordError(mensajeDeError(err, 'No se pudo resetear la contraseña.'));
     } finally {
       setIsResettingPass(false);
     }
@@ -413,56 +497,63 @@ export const UsuariosPage: React.FC = () => {
     },
   ];
 
-  // Custom Row Actions: Roles & Password Reset
-  const renderCustomRowActions = (user: UsuarioResumen) => (
-    <>
-      <button
-        type="button"
-        title="Gestionar Roles (PUT /admin/usuarios/{id}/roles)"
-        onClick={() => handleOpenRoles(user)}
-        disabled={user.protegido}
-        style={{
-          background: 'rgba(6, 182, 212, 0.15)',
-          border: '1px solid rgba(6, 182, 212, 0.3)',
-          color: 'var(--accent-secondary)',
-          padding: '0.35rem 0.6rem',
-          borderRadius: 'var(--radius-sm)',
-          cursor: user.protegido ? 'not-allowed' : 'pointer',
-          fontSize: '0.8rem',
-          opacity: user.protegido ? 0.5 : 1,
-        }}
-      >
-        🛡️ Roles
-      </button>
+  // Custom Row Actions: Roles & Password Reset (un usuario dado de baja primero se reactiva)
+  const renderCustomRowActions = (user: UsuarioResumen) => {
+    if (user.eliminado) return null;
+    return (
+      <>
+        {puedeAsignarRoles && (
+          <button
+            type="button"
+            title="Gestionar Roles (PUT /admin/usuarios/{id}/roles)"
+            onClick={() => handleOpenRoles(user)}
+            disabled={user.protegido}
+            style={{
+              background: 'rgba(6, 182, 212, 0.15)',
+              border: '1px solid rgba(6, 182, 212, 0.3)',
+              color: 'var(--accent-secondary)',
+              padding: '0.35rem 0.6rem',
+              borderRadius: 'var(--radius-sm)',
+              cursor: user.protegido ? 'not-allowed' : 'pointer',
+              fontSize: '0.8rem',
+              opacity: user.protegido ? 0.5 : 1,
+            }}
+          >
+            🛡️ Roles
+          </button>
+        )}
 
-      <button
-        type="button"
-        title="Resetear Contraseña (PUT /admin/usuarios/{id}/password)"
-        onClick={() => {
-          if (user.protegido) {
-            return;
-          }
-          setResetPassUser(user);
-          setNewPassword('');
-          setPasswordError(null);
-          setResetSuccess(null);
-        }}
-        disabled={user.protegido}
-        style={{
-          background: 'rgba(245, 158, 11, 0.15)',
-          border: '1px solid rgba(245, 158, 11, 0.3)',
-          color: '#f59e0b',
-          padding: '0.35rem 0.6rem',
-          borderRadius: 'var(--radius-sm)',
-          cursor: user.protegido ? 'not-allowed' : 'pointer',
-          fontSize: '0.8rem',
-          opacity: user.protegido ? 0.5 : 1,
-        }}
-      >
-        🔑 Reset
-      </button>
-    </>
-  );
+        {puedeEditar && (
+          <button
+            type="button"
+            title="Resetear Contraseña (PUT /admin/usuarios/{id}/password)"
+            onClick={() => {
+              if (user.protegido) {
+                return;
+              }
+              setResetPassUser(user);
+              setNewPassword('');
+              setPasswordError(null);
+              setResetSuccess(null);
+            }}
+            disabled={user.protegido}
+            style={{
+              background: 'rgba(245, 158, 11, 0.15)',
+              border: '1px solid rgba(245, 158, 11, 0.3)',
+              color: '#f59e0b',
+              padding: '0.35rem 0.6rem',
+              borderRadius: 'var(--radius-sm)',
+              cursor: user.protegido ? 'not-allowed' : 'pointer',
+              fontSize: '0.8rem',
+              opacity: user.protegido ? 0.5 : 1,
+            }}
+          >
+            🔑 Reset
+          </button>
+        )}
+      </>
+    );
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -514,22 +605,41 @@ export const UsuariosPage: React.FC = () => {
           setPage(1);
         }}
         onSortChange={(col, dir) => {
-          if (col) setSortParam(`${col},${dir}`);
+          if (col) setSortParam(`${ORDEN_POR_COLUMNA[col] ?? col},${dir}`);
           else setSortParam('id,asc');
         }}
-        onCreate={() => {
-          resetCreateForm();
-          setIsCreateOpen(true);
-        }}
-        onEdit={(u) => {
-          if (u.protegido) {
-            return;
-          }
-          setEditingUser(u);
-          setEditForm({ email: u.email, estado: u.estado === 'BLOQUEADO' ? 'BLOQUEADO' : 'ACTIVO' });
-        }}
-        onDelete={handleDeleteUser}
-        onReactivate={handleReactivateUser}
+        statusOptions={ESTADOS_USUARIO}
+        extraFilters={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Rol:</span>
+            <select
+              value={rolFilter}
+              onChange={(e) => {
+                setRolFilter(Number(e.target.value));
+                setPage(1);
+              }}
+              style={selectStyle}
+            >
+              <option value={0}>Todos</option>
+              {availableRoles.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.nombreAmigable}
+                </option>
+              ))}
+            </select>
+          </div>
+        }
+        onCreate={
+          puedeCrear
+            ? () => {
+                resetCreateForm();
+                setIsCreateOpen(true);
+              }
+            : undefined
+        }
+        onEdit={puedeEditar ? handleOpenEdit : undefined}
+        onDelete={puedeEliminar ? handleDeleteUser : undefined}
+        onReactivate={puedeEliminar ? handleReactivateUser : undefined}
         customActions={renderCustomRowActions}
         isReadOnly={(u) => u.protegido}
         createButtonText="Alta de Usuario"
@@ -640,7 +750,6 @@ export const UsuariosPage: React.FC = () => {
                               onClick={() => {
                                 if (p.tieneUsuario) return;
                                 setSelectedPersona(p);
-                                setCreateUserForm((prev) => ({ ...prev, email: prev.email || `${p.nombres.toLowerCase().replace(/\s+/g, '')}@pica.edu.ar` }));
                               }}
                               style={{
                                 padding: '0.5rem 0.75rem',
@@ -673,26 +782,28 @@ export const UsuariosPage: React.FC = () => {
                       <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.3rem', display: 'block' }}>{createFormErrors.persona}</span>
                     )}
 
-                    <div style={{ marginTop: '0.75rem' }}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsInlinePersona(true);
-                          setSelectedPersona(null);
-                          setFoundPersonas([]);
-                        }}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: 'var(--accent-primary)',
-                          fontSize: '0.85rem',
-                          cursor: 'pointer',
-                          textDecoration: 'underline',
-                        }}
-                      >
-                        + ¿La persona no existe? Crear persona en línea (POST /admin/personas)
-                      </button>
-                    </div>
+                    {puedeCrearPersona && (
+                      <div style={{ marginTop: '0.75rem' }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsInlinePersona(true);
+                            setSelectedPersona(null);
+                            setFoundPersonas([]);
+                          }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--accent-primary)',
+                            fontSize: '0.85rem',
+                            cursor: 'pointer',
+                            textDecoration: 'underline',
+                          }}
+                        >
+                          + ¿La persona no existe? Crear persona en línea (POST /admin/personas)
+                        </button>
+                      </div>
+                    )}
                   </>
                 ) : (
                   /* Formulario en Línea para Crear Persona */
@@ -754,8 +865,11 @@ export const UsuariosPage: React.FC = () => {
                           fontSize: '0.8rem',
                         }}
                       >
-                        <option value="DNI">DNI</option>
-                        <option value="PASAPORTE">Pasaporte</option>
+                        {TIPOS_DOC.map((t) => (
+                          <option key={t} value={t}>
+                            {t}
+                          </option>
+                        ))}
                       </select>
                       <input
                         type="text"
@@ -922,13 +1036,58 @@ export const UsuariosPage: React.FC = () => {
               Editar Usuario: {editingUser.username}
             </h3>
 
+            {editErrors.server && (
+              <div style={{ backgroundColor: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', padding: '0.6rem 0.8rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem', fontSize: '0.85rem' }}>
+                {editErrors.server}
+              </div>
+            )}
+
             <form onSubmit={handleEditSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Nombre de Usuario</label>
+                <input
+                  type="text"
+                  value={editForm.username}
+                  onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.55rem',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-color)',
+                    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.875rem',
+                  }}
+                />
+                {editErrors.username && <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>{editErrors.username}</span>}
+              </div>
+
               <div>
                 <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Correo Electrónico</label>
                 <input
                   type="email"
                   value={editForm.email}
                   onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.55rem',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-color)',
+                    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+                    color: 'var(--text-primary)',
+                    fontSize: '0.875rem',
+                  }}
+                />
+                {editErrors.email && <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>{editErrors.email}</span>}
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Descripción</label>
+                <textarea
+                  rows={2}
+                  maxLength={500}
+                  value={editForm.descripcion}
+                  onChange={(e) => setEditForm({ ...editForm, descripcion: e.target.value })}
                   style={{
                     width: '100%',
                     padding: '0.55rem',
@@ -959,6 +1118,11 @@ export const UsuariosPage: React.FC = () => {
                   <option value="ACTIVO">ACTIVO</option>
                   <option value="BLOQUEADO">BLOQUEADO</option>
                 </select>
+                {editingUser.estado === 'PENDIENTE_VERIFICACION' && (
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem', display: 'block' }}>
+                    Tiene el email sin verificar: pasa a Activo solo cuando lo verifica.
+                  </span>
+                )}
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1rem' }}>
@@ -1042,6 +1206,8 @@ export const UsuariosPage: React.FC = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem', maxHeight: '300px', overflowY: 'auto' }}>
               {availableRoles.map((r) => {
                 const isChecked = selectedRoleIds.includes(r.id);
+                // Un rol inactivo no se puede agregar (409 ROL_INACTIVO); si ya lo tenía, se conserva
+                const bloqueado = r.estado === 'INACTIVO' && !rolesModalUser.roles.some((x) => x.id === r.id);
                 return (
                   <label
                     key={r.id}
@@ -1053,12 +1219,14 @@ export const UsuariosPage: React.FC = () => {
                       borderRadius: 'var(--radius-sm)',
                       backgroundColor: isChecked ? 'rgba(99, 102, 241, 0.12)' : 'rgba(15, 23, 42, 0.4)',
                       border: isChecked ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid var(--border-color)',
-                      cursor: 'pointer',
+                      cursor: bloqueado ? 'not-allowed' : 'pointer',
+                      opacity: bloqueado ? 0.5 : 1,
                     }}
                   >
                     <input
                       type="checkbox"
                       checked={isChecked}
+                      disabled={bloqueado}
                       onChange={(e) => {
                         if (e.target.checked) {
                           setSelectedRoleIds([...selectedRoleIds, r.id]);
@@ -1071,6 +1239,7 @@ export const UsuariosPage: React.FC = () => {
                     <div>
                       <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                         {r.nombreAmigable} <code>(ID: {r.id}, {r.nombre})</code>
+                        {r.estado === 'INACTIVO' && <span style={{ fontSize: '0.75rem', color: '#f59e0b' }}> · inactivo</span>}
                       </div>
                       {r.descripcion && <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{r.descripcion}</div>}
                     </div>

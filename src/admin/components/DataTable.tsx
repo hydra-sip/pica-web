@@ -29,6 +29,8 @@ interface DataTableProps<T extends Record<string, any>> {
   customActions?: (item: T) => React.ReactNode;
   // Filas que no se pueden editar, dar de baja ni reactivar (ej.: usuario con protegido: true)
   isReadOnly?: (item: T) => boolean;
+  // Opciones del filtro de estado; usuarios tiene otros estados que personas y roles
+  statusOptions?: { value: string; label: string }[];
 
   // Server-side control props
   serverSide?: boolean;
@@ -42,6 +44,13 @@ interface DataTableProps<T extends Record<string, any>> {
   onSearchChange?: (searchTerm: string) => void;
   onStatusFilterChange?: (status: string) => void;
 }
+
+const ESTADOS_POR_DEFECTO = [
+  { value: 'TODOS', label: 'Todos' },
+  { value: 'ACTIVO', label: 'Activos' },
+  { value: 'INACTIVO', label: 'Inactivos' },
+  { value: 'ELIMINADO', label: 'Eliminados' },
+];
 
 export function DataTable<T extends Record<string, any>>({
   title,
@@ -61,6 +70,7 @@ export function DataTable<T extends Record<string, any>>({
   extraFilters,
   customActions,
   isReadOnly,
+  statusOptions = ESTADOS_POR_DEFECTO,
   serverSide = false,
   page: propPage,
   pageSize: propPageSize,
@@ -351,10 +361,11 @@ export function DataTable<T extends Record<string, any>>({
                 cursor: 'pointer',
               }}
             >
-              <option value="TODOS">Todos</option>
-              <option value="ACTIVO">Activos</option>
-              <option value="INACTIVO">Inactivos</option>
-              <option value="ELIMINADO">Eliminados</option>
+              {statusOptions.map((op) => (
+                <option key={op.value} value={op.value}>
+                  {op.label}
+                </option>
+              ))}
             </select>
           </div>
 
