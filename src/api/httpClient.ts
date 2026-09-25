@@ -1,4 +1,4 @@
-import { ProblemDetail } from '../auth/types';
+import { ProblemDetail, RefreshResponse } from '../auth/types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 const REFRESH_TOKEN_KEY = 'pica_refresh_token';
@@ -6,6 +6,7 @@ const REFRESH_TOKEN_KEY = 'pica_refresh_token';
 // Access Token strictly in memory
 let inMemoryAccessToken: string | null = null;
 let isRefreshing = false;
+let activeRefreshPromise: Promise<RefreshResponse> | null = null;
 let failedQueue: Array<{
   resolve: (value?: any) => void;
   reject: (reason?: any) => void;
@@ -58,6 +59,54 @@ export const setRefreshToken = (token: string | null) => {
 export const clearSessionTokens = () => {
   inMemoryAccessToken = null;
   localStorage.removeItem(REFRESH_TOKEN_KEY);
+};
+
+export const performRefreshToken = async (): Promise<RefreshResponse> => {
+  if (activeRefreshPromise) {
+    return activeRefreshPromise;
+  }
+
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) {
+    clearSessionTokens();
+    notifyUnauthorized();
+    throw new ApiError('No existe refresh token guardado', 401);
+  }
+
+  activeRefreshPromise = (async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      if (!response.ok) {
+        let problemDetail: ProblemDetail | undefined;
+        try {
+          problemDetail = await response.json();
+        } catch {
+          // ignore
+        }
+        throw new ApiError(
+          problemDetail?.detail || problemDetail?.codigo || 'Refresh token expirado o inválido',
+          response.status,
+          problemDetail
+        );
+      }
+
+      const data: RefreshResponse = await response.json();
+      setAccessToken(data.accessToken);
+      if (data.refreshToken) {
+        setRefreshToken(data.refreshToken);
+      }
+      return data;
+    } finally {
+      activeRefreshPromise = null;
+    }
+  })();
+
+  return activeRefreshPromise;
 };
 
 export interface RequestOptions extends RequestInit {
@@ -158,24 +207,8 @@ export async function customFetch<T = unknown>(
     isRefreshing = true;
 
     try {
-      const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken }),
-      });
-
-      if (!refreshResponse.ok) {
-        throw new Error('Refresh token expirado o inválido');
-      }
-
-      const refreshData = await refreshResponse.json();
+      const refreshData = await performRefreshToken();
       const newAccessToken = refreshData.accessToken;
-      const newRefreshToken = refreshData.refreshToken;
-
-      setAccessToken(newAccessToken);
-      if (newRefreshToken) {
-        setRefreshToken(newRefreshToken);
-      }
 
       processQueue(null, newAccessToken);
 
