@@ -6,7 +6,9 @@ import './Navbar.css';
 export const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, hasPermission } = useAuth();
+  // Mismo criterio que el guard de /admin (RF-008)
+  const veBackoffice = hasPermission(['USUARIO_VER', 'ROL_VER', 'PERSONA_VER']);
 
   const toggleMenu = () => {
     setIsMobileMenuOpen((prev) => !prev);
@@ -52,13 +54,15 @@ export const Navbar: React.FC = () => {
           >
             Inicio
           </Link>
-          <Link
-            to="/admin"
-            className={`nav-link ${isActive('/admin') ? 'active' : ''}`}
-            onClick={closeMenu}
-          >
-            Administración
-          </Link>
+          {veBackoffice && (
+            <Link
+              to="/admin"
+              className={`nav-link ${isActive('/admin') ? 'active' : ''}`}
+              onClick={closeMenu}
+            >
+              Administración
+            </Link>
+          )}
 
           {isAuthenticated && (
             <Link

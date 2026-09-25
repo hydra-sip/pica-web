@@ -39,18 +39,19 @@ export const AppRoutes: React.FC = () => {
         <Route path="*" element={<NotFoundPage />} />
       </Route>
 
-      {/* Layout de Administración Protegido (AdminLayout) */}
+      {/* Layout de Administración Protegido (HU-107 Backoffice Protection) */}
       <Route element={<RequireAuth />}>
         <Route
           element={
-            <RequirePermiso permisos={['USUARIO_VER', 'ROL_VER', 'PERSONA_VER']}>
+            <RequirePermiso
+              permisos={['USUARIO_VER', 'ROL_VER', 'PERSONA_VER']}
+            >
               <AdminLayout />
             </RequirePermiso>
           }
         >
           <Route path="/admin">
             <Route index element={<AdminDashboardPage />} />
-            
             <Route
               path="usuarios"
               element={

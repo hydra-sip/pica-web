@@ -1,148 +1,89 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-
-interface ApiInfo {
-  name: string;
-  version: string;
-  status: string;
-  environment: string;
-  message: string;
-}
+import { useAuth } from '../../auth/hooks/useAuth';
 
 export const HomePage: React.FC = () => {
-  const [info, setInfo] = useState<ApiInfo | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-
-  useEffect(() => {
-    fetch(`${apiUrl}/info`)
-      .then((res) => {
-        if (!res.ok) throw new Error('Error al conectar con la API');
-        return res.json();
-      })
-      .then((data) => {
-        setInfo(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setError(err.message);
-        setLoading(false);
-      });
-  }, [apiUrl]);
+  const { user, hasPermission } = useAuth();
+  // Mismo criterio que el guard de /admin (RF-008)
+  const veBackoffice = hasPermission(['USUARIO_VER', 'ROL_VER', 'PERSONA_VER']);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
-      {/* Hero Section */}
-      <section style={{ textAlign: 'center', padding: '3rem 1rem 1rem 1rem' }}>
-        <span className="badge" style={{ marginBottom: '1rem' }}>
-          Plataforma Web Base
-        </span>
-        <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', marginBottom: '1rem' }}>
-          Bienvenido a <span className="gradient-text">PICA Web</span>
-        </h1>
-        <p
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%', maxWidth: '900px', margin: '0 auto' }}>
+      {/* Hero Banner */}
+      <section className="glass-card" style={{ padding: '2.5rem 1.5rem', textAlign: 'center', background: 'var(--accent-gradient)' }}>
+        <span
           style={{
-            color: 'var(--text-secondary)',
-            fontSize: '1.15rem',
-            maxWidth: '650px',
-            margin: '0 auto 2rem auto',
+            fontSize: '0.75rem',
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            padding: '0.25rem 0.75rem',
+            borderRadius: '9999px',
+            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            color: '#fff',
+            display: 'inline-block',
+            marginBottom: '0.75rem',
           }}
         >
-          Sistema de gestión integral para la administración y control del proyecto PICA (SIP - UNLu).
+          Plataforma Institucional PICA
+        </span>
+
+        <h1 style={{ fontSize: 'clamp(1.75rem, 5vw, 2.75rem)', color: '#fff', margin: '0.25rem 0 0.75rem' }}>
+          Sistema de Gestión y Administración PICA
+        </h1>
+
+        <p style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '1rem', maxWidth: '640px', margin: '0 auto 1.5rem' }}>
+          {user ? `¡Hola ${user.name}! Accedé a las funciones según tus permisos asignados.` : 'Bienvenido. Accedé con tu cuenta para acceder a las funcionalidades del sistema.'}
         </p>
 
-        <div
-          style={{
-            display: 'flex',
-            gap: '1rem',
-            justifyContent: 'center',
-            flexWrap: 'wrap',
-          }}
-        >
-          <Link to="/auth/login" className="btn btn-primary">
-            Acceder al Sistema
-          </Link>
-          <Link to="/admin" className="btn btn-secondary">
-            Panel de Control
-          </Link>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          {user ? (
+            <>
+              <Link to="/mi-perfil" className="btn btn-primary" style={{ padding: '0.65rem 1.25rem' }}>
+                👤 Mi Perfil
+              </Link>
+              {veBackoffice && (
+                <Link to="/admin" className="btn btn-secondary" style={{ padding: '0.65rem 1.25rem', backgroundColor: 'rgba(255,255,255,0.2)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)' }}>
+                  🛡️ Panel de Administración
+                </Link>
+              )}
+            </>
+          ) : (
+            <>
+              <Link to="/auth/login" className="btn btn-primary" style={{ padding: '0.65rem 1.25rem' }}>
+                Iniciar Sesión
+              </Link>
+              <Link to="/auth/register" className="btn btn-secondary" style={{ padding: '0.65rem 1.25rem', backgroundColor: 'rgba(255,255,255,0.2)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)' }}>
+                Registrarse
+              </Link>
+            </>
+          )}
         </div>
       </section>
 
-      {/* API Contract Status Section (MSW Check) */}
-      <section className="glass-card">
-        <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span
-            style={{
-              width: '10px',
-              height: '10px',
-              borderRadius: '50%',
-              backgroundColor: loading ? '#f59e0b' : error ? '#ef4444' : '#10b981',
-              display: 'inline-block',
-            }}
-          />
-          Estado de Contrato de API (MSW Mock)
-        </h3>
-
-        {loading && <p style={{ color: 'var(--text-muted)' }}>Cargando datos del contrato de API...</p>}
-        {error && <p style={{ color: '#ef4444' }}>Error: {error}</p>}
-        {info && (
-          <div
-            style={{
-              background: 'rgba(15, 23, 42, 0.6)',
-              padding: '1rem',
-              borderRadius: 'var(--radius-sm)',
-              fontFamily: 'monospace',
-              fontSize: '0.9rem',
-            }}
-          >
-            <div><strong>Servicio:</strong> {info.name}</div>
-            <div><strong>Versión:</strong> {info.version}</div>
-            <div><strong>Estado:</strong> <span style={{ color: '#10b981' }}>{info.status}</span></div>
-            <div><strong>Ambiente:</strong> {info.environment}</div>
-            <div><strong>VITE_API_URL:</strong> {apiUrl}</div>
-            <div style={{ marginTop: '0.5rem', color: 'var(--accent-secondary)' }}>{info.message}</div>
-          </div>
-        )}
-      </section>
-
-      {/* Feature Architecture Overview */}
-      <section
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '1.5rem',
-        }}
-      >
+      {/* Info Cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
         <div className="glass-card">
-          <h4 style={{ color: 'var(--accent-secondary)', marginBottom: '0.5rem' }}>
-            📁 Módulo Auth
-          </h4>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-            Autenticación, registro, gestión de credenciales y tokens JWT de sesión.
+          <h3>👥 Gestión de Usuarios</h3>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem', fontSize: '0.9rem' }}>
+            Control de cuentas, perfiles de integrantes, roles de acceso y reseteo seguro de credenciales.
           </p>
         </div>
 
         <div className="glass-card">
-          <h4 style={{ color: 'var(--accent-primary)', marginBottom: '0.5rem' }}>
-            📁 Módulo Admin
-          </h4>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-            Panel de control administrativo con métricas, estadísticas y gestión de usuarios.
+          <h3>🛡️ Matriz de Seguridad</h3>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem', fontSize: '0.9rem' }}>
+            Configuración dinámica de roles y asignación granular de permisos por módulos.
           </p>
         </div>
 
         <div className="glass-card">
-          <h4 style={{ color: '#10b981', marginBottom: '0.5rem' }}>
-            📁 Módulo Shared
-          </h4>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-            Layouts públicos mobile-first (RF-007), componentes reutilizables y estilos globales.
+          <h3>📇 Padrón General</h3>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem', fontSize: '0.9rem' }}>
+            Registro unificado de personas, vinculación con usuarios y trazabilidad de contactos.
           </p>
         </div>
-      </section>
+      </div>
     </div>
   );
 };

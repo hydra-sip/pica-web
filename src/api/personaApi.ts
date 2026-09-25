@@ -12,6 +12,31 @@ export interface PersonaResumen {
   tieneUsuario: boolean;
 }
 
+/** GET /admin/personas/{id}; también lo devuelven el alta, la edición y reactivar. */
+export interface PersonaDetalle {
+  id: number;
+  nombres: string;
+  apellidos: string;
+  tipoDoc?: string | null;
+  nroDoc?: string | null;
+  fechaNacimiento?: string | null;
+  domicilioPostal?: string | null;
+  telefono?: string | null;
+  descripcion?: string | null;
+  estado: 'ACTIVO' | 'INACTIVO';
+  eliminado: boolean;
+  eliminadoEn?: string | null;
+  creadoEn: string;
+  modificadoEn?: string | null;
+  usuario?: {
+    id: number;
+    username: string;
+    email: string;
+    estado: 'ACTIVO' | 'BLOQUEADO' | 'PENDIENTE_VERIFICACION';
+    eliminado: boolean;
+  } | null;
+}
+
 export interface PersonaPayload {
   nombres: string;
   apellidos: string;
@@ -36,23 +61,23 @@ export const personaApi = {
     return httpClient.get<PageResponse<PersonaResumen>>('/admin/personas', { params });
   },
 
-  getPersona: async (id: number): Promise<PersonaResumen> => {
-    return httpClient.get<PersonaResumen>(`/admin/personas/${id}`);
+  getPersona: async (id: number): Promise<PersonaDetalle> => {
+    return httpClient.get<PersonaDetalle>(`/admin/personas/${id}`);
   },
 
-  crear: async (payload: PersonaPayload): Promise<PersonaResumen> => {
-    return httpClient.post<PersonaResumen>('/admin/personas', payload);
+  crear: async (payload: PersonaPayload): Promise<PersonaDetalle> => {
+    return httpClient.post<PersonaDetalle>('/admin/personas', payload);
   },
 
-  actualizar: async (id: number, payload: PersonaPayload): Promise<PersonaResumen> => {
-    return httpClient.put<PersonaResumen>(`/admin/personas/${id}`, payload);
+  actualizar: async (id: number, payload: PersonaPayload): Promise<PersonaDetalle> => {
+    return httpClient.put<PersonaDetalle>(`/admin/personas/${id}`, payload);
   },
 
   eliminar: async (id: number): Promise<void> => {
     return httpClient.delete<void>(`/admin/personas/${id}`);
   },
 
-  reactivar: async (id: number): Promise<PersonaResumen> => {
-    return httpClient.post<PersonaResumen>(`/admin/personas/${id}/reactivar`);
+  reactivar: async (id: number): Promise<PersonaDetalle> => {
+    return httpClient.post<PersonaDetalle>(`/admin/personas/${id}/reactivar`);
   },
 };
