@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/hooks/useAuth';
 
 export const HomePage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
+  // Mismo criterio que el guard de /admin (RF-008)
+  const veBackoffice = hasPermission(['USUARIO_VER', 'ROL_VER', 'PERSONA_VER']);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', width: '100%', maxWidth: '900px', margin: '0 auto' }}>
@@ -40,9 +42,11 @@ export const HomePage: React.FC = () => {
               <Link to="/mi-perfil" className="btn btn-primary" style={{ padding: '0.65rem 1.25rem' }}>
                 👤 Mi Perfil
               </Link>
-              <Link to="/admin" className="btn btn-secondary" style={{ padding: '0.65rem 1.25rem', backgroundColor: 'rgba(255,255,255,0.2)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)' }}>
-                🛡️ Panel de Administración
-              </Link>
+              {veBackoffice && (
+                <Link to="/admin" className="btn btn-secondary" style={{ padding: '0.65rem 1.25rem', backgroundColor: 'rgba(255,255,255,0.2)', color: '#fff', border: '1px solid rgba(255,255,255,0.4)' }}>
+                  🛡️ Panel de Administración
+                </Link>
+              )}
             </>
           ) : (
             <>

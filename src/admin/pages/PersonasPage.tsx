@@ -1,9 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { DataTable, ColumnDef } from '../components/DataTable';
 import { FormModal, FormFieldSchema } from '../components/FormModal';
-import { personaApi, PersonaResumen, PersonaPayload } from '../../api/personaApi';
+import { StatusChip } from '../components/StatusChip';
+import { personaApi, PersonaResumen, PersonaDetalle, PersonaPayload } from '../../api/personaApi';
+import { useAuth } from '../../auth/hooks/useAuth';
+import { mensajeDeError } from '../mensajesError';
 
 export const PersonasPage: React.FC = () => {
+  const { hasPermission } = useAuth();
+  const puedeCrear = hasPermission('PERSONA_CREAR');
+  const puedeEditar = hasPermission('PERSONA_EDITAR');
+  const puedeEliminar = hasPermission('PERSONA_ELIMINAR');
+
   const [personas, setPersonas] = useState<PersonaResumen[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -45,22 +53,26 @@ export const PersonasPage: React.FC = () => {
     fetchPersonas();
   }, [fetchPersonas]);
 
-  // Modal State for Form (Create / Edit / View)
+  // Modal State for Form (Create / Edit / View); editar y ver parten del detalle
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
     mode: 'view' | 'edit' | 'create';
-    selectedPersona?: Partial<PersonaResumen>;
+    selectedPersona?: Partial<PersonaDetalle>;
   }>({
     isOpen: false,
     mode: 'create',
   });
 
-  // Modal State for User Profile Card (Ficha de Usuario vinculado)
-  const [selectedUserCard, setSelectedUserCard] = useState<{
-    personaNombre: string;
-    doc: string;
-    tieneUsuario: boolean;
-  } | null>(null);
+  // Ficha del usuario vinculado (sale del detalle de la persona)
+  const [selectedUserCard, setSelectedUserCard] = useState<PersonaDetalle | null>(null);
+
+  const abrirFichaUsuario = async (persona: PersonaResumen) => {
+    try {
+      setSelectedUserCard(await personaApi.getPersona(persona.id));
+    } catch (err) {
+      setAviso(mensajeDeError(err, 'No se pudo abrir la ficha del usuario.'));
+    }
+  };
 
   const columns: ColumnDef<PersonaResumen>[] = [
     {
@@ -89,19 +101,12 @@ export const PersonasPage: React.FC = () => {
     {
       key: 'tieneUsuario',
       label: 'Usuario Vinculado',
-      sortable: true,
       render: (p) => (
         <div>
           {p.tieneUsuario ? (
             <button
               type="button"
-              onClick={() =>
-                setSelectedUserCard({
-                  personaNombre: `${p.nombres} ${p.apellidos}`,
-                  doc: `${p.tipoDoc || 'DNI'}: ${p.nroDoc || 'N/A'}`,
-                  tieneUsuario: p.tieneUsuario,
-                })
-              }
+              onClick={() => abrirFichaUsuario(p)}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -152,6 +157,7 @@ export const PersonasPage: React.FC = () => {
         { value: 'PASAPORTE', label: 'Pasaporte' },
         { value: 'LE', label: 'Libreta Enrolamiento' },
         { value: 'LC', label: 'Libreta Cívica' },
+        { value: 'CI', label: 'Cédula de Identidad' },
       ],
     },
     {
@@ -186,6 +192,12 @@ export const PersonasPage: React.FC = () => {
       placeholder: 'ej. San Martín 500, Luján',
     },
     {
+      name: 'descripcion',
+      label: 'Descripción',
+      type: 'textarea',
+      placeholder: 'ej. Jugador cargado por el club',
+    },
+    {
       name: 'estado',
       label: 'Estado en el Padrón',
       type: 'select',
@@ -205,47 +217,32 @@ export const PersonasPage: React.FC = () => {
     });
   };
 
-  const handleView = async (persona: PersonaResumen) => {
+  // Ver y editar abren el detalle: el listado no trae fecha, domicilio, teléfono ni descripción,
+  // y el PUT reemplaza todo
+  const abrirDetalle = async (persona: PersonaResumen, mode: 'view' | 'edit') => {
     try {
       const detail = await personaApi.getPersona(persona.id);
-      setModalState({
-        isOpen: true,
-        mode: 'view',
-        selectedPersona: detail,
-      });
-    } catch {
-      setModalState({
-        isOpen: true,
-        mode: 'view',
-        selectedPersona: persona,
-      });
+      setModalState({ isOpen: true, mode, selectedPersona: detail });
+    } catch (err) {
+      setAviso(mensajeDeError(err, 'No se pudo abrir la persona.'));
     }
   };
 
-  const handleEdit = (persona: PersonaResumen) => {
-    setModalState({
-      isOpen: true,
-      mode: 'edit',
-      selectedPersona: persona,
-    });
-  };
+  const handleView = (persona: PersonaResumen) => abrirDetalle(persona, 'view');
 
+  const handleEdit = (persona: PersonaResumen) => abrirDetalle(persona, 'edit');
+
+  // tieneUsuario cuenta también un usuario dado de baja: decide el back (409 si el usuario sigue vivo)
   const handleDelete = async (persona: PersonaResumen) => {
-    if (persona.tieneUsuario) {
-      setAviso('No se puede dar de baja una persona que tiene usuario: primero hay que dar de baja el usuario.');
-      return;
-    }
-
     try {
       await personaApi.eliminar(persona.id);
       fetchPersonas();
-    } catch (err: any) {
-      const msg = err?.problemDetail?.detail || err?.message || 'Error al eliminar persona.';
-      if (err?.problemDetail?.codigo === 'PERSONA_CON_USUARIO' || msg.includes('PERSONA_CON_USUARIO')) {
-        setAviso('No se puede dar de baja una persona que tiene usuario: primero hay que dar de baja el usuario.');
-      } else {
-        setAviso('Error: ' + msg);
-      }
+    } catch (err) {
+      setAviso(
+        mensajeDeError(err, 'No se pudo dar de baja la persona.', {
+          PERSONA_CON_USUARIO: 'Tiene un usuario activo: primero hay que dar de baja el usuario.',
+        })
+      );
     }
   };
 
@@ -253,20 +250,21 @@ export const PersonasPage: React.FC = () => {
     try {
       await personaApi.reactivar(persona.id);
       fetchPersonas();
-    } catch (err: any) {
-      setAviso('Error al reactivar la persona: ' + (err?.problemDetail?.detail || err?.message));
+    } catch (err) {
+      setAviso(mensajeDeError(err, 'No se pudo reactivar la persona.'));
     }
   };
 
-  const handleSubmitForm = async (formData: Partial<PersonaResumen>) => {
+  const handleSubmitForm = async (formData: Partial<PersonaDetalle>) => {
     const payload: PersonaPayload = {
       nombres: formData.nombres || '',
       apellidos: formData.apellidos || '',
       tipoDoc: formData.tipoDoc || 'DNI',
       nroDoc: formData.nroDoc || '',
-      fechaNacimiento: (formData as any).fechaNacimiento || null,
-      domicilioPostal: (formData as any).domicilioPostal || null,
-      telefono: (formData as any).telefono || null,
+      fechaNacimiento: formData.fechaNacimiento || null,
+      domicilioPostal: formData.domicilioPostal || null,
+      telefono: formData.telefono || null,
+      descripcion: formData.descripcion || null,
       estado: (formData.estado as 'ACTIVO' | 'INACTIVO') || 'ACTIVO',
     };
 
@@ -332,16 +330,16 @@ export const PersonasPage: React.FC = () => {
           if (col) setSortParam(`${col},${dir}`);
           else setSortParam('id,asc');
         }}
-        onCreate={handleCreate}
+        onCreate={puedeCrear ? handleCreate : undefined}
         onView={handleView}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onReactivate={handleReactivate}
+        onEdit={puedeEditar ? handleEdit : undefined}
+        onDelete={puedeEliminar ? handleDelete : undefined}
+        onReactivate={puedeEliminar ? handleReactivate : undefined}
         createButtonText="Registrar Persona"
       />
 
       {/* Form Modal for Create / Edit Persona */}
-      <FormModal<PersonaResumen>
+      <FormModal<Partial<PersonaDetalle>>
         isOpen={modalState.isOpen}
         title={
           modalState.mode === 'create'
@@ -383,8 +381,10 @@ export const PersonasPage: React.FC = () => {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
               <div>
-                <span className="badge">Estado de Vinculación</span>
-                <h3 style={{ fontSize: '1.25rem', marginTop: '0.4rem' }}>{selectedUserCard.personaNombre}</h3>
+                <span className="badge">Usuario Vinculado</span>
+                <h3 style={{ fontSize: '1.25rem', marginTop: '0.4rem' }}>
+                  {selectedUserCard.nombres} {selectedUserCard.apellidos}
+                </h3>
               </div>
               <button
                 type="button"
@@ -398,13 +398,30 @@ export const PersonasPage: React.FC = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.875rem' }}>
               <div>
                 <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Documento:</span>
-                <div style={{ fontWeight: 600 }}>{selectedUserCard.doc}</div>
+                <div style={{ fontWeight: 600 }}>
+                  {selectedUserCard.tipoDoc || 'DOC'}: {selectedUserCard.nroDoc || 'Sin doc'}
+                </div>
               </div>
 
-              <div>
-                <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Posee Cuenta de Usuario Activa:</span>
-                <div style={{ color: '#10b981', fontWeight: 600 }}>Sí (`tieneUsuario: true`)</div>
-              </div>
+              {selectedUserCard.usuario ? (
+                <>
+                  <div>
+                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Usuario:</span>
+                    <div style={{ fontWeight: 600 }}>{selectedUserCard.usuario.username}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{selectedUserCard.usuario.email}</div>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Estado:</span>
+                    <div style={{ marginTop: '0.25rem' }}>
+                      <StatusChip
+                        status={selectedUserCard.usuario.eliminado ? 'ELIMINADO' : selectedUserCard.usuario.estado}
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div style={{ color: 'var(--text-muted)' }}>Sin usuario vinculado.</div>
+              )}
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
