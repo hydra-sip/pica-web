@@ -60,8 +60,9 @@ export const clearSessionTokens = () => {
   localStorage.removeItem(REFRESH_TOKEN_KEY);
 };
 
-interface RequestOptions extends RequestInit {
+export interface RequestOptions extends RequestInit {
   _retry?: boolean;
+  params?: Record<string, string | number | boolean | undefined | null>;
 }
 
 const processQueue = (error: Error | null, token: string | null = null) => {
@@ -75,11 +76,26 @@ const processQueue = (error: Error | null, token: string | null = null) => {
   failedQueue = [];
 };
 
-export async function customFetch<T = any>(
+export async function customFetch<T = unknown>(
   endpoint: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
+  let rawUrl = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
+
+  if (options.params) {
+    const searchParams = new URLSearchParams();
+    Object.entries(options.params).forEach(([key, val]) => {
+      if (val !== undefined && val !== null && val !== '') {
+        searchParams.append(key, String(val));
+      }
+    });
+    const queryString = searchParams.toString();
+    if (queryString) {
+      rawUrl += (rawUrl.includes('?') ? '&' : '?') + queryString;
+    }
+  }
+
+  const url = rawUrl;
 
   const headers = new Headers(options.headers || {});
   if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
@@ -96,136 +112,132 @@ export async function customFetch<T = any>(
     headers,
   };
 
-  try {
-    let response = await fetch(url, config);
+  let response = await fetch(url, config);
 
-    // Check for 401 Unauthorized (and avoid refresh loop on /auth/login, /auth/verificar, or /auth/refresh)
-    const isAuthRoute =
-      endpoint.includes('/auth/login') ||
-      endpoint.includes('/auth/verificar') ||
-      endpoint.includes('/auth/refresh');
+  // Check for 401 Unauthorized (and avoid refresh loop on /auth/login, /auth/verificar, or /auth/refresh)
+  const isAuthRoute =
+    endpoint.includes('/auth/login') ||
+    endpoint.includes('/auth/verificar') ||
+    endpoint.includes('/auth/refresh');
 
-    if (response.status === 401 && !isAuthRoute && !config._retry) {
-      const refreshToken = getRefreshToken();
+  if (response.status === 401 && !isAuthRoute && !config._retry) {
+    const refreshToken = getRefreshToken();
 
-      if (!refreshToken) {
-        clearSessionTokens();
-        notifyUnauthorized();
-        throw new ApiError('No autorizado', 401, {
-          status: 401,
-          codigo: 'CREDENCIALES_INVALIDAS',
-          detail: 'No autorizado',
-        });
-      }
-
-      if (isRefreshing) {
-        return new Promise<T>((resolve, reject) => {
-          failedQueue.push({
-            resolve: () => {
-              const newHeaders = new Headers(config.headers);
-              if (inMemoryAccessToken) {
-                newHeaders.set('Authorization', `Bearer ${inMemoryAccessToken}`);
-              }
-              fetch(url, { ...config, headers: newHeaders })
-                .then(async (res) => {
-                  if (!res.ok) throw await res.json();
-                  return res.json();
-                })
-                .then(resolve)
-                .catch(reject);
-            },
-            reject: (err) => reject(err),
-          });
-        });
-      }
-
-      config._retry = true;
-      isRefreshing = true;
-
-      try {
-        const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refreshToken }),
-        });
-
-        if (!refreshResponse.ok) {
-          throw new Error('Refresh token expirado o inválido');
-        }
-
-        const refreshData = await refreshResponse.json();
-        const newAccessToken = refreshData.accessToken;
-        const newRefreshToken = refreshData.refreshToken;
-
-        setAccessToken(newAccessToken);
-        if (newRefreshToken) {
-          setRefreshToken(newRefreshToken);
-        }
-
-        processQueue(null, newAccessToken);
-
-        // Retry original failed request
-        const retryHeaders = new Headers(config.headers);
-        retryHeaders.set('Authorization', `Bearer ${newAccessToken}`);
-
-        response = await fetch(url, { ...config, headers: retryHeaders });
-      } catch (refreshErr: any) {
-        processQueue(refreshErr, null);
-        clearSessionTokens();
-        notifyUnauthorized();
-        throw new ApiError('Sesión expirada. Por favor, iniciá sesión nuevamente.', 401);
-      } finally {
-        isRefreshing = false;
-      }
+    if (!refreshToken) {
+      clearSessionTokens();
+      notifyUnauthorized();
+      throw new ApiError('No autorizado', 401, {
+        status: 401,
+        codigo: 'CREDENCIALES_INVALIDAS',
+        detail: 'No autorizado',
+      });
     }
 
-    if (response.status === 204) {
-      return {} as T;
+    if (isRefreshing) {
+      return new Promise<T>((resolve, reject) => {
+        failedQueue.push({
+          resolve: () => {
+            const newHeaders = new Headers(config.headers);
+            if (inMemoryAccessToken) {
+              newHeaders.set('Authorization', `Bearer ${inMemoryAccessToken}`);
+            }
+            fetch(url, { ...config, headers: newHeaders })
+              .then(async (res) => {
+                if (!res.ok) throw await res.json();
+                return res.json();
+              })
+              .then(resolve)
+              .catch(reject);
+          },
+          reject: (err) => reject(err),
+        });
+      });
     }
 
-    if (!response.ok) {
-      let problemDetail: ProblemDetail | undefined;
-      let errorMsg = `Error HTTP ${response.status}`;
+    config._retry = true;
+    isRefreshing = true;
 
-      try {
-        const data = await response.json();
-        if (data && typeof data === 'object') {
-          problemDetail = {
-            status: data.status || response.status,
-            codigo: data.codigo || data.error || 'ERROR_DESCONOCIDO',
-            detail: data.detail || data.message || data.error,
-            errores: data.errores,
-          };
-          errorMsg = problemDetail.detail || problemDetail.codigo || errorMsg;
-        }
-      } catch {
-        // Body couldn't be parsed as JSON
+    try {
+      const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      if (!refreshResponse.ok) {
+        throw new Error('Refresh token expirado o inválido');
       }
 
-      throw new ApiError(errorMsg, response.status, problemDetail);
-    }
+      const refreshData = await refreshResponse.json();
+      const newAccessToken = refreshData.accessToken;
+      const newRefreshToken = refreshData.refreshToken;
 
-    return await response.json();
-  } catch (err: any) {
-    throw err;
+      setAccessToken(newAccessToken);
+      if (newRefreshToken) {
+        setRefreshToken(newRefreshToken);
+      }
+
+      processQueue(null, newAccessToken);
+
+      // Retry original failed request
+      const retryHeaders = new Headers(config.headers);
+      retryHeaders.set('Authorization', `Bearer ${newAccessToken}`);
+
+      response = await fetch(url, { ...config, headers: retryHeaders });
+    } catch (refreshErr: unknown) {
+      processQueue(refreshErr instanceof Error ? refreshErr : new Error(String(refreshErr)), null);
+      clearSessionTokens();
+      notifyUnauthorized();
+      throw new ApiError('Sesión expirada. Por favor, iniciá sesión nuevamente.', 401);
+    } finally {
+      isRefreshing = false;
+    }
   }
+
+  if (response.status === 204) {
+    return {} as T;
+  }
+
+  if (!response.ok) {
+    let problemDetail: ProblemDetail | undefined;
+    let errorMsg = `Error HTTP ${response.status}`;
+
+    try {
+      const data = await response.json();
+      if (data && typeof data === 'object') {
+        problemDetail = {
+          status: data.status || response.status,
+          codigo: data.codigo || data.error || 'ERROR_DESCONOCIDO',
+          detail: data.detail || data.message || data.error,
+          errores: data.errores,
+        };
+        errorMsg = problemDetail.detail || problemDetail.codigo || errorMsg;
+      }
+    } catch {
+      // Body couldn't be parsed as JSON
+    }
+
+    throw new ApiError(errorMsg, response.status, problemDetail);
+  }
+
+  return await response.json();
 }
 
 export const httpClient = {
-  get: <T = any>(endpoint: string, options?: RequestOptions) =>
+  get: <T = unknown>(endpoint: string, options?: RequestOptions) =>
     customFetch<T>(endpoint, { ...options, method: 'GET' }),
-  post: <T = any>(endpoint: string, body?: any, options?: RequestOptions) =>
+  post: <T = unknown>(endpoint: string, body?: unknown, options?: RequestOptions) =>
     customFetch<T>(endpoint, {
       ...options,
       method: 'POST',
       body: body ? JSON.stringify(body) : undefined,
     }),
-  put: <T = any>(endpoint: string, body?: any, options?: RequestOptions) =>
+  put: <T = unknown>(endpoint: string, body?: unknown, options?: RequestOptions) =>
     customFetch<T>(endpoint, {
       ...options,
       method: 'PUT',
       body: body ? JSON.stringify(body) : undefined,
     }),
-  delete: <T = any>(endpoint: string, options?: RequestOptions) =>
+  delete: <T = unknown>(endpoint: string, options?: RequestOptions) =>
     customFetch<T>(endpoint, { ...options, method: 'DELETE' }),
 };
