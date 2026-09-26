@@ -83,7 +83,8 @@ export const LoginPage: React.FC = () => {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `${API_BASE_URL}/oauth2/authorization/google`;
+    const backendRoot = API_BASE_URL.replace(/\/api\/v1\/?$/, '');
+    window.location.href = `${backendRoot}/oauth2/authorization/google`;
   };
 
   return (

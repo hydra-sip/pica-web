@@ -62,7 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateUser = (updatedFields: Partial<User>) => {
-    setUser((prev) => (prev ? { ...prev, ...updatedFields } : null));
+    setUser((prev) => (prev ? { ...prev, ...updatedFields } : (updatedFields as User)));
   };
 
   const logout = async () => {
