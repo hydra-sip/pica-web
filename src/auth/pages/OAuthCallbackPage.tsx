@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { authApi } from '../../api/authApi';
 import { useAuth } from '../hooks/useAuth';
@@ -11,6 +11,7 @@ export const OAuthCallbackPage: React.FC = () => {
 
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const processedCodeRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!code) {
@@ -18,6 +19,12 @@ export const OAuthCallbackPage: React.FC = () => {
       setErrorMsg('No se recibió ningún código de autorización OAuth desde Google.');
       return;
     }
+
+    // Prevenir doble ejecución en React 18 StrictMode (código de un solo uso)
+    if (processedCodeRef.current === code) {
+      return;
+    }
+    processedCodeRef.current = code;
 
     setLoading(true);
     authApi
