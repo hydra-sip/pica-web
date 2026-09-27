@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { authApi } from '../../api/authApi';
 
@@ -9,6 +9,7 @@ export const VerifyEmailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const processedTokenRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!token) {
@@ -16,6 +17,12 @@ export const VerifyEmailPage: React.FC = () => {
       setErrorMsg('No se proporcionó ningún token de verificación en la URL.');
       return;
     }
+
+    // Prevenir doble ejecución en React 18 StrictMode
+    if (processedTokenRef.current === token) {
+      return;
+    }
+    processedTokenRef.current = token;
 
     setLoading(true);
     authApi

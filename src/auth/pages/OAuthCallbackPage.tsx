@@ -1,30 +1,48 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { authApi } from '../../api/authApi';
 import { useAuth } from '../hooks/useAuth';
+
+// El back vuelve con ?error=<CODIGO> cuando el login con Google falla antes del canje (ver /auth/exchange)
+const ERRORES_GOOGLE: Record<string, string> = {
+  NO_AUTENTICADO: 'No se completó el inicio de sesión con Google.',
+  EMAIL_NO_VERIFICADO: 'Google no verificó el email de tu cuenta.',
+  CREDENCIALES_INVALIDAS: 'Tu usuario ya está vinculado a otra cuenta de Google.',
+  EMAIL_DUPLICADO: 'Ese email es de un usuario dado de baja. Por favor, contactá al administrador.',
+};
 
 export const OAuthCallbackPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const code = searchParams.get('code');
+  const oauthError = searchParams.get('error');
   const navigate = useNavigate();
-  const { updateUser } = useAuth();
+  const { loginWithOAuthCode } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const processedCodeRef = useRef<string | null>(null);
 
   useEffect(() => {
+    if (oauthError) {
+      setLoading(false);
+      setErrorMsg(ERRORES_GOOGLE[oauthError] ?? 'No se pudo completar el inicio de sesión con Google.');
+      return;
+    }
+
     if (!code) {
       setLoading(false);
       setErrorMsg('No se recibió ningún código de autorización OAuth desde Google.');
       return;
     }
 
+    // Prevenir doble ejecución en React 18 StrictMode (código de un solo uso)
+    if (processedCodeRef.current === code) {
+      return;
+    }
+    processedCodeRef.current = code;
+
     setLoading(true);
-    authApi
-      .exchangeOAuthCode(code)
+    loginWithOAuthCode(code)
       .then((user) => {
-        updateUser(user);
-        
         // Redirección post-login según permisos/roles
         const userRoles = user.roles?.map((r) => r.nombre) || [];
         const hasAdminAccess =
@@ -46,7 +64,7 @@ export const OAuthCallbackPage: React.FC = () => {
       .finally(() => {
         setLoading(false);
       });
-  }, [code, updateUser, navigate]);
+  }, [code, oauthError, loginWithOAuthCode, navigate]);
 
   return (
     <div style={{ maxWidth: '480px', margin: '3rem auto', textAlign: 'center' }} className="glass-card">

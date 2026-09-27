@@ -63,7 +63,7 @@ export interface AuthState {
 
 export interface AuthContextType extends AuthState {
   login: (identificador: string, password: string) => Promise<User>;
-  loginWithTokens: (accessToken: string, refreshToken: string, user: User) => void;
+  loginWithOAuthCode: (code: string) => Promise<User>;
   updateUser: (updatedFields: Partial<User>) => void;
   logout: () => Promise<void>;
   hasPermission: (permiso: string | string[]) => boolean;

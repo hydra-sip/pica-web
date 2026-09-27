@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { User, RoleName, AuthContextType } from '../types';
 import { authApi } from '../../api/authApi';
-import { getRefreshToken, onUnauthorized, clearSessionTokens, setAccessToken, setRefreshToken } from '../../api/httpClient';
+import { getRefreshToken, onUnauthorized, clearSessionTokens } from '../../api/httpClient';
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -55,11 +55,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const loginWithTokens = (accessToken: string, refreshToken: string, userData: User) => {
-    setAccessToken(accessToken);
-    setRefreshToken(refreshToken);
-    setUser(userData);
-  };
+  // Canjea el código del login con Google (guarda los tokens) y carga el usuario, como login.
+  // Memoizada porque el callback la tiene en las deps de su effect.
+  const loginWithOAuthCode = useCallback(async (code: string): Promise<User> => {
+    const loggedUser = await authApi.exchangeOAuthCode(code);
+    setUser(loggedUser);
+    return loggedUser;
+  }, []);
 
   const updateUser = (updatedFields: Partial<User>) => {
     setUser((prev) => (prev ? { ...prev, ...updatedFields } : null));
@@ -96,7 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isLoading,
     isAuthenticated: !!user,
     login,
-    loginWithTokens,
+    loginWithOAuthCode,
     updateUser,
     logout,
     hasPermission,
