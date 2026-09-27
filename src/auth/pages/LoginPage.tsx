@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { ApiError } from '../../api/httpClient';
+import { ApiError, API_BASE_URL } from '../../api/httpClient';
 
 export const LoginPage: React.FC = () => {
   const [identificador, setIdentificador] = useState('');
@@ -18,8 +18,6 @@ export const LoginPage: React.FC = () => {
   const location = useLocation();
 
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname;
-
-  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
   useEffect(() => {
     if (isAuthenticated && user) {

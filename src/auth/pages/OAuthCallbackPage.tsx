@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { authApi } from '../../api/authApi';
 import { useAuth } from '../hooks/useAuth';
 
 // El back vuelve con ?error=<CODIGO> cuando el login con Google falla antes del canje (ver /auth/exchange)
@@ -16,7 +15,7 @@ export const OAuthCallbackPage: React.FC = () => {
   const code = searchParams.get('code');
   const oauthError = searchParams.get('error');
   const navigate = useNavigate();
-  const { updateUser } = useAuth();
+  const { loginWithOAuthCode } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -42,11 +41,8 @@ export const OAuthCallbackPage: React.FC = () => {
     processedCodeRef.current = code;
 
     setLoading(true);
-    authApi
-      .exchangeOAuthCode(code)
+    loginWithOAuthCode(code)
       .then((user) => {
-        updateUser(user);
-        
         // Redirección post-login según permisos/roles
         const userRoles = user.roles?.map((r) => r.nombre) || [];
         const hasAdminAccess =
@@ -68,7 +64,7 @@ export const OAuthCallbackPage: React.FC = () => {
       .finally(() => {
         setLoading(false);
       });
-  }, [code, oauthError, updateUser, navigate]);
+  }, [code, oauthError, loginWithOAuthCode, navigate]);
 
   return (
     <div style={{ maxWidth: '480px', margin: '3rem auto', textAlign: 'center' }} className="glass-card">
