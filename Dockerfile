@@ -10,6 +10,9 @@ RUN npm ci
 
 # Copiar código fuente y compilar bundle estático
 COPY . .
+# Relativa: en staging la web y la API salen del mismo dominio (Caddy reparte por ruta)
+ARG VITE_API_URL=/api/v1
+ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
 
 # 2. Etapa de Producción (Servidor Web Nginx)
