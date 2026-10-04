@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { authApi } from '../../api/authApi';
+import { ApiError } from '../../api/httpClient';
+import { PasswordRequirements } from '../components/PasswordRequirements';
+import {
+  TIPOS_DOC_VALIDOS,
+  validateNombreApellido,
+  validateDocumento,
+  validateFechaNacimiento,
+  validatePasswordRequirements,
+  getTodayDateString,
+  MIN_FECHA_NACIMIENTO,
+} from '../../shared/validators';
 
 export const ProfilePage: React.FC = () => {
   const { user, updateUser } = useAuth();
@@ -12,12 +23,15 @@ export const ProfilePage: React.FC = () => {
   const [tipoDoc, setTipoDoc] = useState(user?.persona?.tipoDoc || 'DNI');
   const [nroDoc, setNroDoc] = useState(user?.persona?.nroDoc || user?.documento || '');
   const [fechaNacimiento, setFechaNacimiento] = useState(user?.persona?.fechaNacimiento || '');
-  const [domicilioPostal, setDomicilioPostal] = useState(user?.persona?.domicilioPostal || user?.domicilioPostal || '');
+  const [domicilioPostal, setDomicilioPostal] = useState(
+    user?.persona?.domicilioPostal || user?.domicilioPostal || ''
+  );
   const [telefono, setTelefono] = useState(user?.persona?.telefono || user?.telefono || '');
 
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileSuccessMsg, setProfileSuccessMsg] = useState<string | null>(null);
   const [profileErrorMsg, setProfileErrorMsg] = useState<string | null>(null);
+  const [profileFieldErrors, setProfileFieldErrors] = useState<Record<string, string>>({});
 
   // Password change form state according to openapi.yaml
   const [passwordActual, setPasswordActual] = useState('');
@@ -27,6 +41,7 @@ export const ProfilePage: React.FC = () => {
   const [changingPassword, setChangingPassword] = useState(false);
   const [passwordSuccessMsg, setPasswordSuccessMsg] = useState<string | null>(null);
   const [passwordErrorMsg, setPasswordErrorMsg] = useState<string | null>(null);
+  const [passwordFieldErrors, setPasswordFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (user) {
@@ -45,21 +60,72 @@ export const ProfilePage: React.FC = () => {
     setSavingProfile(true);
     setProfileSuccessMsg(null);
     setProfileErrorMsg(null);
+    setProfileFieldErrors({});
+
+    const errors: Record<string, string> = {};
+
+    const errNombres = validateNombreApellido(nombres, 'El nombre', true);
+    if (errNombres) errors.nombres = errNombres;
+
+    const errApellidos = validateNombreApellido(apellidos, 'El apellido', true);
+    if (errApellidos) errors.apellidos = errApellidos;
+
+    if (nroDoc && nroDoc.trim()) {
+      const errDoc = validateDocumento(nroDoc, tipoDoc, true);
+      if (errDoc) errors.nroDoc = errDoc;
+    }
+
+    if (fechaNacimiento && fechaNacimiento.trim()) {
+      const errFecha = validateFechaNacimiento(fechaNacimiento, false);
+      if (errFecha) errors.fechaNacimiento = errFecha;
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setProfileFieldErrors(errors);
+      setSavingProfile(false);
+      return;
+    }
 
     try {
       const updatedUser = await authApi.updateProfile({
-        nombres,
-        apellidos,
+        nombres: nombres.trim(),
+        apellidos: apellidos.trim(),
         tipoDoc,
-        nroDoc,
-        fechaNacimiento,
-        domicilioPostal,
-        telefono,
+        nroDoc: nroDoc.trim() || undefined,
+        fechaNacimiento: fechaNacimiento || undefined,
+        domicilioPostal: domicilioPostal.trim() || undefined,
+        telefono: telefono.trim() || undefined,
       });
       updateUser(updatedUser);
       setProfileSuccessMsg('¡Datos de perfil guardados correctamente!');
     } catch (err: any) {
-      setProfileErrorMsg(err.message || 'Error al actualizar el perfil.');
+      if (err instanceof ApiError && err.problemDetail) {
+        const pd = err.problemDetail;
+        const newFieldErrors: Record<string, string> = {};
+
+        if (pd.errores && Array.isArray(pd.errores)) {
+          pd.errores.forEach((item) => {
+            if (item.campo) {
+              newFieldErrors[item.campo] = item.mensaje;
+            }
+          });
+        }
+
+        if (pd.codigo === 'DOCUMENTO_DUPLICADO') {
+          newFieldErrors.nroDoc = pd.detail || 'Ya existe una persona con ese documento.';
+        } else if (pd.codigo === 'DOCUMENTO_NO_EDITABLE') {
+          newFieldErrors.nroDoc =
+            pd.detail || 'El documento no se puede modificar una vez cargado.';
+        }
+
+        if (Object.keys(newFieldErrors).length > 0) {
+          setProfileFieldErrors(newFieldErrors);
+        } else {
+          setProfileErrorMsg(pd.detail || pd.codigo || 'Error al actualizar el perfil.');
+        }
+      } else {
+        setProfileErrorMsg(err.message || 'Error al actualizar el perfil.');
+      }
     } finally {
       setSavingProfile(false);
     }
@@ -69,14 +135,28 @@ export const ProfilePage: React.FC = () => {
     e.preventDefault();
     setPasswordSuccessMsg(null);
     setPasswordErrorMsg(null);
+    setPasswordFieldErrors({});
 
-    if (passwordNueva.length < 8) {
-      setPasswordErrorMsg('La nueva contraseña debe tener al menos 8 caracteres.');
-      return;
+    const errors: Record<string, string> = {};
+
+    if (!passwordActual) {
+      errors.passwordActual = 'Ingresá tu contraseña actual.';
     }
 
-    if (passwordNueva !== confirmPassword) {
-      setPasswordErrorMsg('La confirmación de la nueva contraseña no coincide.');
+    const pwdRes = validatePasswordRequirements(passwordNueva);
+    if (!pwdRes.isValid) {
+      errors.passwordNueva =
+        pwdRes.errorMessage || 'La contraseña no cumple con los requisitos de seguridad.';
+    }
+
+    if (!confirmPassword) {
+      errors.confirmPassword = 'Confirmá tu nueva contraseña.';
+    } else if (passwordNueva !== confirmPassword) {
+      errors.confirmPassword = 'La confirmación de la nueva contraseña no coincide.';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setPasswordFieldErrors(errors);
       return;
     }
 
@@ -89,19 +169,47 @@ export const ProfilePage: React.FC = () => {
       setPasswordNueva('');
       setConfirmPassword('');
     } catch (err: any) {
-      setPasswordErrorMsg(err.message || 'Error al cambiar la contraseña. Verificá tu contraseña actual.');
+      if (err instanceof ApiError && err.problemDetail) {
+        const pd = err.problemDetail;
+        if (pd.codigo === 'PASSWORD_INCORRECTA') {
+          setPasswordFieldErrors({
+            passwordActual: 'La contraseña actual ingresada es incorrecta.',
+          });
+        } else if (pd.errores && Array.isArray(pd.errores)) {
+          const errs: Record<string, string> = {};
+          pd.errores.forEach((item) => {
+            if (item.campo) errs[item.campo] = item.mensaje;
+          });
+          setPasswordFieldErrors(errs);
+        } else {
+          setPasswordErrorMsg(pd.detail || pd.codigo || 'Error al cambiar la contraseña.');
+        }
+      } else {
+        setPasswordErrorMsg(
+          err.message || 'Error al cambiar la contraseña. Verificá tu contraseña actual.'
+        );
+      }
     } finally {
       setChangingPassword(false);
     }
   };
 
   return (
-    <div style={{ maxWidth: '720px', margin: '2rem auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+    <div
+      style={{
+        maxWidth: '720px',
+        margin: '2rem auto',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '2rem',
+      }}
+    >
       <div>
         <span className="badge">Configuración de Cuenta</span>
         <h1 style={{ marginTop: '0.5rem' }}>Mi Perfil</h1>
         <p style={{ color: 'var(--text-secondary)' }}>
-          Gestioná tu información personal y la seguridad de tu acceso según la especificación del sistema.
+          Gestioná tu información personal y la seguridad de tu acceso según la especificación del
+          sistema.
         </p>
       </div>
 
@@ -117,74 +225,168 @@ export const ProfilePage: React.FC = () => {
             lineHeight: 1.5,
           }}
         >
-          <strong>⚠️ Completá tu perfil:</strong> Por favor, ingresá tu <strong>Documento</strong>, <strong>Fecha de Nacimiento</strong>, <strong>Domicilio Postal</strong> y <strong>Teléfono</strong> para habilitar todas las funciones operativas de la plataforma.
+          <strong>⚠️ Completá tu perfil:</strong> Por favor, ingresá tu <strong>Documento</strong>,{' '}
+          <strong>Fecha de Nacimiento</strong>, <strong>Domicilio Postal</strong> y{' '}
+          <strong>Teléfono</strong> para habilitar todas las funciones operativas de la plataforma.
         </div>
       )}
 
       {/* Sección 1: Datos Personales */}
       <div className="glass-card">
-        <h3 style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <h3
+          style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+        >
           👤 Datos Personales
         </h3>
 
         {profileSuccessMsg && (
-          <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#34d399', padding: '0.75rem', borderRadius: 'var(--radius-sm)', marginBottom: '1.25rem', fontSize: '0.88rem' }}>
+          <div
+            style={{
+              background: 'rgba(16, 185, 129, 0.15)',
+              border: '1px solid rgba(16, 185, 129, 0.3)',
+              color: '#34d399',
+              padding: '0.75rem',
+              borderRadius: 'var(--radius-sm)',
+              marginBottom: '1.25rem',
+              fontSize: '0.88rem',
+            }}
+          >
             {profileSuccessMsg}
           </div>
         )}
 
         {profileErrorMsg && (
-          <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171', padding: '0.75rem', borderRadius: 'var(--radius-sm)', marginBottom: '1.25rem', fontSize: '0.88rem' }}>
+          <div
+            style={{
+              background: 'rgba(239, 68, 68, 0.15)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              color: '#f87171',
+              padding: '0.75rem',
+              borderRadius: 'var(--radius-sm)',
+              marginBottom: '1.25rem',
+              fontSize: '0.88rem',
+            }}
+          >
             {profileErrorMsg}
           </div>
         )}
 
-        <form onSubmit={handleUpdateProfile} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.1rem' }}>
+        <form
+          onSubmit={handleUpdateProfile}
+          noValidate
+          style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}
+        >
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: '1.1rem',
+              alignItems: 'start',
+            }}
+          >
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem', color: 'var(--text-secondary)' }}>
-                Nombres
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.85rem',
+                  marginBottom: '0.35rem',
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                Nombres <span style={{ color: '#f87171' }}>*</span>
               </label>
               <input
                 type="text"
                 required
                 value={nombres}
-                onChange={(e) => setNombres(e.target.value)}
+                onChange={(e) => {
+                  setNombres(e.target.value);
+                  if (profileFieldErrors.nombres) {
+                    setProfileFieldErrors((prev) => ({ ...prev, nombres: undefined as any }));
+                  }
+                }}
                 style={{
                   width: '100%',
                   padding: '0.75rem',
                   borderRadius: 'var(--radius-sm)',
-                  border: '1px solid var(--border-color)',
+                  border: profileFieldErrors.nombres
+                    ? '1px solid #f87171'
+                    : '1px solid var(--border-color)',
                   backgroundColor: 'rgba(15, 23, 42, 0.7)',
                   color: 'var(--text-primary)',
                   outline: 'none',
                 }}
               />
+              {profileFieldErrors.nombres && (
+                <span
+                  style={{
+                    color: '#f87171',
+                    fontSize: '0.78rem',
+                    marginTop: '0.2rem',
+                    display: 'block',
+                  }}
+                >
+                  ⚠️ {profileFieldErrors.nombres}
+                </span>
+              )}
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem', color: 'var(--text-secondary)' }}>
-                Apellidos
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.85rem',
+                  marginBottom: '0.35rem',
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                Apellidos <span style={{ color: '#f87171' }}>*</span>
               </label>
               <input
                 type="text"
                 required
                 value={apellidos}
-                onChange={(e) => setApellidos(e.target.value)}
+                onChange={(e) => {
+                  setApellidos(e.target.value);
+                  if (profileFieldErrors.apellidos) {
+                    setProfileFieldErrors((prev) => ({ ...prev, apellidos: undefined as any }));
+                  }
+                }}
                 style={{
                   width: '100%',
                   padding: '0.75rem',
                   borderRadius: 'var(--radius-sm)',
-                  border: '1px solid var(--border-color)',
+                  border: profileFieldErrors.apellidos
+                    ? '1px solid #f87171'
+                    : '1px solid var(--border-color)',
                   backgroundColor: 'rgba(15, 23, 42, 0.7)',
                   color: 'var(--text-primary)',
                   outline: 'none',
                 }}
               />
+              {profileFieldErrors.apellidos && (
+                <span
+                  style={{
+                    color: '#f87171',
+                    fontSize: '0.78rem',
+                    marginTop: '0.2rem',
+                    display: 'block',
+                  }}
+                >
+                  ⚠️ {profileFieldErrors.apellidos}
+                </span>
+              )}
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem', color: 'var(--text-secondary)' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.85rem',
+                  marginBottom: '0.35rem',
+                  color: 'var(--text-secondary)',
+                }}
+              >
                 Correo Electrónico (No editable)
               </label>
               <input
@@ -204,12 +406,29 @@ export const ProfilePage: React.FC = () => {
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem', color: 'var(--text-secondary)' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.85rem',
+                  marginBottom: '0.35rem',
+                  color: 'var(--text-secondary)',
+                }}
+              >
                 Tipo de Documento
               </label>
               <select
                 value={tipoDoc}
-                onChange={(e) => setTipoDoc(e.target.value)}
+                onChange={(e) => {
+                  const nuevoTipo = e.target.value;
+                  setTipoDoc(nuevoTipo);
+                  if (nroDoc.trim()) {
+                    const err = validateDocumento(nroDoc, nuevoTipo, true);
+                    setProfileFieldErrors((prev) => ({
+                      ...prev,
+                      nroDoc: err || (undefined as any),
+                    }));
+                  }
+                }}
                 style={{
                   width: '100%',
                   padding: '0.75rem',
@@ -220,57 +439,131 @@ export const ProfilePage: React.FC = () => {
                   outline: 'none',
                 }}
               >
-                <option value="DNI">DNI</option>
-                <option value="CUIL">CUIL</option>
-                <option value="PASAPORTE">Pasaporte</option>
+                {TIPOS_DOC_VALIDOS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem', color: 'var(--text-secondary)' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.85rem',
+                  marginBottom: '0.35rem',
+                  color: 'var(--text-secondary)',
+                }}
+              >
                 Nro Documento <span style={{ color: '#facc15' }}>*</span>
               </label>
               <input
                 type="text"
                 required
-                placeholder="ej: 38123456"
+                placeholder={
+                  tipoDoc === 'DNI' || tipoDoc === 'LC' || tipoDoc === 'LE'
+                    ? 'ej: 38123456'
+                    : 'ej: A1234567'
+                }
                 value={nroDoc}
-                onChange={(e) => setNroDoc(e.target.value)}
+                onChange={(e) => {
+                  setNroDoc(e.target.value);
+                  if (profileFieldErrors.nroDoc) {
+                    setProfileFieldErrors((prev) => ({ ...prev, nroDoc: undefined as any }));
+                  }
+                }}
                 style={{
                   width: '100%',
                   padding: '0.75rem',
                   borderRadius: 'var(--radius-sm)',
-                  border: !nroDoc ? '1px solid rgba(234, 179, 8, 0.5)' : '1px solid var(--border-color)',
+                  border: profileFieldErrors.nroDoc
+                    ? '1px solid #f87171'
+                    : !nroDoc
+                      ? '1px solid rgba(234, 179, 8, 0.5)'
+                      : '1px solid var(--border-color)',
                   backgroundColor: 'rgba(15, 23, 42, 0.7)',
                   color: 'var(--text-primary)',
                   outline: 'none',
                 }}
               />
+              {profileFieldErrors.nroDoc && (
+                <span
+                  style={{
+                    color: '#f87171',
+                    fontSize: '0.78rem',
+                    marginTop: '0.2rem',
+                    display: 'block',
+                  }}
+                >
+                  ⚠️ {profileFieldErrors.nroDoc}
+                </span>
+              )}
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem', color: 'var(--text-secondary)' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.85rem',
+                  marginBottom: '0.35rem',
+                  color: 'var(--text-secondary)',
+                }}
+              >
                 Fecha de Nacimiento <span style={{ color: '#facc15' }}>*</span>
               </label>
               <input
                 type="date"
                 required
+                min={MIN_FECHA_NACIMIENTO}
+                max={getTodayDateString()}
                 value={fechaNacimiento}
-                onChange={(e) => setFechaNacimiento(e.target.value)}
+                onChange={(e) => {
+                  setFechaNacimiento(e.target.value);
+                  if (profileFieldErrors.fechaNacimiento) {
+                    setProfileFieldErrors((prev) => ({
+                      ...prev,
+                      fechaNacimiento: undefined as any,
+                    }));
+                  }
+                }}
                 style={{
                   width: '100%',
                   padding: '0.75rem',
                   borderRadius: 'var(--radius-sm)',
-                  border: !fechaNacimiento ? '1px solid rgba(234, 179, 8, 0.5)' : '1px solid var(--border-color)',
+                  border: profileFieldErrors.fechaNacimiento
+                    ? '1px solid #f87171'
+                    : !fechaNacimiento
+                      ? '1px solid rgba(234, 179, 8, 0.5)'
+                      : '1px solid var(--border-color)',
                   backgroundColor: 'rgba(15, 23, 42, 0.7)',
                   color: 'var(--text-primary)',
                   outline: 'none',
                 }}
               />
+              {profileFieldErrors.fechaNacimiento && (
+                <span
+                  style={{
+                    color: '#f87171',
+                    fontSize: '0.78rem',
+                    marginTop: '0.2rem',
+                    display: 'block',
+                  }}
+                >
+                  ⚠️ {profileFieldErrors.fechaNacimiento}
+                </span>
+              )}
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem', color: 'var(--text-secondary)' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.85rem',
+                  marginBottom: '0.35rem',
+                  color: 'var(--text-secondary)',
+                }}
+              >
                 Domicilio Postal <span style={{ color: '#facc15' }}>*</span>
               </label>
               <input
@@ -283,7 +576,9 @@ export const ProfilePage: React.FC = () => {
                   width: '100%',
                   padding: '0.75rem',
                   borderRadius: 'var(--radius-sm)',
-                  border: !domicilioPostal ? '1px solid rgba(234, 179, 8, 0.5)' : '1px solid var(--border-color)',
+                  border: !domicilioPostal
+                    ? '1px solid rgba(234, 179, 8, 0.5)'
+                    : '1px solid var(--border-color)',
                   backgroundColor: 'rgba(15, 23, 42, 0.7)',
                   color: 'var(--text-primary)',
                   outline: 'none',
@@ -292,7 +587,14 @@ export const ProfilePage: React.FC = () => {
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem', color: 'var(--text-secondary)' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.85rem',
+                  marginBottom: '0.35rem',
+                  color: 'var(--text-secondary)',
+                }}
+              >
                 Teléfono de Contacto <span style={{ color: '#facc15' }}>*</span>
               </label>
               <input
@@ -305,7 +607,9 @@ export const ProfilePage: React.FC = () => {
                   width: '100%',
                   padding: '0.75rem',
                   borderRadius: 'var(--radius-sm)',
-                  border: !telefono ? '1px solid rgba(234, 179, 8, 0.5)' : '1px solid var(--border-color)',
+                  border: !telefono
+                    ? '1px solid rgba(234, 179, 8, 0.5)'
+                    : '1px solid var(--border-color)',
                   backgroundColor: 'rgba(15, 23, 42, 0.7)',
                   color: 'var(--text-primary)',
                   outline: 'none',
@@ -324,88 +628,206 @@ export const ProfilePage: React.FC = () => {
 
       {/* Sección 2: Cambio de Contraseña */}
       <div className="glass-card">
-        <h3 style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <h3
+          style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+        >
           🔒 Cambiar Contraseña
         </h3>
 
         {passwordSuccessMsg && (
-          <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#34d399', padding: '0.75rem', borderRadius: 'var(--radius-sm)', marginBottom: '1.25rem', fontSize: '0.88rem' }}>
+          <div
+            style={{
+              background: 'rgba(16, 185, 129, 0.15)',
+              border: '1px solid rgba(16, 185, 129, 0.3)',
+              color: '#34d399',
+              padding: '0.75rem',
+              borderRadius: 'var(--radius-sm)',
+              marginBottom: '1.25rem',
+              fontSize: '0.88rem',
+            }}
+          >
             {passwordSuccessMsg}
           </div>
         )}
 
         {passwordErrorMsg && (
-          <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171', padding: '0.75rem', borderRadius: 'var(--radius-sm)', marginBottom: '1.25rem', fontSize: '0.88rem' }}>
+          <div
+            style={{
+              background: 'rgba(239, 68, 68, 0.15)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              color: '#f87171',
+              padding: '0.75rem',
+              borderRadius: 'var(--radius-sm)',
+              marginBottom: '1.25rem',
+              fontSize: '0.88rem',
+            }}
+          >
             {passwordErrorMsg}
           </div>
         )}
 
-        <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+        <form
+          onSubmit={handleChangePassword}
+          noValidate
+          style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}
+        >
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem', color: 'var(--text-secondary)' }}>
-              Contraseña Actual
+            <label
+              style={{
+                display: 'block',
+                fontSize: '0.85rem',
+                marginBottom: '0.35rem',
+                color: 'var(--text-secondary)',
+              }}
+            >
+              Contraseña Actual <span style={{ color: '#f87171' }}>*</span>
             </label>
             <input
               type="password"
               required
               placeholder="••••••••"
               value={passwordActual}
-              onChange={(e) => setPasswordActual(e.target.value)}
+              onChange={(e) => {
+                setPasswordActual(e.target.value);
+                if (passwordFieldErrors.passwordActual) {
+                  setPasswordFieldErrors((prev) => ({ ...prev, passwordActual: undefined as any }));
+                }
+              }}
               style={{
                 width: '100%',
                 padding: '0.75rem',
                 borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-color)',
+                border: passwordFieldErrors.passwordActual
+                  ? '1px solid #f87171'
+                  : '1px solid var(--border-color)',
                 backgroundColor: 'rgba(15, 23, 42, 0.7)',
                 color: 'var(--text-primary)',
                 outline: 'none',
               }}
             />
+            {passwordFieldErrors.passwordActual && (
+              <span
+                style={{
+                  color: '#f87171',
+                  fontSize: '0.78rem',
+                  marginTop: '0.2rem',
+                  display: 'block',
+                }}
+              >
+                ⚠️ {passwordFieldErrors.passwordActual}
+              </span>
+            )}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.1rem' }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: '1.1rem',
+              alignItems: 'start',
+            }}
+          >
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem', color: 'var(--text-secondary)' }}>
-                Nueva Contraseña
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.85rem',
+                  marginBottom: '0.35rem',
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                Nueva Contraseña <span style={{ color: '#f87171' }}>*</span>
               </label>
               <input
                 type="password"
                 required
                 placeholder="Mínimo 8 caracteres"
                 value={passwordNueva}
-                onChange={(e) => setPasswordNueva(e.target.value)}
+                onChange={(e) => {
+                  setPasswordNueva(e.target.value);
+                  if (passwordFieldErrors.passwordNueva) {
+                    setPasswordFieldErrors((prev) => ({
+                      ...prev,
+                      passwordNueva: undefined as any,
+                    }));
+                  }
+                }}
                 style={{
                   width: '100%',
                   padding: '0.75rem',
                   borderRadius: 'var(--radius-sm)',
-                  border: '1px solid var(--border-color)',
+                  border: passwordFieldErrors.passwordNueva
+                    ? '1px solid #f87171'
+                    : '1px solid var(--border-color)',
                   backgroundColor: 'rgba(15, 23, 42, 0.7)',
                   color: 'var(--text-primary)',
                   outline: 'none',
                 }}
               />
+              <PasswordRequirements password={passwordNueva} />
+              {passwordFieldErrors.passwordNueva && (
+                <span
+                  style={{
+                    color: '#f87171',
+                    fontSize: '0.78rem',
+                    marginTop: '0.2rem',
+                    display: 'block',
+                  }}
+                >
+                  ⚠️ {passwordFieldErrors.passwordNueva}
+                </span>
+              )}
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.35rem', color: 'var(--text-secondary)' }}>
-                Confirmar Nueva Contraseña
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.85rem',
+                  marginBottom: '0.35rem',
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                Confirmar Nueva Contraseña <span style={{ color: '#f87171' }}>*</span>
               </label>
               <input
                 type="password"
                 required
                 placeholder="••••••••"
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  if (passwordFieldErrors.confirmPassword) {
+                    setPasswordFieldErrors((prev) => ({
+                      ...prev,
+                      confirmPassword: undefined as any,
+                    }));
+                  }
+                }}
                 style={{
                   width: '100%',
                   padding: '0.75rem',
                   borderRadius: 'var(--radius-sm)',
-                  border: '1px solid var(--border-color)',
+                  border: passwordFieldErrors.confirmPassword
+                    ? '1px solid #f87171'
+                    : '1px solid var(--border-color)',
                   backgroundColor: 'rgba(15, 23, 42, 0.7)',
                   color: 'var(--text-primary)',
                   outline: 'none',
                 }}
               />
+              {passwordFieldErrors.confirmPassword && (
+                <span
+                  style={{
+                    color: '#f87171',
+                    fontSize: '0.78rem',
+                    marginTop: '0.2rem',
+                    display: 'block',
+                  }}
+                >
+                  ⚠️ {passwordFieldErrors.confirmPassword}
+                </span>
+              )}
             </div>
           </div>
 

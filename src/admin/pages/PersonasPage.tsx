@@ -5,6 +5,13 @@ import { StatusChip } from '../components/StatusChip';
 import { personaApi, PersonaResumen, PersonaDetalle, PersonaPayload } from '../../api/personaApi';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { mensajeDeError } from '../mensajesError';
+import {
+  validateNombreApellido,
+  validateDocumento,
+  validateFechaNacimiento,
+  getTodayDateString,
+  MIN_FECHA_NACIMIENTO,
+} from '../../shared/validators';
 
 export const PersonasPage: React.FC = () => {
   const { hasPermission } = useAuth();
@@ -81,7 +88,9 @@ export const PersonasPage: React.FC = () => {
       sortable: true,
       render: (p) => (
         <div>
-          <strong style={{ color: 'var(--text-primary)' }}>{p.apellidos}, {p.nombres}</strong>
+          <strong style={{ color: 'var(--text-primary)' }}>
+            {p.apellidos}, {p.nombres}
+          </strong>
         </div>
       ),
     },
@@ -92,7 +101,9 @@ export const PersonasPage: React.FC = () => {
       render: (p) => (
         <div>
           <span style={{ fontWeight: 600 }}>
-            <small style={{ color: 'var(--text-secondary)', marginRight: '0.25rem' }}>{p.tipoDoc || 'DNI'}:</small>
+            <small style={{ color: 'var(--text-secondary)', marginRight: '0.25rem' }}>
+              {p.tipoDoc || 'DNI'}:
+            </small>
             {p.nroDoc || 'Sin doc'}
           </span>
         </div>
@@ -125,7 +136,9 @@ export const PersonasPage: React.FC = () => {
               👤 Vinculado
             </button>
           ) : (
-            <span style={{ fontSize: '0.775rem', color: 'var(--text-muted)' }}>Sin usuario vinculado</span>
+            <span style={{ fontSize: '0.775rem', color: 'var(--text-muted)' }}>
+              Sin usuario vinculado
+            </span>
           )}
         </div>
       ),
@@ -140,12 +153,14 @@ export const PersonasPage: React.FC = () => {
       label: 'Nombres',
       required: true,
       placeholder: 'ej. Carlos Alberto',
+      validate: (val) => validateNombreApellido(String(val || ''), 'Nombres', true),
     },
     {
       name: 'apellidos',
       label: 'Apellidos',
       required: true,
       placeholder: 'ej. Gómez',
+      validate: (val) => validateNombreApellido(String(val || ''), 'Apellidos', true),
     },
     {
       name: 'tipoDoc',
@@ -165,6 +180,8 @@ export const PersonasPage: React.FC = () => {
       label: 'Número de Documento',
       required: true,
       placeholder: 'ej. 32456789',
+      validate: (val, formData) =>
+        validateDocumento(String(val || ''), formData.tipoDoc || 'DNI', true),
     },
     {
       name: 'telefono',
@@ -175,16 +192,9 @@ export const PersonasPage: React.FC = () => {
       name: 'fechaNacimiento',
       label: 'Fecha de Nacimiento',
       type: 'date',
-      validate: (val) => {
-        if (val) {
-          const birthDate = new Date(val);
-          const today = new Date();
-          if (birthDate > today) {
-            return 'La fecha de nacimiento no puede ser una fecha futura.';
-          }
-        }
-        return null;
-      },
+      min: MIN_FECHA_NACIMIENTO,
+      max: getTodayDateString(),
+      validate: (val) => validateFechaNacimiento(val ? String(val) : '', false),
     },
     {
       name: 'domicilioPostal',
@@ -290,10 +300,23 @@ export const PersonasPage: React.FC = () => {
       {aviso && (
         <div
           role="alert"
-          style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171', padding: '0.75rem', borderRadius: 'var(--radius-sm)' }}
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: '1rem',
+            background: 'rgba(239, 68, 68, 0.15)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            color: '#f87171',
+            padding: '0.75rem',
+            borderRadius: 'var(--radius-sm)',
+          }}
         >
           <span>{aviso}</span>
-          <button type="button" onClick={() => setAviso(null)} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}>
+          <button
+            type="button"
+            onClick={() => setAviso(null)}
+            style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}
+          >
             ✕
           </button>
         </div>
@@ -345,8 +368,8 @@ export const PersonasPage: React.FC = () => {
           modalState.mode === 'create'
             ? 'Registrar Nueva Persona'
             : modalState.mode === 'edit'
-            ? `Editar Ficha de ${modalState.selectedPersona?.nombres} ${modalState.selectedPersona?.apellidos}`
-            : `Ficha de ${modalState.selectedPersona?.nombres} ${modalState.selectedPersona?.apellidos}`
+              ? `Editar Ficha de ${modalState.selectedPersona?.nombres} ${modalState.selectedPersona?.apellidos}`
+              : `Ficha de ${modalState.selectedPersona?.nombres} ${modalState.selectedPersona?.apellidos}`
         }
         mode={modalState.mode}
         fields={formFields}
@@ -379,7 +402,14 @@ export const PersonasPage: React.FC = () => {
             style={{ width: '100%', maxWidth: '440px', padding: '1.75rem' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                marginBottom: '1rem',
+              }}
+            >
               <div>
                 <span className="badge">Usuario Vinculado</span>
                 <h3 style={{ fontSize: '1.25rem', marginTop: '0.4rem' }}>
@@ -389,15 +419,30 @@ export const PersonasPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setSelectedUserCard(null)}
-                style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', cursor: 'pointer' }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-secondary)',
+                  fontSize: '1.5rem',
+                  cursor: 'pointer',
+                }}
               >
                 &times;
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.875rem' }}>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.75rem',
+                fontSize: '0.875rem',
+              }}
+            >
               <div>
-                <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Documento:</span>
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                  Documento:
+                </span>
                 <div style={{ fontWeight: 600 }}>
                   {selectedUserCard.tipoDoc || 'DOC'}: {selectedUserCard.nroDoc || 'Sin doc'}
                 </div>
@@ -406,15 +451,25 @@ export const PersonasPage: React.FC = () => {
               {selectedUserCard.usuario ? (
                 <>
                   <div>
-                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Usuario:</span>
+                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                      Usuario:
+                    </span>
                     <div style={{ fontWeight: 600 }}>{selectedUserCard.usuario.username}</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{selectedUserCard.usuario.email}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                      {selectedUserCard.usuario.email}
+                    </div>
                   </div>
                   <div>
-                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>Estado:</span>
+                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                      Estado:
+                    </span>
                     <div style={{ marginTop: '0.25rem' }}>
                       <StatusChip
-                        status={selectedUserCard.usuario.eliminado ? 'ELIMINADO' : selectedUserCard.usuario.estado}
+                        status={
+                          selectedUserCard.usuario.eliminado
+                            ? 'ELIMINADO'
+                            : selectedUserCard.usuario.estado
+                        }
                       />
                     </div>
                   </div>
