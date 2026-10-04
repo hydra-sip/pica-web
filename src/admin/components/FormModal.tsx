@@ -13,6 +13,8 @@ export interface FormFieldSchema {
   placeholder?: string;
   options?: FormFieldOption[];
   readOnlyInEdit?: boolean;
+  min?: string;
+  max?: string;
   validate?: (value: any, formData: Record<string, any>) => string | null;
 }
 
@@ -111,10 +113,10 @@ export function FormModal<T extends Record<string, any>>({
       }
       setServerError(
         err?.problemDetail?.detail ||
-        err?.problemDetail?.title ||
-        err?.detail ||
-        err?.message ||
-        'Ocurrió un error al guardar los datos.'
+          err?.problemDetail?.title ||
+          err?.detail ||
+          err?.message ||
+          'Ocurrió un error al guardar los datos.'
       );
     } finally {
       setIsSubmitting(false);
@@ -125,9 +127,7 @@ export function FormModal<T extends Record<string, any>>({
     width: '100%',
     padding: '0.65rem 0.85rem',
     borderRadius: 'var(--radius-sm)',
-    border: errors[fieldName]
-      ? '1px solid #ef4444'
-      : '1px solid var(--border-color)',
+    border: errors[fieldName] ? '1px solid #ef4444' : '1px solid var(--border-color)',
     backgroundColor: isReadOnly ? 'rgba(15, 23, 42, 0.4)' : 'rgba(15, 23, 42, 0.6)',
     color: isReadOnly ? 'var(--text-secondary)' : 'var(--text-primary)',
     fontSize: '0.9rem',
@@ -187,7 +187,11 @@ export function FormModal<T extends Record<string, any>>({
                 textTransform: 'uppercase',
               }}
             >
-              {mode === 'view' ? 'Modo Lectura' : mode === 'edit' ? 'Modo Edición' : 'Nuevo Registro'}
+              {mode === 'view'
+                ? 'Modo Lectura'
+                : mode === 'edit'
+                  ? 'Modo Edición'
+                  : 'Nuevo Registro'}
             </span>
           </div>
           <button
@@ -229,9 +233,15 @@ export function FormModal<T extends Record<string, any>>({
               const val = formData[field.name] ?? '';
 
               return (
-                <div key={field.name} style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                  <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                    {field.label} {field.required && !isReadOnly && <span style={{ color: '#ef4444' }}>*</span>}
+                <div
+                  key={field.name}
+                  style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}
+                >
+                  <label
+                    style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}
+                  >
+                    {field.label}{' '}
+                    {field.required && !isReadOnly && <span style={{ color: '#ef4444' }}>*</span>}
                   </label>
 
                   {field.type === 'select' ? (
@@ -239,7 +249,10 @@ export function FormModal<T extends Record<string, any>>({
                       value={val}
                       disabled={disabled}
                       onChange={(e) => handleChange(field.name, e.target.value)}
-                      style={{ ...inputStyle(field.name), cursor: disabled ? 'not-allowed' : 'pointer' }}
+                      style={{
+                        ...inputStyle(field.name),
+                        cursor: disabled ? 'not-allowed' : 'pointer',
+                      }}
                     >
                       <option value="" disabled>
                         Seleccionar...
@@ -260,15 +273,28 @@ export function FormModal<T extends Record<string, any>>({
                       style={inputStyle(field.name)}
                     />
                   ) : field.type === 'checkbox' ? (
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                    <label
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        cursor: 'pointer',
+                      }}
+                    >
                       <input
                         type="checkbox"
                         checked={Boolean(val)}
                         disabled={disabled}
                         onChange={(e) => handleChange(field.name, e.target.checked)}
-                        style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)' }}
+                        style={{
+                          width: '18px',
+                          height: '18px',
+                          accentColor: 'var(--accent-primary)',
+                        }}
                       />
-                      <span style={{ fontSize: '0.9rem' }}>{field.placeholder || 'Habilitado'}</span>
+                      <span style={{ fontSize: '0.9rem' }}>
+                        {field.placeholder || 'Habilitado'}
+                      </span>
                     </label>
                   ) : (
                     <input
@@ -276,6 +302,8 @@ export function FormModal<T extends Record<string, any>>({
                       value={val}
                       disabled={disabled}
                       placeholder={field.placeholder}
+                      min={field.min}
+                      max={field.max}
                       onChange={(e) => handleChange(field.name, e.target.value)}
                       style={inputStyle(field.name)}
                     />
