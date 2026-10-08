@@ -5,6 +5,7 @@ import { personaApi, PersonaResumen } from '../../api/personaApi';
 import { rolApi, RolResumen } from '../../api/rolApi';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { erroresPorCampo, mensajeDeError } from '../mensajesError';
+import { validateNombreApellido, validateDocumento } from '../../shared/validators';
 
 const TIPOS_DOC = ['DNI', 'LC', 'LE', 'CI', 'PASAPORTE'];
 
@@ -90,9 +91,12 @@ export const UsuariosPage: React.FC = () => {
 
   // Load available roles list
   useEffect(() => {
-    rolApi.getRoles({ size: 100 }).then((res) => {
-      setAvailableRoles(res.content || []);
-    }).catch(() => {});
+    rolApi
+      .getRoles({ size: 100 })
+      .then((res) => {
+        setAvailableRoles(res.content || []);
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -164,7 +168,9 @@ export const UsuariosPage: React.FC = () => {
       const res = await personaApi.getPersonas({ q: docSearchInput.trim() });
       setFoundPersonas(res.content || []);
       if ((res.content || []).length === 0) {
-        setSearchError(`No se encontraron personas con el criterio "${docSearchInput}". Podés crearla en línea a continuación.`);
+        setSearchError(
+          `No se encontraron personas con el criterio "${docSearchInput}". Podés crearla en línea a continuación.`
+        );
       }
     } catch (err) {
       setSearchError(mensajeDeError(err, 'Error al buscar personas.'));
@@ -193,9 +199,12 @@ export const UsuariosPage: React.FC = () => {
     }
 
     if (isInlinePersona) {
-      if (!inlinePersonaData.nombres.trim()) errors.inlineNombres = 'El nombre es obligatorio.';
-      if (!inlinePersonaData.apellidos.trim()) errors.inlineApellidos = 'El apellido es obligatorio.';
-      if (!inlinePersonaData.nroDoc.trim()) errors.inlineDoc = 'El número de documento es obligatorio.';
+      const errNombres = validateNombreApellido(inlinePersonaData.nombres, 'El nombre', true);
+      if (errNombres) errors.inlineNombres = errNombres;
+      const errApellidos = validateNombreApellido(inlinePersonaData.apellidos, 'El apellido', true);
+      if (errApellidos) errors.inlineApellidos = errApellidos;
+      const errDoc = validateDocumento(inlinePersonaData.nroDoc, inlinePersonaData.tipoDoc, true);
+      if (errDoc) errors.inlineDoc = errDoc;
     }
 
     if (Object.keys(errors).length > 0) {
@@ -254,7 +263,10 @@ export const UsuariosPage: React.FC = () => {
       Object.entries(erroresPorCampo(err)).forEach(([campo, mensaje]) => {
         errors[CAMPO_PERSONA_EN_LINEA[campo] ?? campo] = mensaje;
       });
-      setCreateFormErrors({ ...errors, server: mensajeDeError(err, 'No se pudo dar de alta el usuario.') });
+      setCreateFormErrors({
+        ...errors,
+        server: mensajeDeError(err, 'No se pudo dar de alta el usuario.'),
+      });
     } finally {
       setIsCreatingUser(false);
     }
@@ -312,7 +324,10 @@ export const UsuariosPage: React.FC = () => {
       setEditingUser(null);
       fetchUsuarios();
     } catch (err) {
-      setEditErrors({ ...erroresPorCampo(err), server: mensajeDeError(err, 'No se pudo guardar el usuario.') });
+      setEditErrors({
+        ...erroresPorCampo(err),
+        server: mensajeDeError(err, 'No se pudo guardar el usuario.'),
+      });
     } finally {
       setIsSavingEdit(false);
     }
@@ -389,14 +404,18 @@ export const UsuariosPage: React.FC = () => {
     }
 
     if (!validateStrongPassword(newPassword)) {
-      setPasswordError('La contraseña debe tener al menos 8 caracteres, al menos una letra mayúscula y al menos un número.');
+      setPasswordError(
+        'La contraseña debe tener al menos 8 caracteres, al menos una letra mayúscula y al menos un número.'
+      );
       return;
     }
 
     setIsResettingPass(true);
     try {
       await usuarioApi.updatePassword(resetPassUser.id, newPassword);
-      setResetSuccess(`La contraseña para ${resetPassUser.username} fue restablecida exitosamente.`);
+      setResetSuccess(
+        `La contraseña para ${resetPassUser.username} fue restablecida exitosamente.`
+      );
       setTimeout(() => {
         setResetPassUser(null);
         setNewPassword('');
@@ -471,14 +490,14 @@ export const UsuariosPage: React.FC = () => {
                   r.nombre === 'SUPER_USUARIO' || r.nombre === 'ADMINISTRADOR'
                     ? 'rgba(239, 68, 68, 0.15)'
                     : r.nombre === 'ORGANIZADOR'
-                    ? 'rgba(6, 182, 212, 0.15)'
-                    : 'rgba(99, 102, 241, 0.15)',
+                      ? 'rgba(6, 182, 212, 0.15)'
+                      : 'rgba(99, 102, 241, 0.15)',
                 color:
                   r.nombre === 'SUPER_USUARIO' || r.nombre === 'ADMINISTRADOR'
                     ? '#f87171'
                     : r.nombre === 'ORGANIZADOR'
-                    ? 'var(--accent-secondary)'
-                    : 'var(--accent-primary)',
+                      ? 'var(--accent-secondary)'
+                      : 'var(--accent-primary)',
                 border: '1px solid var(--border-color)',
               }}
             >
@@ -568,10 +587,23 @@ export const UsuariosPage: React.FC = () => {
       {aviso && (
         <div
           role="alert"
-          style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171', padding: '0.75rem', borderRadius: 'var(--radius-sm)' }}
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: '1rem',
+            background: 'rgba(239, 68, 68, 0.15)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            color: '#f87171',
+            padding: '0.75rem',
+            borderRadius: 'var(--radius-sm)',
+          }}
         >
           <span>{aviso}</span>
-          <button type="button" onClick={() => setAviso(null)} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}>
+          <button
+            type="button"
+            onClick={() => setAviso(null)}
+            style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}
+          >
             ✕
           </button>
         </div>
@@ -611,7 +643,9 @@ export const UsuariosPage: React.FC = () => {
         statusOptions={ESTADOS_USUARIO}
         extraFilters={
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Rol:</span>
+            <span style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', fontWeight: 500 }}>
+              Rol:
+            </span>
             <select
               value={rolFilter}
               onChange={(e) => {
@@ -680,19 +714,38 @@ export const UsuariosPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsCreateOpen(false)}
-                style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', cursor: 'pointer' }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-secondary)',
+                  fontSize: '1.5rem',
+                  cursor: 'pointer',
+                }}
               >
                 &times;
               </button>
             </div>
 
             {createFormErrors.server && (
-              <div style={{ backgroundColor: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', padding: '0.6rem 0.8rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem', fontSize: '0.85rem' }}>
+              <div
+                style={{
+                  backgroundColor: 'rgba(239,68,68,0.15)',
+                  border: '1px solid rgba(239,68,68,0.3)',
+                  color: '#f87171',
+                  padding: '0.6rem 0.8rem',
+                  borderRadius: 'var(--radius-sm)',
+                  marginBottom: '1rem',
+                  fontSize: '0.85rem',
+                }}
+              >
                 {createFormErrors.server}
               </div>
             )}
 
-            <form onSubmit={handleCreateSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <form
+              onSubmit={handleCreateSubmit}
+              style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}
+            >
               {/* Sección Buscador de Persona con la API */}
               <div
                 style={{
@@ -702,7 +755,9 @@ export const UsuariosPage: React.FC = () => {
                   border: '1px solid var(--border-color)',
                 }}
               >
-                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--accent-secondary)' }}>
+                <label
+                  style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--accent-secondary)' }}
+                >
                   1. Vinculación con Persona (Búsqueda API GET /admin/personas)
                 </label>
 
@@ -718,7 +773,9 @@ export const UsuariosPage: React.FC = () => {
                           flex: 1,
                           padding: '0.5rem 0.75rem',
                           borderRadius: 'var(--radius-sm)',
-                          border: createFormErrors.persona ? '1px solid #ef4444' : '1px solid var(--border-color)',
+                          border: createFormErrors.persona
+                            ? '1px solid #ef4444'
+                            : '1px solid var(--border-color)',
                           backgroundColor: 'rgba(15, 23, 42, 0.6)',
                           color: 'var(--text-primary)',
                           fontSize: '0.85rem',
@@ -736,12 +793,25 @@ export const UsuariosPage: React.FC = () => {
                     </div>
 
                     {searchError && (
-                      <p style={{ color: '#f87171', fontSize: '0.8rem', marginTop: '0.4rem' }}>{searchError}</p>
+                      <p style={{ color: '#f87171', fontSize: '0.8rem', marginTop: '0.4rem' }}>
+                        {searchError}
+                      </p>
                     )}
 
                     {foundPersonas.length > 0 && (
-                      <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', maxHeight: '180px', overflowY: 'auto' }}>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Seleccione una persona del padrón:</span>
+                      <div
+                        style={{
+                          marginTop: '0.75rem',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.4rem',
+                          maxHeight: '180px',
+                          overflowY: 'auto',
+                        }}
+                      >
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                          Seleccione una persona del padrón:
+                        </span>
                         {foundPersonas.map((p) => {
                           const isSelected = selectedPersona?.id === p.id;
                           return (
@@ -754,8 +824,14 @@ export const UsuariosPage: React.FC = () => {
                               style={{
                                 padding: '0.5rem 0.75rem',
                                 borderRadius: 'var(--radius-sm)',
-                                border: isSelected ? '1px solid var(--accent-primary)' : '1px solid var(--border-color)',
-                                backgroundColor: isSelected ? 'rgba(99,102,241,0.2)' : p.tieneUsuario ? 'rgba(239,68,68,0.1)' : 'rgba(15,23,42,0.4)',
+                                border: isSelected
+                                  ? '1px solid var(--accent-primary)'
+                                  : '1px solid var(--border-color)',
+                                backgroundColor: isSelected
+                                  ? 'rgba(99,102,241,0.2)'
+                                  : p.tieneUsuario
+                                    ? 'rgba(239,68,68,0.1)'
+                                    : 'rgba(15,23,42,0.4)',
                                 cursor: p.tieneUsuario ? 'not-allowed' : 'pointer',
                                 opacity: p.tieneUsuario ? 0.6 : 1,
                                 display: 'flex',
@@ -765,12 +841,23 @@ export const UsuariosPage: React.FC = () => {
                               }}
                             >
                               <div>
-                                <strong>{p.nombres} {p.apellidos}</strong> ({p.tipoDoc || 'DOC'}: {p.nroDoc || 'Sin doc'})
+                                <strong>
+                                  {p.nombres} {p.apellidos}
+                                </strong>{' '}
+                                ({p.tipoDoc || 'DOC'}: {p.nroDoc || 'Sin doc'})
                               </div>
                               {p.tieneUsuario ? (
-                                <span style={{ color: '#ef4444', fontSize: '0.75rem', fontWeight: 600 }}>⚠️ Ya tiene usuario</span>
+                                <span
+                                  style={{ color: '#ef4444', fontSize: '0.75rem', fontWeight: 600 }}
+                                >
+                                  ⚠️ Ya tiene usuario
+                                </span>
                               ) : isSelected ? (
-                                <span style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: 600 }}>✓ Seleccionada</span>
+                                <span
+                                  style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: 600 }}
+                                >
+                                  ✓ Seleccionada
+                                </span>
                               ) : null}
                             </div>
                           );
@@ -779,7 +866,16 @@ export const UsuariosPage: React.FC = () => {
                     )}
 
                     {createFormErrors.persona && (
-                      <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.3rem', display: 'block' }}>{createFormErrors.persona}</span>
+                      <span
+                        style={{
+                          color: '#ef4444',
+                          fontSize: '0.75rem',
+                          marginTop: '0.3rem',
+                          display: 'block',
+                        }}
+                      >
+                        {createFormErrors.persona}
+                      </span>
                     )}
 
                     {puedeCrearPersona && (
@@ -807,55 +903,131 @@ export const UsuariosPage: React.FC = () => {
                   </>
                 ) : (
                   /* Formulario en Línea para Crear Persona */
-                  <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 600 }}>Registro de Persona en Línea (POST /admin/personas)</span>
+                  <div
+                    style={{
+                      marginTop: '0.75rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.65rem',
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <span style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 600 }}>
+                        Registro de Persona en Línea (POST /admin/personas)
+                      </span>
                       <button
                         type="button"
                         onClick={() => setIsInlinePersona(false)}
-                        style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '0.75rem', cursor: 'pointer' }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--text-secondary)',
+                          fontSize: '0.75rem',
+                          cursor: 'pointer',
+                        }}
                       >
                         Volver al buscador
                       </button>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                      <input
-                        type="text"
-                        placeholder="Nombres *"
-                        value={inlinePersonaData.nombres}
-                        onChange={(e) => setInlinePersonaData({ ...inlinePersonaData, nombres: e.target.value })}
-                        style={{
-                          width: '100%',
-                          padding: '0.45rem',
-                          borderRadius: 'var(--radius-sm)',
-                          border: createFormErrors.inlineNombres ? '1px solid #ef4444' : '1px solid var(--border-color)',
-                          backgroundColor: 'rgba(15, 23, 42, 0.6)',
-                          color: 'var(--text-primary)',
-                          fontSize: '0.8rem',
-                        }}
-                      />
-                      <input
-                        type="text"
-                        placeholder="Apellidos *"
-                        value={inlinePersonaData.apellidos}
-                        onChange={(e) => setInlinePersonaData({ ...inlinePersonaData, apellidos: e.target.value })}
-                        style={{
-                          width: '100%',
-                          padding: '0.45rem',
-                          borderRadius: 'var(--radius-sm)',
-                          border: createFormErrors.inlineApellidos ? '1px solid #ef4444' : '1px solid var(--border-color)',
-                          backgroundColor: 'rgba(15, 23, 42, 0.6)',
-                          color: 'var(--text-primary)',
-                          fontSize: '0.8rem',
-                        }}
-                      />
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: '0.5rem',
+                        alignItems: 'start',
+                      }}
+                    >
+                      <div>
+                        <input
+                          type="text"
+                          placeholder="Nombres *"
+                          value={inlinePersonaData.nombres}
+                          onChange={(e) =>
+                            setInlinePersonaData({ ...inlinePersonaData, nombres: e.target.value })
+                          }
+                          style={{
+                            width: '100%',
+                            padding: '0.45rem',
+                            borderRadius: 'var(--radius-sm)',
+                            border: createFormErrors.inlineNombres
+                              ? '1px solid #ef4444'
+                              : '1px solid var(--border-color)',
+                            backgroundColor: 'rgba(15, 23, 42, 0.6)',
+                            color: 'var(--text-primary)',
+                            fontSize: '0.8rem',
+                          }}
+                        />
+                        {createFormErrors.inlineNombres && (
+                          <span
+                            style={{
+                              color: '#ef4444',
+                              fontSize: '0.72rem',
+                              marginTop: '0.15rem',
+                              display: 'block',
+                            }}
+                          >
+                            {createFormErrors.inlineNombres}
+                          </span>
+                        )}
+                      </div>
+                      <div>
+                        <input
+                          type="text"
+                          placeholder="Apellidos *"
+                          value={inlinePersonaData.apellidos}
+                          onChange={(e) =>
+                            setInlinePersonaData({
+                              ...inlinePersonaData,
+                              apellidos: e.target.value,
+                            })
+                          }
+                          style={{
+                            width: '100%',
+                            padding: '0.45rem',
+                            borderRadius: 'var(--radius-sm)',
+                            border: createFormErrors.inlineApellidos
+                              ? '1px solid #ef4444'
+                              : '1px solid var(--border-color)',
+                            backgroundColor: 'rgba(15, 23, 42, 0.6)',
+                            color: 'var(--text-primary)',
+                            fontSize: '0.8rem',
+                          }}
+                        />
+                        {createFormErrors.inlineApellidos && (
+                          <span
+                            style={{
+                              color: '#ef4444',
+                              fontSize: '0.72rem',
+                              marginTop: '0.15rem',
+                              display: 'block',
+                            }}
+                          >
+                            {createFormErrors.inlineApellidos}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.5rem' }}>
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 2fr',
+                        gap: '0.5rem',
+                        alignItems: 'start',
+                      }}
+                    >
                       <select
                         value={inlinePersonaData.tipoDoc}
-                        onChange={(e) => setInlinePersonaData({ ...inlinePersonaData, tipoDoc: e.target.value })}
+                        onChange={(e) =>
+                          setInlinePersonaData({ ...inlinePersonaData, tipoDoc: e.target.value })
+                        }
                         style={{
                           padding: '0.45rem',
                           borderRadius: 'var(--radius-sm)',
@@ -871,21 +1043,39 @@ export const UsuariosPage: React.FC = () => {
                           </option>
                         ))}
                       </select>
-                      <input
-                        type="text"
-                        placeholder="Nro Documento *"
-                        value={inlinePersonaData.nroDoc}
-                        onChange={(e) => setInlinePersonaData({ ...inlinePersonaData, nroDoc: e.target.value })}
-                        style={{
-                          width: '100%',
-                          padding: '0.45rem',
-                          borderRadius: 'var(--radius-sm)',
-                          border: createFormErrors.inlineDoc ? '1px solid #ef4444' : '1px solid var(--border-color)',
-                          backgroundColor: 'rgba(15, 23, 42, 0.6)',
-                          color: 'var(--text-primary)',
-                          fontSize: '0.8rem',
-                        }}
-                      />
+                      <div>
+                        <input
+                          type="text"
+                          placeholder="Nro Documento *"
+                          value={inlinePersonaData.nroDoc}
+                          onChange={(e) =>
+                            setInlinePersonaData({ ...inlinePersonaData, nroDoc: e.target.value })
+                          }
+                          style={{
+                            width: '100%',
+                            padding: '0.45rem',
+                            borderRadius: 'var(--radius-sm)',
+                            border: createFormErrors.inlineDoc
+                              ? '1px solid #ef4444'
+                              : '1px solid var(--border-color)',
+                            backgroundColor: 'rgba(15, 23, 42, 0.6)',
+                            color: 'var(--text-primary)',
+                            fontSize: '0.8rem',
+                          }}
+                        />
+                        {createFormErrors.inlineDoc && (
+                          <span
+                            style={{
+                              color: '#ef4444',
+                              fontSize: '0.72rem',
+                              marginTop: '0.15rem',
+                              display: 'block',
+                            }}
+                          >
+                            {createFormErrors.inlineDoc}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -893,82 +1083,122 @@ export const UsuariosPage: React.FC = () => {
 
               {/* Sección Datos de Cuenta de Usuario */}
               <div>
-                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--accent-secondary)' }}>
+                <label
+                  style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--accent-secondary)' }}
+                >
                   2. Credenciales de Usuario (POST /admin/usuarios)
                 </label>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.75rem',
+                    marginTop: '0.5rem',
+                  }}
+                >
                   <div>
-                    <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Nombre de Usuario *</label>
+                    <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                      Nombre de Usuario *
+                    </label>
                     <input
                       type="text"
                       placeholder="ej. jorganizador"
                       value={createUserForm.username}
-                      onChange={(e) => setCreateUserForm({ ...createUserForm, username: e.target.value })}
+                      onChange={(e) =>
+                        setCreateUserForm({ ...createUserForm, username: e.target.value })
+                      }
                       style={{
                         width: '100%',
                         padding: '0.55rem',
                         borderRadius: 'var(--radius-sm)',
-                        border: createFormErrors.username ? '1px solid #ef4444' : '1px solid var(--border-color)',
+                        border: createFormErrors.username
+                          ? '1px solid #ef4444'
+                          : '1px solid var(--border-color)',
                         backgroundColor: 'rgba(15, 23, 42, 0.6)',
                         color: 'var(--text-primary)',
                         fontSize: '0.875rem',
                       }}
                     />
                     {createFormErrors.username && (
-                      <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>{createFormErrors.username}</span>
+                      <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>
+                        {createFormErrors.username}
+                      </span>
                     )}
                   </div>
 
                   <div>
-                    <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Correo Electrónico *</label>
+                    <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                      Correo Electrónico *
+                    </label>
                     <input
                       type="email"
                       placeholder="ej. usuario@pica.edu.ar"
                       value={createUserForm.email}
-                      onChange={(e) => setCreateUserForm({ ...createUserForm, email: e.target.value })}
+                      onChange={(e) =>
+                        setCreateUserForm({ ...createUserForm, email: e.target.value })
+                      }
                       style={{
                         width: '100%',
                         padding: '0.55rem',
                         borderRadius: 'var(--radius-sm)',
-                        border: createFormErrors.email ? '1px solid #ef4444' : '1px solid var(--border-color)',
+                        border: createFormErrors.email
+                          ? '1px solid #ef4444'
+                          : '1px solid var(--border-color)',
                         backgroundColor: 'rgba(15, 23, 42, 0.6)',
                         color: 'var(--text-primary)',
                         fontSize: '0.875rem',
                       }}
                     />
                     {createFormErrors.email && (
-                      <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>{createFormErrors.email}</span>
+                      <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>
+                        {createFormErrors.email}
+                      </span>
                     )}
                   </div>
 
                   <div>
-                    <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Contraseña Temporal *</label>
+                    <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                      Contraseña Temporal *
+                    </label>
                     <input
                       type="password"
                       placeholder="Contraseña inicial..."
                       value={createUserForm.passwordTemporal}
-                      onChange={(e) => setCreateUserForm({ ...createUserForm, passwordTemporal: e.target.value })}
+                      onChange={(e) =>
+                        setCreateUserForm({ ...createUserForm, passwordTemporal: e.target.value })
+                      }
                       style={{
                         width: '100%',
                         padding: '0.55rem',
                         borderRadius: 'var(--radius-sm)',
-                        border: createFormErrors.passwordTemporal ? '1px solid #ef4444' : '1px solid var(--border-color)',
+                        border: createFormErrors.passwordTemporal
+                          ? '1px solid #ef4444'
+                          : '1px solid var(--border-color)',
                         backgroundColor: 'rgba(15, 23, 42, 0.6)',
                         color: 'var(--text-primary)',
                         fontSize: '0.875rem',
                       }}
                     />
                     {createFormErrors.passwordTemporal && (
-                      <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>{createFormErrors.passwordTemporal}</span>
+                      <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>
+                        {createFormErrors.passwordTemporal}
+                      </span>
                     )}
                   </div>
 
                   <div>
-                    <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Rol Inicial (Opcional)</label>
+                    <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                      Rol Inicial (Opcional)
+                    </label>
                     <select
                       value={createUserForm.initialRoleId}
-                      onChange={(e) => setCreateUserForm({ ...createUserForm, initialRoleId: Number(e.target.value) })}
+                      onChange={(e) =>
+                        setCreateUserForm({
+                          ...createUserForm,
+                          initialRoleId: Number(e.target.value),
+                        })
+                      }
                       style={{
                         width: '100%',
                         padding: '0.55rem',
@@ -990,7 +1220,14 @@ export const UsuariosPage: React.FC = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1rem' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: '0.75rem',
+                  marginTop: '1rem',
+                }}
+              >
                 <button
                   type="button"
                   className="btn btn-secondary"
@@ -1037,14 +1274,29 @@ export const UsuariosPage: React.FC = () => {
             </h3>
 
             {editErrors.server && (
-              <div style={{ backgroundColor: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', padding: '0.6rem 0.8rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem', fontSize: '0.85rem' }}>
+              <div
+                style={{
+                  backgroundColor: 'rgba(239,68,68,0.15)',
+                  border: '1px solid rgba(239,68,68,0.3)',
+                  color: '#f87171',
+                  padding: '0.6rem 0.8rem',
+                  borderRadius: 'var(--radius-sm)',
+                  marginBottom: '1rem',
+                  fontSize: '0.85rem',
+                }}
+              >
                 {editErrors.server}
               </div>
             )}
 
-            <form onSubmit={handleEditSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <form
+              onSubmit={handleEditSubmit}
+              style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
+            >
               <div>
-                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Nombre de Usuario</label>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  Nombre de Usuario
+                </label>
                 <input
                   type="text"
                   value={editForm.username}
@@ -1059,11 +1311,17 @@ export const UsuariosPage: React.FC = () => {
                     fontSize: '0.875rem',
                   }}
                 />
-                {editErrors.username && <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>{editErrors.username}</span>}
+                {editErrors.username && (
+                  <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>
+                    {editErrors.username}
+                  </span>
+                )}
               </div>
 
               <div>
-                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Correo Electrónico</label>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  Correo Electrónico
+                </label>
                 <input
                   type="email"
                   value={editForm.email}
@@ -1078,11 +1336,15 @@ export const UsuariosPage: React.FC = () => {
                     fontSize: '0.875rem',
                   }}
                 />
-                {editErrors.email && <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>{editErrors.email}</span>}
+                {editErrors.email && (
+                  <span style={{ color: '#ef4444', fontSize: '0.75rem' }}>{editErrors.email}</span>
+                )}
               </div>
 
               <div>
-                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Descripción</label>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  Descripción
+                </label>
                 <textarea
                   rows={2}
                   maxLength={500}
@@ -1119,13 +1381,27 @@ export const UsuariosPage: React.FC = () => {
                   <option value="BLOQUEADO">BLOQUEADO</option>
                 </select>
                 {editingUser.estado === 'PENDIENTE_VERIFICACION' && (
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem', display: 'block' }}>
+                  <span
+                    style={{
+                      fontSize: '0.75rem',
+                      color: 'var(--text-muted)',
+                      marginTop: '0.2rem',
+                      display: 'block',
+                    }}
+                  >
                     Tiene el email sin verificar: pasa a Activo solo cuando lo verifica.
                   </span>
                 )}
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1rem' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: '0.75rem',
+                  marginTop: '1rem',
+                }}
+              >
                 <button
                   type="button"
                   className="btn btn-secondary"
@@ -1177,14 +1453,21 @@ export const UsuariosPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setRolesModalUser(null)}
-                style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', cursor: 'pointer' }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-secondary)',
+                  fontSize: '1.5rem',
+                  cursor: 'pointer',
+                }}
               >
                 &times;
               </button>
             </div>
 
             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-              Llama a <code>PUT /admin/usuarios/{rolesModalUser.id}/roles</code> enviando array de IDs numéricos <code>{`{ roles: [number] }`}</code>.
+              Llama a <code>PUT /admin/usuarios/{rolesModalUser.id}/roles</code> enviando array de
+              IDs numéricos <code>{`{ roles: [number] }`}</code>.
             </p>
 
             {rolesMessage && (
@@ -1194,20 +1477,34 @@ export const UsuariosPage: React.FC = () => {
                   borderRadius: 'var(--radius-sm)',
                   marginBottom: '1rem',
                   fontSize: '0.85rem',
-                  backgroundColor: rolesMessage.includes('exitosamente') ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                  backgroundColor: rolesMessage.includes('exitosamente')
+                    ? 'rgba(16, 185, 129, 0.15)'
+                    : 'rgba(239, 68, 68, 0.15)',
                   color: rolesMessage.includes('exitosamente') ? '#10b981' : '#f87171',
-                  border: rolesMessage.includes('exitosamente') ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)',
+                  border: rolesMessage.includes('exitosamente')
+                    ? '1px solid rgba(16, 185, 129, 0.3)'
+                    : '1px solid rgba(239, 68, 68, 0.3)',
                 }}
               >
                 {rolesMessage}
               </div>
             )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem', maxHeight: '300px', overflowY: 'auto' }}>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.75rem',
+                marginBottom: '1.5rem',
+                maxHeight: '300px',
+                overflowY: 'auto',
+              }}
+            >
               {availableRoles.map((r) => {
                 const isChecked = selectedRoleIds.includes(r.id);
                 // Un rol inactivo no se puede agregar (409 ROL_INACTIVO); si ya lo tenía, se conserva
-                const bloqueado = r.estado === 'INACTIVO' && !rolesModalUser.roles.some((x) => x.id === r.id);
+                const bloqueado =
+                  r.estado === 'INACTIVO' && !rolesModalUser.roles.some((x) => x.id === r.id);
                 return (
                   <label
                     key={r.id}
@@ -1217,8 +1514,12 @@ export const UsuariosPage: React.FC = () => {
                       gap: '0.75rem',
                       padding: '0.65rem 0.85rem',
                       borderRadius: 'var(--radius-sm)',
-                      backgroundColor: isChecked ? 'rgba(99, 102, 241, 0.12)' : 'rgba(15, 23, 42, 0.4)',
-                      border: isChecked ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid var(--border-color)',
+                      backgroundColor: isChecked
+                        ? 'rgba(99, 102, 241, 0.12)'
+                        : 'rgba(15, 23, 42, 0.4)',
+                      border: isChecked
+                        ? '1px solid rgba(99, 102, 241, 0.4)'
+                        : '1px solid var(--border-color)',
                       cursor: bloqueado ? 'not-allowed' : 'pointer',
                       opacity: bloqueado ? 0.5 : 1,
                     }}
@@ -1234,14 +1535,33 @@ export const UsuariosPage: React.FC = () => {
                           setSelectedRoleIds(selectedRoleIds.filter((id) => id !== r.id));
                         }
                       }}
-                      style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)' }}
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        accentColor: 'var(--accent-primary)',
+                      }}
                     />
                     <div>
-                      <div style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                        {r.nombreAmigable} <code>(ID: {r.id}, {r.nombre})</code>
-                        {r.estado === 'INACTIVO' && <span style={{ fontSize: '0.75rem', color: '#f59e0b' }}> · inactivo</span>}
+                      <div
+                        style={{
+                          fontSize: '0.9rem',
+                          fontWeight: 600,
+                          color: 'var(--text-primary)',
+                        }}
+                      >
+                        {r.nombreAmigable}{' '}
+                        <code>
+                          (ID: {r.id}, {r.nombre})
+                        </code>
+                        {r.estado === 'INACTIVO' && (
+                          <span style={{ fontSize: '0.75rem', color: '#f59e0b' }}> · inactivo</span>
+                        )}
                       </div>
-                      {r.descripcion && <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{r.descripcion}</div>}
+                      {r.descripcion && (
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                          {r.descripcion}
+                        </div>
+                      )}
                     </div>
                   </label>
                 );
@@ -1297,7 +1617,9 @@ export const UsuariosPage: React.FC = () => {
             <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>
               Resetear Contraseña (PUT /password)
             </h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+            <p
+              style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}
+            >
               Usuario: <strong>{resetPassUser.username}</strong>
             </p>
 
@@ -1333,9 +1655,14 @@ export const UsuariosPage: React.FC = () => {
               </div>
             )}
 
-            <form onSubmit={handleResetPasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <form
+              onSubmit={handleResetPasswordSubmit}
+              style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
+            >
               <div>
-                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Nueva Contraseña Fuerte *</label>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  Nueva Contraseña Fuerte *
+                </label>
                 <input
                   type="password"
                   placeholder="Mínimo 8 caracteres, 1 mayúscula y 1 número..."
@@ -1355,7 +1682,14 @@ export const UsuariosPage: React.FC = () => {
                     fontSize: '0.875rem',
                   }}
                 />
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem', display: 'block' }}>
+                <span
+                  style={{
+                    fontSize: '0.75rem',
+                    color: 'var(--text-muted)',
+                    marginTop: '0.2rem',
+                    display: 'block',
+                  }}
+                >
                   Requisito: Mínimo 8 caracteres, al menos 1 letra mayúscula y 1 número.
                 </span>
               </div>
@@ -1373,7 +1707,14 @@ export const UsuariosPage: React.FC = () => {
                 ⚡ Generar Clave Temporal Válida (ej: Pica2026#1234)
               </button>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: '0.75rem',
+                  marginTop: '0.5rem',
+                }}
+              >
                 <button
                   type="button"
                   className="btn btn-secondary"
