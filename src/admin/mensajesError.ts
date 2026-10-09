@@ -21,6 +21,8 @@ const POR_CODIGO: Record<string, string> = {
   USUARIO_PROTEGIDO: 'El usuario Admin del sistema no se puede modificar.',
   ROL_PROTEGIDO: 'Ese cambio no está permitido en este rol del sistema.',
   ULTIMO_ASIGNADOR: 'No podés quitarte tu último rol que permite asignar roles.',
+  ACCION_SOBRE_SI_MISMO:
+    'No podés darte de baja, bloquearte ni resetear tu contraseña desde acá. Tu contraseña se cambia en Mi perfil.',
 };
 
 const POR_CODIGO_DE_CAMPO: Record<string, string> = {

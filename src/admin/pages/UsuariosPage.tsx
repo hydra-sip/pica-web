@@ -40,7 +40,11 @@ const selectStyle: React.CSSProperties = {
 };
 
 export const UsuariosPage: React.FC = () => {
-  const { hasPermission } = useAuth();
+  const { hasPermission, user: usuarioLogueado } = useAuth();
+  // CE2-1: nadie se da de baja, se bloquea ni se resetea la clave a sí mismo (el back responde 403
+  // ACCION_SOBRE_SI_MISMO); la clave propia se cambia desde Mi perfil
+  const esYo = (u: { id: number | string }) =>
+    usuarioLogueado != null && String(usuarioLogueado.id) === String(u.id);
   const puedeCrear = hasPermission('USUARIO_CREAR');
   const puedeEditar = hasPermission('USUARIO_EDITAR');
   const puedeEliminar = hasPermission('USUARIO_ELIMINAR');
@@ -335,7 +339,7 @@ export const UsuariosPage: React.FC = () => {
 
   // Handle Soft-Delete
   const handleDeleteUser = async (user: UsuarioResumen) => {
-    if (user.protegido) {
+    if (user.protegido || esYo(user)) {
       return;
     }
     try {
@@ -399,7 +403,7 @@ export const UsuariosPage: React.FC = () => {
 
     if (!resetPassUser || !newPassword) return;
 
-    if (resetPassUser.protegido) {
+    if (resetPassUser.protegido || esYo(resetPassUser)) {
       return;
     }
 
@@ -545,9 +549,13 @@ export const UsuariosPage: React.FC = () => {
         {puedeEditar && (
           <button
             type="button"
-            title="Resetear Contraseña (PUT /admin/usuarios/{id}/password)"
+            title={
+              esYo(user)
+                ? 'Tu contraseña se cambia desde Mi perfil'
+                : 'Resetear Contraseña (PUT /admin/usuarios/{id}/password)'
+            }
             onClick={() => {
-              if (user.protegido) {
+              if (user.protegido || esYo(user)) {
                 return;
               }
               setResetPassUser(user);
@@ -555,16 +563,16 @@ export const UsuariosPage: React.FC = () => {
               setPasswordError(null);
               setResetSuccess(null);
             }}
-            disabled={user.protegido}
+            disabled={user.protegido || esYo(user)}
             style={{
               background: 'rgba(245, 158, 11, 0.15)',
               border: '1px solid rgba(245, 158, 11, 0.3)',
               color: '#f59e0b',
               padding: '0.35rem 0.6rem',
               borderRadius: 'var(--radius-sm)',
-              cursor: user.protegido ? 'not-allowed' : 'pointer',
+              cursor: user.protegido || esYo(user) ? 'not-allowed' : 'pointer',
               fontSize: '0.8rem',
-              opacity: user.protegido ? 0.5 : 1,
+              opacity: user.protegido || esYo(user) ? 0.5 : 1,
             }}
           >
             🔑 Reset
@@ -676,6 +684,7 @@ export const UsuariosPage: React.FC = () => {
         onReactivate={puedeEliminar ? handleReactivateUser : undefined}
         customActions={renderCustomRowActions}
         isReadOnly={(u) => u.protegido}
+        canDelete={(u) => !esYo(u)}
         createButtonText="Alta de Usuario"
       />
 
@@ -1378,7 +1387,7 @@ export const UsuariosPage: React.FC = () => {
                   }}
                 >
                   <option value="ACTIVO">ACTIVO</option>
-                  <option value="BLOQUEADO">BLOQUEADO</option>
+                  {!esYo(editingUser) && <option value="BLOQUEADO">BLOQUEADO</option>}
                 </select>
                 {editingUser.estado === 'PENDIENTE_VERIFICACION' && (
                   <span
