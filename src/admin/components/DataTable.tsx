@@ -29,6 +29,8 @@ interface DataTableProps<T extends Record<string, any>> {
   customActions?: (item: T) => React.ReactNode;
   // Filas que no se pueden editar, dar de baja ni reactivar (ej.: usuario con protegido: true)
   isReadOnly?: (item: T) => boolean;
+  // Filas que se pueden editar pero no dar de baja (ej.: el usuario logueado sobre sí mismo, CE2-1)
+  canDelete?: (item: T) => boolean;
   // Opciones del filtro de estado; usuarios tiene otros estados que personas y roles
   statusOptions?: { value: string; label: string }[];
 
@@ -70,6 +72,7 @@ export function DataTable<T extends Record<string, any>>({
   extraFilters,
   customActions,
   isReadOnly,
+  canDelete,
   statusOptions = ESTADOS_POR_DEFECTO,
   serverSide = false,
   page: propPage,
@@ -477,6 +480,7 @@ export function DataTable<T extends Record<string, any>>({
                 // el contrato marca la baja lógica con eliminado: true; 'ELIMINADO' queda para las pantallas con datos locales
                 const isEliminado = item.eliminado === true || itemStatus === 'ELIMINADO';
                 const soloLectura = isReadOnly ? isReadOnly(item) : false;
+                const sePuedeDarDeBaja = canDelete ? canDelete(item) : true;
 
                 return (
                   <tr
@@ -541,7 +545,7 @@ export function DataTable<T extends Record<string, any>>({
                             </button>
                           )}
 
-                          {onDelete && !isEliminado && !soloLectura && (
+                          {onDelete && !isEliminado && !soloLectura && sePuedeDarDeBaja && (
                             <button
                               type="button"
                               title="Dar de baja"
