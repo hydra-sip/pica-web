@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { PublicLayout } from '../shared/layouts/PublicLayout';
+import { AppLayout } from '../shared/layouts/AppLayout';
 import { HomePage } from '../shared/pages/HomePage';
 import { LoginPage } from '../auth/pages/LoginPage';
 import { RegisterPage } from '../auth/pages/RegisterPage';
@@ -8,7 +8,6 @@ import { CheckEmailPage } from '../auth/pages/CheckEmailPage';
 import { VerifyEmailPage } from '../auth/pages/VerifyEmailPage';
 import { OAuthCallbackPage } from '../auth/pages/OAuthCallbackPage';
 import { ProfilePage } from '../auth/pages/ProfilePage';
-import { AdminLayout } from '../admin/layouts/AdminLayout';
 import { AdminDashboardPage } from '../admin/pages/AdminDashboardPage';
 import { UsuariosPage } from '../admin/pages/UsuariosPage';
 import { RolesPage } from '../admin/pages/RolesPage';
@@ -21,8 +20,8 @@ import { RequirePermiso } from '../auth/components/RequirePermiso';
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
-      {/* Layout Público con Navbar / Footer */}
-      <Route path="/" element={<PublicLayout />}>
+      {/* Sitio: sidebar en escritorio, barra inferior en el celular */}
+      <Route path="/" element={<AppLayout seccion="sitio" />}>
         <Route index element={<HomePage />} />
         <Route path="auth/login" element={<LoginPage />} />
         <Route path="auth/register" element={<RegisterPage />} />
@@ -46,7 +45,7 @@ export const AppRoutes: React.FC = () => {
             <RequirePermiso
               permisos={['USUARIO_VER', 'ROL_VER', 'PERSONA_VER']}
             >
-              <AdminLayout />
+              <AppLayout seccion="admin" />
             </RequirePermiso>
           }
         >

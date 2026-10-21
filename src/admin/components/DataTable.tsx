@@ -298,7 +298,7 @@ export function DataTable<T extends Record<string, any>>({
           border: '1px solid var(--color-border)',
         }}
       >
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 'var(--space-3)', flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 'var(--space-3)', flex: '1 1 260px' }}>
           <input
             type="search"
             className="input"
@@ -306,7 +306,7 @@ export function DataTable<T extends Record<string, any>>({
             placeholder="Buscar en la tabla..."
             value={searchTerm}
             onChange={(e) => handleSearchChange(e.target.value)}
-            style={{ flex: '1 1 220px', maxWidth: '380px', minWidth: 0 }}
+            style={{ flex: '1 1 220px', maxWidth: '380px' }}
           />
 
           <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
