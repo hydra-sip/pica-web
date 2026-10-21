@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Button, Field, Input, Modal, Select, Textarea } from '../../shared/ui';
 
 export interface FormFieldOption {
   value: string | number;
@@ -123,236 +124,101 @@ export function FormModal<T extends Record<string, any>>({
     }
   };
 
-  const inputStyle = (fieldName: string): React.CSSProperties => ({
-    width: '100%',
-    padding: '0.65rem 0.85rem',
-    borderRadius: 'var(--radius-sm)',
-    border: errors[fieldName] ? '1px solid #ef4444' : '1px solid var(--border-color)',
-    backgroundColor: isReadOnly ? 'rgba(15, 23, 42, 0.4)' : 'rgba(15, 23, 42, 0.6)',
-    color: isReadOnly ? 'var(--text-secondary)' : 'var(--text-primary)',
-    fontSize: '0.9rem',
-    outline: 'none',
-    boxSizing: 'border-box',
-    cursor: isReadOnly ? 'not-allowed' : 'text',
-  });
+  const modo = mode === 'view' ? 'Modo lectura' : mode === 'edit' ? 'Modo edición' : 'Nuevo registro';
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.8)',
-        backdropFilter: 'blur(4px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-        padding: '1rem',
-      }}
-      onClick={onClose}
+    <Modal
+      isOpen={isOpen}
+      title={
+        <>
+          {title}
+          <span style={{ display: 'block', fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', textTransform: 'uppercase', marginTop: '0.2rem' }}>
+            {modo}
+          </span>
+        </>
+      }
+      onClose={onClose}
+      closeDisabled={isSubmitting}
     >
-      <div
-        className="glass-card"
-        style={{
-          width: '100%',
-          maxWidth: '560px',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          padding: '1.75rem',
-          boxShadow: 'var(--shadow-lg)',
-          animation: 'fadeIn 0.2s ease-out',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '1.25rem',
-            borderBottom: '1px solid var(--border-color)',
-            paddingBottom: '0.75rem',
-          }}
-        >
-          <div>
-            <h3 style={{ fontSize: '1.25rem', color: 'var(--text-primary)' }}>{title}</h3>
-            <span
-              style={{
-                fontSize: '0.75rem',
-                color: 'var(--accent-secondary)',
-                fontWeight: 600,
-                textTransform: 'uppercase',
-              }}
-            >
-              {mode === 'view'
-                ? 'Modo Lectura'
-                : mode === 'edit'
-                  ? 'Modo Edición'
-                  : 'Nuevo Registro'}
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-secondary)',
-              fontSize: '1.5rem',
-              cursor: 'pointer',
-              lineHeight: 1,
-            }}
-          >
-            &times;
-          </button>
+      {serverError && (
+        <div className="alerta alerta-peligro" role="alert" style={{ marginBottom: 'var(--space-4)' }}>
+          {serverError}
         </div>
+      )}
 
-        {serverError && (
-          <div
-            style={{
-              backgroundColor: 'rgba(239, 68, 68, 0.15)',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              color: '#f87171',
-              padding: '0.75rem 1rem',
-              borderRadius: 'var(--radius-sm)',
-              marginBottom: '1rem',
-              fontSize: '0.875rem',
-            }}
-          >
-            {serverError}
-          </div>
-        )}
+      <form onSubmit={handleSubmit} noValidate>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          {fields.map((field) => {
+            const disabled = isReadOnly || (mode === 'edit' && field.readOnlyInEdit);
+            const val = formData[field.name] ?? '';
 
-        <form onSubmit={handleSubmit} noValidate>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {fields.map((field) => {
-              const disabled = isReadOnly || (mode === 'edit' && field.readOnlyInEdit);
-              const val = formData[field.name] ?? '';
-
+            if (field.type === 'checkbox') {
               return (
-                <div
-                  key={field.name}
-                  style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}
-                >
-                  <label
-                    style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}
-                  >
-                    {field.label}{' '}
-                    {field.required && !isReadOnly && <span style={{ color: '#ef4444' }}>*</span>}
-                  </label>
-
-                  {field.type === 'select' ? (
-                    <select
-                      value={val}
-                      disabled={disabled}
-                      onChange={(e) => handleChange(field.name, e.target.value)}
-                      style={{
-                        ...inputStyle(field.name),
-                        cursor: disabled ? 'not-allowed' : 'pointer',
-                      }}
-                    >
-                      <option value="" disabled>
-                        Seleccionar...
-                      </option>
-                      {field.options?.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                  ) : field.type === 'textarea' ? (
-                    <textarea
-                      value={val}
-                      disabled={disabled}
-                      placeholder={field.placeholder}
-                      rows={3}
-                      onChange={(e) => handleChange(field.name, e.target.value)}
-                      style={inputStyle(field.name)}
-                    />
-                  ) : field.type === 'checkbox' ? (
-                    <label
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={Boolean(val)}
-                        disabled={disabled}
-                        onChange={(e) => handleChange(field.name, e.target.checked)}
-                        style={{
-                          width: '18px',
-                          height: '18px',
-                          accentColor: 'var(--accent-primary)',
-                        }}
-                      />
-                      <span style={{ fontSize: '0.9rem' }}>
-                        {field.placeholder || 'Habilitado'}
-                      </span>
-                    </label>
-                  ) : (
+                <div key={field.name} className="field">
+                  <span className="field-label">{field.label}</span>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', cursor: 'pointer' }}>
                     <input
-                      type={field.type || 'text'}
-                      value={val}
+                      type="checkbox"
+                      checked={Boolean(val)}
                       disabled={disabled}
-                      placeholder={field.placeholder}
-                      min={field.min}
-                      max={field.max}
-                      onChange={(e) => handleChange(field.name, e.target.value)}
-                      style={inputStyle(field.name)}
+                      onChange={(e) => handleChange(field.name, e.target.checked)}
+                      style={{ width: '18px', height: '18px', accentColor: 'var(--color-primary)' }}
                     />
-                  )}
-
-                  {/* Field-level inline error */}
-                  {errors[field.name] && (
-                    <span style={{ color: '#ef4444', fontSize: '0.775rem', marginTop: '0.15rem' }}>
-                      {errors[field.name]}
-                    </span>
-                  )}
+                    <span style={{ fontSize: 'var(--text-md)' }}>{field.placeholder || 'Habilitado'}</span>
+                  </label>
+                  {errors[field.name] && <span className="field-error">{errors[field.name]}</span>}
                 </div>
               );
-            })}
-          </div>
+            }
 
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: '0.75rem',
-              marginTop: '1.75rem',
-              paddingTop: '1rem',
-              borderTop: '1px solid var(--border-color)',
-            }}
-          >
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={onClose}
-              disabled={isSubmitting}
-              style={{ padding: '0.5rem 1.15rem', fontSize: '0.875rem' }}
-            >
-              {isReadOnly ? 'Cerrar' : 'Cancelar'}
-            </button>
+            return (
+              <Field key={field.name} label={field.label} required={field.required && !isReadOnly} error={errors[field.name]}>
+                {field.type === 'select' ? (
+                  <Select value={val} disabled={disabled} onChange={(e) => handleChange(field.name, e.target.value)}>
+                    <option value="" disabled>
+                      Seleccionar...
+                    </option>
+                    {field.options?.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </Select>
+                ) : field.type === 'textarea' ? (
+                  <Textarea
+                    value={val}
+                    disabled={disabled}
+                    placeholder={field.placeholder}
+                    rows={3}
+                    onChange={(e) => handleChange(field.name, e.target.value)}
+                  />
+                ) : (
+                  <Input
+                    type={field.type || 'text'}
+                    value={val}
+                    disabled={disabled}
+                    placeholder={field.placeholder}
+                    min={field.min}
+                    max={field.max}
+                    onChange={(e) => handleChange(field.name, e.target.value)}
+                  />
+                )}
+              </Field>
+            );
+          })}
+        </div>
 
-            {!isReadOnly && (
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={isSubmitting}
-                style={{ padding: '0.5rem 1.35rem', fontSize: '0.875rem' }}
-              >
-                {isSubmitting ? 'Guardando...' : 'Guardar Cambios'}
-              </button>
-            )}
-          </div>
-        </form>
-      </div>
-    </div>
+        <div className="modal-pie">
+          <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
+            {isReadOnly ? 'Cerrar' : 'Cancelar'}
+          </Button>
+          {!isReadOnly && (
+            <Button type="submit" loading={isSubmitting}>
+              {isSubmitting ? 'Guardando...' : 'Guardar cambios'}
+            </Button>
+          )}
+        </div>
+      </form>
+    </Modal>
   );
 }

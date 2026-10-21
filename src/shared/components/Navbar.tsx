@@ -78,7 +78,7 @@ export const Navbar: React.FC = () => {
             {isAuthenticated && user ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <Link to="/mi-perfil" onClick={closeMenu} style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
                     👤 {user.name} <strong style={{ color: 'var(--accent-teal)', fontSize: '0.75rem', border: '1px solid var(--accent-teal)', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>{user.role}</strong>
                   </span>
                 </Link>

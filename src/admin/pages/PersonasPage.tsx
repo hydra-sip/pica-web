@@ -88,7 +88,7 @@ export const PersonasPage: React.FC = () => {
       sortable: true,
       render: (p) => (
         <div>
-          <strong style={{ color: 'var(--text-primary)' }}>
+          <strong style={{ color: 'var(--color-text)' }}>
             {p.apellidos}, {p.nombres}
           </strong>
         </div>
@@ -101,7 +101,7 @@ export const PersonasPage: React.FC = () => {
       render: (p) => (
         <div>
           <span style={{ fontWeight: 600 }}>
-            <small style={{ color: 'var(--text-secondary)', marginRight: '0.25rem' }}>
+            <small style={{ color: 'var(--color-text-secondary)', marginRight: '0.25rem' }}>
               {p.tipoDoc || 'DNI'}:
             </small>
             {p.nroDoc || 'Sin doc'}
@@ -126,9 +126,9 @@ export const PersonasPage: React.FC = () => {
                 borderRadius: 'var(--radius-sm)',
                 fontSize: '0.775rem',
                 fontWeight: 600,
-                backgroundColor: 'rgba(99, 102, 241, 0.15)',
-                color: 'var(--accent-secondary)',
-                border: '1px solid rgba(99, 102, 241, 0.3)',
+                backgroundColor: 'var(--color-surface)',
+                color: 'var(--color-text-secondary)',
+                border: '1px solid var(--color-border-strong)',
                 cursor: 'pointer',
               }}
               title="Ver estado de vinculación"
@@ -136,7 +136,7 @@ export const PersonasPage: React.FC = () => {
               👤 Vinculado
             </button>
           ) : (
-            <span style={{ fontSize: '0.775rem', color: 'var(--text-muted)' }}>
+            <span style={{ fontSize: '0.775rem', color: 'var(--color-text-muted)' }}>
               Sin usuario vinculado
             </span>
           )}
@@ -292,7 +292,7 @@ export const PersonasPage: React.FC = () => {
       <div>
         <span className="badge">Permiso: PERSONA_VER</span>
         <h1 style={{ marginTop: '0.5rem' }}>Gestión de Personas</h1>
-        <p style={{ color: 'var(--text-secondary)' }}>
+        <p style={{ color: 'var(--color-text-secondary)' }}>
           Registro de integrantes y padrón personal conectado al backend REST `pica-back`.
         </p>
       </div>
@@ -304,9 +304,9 @@ export const PersonasPage: React.FC = () => {
             display: 'flex',
             justifyContent: 'space-between',
             gap: '1rem',
-            background: 'rgba(239, 68, 68, 0.15)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            color: '#f87171',
+            background: 'var(--color-danger-bg)',
+            border: '1px solid var(--color-danger-border)',
+            color: 'var(--color-danger)',
             padding: '0.75rem',
             borderRadius: 'var(--radius-sm)',
           }}
@@ -387,7 +387,7 @@ export const PersonasPage: React.FC = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(15, 23, 42, 0.8)',
+            backgroundColor: 'var(--color-overlay)',
             backdropFilter: 'blur(4px)',
             display: 'flex',
             alignItems: 'center',
@@ -398,7 +398,7 @@ export const PersonasPage: React.FC = () => {
           onClick={() => setSelectedUserCard(null)}
         >
           <div
-            className="glass-card"
+            className="card"
             style={{ width: '100%', maxWidth: '440px', padding: '1.75rem' }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -422,7 +422,7 @@ export const PersonasPage: React.FC = () => {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: 'var(--text-secondary)',
+                  color: 'var(--color-text-secondary)',
                   fontSize: '1.5rem',
                   cursor: 'pointer',
                 }}
@@ -440,7 +440,7 @@ export const PersonasPage: React.FC = () => {
               }}
             >
               <div>
-                <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.8rem' }}>
                   Documento:
                 </span>
                 <div style={{ fontWeight: 600 }}>
@@ -451,16 +451,16 @@ export const PersonasPage: React.FC = () => {
               {selectedUserCard.usuario ? (
                 <>
                   <div>
-                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                    <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.8rem' }}>
                       Usuario:
                     </span>
                     <div style={{ fontWeight: 600 }}>{selectedUserCard.usuario.username}</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>
                       {selectedUserCard.usuario.email}
                     </div>
                   </div>
                   <div>
-                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                    <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.8rem' }}>
                       Estado:
                     </span>
                     <div style={{ marginTop: '0.25rem' }}>
@@ -475,7 +475,7 @@ export const PersonasPage: React.FC = () => {
                   </div>
                 </>
               ) : (
-                <div style={{ color: 'var(--text-muted)' }}>Sin usuario vinculado.</div>
+                <div style={{ color: 'var(--color-text-muted)' }}>Sin usuario vinculado.</div>
               )}
             </div>
 
