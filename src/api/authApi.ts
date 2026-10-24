@@ -41,6 +41,11 @@ export const authApi = {
     await httpClient.get(`/auth/verificar?token=${encodeURIComponent(token)}`);
   },
 
+  // Responde 202 exista o no el mail, para no revelar qué correos están registrados
+  reenviarVerificacion: async (email: string): Promise<void> => {
+    await httpClient.post('/auth/reenviar-verificacion', { email });
+  },
+
   getMe: async (): Promise<User> => {
     const rawUser = await httpClient.get<any>('/me');
     const persona = rawUser.persona || {};

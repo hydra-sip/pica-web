@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { rifaApi, RifaDetalle } from '../../api/rifaApi';
-import { erroresPorCampo, mensajeDeError } from '../../admin/mensajesError';
+import { erroresPorCampo, mensajeDeError } from '../../shared/mensajesError';
 import {
   ErroresPremios,
   PremioForm,

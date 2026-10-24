@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { EstadoRifa, rifaApi, RifaResumen } from '../../api/rifaApi';
-import { mensajeDeError } from '../../admin/mensajesError';
+import { mensajeDeError } from '../../shared/mensajesError';
 import { ESTADO_RIFA_UI, formatearFecha, formatearPrecio } from '../formato';
 import '../rifas.css';
 

@@ -19,9 +19,9 @@ export const IncompleteProfileBanner: React.FC = () => {
   return (
     <div
       style={{
-        backgroundColor: 'rgba(234, 179, 8, 0.15)',
-        borderBottom: '1px solid rgba(234, 179, 8, 0.35)',
-        color: '#facc15',
+        backgroundColor: 'var(--color-warning-bg)',
+        borderBottom: '1px solid var(--color-warning-border)',
+        color: 'var(--color-warning)',
         padding: '0.75rem 1rem',
         fontSize: '0.9rem',
         display: 'flex',
@@ -41,9 +41,9 @@ export const IncompleteProfileBanner: React.FC = () => {
         style={{
           padding: '0.25rem 0.75rem',
           fontSize: '0.8rem',
-          backgroundColor: 'rgba(234, 179, 8, 0.25)',
-          color: '#fef08a',
-          borderColor: 'rgba(234, 179, 8, 0.5)',
+          backgroundColor: 'var(--color-warning-border)',
+          color: 'var(--color-warning)',
+          borderColor: 'var(--color-warning-border)',
         }}
       >
         Completar Perfil →

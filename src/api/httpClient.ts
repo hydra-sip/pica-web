@@ -175,11 +175,7 @@ export async function customFetch<T = unknown>(
     if (!refreshToken) {
       clearSessionTokens();
       notifyUnauthorized();
-      throw new ApiError('No autorizado', 401, {
-        status: 401,
-        codigo: 'CREDENCIALES_INVALIDAS',
-        detail: 'No autorizado',
-      });
+      throw new ApiError('No autorizado', 401, { status: 401, codigo: 'NO_AUTENTICADO' });
     }
 
     if (isRefreshing) {
@@ -253,7 +249,9 @@ export async function customFetch<T = unknown>(
     throw new ApiError(errorMsg, response.status, problemDetail);
   }
 
-  return await response.json();
+  // 202 y otros éxitos pueden venir sin cuerpo
+  const texto = await response.text();
+  return (texto ? JSON.parse(texto) : {}) as T;
 }
 
 export const httpClient = {

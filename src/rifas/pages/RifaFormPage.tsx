@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { rifaApi, RifaDetalle } from '../../api/rifaApi';
-import { mensajeDeError } from '../../admin/mensajesError';
+import { mensajeDeError } from '../../shared/mensajesError';
 import { PasosAsistente } from '../components/PasosAsistente';
 import { DatosGeneralesForm } from '../components/DatosGeneralesForm';
 import { PremiosForm } from '../components/PremiosForm';

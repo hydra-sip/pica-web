@@ -3,7 +3,8 @@ import { DataTable, ColumnDef } from '../components/DataTable';
 import { FormModal, FormFieldSchema } from '../components/FormModal';
 import { rolApi, RolResumen, RolDetalle, ModuloPermisosApi } from '../../api/rolApi';
 import { useAuth } from '../../auth/hooks/useAuth';
-import { mensajeDeError } from '../mensajesError';
+import { mensajeDeError } from '../../shared/mensajesError';
+import { Badge, Button, Modal } from '../../shared/ui';
 
 export interface PermisoItem {
   id: string;
@@ -108,55 +109,31 @@ export const RolesPage: React.FC = () => {
   const columns: ColumnDef<RolResumen>[] = [
     {
       key: 'nombre',
-      label: 'Código de Rol',
+      label: 'Código',
       sortable: true,
       render: (r) => (
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <code>{r.nombre}</code>
-            {r.esSistema && (
-              <span
-                style={{
-                  fontSize: '0.65rem',
-                  padding: '0.1rem 0.4rem',
-                  borderRadius: '9999px',
-                  backgroundColor: 'rgba(239, 68, 68, 0.2)',
-                  color: '#f87171',
-                  border: '1px solid rgba(239, 68, 68, 0.4)',
-                }}
-              >
-                🔒 Rol del Sistema
-              </span>
-            )}
+            {r.esSistema && <Badge tone="aviso">Del sistema</Badge>}
           </div>
         </div>
       ),
     },
     {
       key: 'nombreAmigable',
-      label: 'Nombre Display',
+      label: 'Nombre',
       sortable: true,
-      render: (r) => <strong style={{ color: 'var(--text-primary)' }}>{r.nombreAmigable}</strong>,
+      render: (r) => <strong style={{ color: 'var(--color-text)' }}>{r.nombreAmigable}</strong>,
     },
     { key: 'descripcion', label: 'Descripción' },
     {
       key: 'cantidadUsuarios',
-      label: 'Usuarios Asignados',
-      render: (r) => (
-        <span
-          style={{
-            padding: '0.2rem 0.6rem',
-            borderRadius: '9999px',
-            fontSize: '0.75rem',
-            fontWeight: 600,
-            background: 'rgba(99, 102, 241, 0.15)',
-            color: 'var(--accent-secondary)',
-            border: '1px solid rgba(99, 102, 241, 0.3)',
-          }}
-        >
-          {r.cantidadUsuarios ?? 0} usuarios
-        </span>
-      ),
+      label: 'Usuarios',
+      render: (r) => {
+        const cantidad = r.cantidadUsuarios ?? 0;
+        return <Badge tone="borde">{cantidad === 1 ? '1 usuario' : `${cantidad} usuarios`}</Badge>;
+      },
     },
     { key: 'estado', label: 'Estado', sortable: true },
   ];
@@ -324,51 +301,41 @@ export const RolesPage: React.FC = () => {
     }
   };
 
-  // Render Custom Action: "🔑 Permisos" button
+  // Acción de la fila: elegir los permisos del rol
   // Dado de baja: primero se reactiva (404). Inactivo: el back no deja cambiarle permisos (409 ROL_INACTIVO)
   const renderCustomActions = (rol: RolResumen) => {
     if (!puedeEditar || rol.eliminado) return null;
     const apagado = esSuperUsuario(rol) || rol.estado === 'INACTIVO';
     return (
-      <button
-        type="button"
+      <Button
+        size="sm"
+        variant="secondary"
         title={
           rol.estado === 'INACTIVO'
             ? 'Rol inactivo: activalo para cambiar sus permisos'
-            : 'Configurar matriz de permisos (PUT /admin/roles/{id}/permisos)'
+            : 'Elegir qué puede hacer este rol'
         }
         onClick={() => handleOpenPermisos(rol)}
         disabled={apagado}
-        style={{
-          background: 'rgba(99, 102, 241, 0.15)',
-          border: '1px solid rgba(99, 102, 241, 0.3)',
-          color: 'var(--accent-primary)',
-          padding: '0.35rem 0.6rem',
-          borderRadius: 'var(--radius-sm)',
-          cursor: apagado ? 'not-allowed' : 'pointer',
-          fontSize: '0.8rem',
-          opacity: apagado ? 0.5 : 1,
-        }}
       >
-        🔑 Permisos
-      </button>
+        Permisos
+      </Button>
     );
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       <div>
-        <span className="badge">Permiso: ROL_VER</span>
-        <h1 style={{ marginTop: '0.5rem' }}>Gestión de Roles y Permisos</h1>
-        <p style={{ color: 'var(--text-secondary)' }}>
-          Definición de roles del sistema y matriz de permisos por módulos conectada al backend REST.
+        <h1 style={{ margin: 0 }}>Roles y permisos</h1>
+        <p style={{ color: 'var(--color-text-secondary)', margin: '0.25rem 0 0' }}>
+          Qué puede hacer cada rol, por módulo.
         </p>
       </div>
 
       {aviso && (
         <div
           role="alert"
-          style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#f87171', padding: '0.75rem', borderRadius: 'var(--radius-sm)' }}
+          style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', background: 'var(--color-danger-bg)', border: '1px solid var(--color-danger-border)', color: 'var(--color-danger)', padding: '0.75rem', borderRadius: 'var(--radius-sm)' }}
         >
           <span>{aviso}</span>
           <button type="button" onClick={() => setAviso(null)} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}>
@@ -378,8 +345,8 @@ export const RolesPage: React.FC = () => {
       )}
 
       <DataTable<RolResumen>
-        title="Matriz de Roles y Permisos"
-        description="Gestión centralizada de perfiles de acceso. Los roles del sistema (esSistema: true) se mantienen en sólo lectura."
+        title="Listado de roles"
+        description="Los roles del sistema no se pueden editar ni dar de baja."
         data={roles}
         columns={columns}
         searchFields={['nombre', 'nombreAmigable', 'descripcion']}
@@ -415,7 +382,7 @@ export const RolesPage: React.FC = () => {
         onReactivate={puedeEliminar ? handleReactivate : undefined}
         customActions={renderCustomActions}
         isReadOnly={(rol) => rol.esSistema}
-        createButtonText="Crear Nuevo Rol"
+        createButtonText="Crear rol"
       />
 
       {/* Form Modal for Create / Edit Rol */}
@@ -435,56 +402,26 @@ export const RolesPage: React.FC = () => {
         onSubmit={handleSubmitForm}
       />
 
-      {/* MODAL PERMISOS AGRUPADOS POR MÓDULO (PUT /admin/roles/{id}/permisos) */}
-      {permisosModalRol && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(15, 23, 42, 0.8)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '1rem',
-          }}
-          onClick={() => setPermisosModalRol(null)}
-        >
-          <div
-            className="glass-card"
-            style={{
-              width: '100%',
-              maxWidth: '720px',
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              padding: '1.75rem',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-              <div>
-                <h3 style={{ fontSize: '1.25rem' }}>Configuración de Permisos</h3>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-                  Rol: <strong>{permisosModalRol.nombreAmigable}</strong> (<code>{permisosModalRol.nombre}</code>)
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setPermisosModalRol(null)}
-                style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', cursor: 'pointer' }}
-              >
-                &times;
-              </button>
-            </div>
-
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-              Los cambios se guardan invocando a <code>PUT /admin/roles/{permisosModalRol.id}/permisos</code> con la lista de permisos seleccionados.
-            </p>
-
+      {/* Permisos del rol, agrupados por módulo (PUT /admin/roles/{id}/permisos) */}
+      <Modal
+        isOpen={permisosModalRol !== null}
+        title={permisosModalRol ? `Permisos de ${permisosModalRol.nombreAmigable}` : ''}
+        size="lg"
+        onClose={() => setPermisosModalRol(null)}
+        closeDisabled={isSavingPermisos}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setPermisosModalRol(null)} disabled={isSavingPermisos}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSavePermisos} loading={isSavingPermisos}>
+              {isSavingPermisos ? 'Guardando...' : 'Guardar permisos'}
+            </Button>
+          </>
+        }
+      >
+        {permisosModalRol && (
+          <>
             {/* Quick Actions Bar */}
             <div
               style={{
@@ -492,56 +429,31 @@ export const RolesPage: React.FC = () => {
                 flexWrap: 'wrap',
                 gap: '0.5rem',
                 marginBottom: '1.25rem',
-                backgroundColor: 'rgba(15, 23, 42, 0.5)',
+                backgroundColor: 'var(--color-surface)',
                 padding: '0.75rem 0.9rem',
                 borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-color)',
+                border: '1px solid var(--color-border)',
                 alignItems: 'center',
               }}
             >
-              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginRight: '0.25rem' }}>
-                Acciones Rápidas:
+              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-text-secondary)', marginRight: '0.25rem' }}>
+                Marcar:
               </span>
-
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={handleSelectReadOnlyPermisos}
-                style={{ fontSize: '0.775rem', padding: '0.35rem 0.75rem', backgroundColor: 'rgba(6, 182, 212, 0.15)', color: 'var(--accent-secondary)' }}
-              >
-                ⚡ Seleccionar sólo lectura (*_VER)
-              </button>
-
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={handleSelectAllPermisos}
-                style={{ fontSize: '0.775rem', padding: '0.35rem 0.75rem' }}
-              >
-                ✓ Seleccionar todo
-              </button>
-
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={handleClearAllPermisos}
-                style={{ fontSize: '0.775rem', padding: '0.35rem 0.75rem' }}
-              >
-                ✕ Desmarcar todo
-              </button>
+              <Button size="sm" variant="secondary" onClick={handleSelectReadOnlyPermisos}>
+                Solo ver
+              </Button>
+              <Button size="sm" variant="secondary" onClick={handleSelectAllPermisos}>
+                Todos
+              </Button>
+              <Button size="sm" variant="secondary" onClick={handleClearAllPermisos}>
+                Ninguno
+              </Button>
             </div>
 
             {permisosFeedback && (
               <div
-                style={{
-                  padding: '0.65rem 0.85rem',
-                  borderRadius: 'var(--radius-sm)',
-                  marginBottom: '1rem',
-                  fontSize: '0.85rem',
-                  backgroundColor: permisosFeedback.includes('exitosamente') ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                  color: permisosFeedback.includes('exitosamente') ? '#10b981' : '#f87171',
-                  border: permisosFeedback.includes('exitosamente') ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)',
-                }}
+                className={`alerta ${permisosFeedback.includes('exitosamente') ? 'alerta-exito' : 'alerta-peligro'}`}
+                style={{ marginBottom: '1rem' }}
               >
                 {permisosFeedback}
               </div>
@@ -566,9 +478,9 @@ export const RolesPage: React.FC = () => {
                   <div
                     key={mod.modulo}
                     style={{
-                      backgroundColor: 'rgba(15, 23, 42, 0.5)',
+                      backgroundColor: 'var(--color-surface)',
                       borderRadius: 'var(--radius-sm)',
-                      border: '1px solid var(--border-color)',
+                      border: '1px solid var(--color-border)',
                       padding: '1rem',
                     }}
                   >
@@ -577,22 +489,22 @@ export const RolesPage: React.FC = () => {
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
-                        borderBottom: '1px solid var(--border-color)',
+                        borderBottom: '1px solid var(--color-border)',
                         paddingBottom: '0.5rem',
                         marginBottom: '0.75rem',
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <span style={{ fontSize: '1.1rem' }}>{mod.icono}</span>
-                        <h4 style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>{mod.modulo}</h4>
+                        <h4 style={{ fontSize: '0.95rem', color: 'var(--color-text)' }}>{mod.modulo}</h4>
                       </div>
 
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer', fontSize: '0.775rem', color: 'var(--accent-secondary)' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer', fontSize: '0.775rem', color: 'var(--color-text-secondary)' }}>
                         <input
                           type="checkbox"
                           checked={allModSelected}
                           onChange={(e) => toggleModule(e.target.checked)}
-                          style={{ accentColor: 'var(--accent-primary)' }}
+                          style={{ accentColor: 'var(--color-primary)' }}
                         />
                         Seleccionar módulo
                       </label>
@@ -610,8 +522,8 @@ export const RolesPage: React.FC = () => {
                               gap: '0.6rem',
                               padding: '0.5rem 0.65rem',
                               borderRadius: 'var(--radius-sm)',
-                              backgroundColor: isChecked ? 'rgba(99, 102, 241, 0.12)' : 'rgba(15, 23, 42, 0.3)',
-                              border: isChecked ? '1px solid rgba(99, 102, 241, 0.35)' : '1px solid transparent',
+                              backgroundColor: isChecked ? 'var(--color-surface)' : 'var(--color-surface)',
+                              border: isChecked ? '1px solid var(--color-border-strong)' : '1px solid transparent',
                               cursor: 'pointer',
                               fontSize: '0.825rem',
                             }}
@@ -626,13 +538,13 @@ export const RolesPage: React.FC = () => {
                                   setSelectedPermisos(selectedPermisos.filter((id) => id !== perm.id));
                                 }
                               }}
-                              style={{ marginTop: '0.15rem', accentColor: 'var(--accent-primary)' }}
+                              style={{ marginTop: '0.15rem', accentColor: 'var(--color-primary)' }}
                             />
                             <div>
-                              <code style={{ fontSize: '0.75rem', color: isChecked ? 'var(--accent-secondary)' : 'var(--text-secondary)' }}>
+                              <code style={{ fontSize: '0.75rem', color: isChecked ? 'var(--color-text-secondary)' : 'var(--color-text-secondary)' }}>
                                 {perm.id}
                               </code>
-                              <div style={{ fontSize: '0.775rem', color: 'var(--text-primary)' }}>{perm.label}</div>
+                              <div style={{ fontSize: '0.775rem', color: 'var(--color-text)' }}>{perm.label}</div>
                             </div>
                           </label>
                         );
@@ -643,27 +555,9 @@ export const RolesPage: React.FC = () => {
               })}
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => setPermisosModalRol(null)}
-                disabled={isSavingPermisos}
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleSavePermisos}
-                disabled={isSavingPermisos}
-              >
-                {isSavingPermisos ? 'Guardando...' : 'Guardar Permisos (PUT)'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </Modal>
     </div>
   );
 };

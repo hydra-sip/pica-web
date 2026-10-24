@@ -39,6 +39,7 @@ interface UsuarioMock {
   roles: number[];
   creadoEn: string;
   modificadoEn: string | null;
+  bloqueo?: { motivo: string; desde: string; hasta: string | null } | null;
 }
 
 interface RolMock {
@@ -205,6 +206,11 @@ const usuarios: UsuarioMock[] = [
   usuario(4, 'lfernandez', 'lucas.fernandez@example.com', 4, [PARTICIPANTE], {
     estado: 'BLOQUEADO',
     creadoEn: '2026-09-21T11:00:00Z',
+    bloqueo: {
+      motivo: 'Conducta antideportiva reiterada y agresión verbal al árbitro en el Torneo Clausura.',
+      desde: '2026-10-20T18:00:00Z',
+      hasta: '2026-11-19T18:00:00Z',
+    },
   }),
   usuario(5, 'cgomez', 'carla.gomez@example.com', 5, [2], {
     descripcion: 'Carga los jugadores del club',
@@ -482,6 +488,7 @@ const usuarioDetalle = (u: UsuarioMock) => ({
   roles: u.roles.map(rolMinimo),
   creadoEn: u.creadoEn,
   modificadoEn: u.modificadoEn,
+  bloqueo: u.estado === 'BLOQUEADO' ? (u.bloqueo ?? null) : null,
 });
 
 const rolResumen = (r: RolMock) => ({
@@ -687,6 +694,40 @@ export const adminHandlers = [
         : u.emailVerificado
           ? 'ACTIVO'
           : 'PENDIENTE_VERIFICACION';
+    if (u.estado !== 'BLOQUEADO') u.bloqueo = null;
+    return HttpResponse.json(usuarioDetalle(u));
+  }),
+
+  // Bloqueo con motivo y fecha de fin opcional (POST/DELETE /admin/usuarios/{id}/bloqueo)
+  http.post(`${API_URL}/admin/usuarios/:id/bloqueo`, async ({ params, request }) => {
+    const u = buscarUsuario(idDe(params));
+    if (!u || u.eliminadoEn) return noEncontrado('USUARIO_NO_ENCONTRADO', 'El usuario');
+    if (u.protegido)
+      return problema(403, 'USUARIO_PROTEGIDO', 'El usuario Admin del sistema no se puede bloquear');
+    const b = (await request.json().catch(() => ({}))) as Cuerpo;
+    const errores: ErrorCampo[] = [];
+    if (!texto(b.motivo).trim())
+      errores.push({ campo: 'motivo', codigo: 'REQUERIDO', mensaje: 'Es obligatorio' });
+    const hasta = b.hasta ? texto(b.hasta) : null;
+    if (hasta && new Date(hasta).getTime() <= Date.now())
+      errores.push({ campo: 'hasta', codigo: 'VALOR_INVALIDO', mensaje: 'Tiene que ser futura' });
+    if (errores.length) return validacion(errores);
+    if (u.estado === 'BLOQUEADO')
+      return problema(409, 'USUARIO_YA_BLOQUEADO', `El usuario ${u.username} ya está bloqueado`);
+    u.estado = 'BLOQUEADO';
+    u.bloqueo = { motivo: texto(b.motivo).trim(), desde: ahora(), hasta };
+    u.modificadoEn = ahora();
+    return HttpResponse.json(usuarioDetalle(u));
+  }),
+
+  http.delete(`${API_URL}/admin/usuarios/:id/bloqueo`, ({ params }) => {
+    const u = buscarUsuario(idDe(params));
+    if (!u || u.eliminadoEn) return noEncontrado('USUARIO_NO_ENCONTRADO', 'El usuario');
+    if (u.estado === 'BLOQUEADO') {
+      u.estado = u.emailVerificado ? 'ACTIVO' : 'PENDIENTE_VERIFICACION';
+      u.bloqueo = null;
+      u.modificadoEn = ahora();
+    }
     return HttpResponse.json(usuarioDetalle(u));
   }),
 
