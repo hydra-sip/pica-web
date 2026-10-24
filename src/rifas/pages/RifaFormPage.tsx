@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { rifaApi, RifaDetalle } from '../../api/rifaApi';
 import { mensajeDeError } from '../../shared/mensajesError';
+import { Badge, Card } from '../../shared/ui';
 import { PasosAsistente } from '../components/PasosAsistente';
 import { DatosGeneralesForm } from '../components/DatosGeneralesForm';
 import { PremiosForm } from '../components/PremiosForm';
-import { ESTADO_RIFA_UI } from '../formato';
+import { ESTADO_RIFA_UI, TONO_ESTADO_RIFA } from '../formato';
 import '../rifas.css';
 
 /**
@@ -24,6 +25,7 @@ export const RifaFormPage: React.FC = () => {
 
   const paso = searchParams.get('paso') === 'premios' && rifa ? 1 : 0;
   const editable = !rifa || rifa.estado === 'BORRADOR';
+  const estado = rifa?.estado ?? 'BORRADOR';
 
   useEffect(() => {
     if (!id) {
@@ -57,9 +59,15 @@ export const RifaFormPage: React.FC = () => {
     }
   };
 
+  const volver = (
+    <Link to="/mis-rifas" className="rifas-volver">
+      ← Volver a mis rifas
+    </Link>
+  );
+
   if (cargando) {
     return (
-      <div className="container rifas-page">
+      <div className="rifas-page">
         <p className="rifas-vacio">Cargando rifa...</p>
       </div>
     );
@@ -67,36 +75,32 @@ export const RifaFormPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="container rifas-page">
-        <Link to="/mis-rifas" className="rifas-volver">
-          ← Volver a mis rifas
-        </Link>
-        <div className="rifas-aviso rifas-aviso-error">{error}</div>
+      <div className="rifas-page">
+        <div>
+          {volver}
+          <div className="alerta alerta-peligro" role="alert">
+            {error}
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container rifas-page">
-      <div>
-        <Link to="/mis-rifas" className="rifas-volver">
-          ← Volver a mis rifas
-        </Link>
-        <div className="rifas-encabezado" style={{ marginTop: '0.75rem' }}>
-          <div>
-            <div className="rifas-titulo-con-chip">
-              <h1>{rifa ? rifa.titulo : 'Crear nueva rifa'}</h1>
-              <span className={`estado-rifa ${rifa?.estado ?? 'BORRADOR'}`}>
-                {ESTADO_RIFA_UI[rifa?.estado ?? 'BORRADOR']}
-              </span>
-            </div>
-            <p>Rifa sin torneo asociado: el pozo se reparte entre sus premios.</p>
-          </div>
+    <div className="rifas-page">
+      <header>
+        {volver}
+        <div className="rifas-titulo-con-chip">
+          <h1>{rifa ? rifa.titulo : 'Crear nueva rifa'}</h1>
+          <Badge tone={TONO_ESTADO_RIFA[estado]}>{ESTADO_RIFA_UI[estado]}</Badge>
         </div>
-      </div>
+        <p className="rifas-subtitulo">
+          Rifa sin torneo asociado: el pozo se reparte entre sus premios.
+        </p>
+      </header>
 
       {!editable && (
-        <div className="rifas-aviso rifas-aviso-info">
+        <div className="alerta alerta-info" role="status">
           La rifa ya no está en borrador: se muestra de solo lectura.
         </div>
       )}
@@ -114,7 +118,7 @@ export const RifaFormPage: React.FC = () => {
         ]}
       />
 
-      <div className="glass-card">
+      <Card>
         {/* Los dos pasos quedan montados para no perder lo que no se guardó al ir y volver. */}
         <div hidden={paso !== 0}>
           <DatosGeneralesForm
@@ -134,7 +138,7 @@ export const RifaFormPage: React.FC = () => {
             />
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 };

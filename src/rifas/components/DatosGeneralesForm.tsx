@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { rifaApi, RifaDetalle, RifaPayload } from '../../api/rifaApi';
 import { erroresPorCampo, mensajeDeError } from '../../shared/mensajesError';
 import { DatosRifaForm, validateDatosRifa } from '../../shared/validators';
+import { Button, Field, Input, Textarea } from '../../shared/ui';
 import { inputLocalAIso, isoAInputLocal } from '../formato';
 
 interface DatosGeneralesFormProps {
@@ -107,50 +108,44 @@ export const DatosGeneralesForm: React.FC<DatosGeneralesFormProps> = ({
     requerido = false,
     ayuda?: string
   ) => (
-    <div className="rifas-campo">
-      <label htmlFor={`rifa-${nombre}`}>
-        {etiqueta} {requerido && <span className="requerido">*</span>}
-      </label>
-      <input
-        id={`rifa-${nombre}`}
-        className={`rifas-input ${errores[nombre] ? 'con-error' : ''}`}
+    <Field label={etiqueta} required={requerido} hint={ayuda} error={errores[nombre]}>
+      <Input
         value={form[nombre]}
         onChange={cambiar(nombre)}
         disabled={!editable || guardando}
         {...props}
       />
-      {errores[nombre] ? (
-        <span className="rifas-error-campo">⚠️ {errores[nombre]}</span>
-      ) : (
-        ayuda && <span className="rifas-ayuda">{ayuda}</span>
-      )}
-    </div>
+    </Field>
   );
 
   return (
     <form className="rifas-form" onSubmit={enviar} noValidate>
       <div className="rifas-tarjeta-titulo">
-        <h3>Paso 1: Datos generales de la rifa</h3>
+        <h2>Paso 1: Datos generales de la rifa</h2>
         {editable && <span>Los campos con * son obligatorios</span>}
       </div>
 
-      {mensaje && <div className={`rifas-aviso rifas-aviso-${mensaje.tipo}`}>{mensaje.texto}</div>}
+      {mensaje && (
+        <div
+          className={`alerta ${mensaje.tipo === 'exito' ? 'alerta-exito' : 'alerta-peligro'}`}
+          role={mensaje.tipo === 'exito' ? 'status' : 'alert'}
+        >
+          {mensaje.texto}
+        </div>
+      )}
 
       {campo('titulo', 'Título de la rifa', { type: 'text', maxLength: 100 }, true)}
 
-      <div className="rifas-campo">
-        <label htmlFor="rifa-descripcion">Descripción</label>
-        <textarea
-          id="rifa-descripcion"
-          className={`rifas-input ${errores.descripcion ? 'con-error' : ''}`}
+      <Field label="Descripción" error={errores.descripcion}>
+        <Textarea
+          rows={4}
           value={form.descripcion}
           onChange={cambiar('descripcion')}
           disabled={!editable || guardando}
           maxLength={2000}
-          placeholder="Para qué se recaudan los fondos, cómo se sortea, etc."
+          placeholder="Para qué se recaudan los fondos, cómo se sortea"
         />
-        {errores.descripcion && <span className="rifas-error-campo">⚠️ {errores.descripcion}</span>}
-      </div>
+      </Field>
 
       <div className="rifas-grilla">
         {campo('numeroDesde', 'Número desde', { type: 'number', min: 0, step: 1 }, true)}
@@ -179,22 +174,15 @@ export const DatosGeneralesForm: React.FC<DatosGeneralesFormProps> = ({
         <div className="rifas-acciones">
           {editable ? (
             <>
-              <button type="submit" className="btn btn-secondary" disabled={guardando}>
-                {guardando ? 'Guardando...' : 'Guardar como borrador'}
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                disabled={guardando}
-                onClick={() => void guardar(true)}
-              >
+              <Button type="submit" variant="secondary" loading={guardando}>
+                Guardar como borrador
+              </Button>
+              <Button disabled={guardando} onClick={() => void guardar(true)}>
                 Siguiente: Premios →
-              </button>
+              </Button>
             </>
           ) : (
-            <button type="button" className="btn btn-primary" onClick={onSiguiente}>
-              Ver premios →
-            </button>
+            <Button onClick={onSiguiente}>Ver premios →</Button>
           )}
         </div>
       </div>

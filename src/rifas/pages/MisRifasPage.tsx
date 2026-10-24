@@ -2,7 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { EstadoRifa, rifaApi, RifaResumen } from '../../api/rifaApi';
 import { mensajeDeError } from '../../shared/mensajesError';
-import { ESTADO_RIFA_UI, formatearFecha, formatearPrecio } from '../formato';
+import { fechaHora, pesos } from '../../shared/formato';
+import { Badge, Card, Input, Table } from '../../shared/ui';
+import { ESTADO_RIFA_UI, TONO_ESTADO_RIFA } from '../formato';
 import '../rifas.css';
 
 // El contrato permite hasta 100 por página. Un organizador no suele tener más, así que se traen
@@ -63,32 +65,37 @@ export const MisRifasPage: React.FC = () => {
   }, [rifas, filtro, busqueda]);
 
   return (
-    <div className="container rifas-page">
-      <div className="rifas-encabezado">
+    <div className="rifas-page">
+      <header className="rifas-encabezado">
         <div>
           <div className="rifas-titulo-con-chip">
             <h1>Mis rifas</h1>
             {!cargando && (
-              <span className="chip-contador">
+              <Badge tone="borde">
                 {total} {total === 1 ? 'rifa' : 'rifas'}
-              </span>
+              </Badge>
             )}
           </div>
-          <p>Las rifas que organizás. Mientras están en borrador las podés editar.</p>
+          <p className="rifas-subtitulo">
+            Las rifas que organizás. Mientras están en borrador las podés editar.
+          </p>
         </div>
         <Link to="/rifas/nueva" className="btn btn-primary">
-          + Crear nueva rifa
+          Crear nueva rifa
         </Link>
-      </div>
+      </header>
 
-      {error && <div className="rifas-aviso rifas-aviso-error">{error}</div>}
+      {error && (
+        <div className="alerta alerta-peligro" role="alert">
+          {error}
+        </div>
+      )}
 
-      <div className="glass-card">
+      <Card>
         <div className="rifas-filtros">
-          <input
+          <Input
             type="search"
-            className="rifas-input"
-            placeholder="Buscar rifa por título..."
+            placeholder="Buscar rifa por título"
             aria-label="Buscar rifa por título"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
@@ -98,7 +105,7 @@ export const MisRifasPage: React.FC = () => {
               <button
                 key={c.estado}
                 type="button"
-                className={`chip-estado ${filtro === c.estado ? 'activo' : ''}`}
+                className={`chip-estado${filtro === c.estado ? ' activo' : ''}`}
                 aria-pressed={filtro === c.estado}
                 onClick={() => setFiltro(c.estado)}
               >
@@ -112,80 +119,77 @@ export const MisRifasPage: React.FC = () => {
           <p className="rifas-vacio">Cargando rifas...</p>
         ) : rifas.length === 0 && !error ? (
           <div className="rifas-vacio">
-            <h3>Todavía no organizaste ninguna rifa</h3>
+            <h2>Todavía no organizaste ninguna rifa</h2>
             <p>Creá la primera con el botón &quot;Crear nueva rifa&quot;.</p>
           </div>
         ) : visibles.length === 0 ? (
           <p className="rifas-vacio">Ninguna rifa coincide con el filtro.</p>
         ) : (
-          <div className="rifas-tabla-contenedor">
-            <table className="rifas-tabla">
-              <thead>
-                <tr>
-                  <th>Rifa</th>
-                  <th>Números</th>
-                  <th>Precio</th>
-                  <th>Venta</th>
-                  <th>Estado</th>
-                  <th aria-label="Acciones" />
+          <Table caption="Mis rifas">
+            <thead>
+              <tr>
+                <th scope="col">Rifa</th>
+                <th scope="col">Números</th>
+                <th scope="col">Precio</th>
+                <th scope="col">Venta</th>
+                <th scope="col">Estado</th>
+                <th scope="col" aria-label="Acciones" />
+              </tr>
+            </thead>
+            <tbody>
+              {visibles.map((rifa) => (
+                <tr key={rifa.id}>
+                  <td>
+                    <span className="rifas-titulo-fila">{rifa.titulo}</span>
+                    <span className="rifas-celda-secundaria">
+                      Sin torneo · creada el {fechaHora(rifa.creadoEn)}
+                    </span>
+                  </td>
+                  <td>
+                    {rifa.numeroDesde} – {rifa.numeroHasta}
+                    <span className="rifas-celda-secundaria">
+                      {rifa.numeroHasta - rifa.numeroDesde + 1} números
+                    </span>
+                  </td>
+                  <td>{pesos(rifa.precioNumero)}</td>
+                  <td>
+                    {rifa.ventaDesde ? (
+                      <>
+                        {fechaHora(rifa.ventaDesde)}
+                        <span className="rifas-celda-secundaria">
+                          hasta {fechaHora(rifa.ventaHasta)}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="rifas-celda-secundaria">Sin definir</span>
+                    )}
+                  </td>
+                  <td>
+                    <Badge tone={TONO_ESTADO_RIFA[rifa.estado]}>
+                      {ESTADO_RIFA_UI[rifa.estado] ?? rifa.estado}
+                    </Badge>
+                  </td>
+                  <td style={{ textAlign: 'right' }}>
+                    <Link
+                      to={`/rifas/${rifa.id}/editar`}
+                      className={`btn btn-sm ${rifa.estado === 'BORRADOR' ? 'btn-primary' : 'btn-secondary'}`}
+                    >
+                      {rifa.estado === 'BORRADOR' ? 'Continuar edición' : 'Ver rifa'}
+                    </Link>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {visibles.map((rifa) => (
-                  <tr key={rifa.id}>
-                    <td>
-                      <span className="titulo">{rifa.titulo}</span>
-                      <span className="secundario" style={{ display: 'block' }}>
-                        Sin torneo · creada el {formatearFecha(rifa.creadoEn)}
-                      </span>
-                    </td>
-                    <td>
-                      {rifa.numeroDesde} – {rifa.numeroHasta}
-                      <span className="secundario" style={{ display: 'block' }}>
-                        {rifa.numeroHasta - rifa.numeroDesde + 1} números
-                      </span>
-                    </td>
-                    <td>{formatearPrecio(rifa.precioNumero)}</td>
-                    <td className="secundario">
-                      {rifa.ventaDesde ? (
-                        <>
-                          {formatearFecha(rifa.ventaDesde)}
-                          <br />
-                          {formatearFecha(rifa.ventaHasta)}
-                        </>
-                      ) : (
-                        'Sin definir'
-                      )}
-                    </td>
-                    <td>
-                      <span className={`estado-rifa ${rifa.estado}`}>
-                        {ESTADO_RIFA_UI[rifa.estado] ?? rifa.estado}
-                      </span>
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <Link
-                        to={`/rifas/${rifa.id}/editar`}
-                        className={`btn ${rifa.estado === 'BORRADOR' ? 'btn-primary' : 'btn-secondary'}`}
-                      >
-                        {rifa.estado === 'BORRADOR' ? 'Continuar edición' : 'Ver rifa'}
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </Table>
         )}
 
         {!cargando && rifas.length > 0 && (
-          <div className="rifas-paginado">
-            <span>
-              Mostrando {visibles.length} de {total} {total === 1 ? 'rifa' : 'rifas'}
-              {total > MAXIMO && ` (solo las ${MAXIMO} más nuevas)`}
-            </span>
-          </div>
+          <p className="rifas-pie-tabla">
+            Mostrando {visibles.length} de {total} {total === 1 ? 'rifa' : 'rifas'}
+            {total > MAXIMO && ` (solo las ${MAXIMO} más nuevas)`}
+          </p>
         )}
-      </div>
+      </Card>
     </div>
   );
 };

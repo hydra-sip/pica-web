@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { rifaApi, RifaDetalle } from '../../api/rifaApi';
 import { erroresPorCampo, mensajeDeError } from '../../shared/mensajesError';
+import { Button, Input } from '../../shared/ui';
 import {
   ErroresPremios,
   PremioForm,
@@ -99,13 +100,20 @@ export const PremiosForm: React.FC<PremiosFormProps> = ({
   return (
     <form className="rifas-form" onSubmit={guardar} noValidate>
       <div className="rifas-tarjeta-titulo">
-        <h3>Paso 2: Premios por puesto</h3>
+        <h2>Paso 2: Premios por puesto</h2>
         <span>Puede haber hasta un premio por número ({cantidadNumeros})</span>
       </div>
 
-      {mensaje && <div className={`rifas-aviso rifas-aviso-${mensaje.tipo}`}>{mensaje.texto}</div>}
+      {mensaje && (
+        <div
+          className={`alerta ${mensaje.tipo === 'exito' ? 'alerta-exito' : 'alerta-peligro'}`}
+          role={mensaje.tipo === 'exito' ? 'status' : 'alert'}
+        >
+          {mensaje.texto}
+        </div>
+      )}
 
-      <div className="rifas-aviso rifas-aviso-info">
+      <div className="alerta alerta-info">
         Cada premio es un porcentaje del pozo de la rifa y entre todos tienen que sumar 100 % para
         poder publicarla.
       </div>
@@ -118,9 +126,9 @@ export const PremiosForm: React.FC<PremiosFormProps> = ({
             <div key={i}>
               <div className="premio-fila">
                 <span className="premio-puesto">{i + 1}.º</span>
-                <input
+                <Input
                   aria-label={`Porcentaje del ${i + 1}.º premio`}
-                  className={`rifas-input ${errores.porFila[i] ? 'con-error' : ''}`}
+                  aria-invalid={errores.porFila[i] ? true : undefined}
                   type="number"
                   inputMode="numeric"
                   min={1}
@@ -137,9 +145,9 @@ export const PremiosForm: React.FC<PremiosFormProps> = ({
                   onChange={(e) => actualizar(i, 'pct', e.target.value.replace(/\D/g, ''))}
                   disabled={bloqueado}
                 />
-                <input
+                <Input
                   aria-label={`Descripción del ${i + 1}.º premio`}
-                  className="rifas-input premio-descripcion"
+                  className="premio-descripcion"
                   type="text"
                   maxLength={255}
                   placeholder="Descripción (opcional)"
@@ -149,42 +157,39 @@ export const PremiosForm: React.FC<PremiosFormProps> = ({
                 />
                 {editable && (
                   <div className="premio-botones">
-                    <button
-                      type="button"
-                      className="btn-icono"
+                    <Button
+                      variant="ghost"
                       title="Subir"
-                      aria-label="Subir"
+                      aria-label={`Subir el ${i + 1}.º premio`}
                       disabled={guardando || i === 0}
                       onClick={() => mover(i, i - 1)}
                     >
                       ↑
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-icono"
+                    </Button>
+                    <Button
+                      variant="ghost"
                       title="Bajar"
-                      aria-label="Bajar"
+                      aria-label={`Bajar el ${i + 1}.º premio`}
                       disabled={guardando || i === premios.length - 1}
                       onClick={() => mover(i, i + 1)}
                     >
                       ↓
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-icono"
+                    </Button>
+                    <Button
+                      variant="ghost"
                       title="Quitar"
-                      aria-label="Quitar"
+                      aria-label={`Quitar el ${i + 1}.º premio`}
                       disabled={guardando}
                       onClick={() => quitar(i)}
                     >
                       ✕
-                    </button>
+                    </Button>
                   </div>
                 )}
               </div>
               {errores.porFila[i] && (
-                <span className="rifas-error-campo" style={{ marginLeft: '4.25rem' }}>
-                  ⚠️ {errores.porFila[i]}
+                <span className="premio-error" role="alert">
+                  {errores.porFila[i]}
                 </span>
               )}
             </div>
@@ -201,32 +206,26 @@ export const PremiosForm: React.FC<PremiosFormProps> = ({
           {suma < 100 && premios.length > 0 && <> · faltan {100 - suma} % para publicar</>}
         </span>
         {editable && (
-          <button
-            type="button"
-            className="btn btn-secondary"
+          <Button
+            variant="secondary"
             onClick={agregar}
             disabled={guardando || premios.length >= cantidadNumeros}
           >
             + Agregar premio
-          </button>
+          </Button>
         )}
       </div>
 
       <div className="rifas-pie">
         <span>Paso 2 de 2{editable && ' · Los cambios se guardan como borrador'}</span>
         <div className="rifas-acciones">
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={onAnterior}
-            disabled={guardando}
-          >
+          <Button variant="secondary" onClick={onAnterior} disabled={guardando}>
             ← Anterior
-          </button>
+          </Button>
           {editable && (
-            <button type="submit" className="btn btn-primary" disabled={guardando}>
-              {guardando ? 'Guardando...' : 'Guardar como borrador'}
-            </button>
+            <Button type="submit" loading={guardando}>
+              Guardar como borrador
+            </Button>
           )}
         </div>
       </div>
