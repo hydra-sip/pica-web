@@ -13,7 +13,7 @@ export const RequireAuth: React.FC<RequireAuthProps> = ({ children }) => {
   if (isLoading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px' }}>
-        <p style={{ color: 'var(--text-secondary)' }}>Verificando autenticación...</p>
+        <p style={{ color: 'var(--color-text-secondary)' }}>Verificando autenticación...</p>
       </div>
     );
   }

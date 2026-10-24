@@ -207,7 +207,7 @@ export const ProfilePage: React.FC = () => {
       <div>
         <span className="badge">Configuración de Cuenta</span>
         <h1 style={{ marginTop: '0.5rem' }}>Mi Perfil</h1>
-        <p style={{ color: 'var(--text-secondary)' }}>
+        <p style={{ color: 'var(--color-text-secondary)' }}>
           Gestioná tu información personal y la seguridad de tu acceso según la especificación del
           sistema.
         </p>
@@ -216,9 +216,9 @@ export const ProfilePage: React.FC = () => {
       {user && user.datosCompletos === false && (
         <div
           style={{
-            background: 'rgba(234, 179, 8, 0.15)',
-            border: '1px solid rgba(234, 179, 8, 0.4)',
-            color: '#facc15',
+            background: 'var(--color-warning-bg)',
+            border: '1px solid var(--color-warning-border)',
+            color: 'var(--color-warning)',
             padding: '1rem',
             borderRadius: 'var(--radius-sm)',
             fontSize: '0.9rem',
@@ -232,7 +232,7 @@ export const ProfilePage: React.FC = () => {
       )}
 
       {/* Sección 1: Datos Personales */}
-      <div className="glass-card">
+      <div className="card">
         <h3
           style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
         >
@@ -242,9 +242,9 @@ export const ProfilePage: React.FC = () => {
         {profileSuccessMsg && (
           <div
             style={{
-              background: 'rgba(16, 185, 129, 0.15)',
-              border: '1px solid rgba(16, 185, 129, 0.3)',
-              color: '#34d399',
+              background: 'var(--color-success-bg)',
+              border: '1px solid var(--color-success-border)',
+              color: 'var(--color-success)',
               padding: '0.75rem',
               borderRadius: 'var(--radius-sm)',
               marginBottom: '1.25rem',
@@ -258,9 +258,9 @@ export const ProfilePage: React.FC = () => {
         {profileErrorMsg && (
           <div
             style={{
-              background: 'rgba(239, 68, 68, 0.15)',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              color: '#f87171',
+              background: 'var(--color-danger-bg)',
+              border: '1px solid var(--color-danger-border)',
+              color: 'var(--color-danger)',
               padding: '0.75rem',
               borderRadius: 'var(--radius-sm)',
               marginBottom: '1.25rem',
@@ -290,10 +290,10 @@ export const ProfilePage: React.FC = () => {
                   display: 'block',
                   fontSize: '0.85rem',
                   marginBottom: '0.35rem',
-                  color: 'var(--text-secondary)',
+                  color: 'var(--color-text-secondary)',
                 }}
               >
-                Nombres <span style={{ color: '#f87171' }}>*</span>
+                Nombres <span style={{ color: 'var(--color-danger)' }}>*</span>
               </label>
               <input
                 type="text"
@@ -310,17 +310,17 @@ export const ProfilePage: React.FC = () => {
                   padding: '0.75rem',
                   borderRadius: 'var(--radius-sm)',
                   border: profileFieldErrors.nombres
-                    ? '1px solid #f87171'
-                    : '1px solid var(--border-color)',
-                  backgroundColor: 'rgba(15, 23, 42, 0.7)',
-                  color: 'var(--text-primary)',
+                    ? '1px solid var(--color-danger)'
+                    : '1px solid var(--color-border)',
+                  backgroundColor: 'var(--color-input-bg)',
+                  color: 'var(--color-text)',
                   outline: 'none',
                 }}
               />
               {profileFieldErrors.nombres && (
                 <span
                   style={{
-                    color: '#f87171',
+                    color: 'var(--color-danger)',
                     fontSize: '0.78rem',
                     marginTop: '0.2rem',
                     display: 'block',
@@ -337,10 +337,10 @@ export const ProfilePage: React.FC = () => {
                   display: 'block',
                   fontSize: '0.85rem',
                   marginBottom: '0.35rem',
-                  color: 'var(--text-secondary)',
+                  color: 'var(--color-text-secondary)',
                 }}
               >
-                Apellidos <span style={{ color: '#f87171' }}>*</span>
+                Apellidos <span style={{ color: 'var(--color-danger)' }}>*</span>
               </label>
               <input
                 type="text"
@@ -357,17 +357,17 @@ export const ProfilePage: React.FC = () => {
                   padding: '0.75rem',
                   borderRadius: 'var(--radius-sm)',
                   border: profileFieldErrors.apellidos
-                    ? '1px solid #f87171'
-                    : '1px solid var(--border-color)',
-                  backgroundColor: 'rgba(15, 23, 42, 0.7)',
-                  color: 'var(--text-primary)',
+                    ? '1px solid var(--color-danger)'
+                    : '1px solid var(--color-border)',
+                  backgroundColor: 'var(--color-input-bg)',
+                  color: 'var(--color-text)',
                   outline: 'none',
                 }}
               />
               {profileFieldErrors.apellidos && (
                 <span
                   style={{
-                    color: '#f87171',
+                    color: 'var(--color-danger)',
                     fontSize: '0.78rem',
                     marginTop: '0.2rem',
                     display: 'block',
@@ -384,7 +384,7 @@ export const ProfilePage: React.FC = () => {
                   display: 'block',
                   fontSize: '0.85rem',
                   marginBottom: '0.35rem',
-                  color: 'var(--text-secondary)',
+                  color: 'var(--color-text-secondary)',
                 }}
               >
                 Correo Electrónico (No editable)
@@ -397,9 +397,9 @@ export const ProfilePage: React.FC = () => {
                   width: '100%',
                   padding: '0.75rem',
                   borderRadius: 'var(--radius-sm)',
-                  border: '1px solid var(--border-color)',
-                  backgroundColor: 'rgba(15, 23, 42, 0.4)',
-                  color: 'var(--text-muted)',
+                  border: '1px solid var(--color-border)',
+                  backgroundColor: 'var(--color-surface)',
+                  color: 'var(--color-text-muted)',
                   cursor: 'not-allowed',
                 }}
               />
@@ -411,7 +411,7 @@ export const ProfilePage: React.FC = () => {
                   display: 'block',
                   fontSize: '0.85rem',
                   marginBottom: '0.35rem',
-                  color: 'var(--text-secondary)',
+                  color: 'var(--color-text-secondary)',
                 }}
               >
                 Tipo de Documento
@@ -433,9 +433,9 @@ export const ProfilePage: React.FC = () => {
                   width: '100%',
                   padding: '0.75rem',
                   borderRadius: 'var(--radius-sm)',
-                  border: '1px solid var(--border-color)',
-                  backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                  color: 'var(--text-primary)',
+                  border: '1px solid var(--color-border)',
+                  backgroundColor: 'var(--color-input-bg)',
+                  color: 'var(--color-text)',
                   outline: 'none',
                 }}
               >
@@ -453,10 +453,10 @@ export const ProfilePage: React.FC = () => {
                   display: 'block',
                   fontSize: '0.85rem',
                   marginBottom: '0.35rem',
-                  color: 'var(--text-secondary)',
+                  color: 'var(--color-text-secondary)',
                 }}
               >
-                Nro Documento <span style={{ color: '#facc15' }}>*</span>
+                Nro Documento <span style={{ color: 'var(--color-warning)' }}>*</span>
               </label>
               <input
                 type="text"
@@ -478,19 +478,19 @@ export const ProfilePage: React.FC = () => {
                   padding: '0.75rem',
                   borderRadius: 'var(--radius-sm)',
                   border: profileFieldErrors.nroDoc
-                    ? '1px solid #f87171'
+                    ? '1px solid var(--color-danger)'
                     : !nroDoc
-                      ? '1px solid rgba(234, 179, 8, 0.5)'
-                      : '1px solid var(--border-color)',
-                  backgroundColor: 'rgba(15, 23, 42, 0.7)',
-                  color: 'var(--text-primary)',
+                      ? '1px solid var(--color-warning-border)'
+                      : '1px solid var(--color-border)',
+                  backgroundColor: 'var(--color-input-bg)',
+                  color: 'var(--color-text)',
                   outline: 'none',
                 }}
               />
               {profileFieldErrors.nroDoc && (
                 <span
                   style={{
-                    color: '#f87171',
+                    color: 'var(--color-danger)',
                     fontSize: '0.78rem',
                     marginTop: '0.2rem',
                     display: 'block',
@@ -507,10 +507,10 @@ export const ProfilePage: React.FC = () => {
                   display: 'block',
                   fontSize: '0.85rem',
                   marginBottom: '0.35rem',
-                  color: 'var(--text-secondary)',
+                  color: 'var(--color-text-secondary)',
                 }}
               >
-                Fecha de Nacimiento <span style={{ color: '#facc15' }}>*</span>
+                Fecha de Nacimiento <span style={{ color: 'var(--color-warning)' }}>*</span>
               </label>
               <input
                 type="date"
@@ -532,19 +532,19 @@ export const ProfilePage: React.FC = () => {
                   padding: '0.75rem',
                   borderRadius: 'var(--radius-sm)',
                   border: profileFieldErrors.fechaNacimiento
-                    ? '1px solid #f87171'
+                    ? '1px solid var(--color-danger)'
                     : !fechaNacimiento
-                      ? '1px solid rgba(234, 179, 8, 0.5)'
-                      : '1px solid var(--border-color)',
-                  backgroundColor: 'rgba(15, 23, 42, 0.7)',
-                  color: 'var(--text-primary)',
+                      ? '1px solid var(--color-warning-border)'
+                      : '1px solid var(--color-border)',
+                  backgroundColor: 'var(--color-input-bg)',
+                  color: 'var(--color-text)',
                   outline: 'none',
                 }}
               />
               {profileFieldErrors.fechaNacimiento && (
                 <span
                   style={{
-                    color: '#f87171',
+                    color: 'var(--color-danger)',
                     fontSize: '0.78rem',
                     marginTop: '0.2rem',
                     display: 'block',
@@ -561,10 +561,10 @@ export const ProfilePage: React.FC = () => {
                   display: 'block',
                   fontSize: '0.85rem',
                   marginBottom: '0.35rem',
-                  color: 'var(--text-secondary)',
+                  color: 'var(--color-text-secondary)',
                 }}
               >
-                Domicilio Postal <span style={{ color: '#facc15' }}>*</span>
+                Domicilio Postal <span style={{ color: 'var(--color-warning)' }}>*</span>
               </label>
               <input
                 type="text"
@@ -577,10 +577,10 @@ export const ProfilePage: React.FC = () => {
                   padding: '0.75rem',
                   borderRadius: 'var(--radius-sm)',
                   border: !domicilioPostal
-                    ? '1px solid rgba(234, 179, 8, 0.5)'
-                    : '1px solid var(--border-color)',
-                  backgroundColor: 'rgba(15, 23, 42, 0.7)',
-                  color: 'var(--text-primary)',
+                    ? '1px solid var(--color-warning-border)'
+                    : '1px solid var(--color-border)',
+                  backgroundColor: 'var(--color-input-bg)',
+                  color: 'var(--color-text)',
                   outline: 'none',
                 }}
               />
@@ -592,10 +592,10 @@ export const ProfilePage: React.FC = () => {
                   display: 'block',
                   fontSize: '0.85rem',
                   marginBottom: '0.35rem',
-                  color: 'var(--text-secondary)',
+                  color: 'var(--color-text-secondary)',
                 }}
               >
-                Teléfono de Contacto <span style={{ color: '#facc15' }}>*</span>
+                Teléfono de Contacto <span style={{ color: 'var(--color-warning)' }}>*</span>
               </label>
               <input
                 type="text"
@@ -608,10 +608,10 @@ export const ProfilePage: React.FC = () => {
                   padding: '0.75rem',
                   borderRadius: 'var(--radius-sm)',
                   border: !telefono
-                    ? '1px solid rgba(234, 179, 8, 0.5)'
-                    : '1px solid var(--border-color)',
-                  backgroundColor: 'rgba(15, 23, 42, 0.7)',
-                  color: 'var(--text-primary)',
+                    ? '1px solid var(--color-warning-border)'
+                    : '1px solid var(--color-border)',
+                  backgroundColor: 'var(--color-input-bg)',
+                  color: 'var(--color-text)',
                   outline: 'none',
                 }}
               />
@@ -627,7 +627,7 @@ export const ProfilePage: React.FC = () => {
       </div>
 
       {/* Sección 2: Cambio de Contraseña */}
-      <div className="glass-card">
+      <div className="card">
         <h3
           style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
         >
@@ -637,9 +637,9 @@ export const ProfilePage: React.FC = () => {
         {passwordSuccessMsg && (
           <div
             style={{
-              background: 'rgba(16, 185, 129, 0.15)',
-              border: '1px solid rgba(16, 185, 129, 0.3)',
-              color: '#34d399',
+              background: 'var(--color-success-bg)',
+              border: '1px solid var(--color-success-border)',
+              color: 'var(--color-success)',
               padding: '0.75rem',
               borderRadius: 'var(--radius-sm)',
               marginBottom: '1.25rem',
@@ -653,9 +653,9 @@ export const ProfilePage: React.FC = () => {
         {passwordErrorMsg && (
           <div
             style={{
-              background: 'rgba(239, 68, 68, 0.15)',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              color: '#f87171',
+              background: 'var(--color-danger-bg)',
+              border: '1px solid var(--color-danger-border)',
+              color: 'var(--color-danger)',
               padding: '0.75rem',
               borderRadius: 'var(--radius-sm)',
               marginBottom: '1.25rem',
@@ -677,10 +677,10 @@ export const ProfilePage: React.FC = () => {
                 display: 'block',
                 fontSize: '0.85rem',
                 marginBottom: '0.35rem',
-                color: 'var(--text-secondary)',
+                color: 'var(--color-text-secondary)',
               }}
             >
-              Contraseña Actual <span style={{ color: '#f87171' }}>*</span>
+              Contraseña Actual <span style={{ color: 'var(--color-danger)' }}>*</span>
             </label>
             <input
               type="password"
@@ -698,17 +698,17 @@ export const ProfilePage: React.FC = () => {
                 padding: '0.75rem',
                 borderRadius: 'var(--radius-sm)',
                 border: passwordFieldErrors.passwordActual
-                  ? '1px solid #f87171'
-                  : '1px solid var(--border-color)',
-                backgroundColor: 'rgba(15, 23, 42, 0.7)',
-                color: 'var(--text-primary)',
+                  ? '1px solid var(--color-danger)'
+                  : '1px solid var(--color-border)',
+                backgroundColor: 'var(--color-input-bg)',
+                color: 'var(--color-text)',
                 outline: 'none',
               }}
             />
             {passwordFieldErrors.passwordActual && (
               <span
                 style={{
-                  color: '#f87171',
+                  color: 'var(--color-danger)',
                   fontSize: '0.78rem',
                   marginTop: '0.2rem',
                   display: 'block',
@@ -733,10 +733,10 @@ export const ProfilePage: React.FC = () => {
                   display: 'block',
                   fontSize: '0.85rem',
                   marginBottom: '0.35rem',
-                  color: 'var(--text-secondary)',
+                  color: 'var(--color-text-secondary)',
                 }}
               >
-                Nueva Contraseña <span style={{ color: '#f87171' }}>*</span>
+                Nueva Contraseña <span style={{ color: 'var(--color-danger)' }}>*</span>
               </label>
               <input
                 type="password"
@@ -757,10 +757,10 @@ export const ProfilePage: React.FC = () => {
                   padding: '0.75rem',
                   borderRadius: 'var(--radius-sm)',
                   border: passwordFieldErrors.passwordNueva
-                    ? '1px solid #f87171'
-                    : '1px solid var(--border-color)',
-                  backgroundColor: 'rgba(15, 23, 42, 0.7)',
-                  color: 'var(--text-primary)',
+                    ? '1px solid var(--color-danger)'
+                    : '1px solid var(--color-border)',
+                  backgroundColor: 'var(--color-input-bg)',
+                  color: 'var(--color-text)',
                   outline: 'none',
                 }}
               />
@@ -768,7 +768,7 @@ export const ProfilePage: React.FC = () => {
               {passwordFieldErrors.passwordNueva && (
                 <span
                   style={{
-                    color: '#f87171',
+                    color: 'var(--color-danger)',
                     fontSize: '0.78rem',
                     marginTop: '0.2rem',
                     display: 'block',
@@ -785,10 +785,10 @@ export const ProfilePage: React.FC = () => {
                   display: 'block',
                   fontSize: '0.85rem',
                   marginBottom: '0.35rem',
-                  color: 'var(--text-secondary)',
+                  color: 'var(--color-text-secondary)',
                 }}
               >
-                Confirmar Nueva Contraseña <span style={{ color: '#f87171' }}>*</span>
+                Confirmar Nueva Contraseña <span style={{ color: 'var(--color-danger)' }}>*</span>
               </label>
               <input
                 type="password"
@@ -809,17 +809,17 @@ export const ProfilePage: React.FC = () => {
                   padding: '0.75rem',
                   borderRadius: 'var(--radius-sm)',
                   border: passwordFieldErrors.confirmPassword
-                    ? '1px solid #f87171'
-                    : '1px solid var(--border-color)',
-                  backgroundColor: 'rgba(15, 23, 42, 0.7)',
-                  color: 'var(--text-primary)',
+                    ? '1px solid var(--color-danger)'
+                    : '1px solid var(--color-border)',
+                  backgroundColor: 'var(--color-input-bg)',
+                  color: 'var(--color-text)',
                   outline: 'none',
                 }}
               />
               {passwordFieldErrors.confirmPassword && (
                 <span
                   style={{
-                    color: '#f87171',
+                    color: 'var(--color-danger)',
                     fontSize: '0.78rem',
                     marginTop: '0.2rem',
                     display: 'block',

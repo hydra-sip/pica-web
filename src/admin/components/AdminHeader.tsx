@@ -20,8 +20,8 @@ export const AdminHeader: React.FC = () => {
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0.9rem 1.5rem',
-        backgroundColor: 'rgba(15, 23, 42, 0.9)',
-        borderBottom: '1px solid var(--border-color)',
+        backgroundColor: 'var(--color-input-bg)',
+        borderBottom: '1px solid var(--color-border)',
         backdropFilter: 'blur(12px)',
         position: 'sticky',
         top: 0,
@@ -38,9 +38,9 @@ export const AdminHeader: React.FC = () => {
             fontSize: '0.75rem',
             padding: '0.2rem 0.5rem',
             borderRadius: 'var(--radius-sm)',
-            backgroundColor: 'rgba(59, 130, 246, 0.15)',
-            color: 'var(--accent-primary)',
-            border: '1px solid rgba(59, 130, 246, 0.3)',
+            backgroundColor: 'var(--color-surface)',
+            color: 'var(--color-text)',
+            border: '1px solid var(--color-border)',
             fontWeight: 500,
           }}
         >
@@ -51,8 +51,8 @@ export const AdminHeader: React.FC = () => {
       <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
         {user && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              👤 <strong style={{ color: 'var(--text-primary)' }}>{user.name || user.username}</strong> ({userRoleName})
+            <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
+              👤 <strong style={{ color: 'var(--color-text)' }}>{user.name || user.username}</strong> ({userRoleName})
             </span>
           </div>
         )}

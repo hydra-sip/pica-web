@@ -5,7 +5,7 @@ import { AdminSidebar } from '../components/AdminSidebar';
 
 export const AdminLayout: React.FC = () => {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'var(--bg-dark)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: 'var(--color-bg)' }}>
       <AdminHeader />
       <div style={{ display: 'flex', flex: 1 }}>
         <AdminSidebar />

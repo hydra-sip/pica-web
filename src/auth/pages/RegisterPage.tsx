@@ -148,12 +148,12 @@ export const RegisterPage: React.FC = () => {
   };
 
   return (
-    <div style={{ maxWidth: '560px', margin: '2rem auto' }} className="glass-card">
+    <div style={{ maxWidth: '560px', margin: '2rem auto' }} className="card">
       <h2 style={{ textAlign: 'center', marginBottom: '0.5rem' }}>Crear Cuenta</h2>
       <p
         style={{
           textAlign: 'center',
-          color: 'var(--text-secondary)',
+          color: 'var(--color-text-secondary)',
           fontSize: '0.9rem',
           marginBottom: '1.5rem',
         }}
@@ -164,9 +164,9 @@ export const RegisterPage: React.FC = () => {
       {generalError && (
         <div
           style={{
-            background: 'rgba(239, 68, 68, 0.15)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            color: '#f87171',
+            background: 'var(--color-danger-bg)',
+            border: '1px solid var(--color-danger-border)',
+            color: 'var(--color-danger)',
             padding: '0.75rem',
             borderRadius: 'var(--radius-sm)',
             marginBottom: '1rem',
@@ -197,10 +197,10 @@ export const RegisterPage: React.FC = () => {
                 display: 'block',
                 fontSize: '0.85rem',
                 marginBottom: '0.35rem',
-                color: 'var(--text-secondary)',
+                color: 'var(--color-text-secondary)',
               }}
             >
-              Nombre/s <span style={{ color: '#f87171' }}>*</span>
+              Nombre/s <span style={{ color: 'var(--color-danger)' }}>*</span>
             </label>
             <input
               type="text"
@@ -217,16 +217,16 @@ export const RegisterPage: React.FC = () => {
                 width: '100%',
                 padding: '0.75rem',
                 borderRadius: 'var(--radius-sm)',
-                border: fieldErrors.nombres ? '1px solid #f87171' : '1px solid var(--border-color)',
-                backgroundColor: 'rgba(15, 23, 42, 0.7)',
-                color: 'var(--text-primary)',
+                border: fieldErrors.nombres ? '1px solid var(--color-danger)' : '1px solid var(--color-border)',
+                backgroundColor: 'var(--color-input-bg)',
+                color: 'var(--color-text)',
                 outline: 'none',
               }}
             />
             {fieldErrors.nombres && (
               <span
                 style={{
-                  color: '#f87171',
+                  color: 'var(--color-danger)',
                   fontSize: '0.78rem',
                   marginTop: '0.2rem',
                   display: 'block',
@@ -243,10 +243,10 @@ export const RegisterPage: React.FC = () => {
                 display: 'block',
                 fontSize: '0.85rem',
                 marginBottom: '0.35rem',
-                color: 'var(--text-secondary)',
+                color: 'var(--color-text-secondary)',
               }}
             >
-              Apellido/s <span style={{ color: '#f87171' }}>*</span>
+              Apellido/s <span style={{ color: 'var(--color-danger)' }}>*</span>
             </label>
             <input
               type="text"
@@ -264,17 +264,17 @@ export const RegisterPage: React.FC = () => {
                 padding: '0.75rem',
                 borderRadius: 'var(--radius-sm)',
                 border: fieldErrors.apellidos
-                  ? '1px solid #f87171'
-                  : '1px solid var(--border-color)',
-                backgroundColor: 'rgba(15, 23, 42, 0.7)',
-                color: 'var(--text-primary)',
+                  ? '1px solid var(--color-danger)'
+                  : '1px solid var(--color-border)',
+                backgroundColor: 'var(--color-input-bg)',
+                color: 'var(--color-text)',
                 outline: 'none',
               }}
             />
             {fieldErrors.apellidos && (
               <span
                 style={{
-                  color: '#f87171',
+                  color: 'var(--color-danger)',
                   fontSize: '0.78rem',
                   marginTop: '0.2rem',
                   display: 'block',
@@ -301,10 +301,10 @@ export const RegisterPage: React.FC = () => {
                 display: 'block',
                 fontSize: '0.85rem',
                 marginBottom: '0.35rem',
-                color: 'var(--text-secondary)',
+                color: 'var(--color-text-secondary)',
               }}
             >
-              Nombre de Usuario <span style={{ color: '#f87171' }}>*</span>
+              Nombre de Usuario <span style={{ color: 'var(--color-danger)' }}>*</span>
             </label>
             <input
               type="text"
@@ -322,17 +322,17 @@ export const RegisterPage: React.FC = () => {
                 padding: '0.75rem',
                 borderRadius: 'var(--radius-sm)',
                 border: fieldErrors.username
-                  ? '1px solid #f87171'
-                  : '1px solid var(--border-color)',
-                backgroundColor: 'rgba(15, 23, 42, 0.7)',
-                color: 'var(--text-primary)',
+                  ? '1px solid var(--color-danger)'
+                  : '1px solid var(--color-border)',
+                backgroundColor: 'var(--color-input-bg)',
+                color: 'var(--color-text)',
                 outline: 'none',
               }}
             />
             {fieldErrors.username && (
               <span
                 style={{
-                  color: '#f87171',
+                  color: 'var(--color-danger)',
                   fontSize: '0.78rem',
                   marginTop: '0.2rem',
                   display: 'block',
@@ -349,10 +349,10 @@ export const RegisterPage: React.FC = () => {
                 display: 'block',
                 fontSize: '0.85rem',
                 marginBottom: '0.35rem',
-                color: 'var(--text-secondary)',
+                color: 'var(--color-text-secondary)',
               }}
             >
-              Correo Electrónico <span style={{ color: '#f87171' }}>*</span>
+              Correo Electrónico <span style={{ color: 'var(--color-danger)' }}>*</span>
             </label>
             <input
               type="email"
@@ -369,16 +369,16 @@ export const RegisterPage: React.FC = () => {
                 width: '100%',
                 padding: '0.75rem',
                 borderRadius: 'var(--radius-sm)',
-                border: fieldErrors.email ? '1px solid #f87171' : '1px solid var(--border-color)',
-                backgroundColor: 'rgba(15, 23, 42, 0.7)',
-                color: 'var(--text-primary)',
+                border: fieldErrors.email ? '1px solid var(--color-danger)' : '1px solid var(--color-border)',
+                backgroundColor: 'var(--color-input-bg)',
+                color: 'var(--color-text)',
                 outline: 'none',
               }}
             />
             {fieldErrors.email && (
               <span
                 style={{
-                  color: '#f87171',
+                  color: 'var(--color-danger)',
                   fontSize: '0.78rem',
                   marginTop: '0.2rem',
                   display: 'block',
@@ -405,10 +405,10 @@ export const RegisterPage: React.FC = () => {
                 display: 'block',
                 fontSize: '0.85rem',
                 marginBottom: '0.35rem',
-                color: 'var(--text-secondary)',
+                color: 'var(--color-text-secondary)',
               }}
             >
-              Tipo Doc <span style={{ color: '#f87171' }}>*</span>
+              Tipo Doc <span style={{ color: 'var(--color-danger)' }}>*</span>
             </label>
             <select
               value={tipoDoc}
@@ -424,9 +424,9 @@ export const RegisterPage: React.FC = () => {
                 width: '100%',
                 padding: '0.75rem',
                 borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-color)',
-                backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                color: 'var(--text-primary)',
+                border: '1px solid var(--color-border)',
+                backgroundColor: 'var(--color-input-bg)',
+                color: 'var(--color-text)',
                 outline: 'none',
               }}
             >
@@ -444,10 +444,10 @@ export const RegisterPage: React.FC = () => {
                 display: 'block',
                 fontSize: '0.85rem',
                 marginBottom: '0.35rem',
-                color: 'var(--text-secondary)',
+                color: 'var(--color-text-secondary)',
               }}
             >
-              Nro Documento <span style={{ color: '#f87171' }}>*</span>
+              Nro Documento <span style={{ color: 'var(--color-danger)' }}>*</span>
             </label>
             <input
               type="text"
@@ -466,16 +466,16 @@ export const RegisterPage: React.FC = () => {
                 width: '100%',
                 padding: '0.75rem',
                 borderRadius: 'var(--radius-sm)',
-                border: fieldErrors.nroDoc ? '1px solid #f87171' : '1px solid var(--border-color)',
-                backgroundColor: 'rgba(15, 23, 42, 0.7)',
-                color: 'var(--text-primary)',
+                border: fieldErrors.nroDoc ? '1px solid var(--color-danger)' : '1px solid var(--color-border)',
+                backgroundColor: 'var(--color-input-bg)',
+                color: 'var(--color-text)',
                 outline: 'none',
               }}
             />
             {fieldErrors.nroDoc && (
               <span
                 style={{
-                  color: '#f87171',
+                  color: 'var(--color-danger)',
                   fontSize: '0.78rem',
                   marginTop: '0.2rem',
                   display: 'block',
@@ -492,10 +492,10 @@ export const RegisterPage: React.FC = () => {
                 display: 'block',
                 fontSize: '0.85rem',
                 marginBottom: '0.35rem',
-                color: 'var(--text-secondary)',
+                color: 'var(--color-text-secondary)',
               }}
             >
-              Nacimiento <span style={{ color: '#f87171' }}>*</span>
+              Nacimiento <span style={{ color: 'var(--color-danger)' }}>*</span>
             </label>
             <input
               type="date"
@@ -514,17 +514,17 @@ export const RegisterPage: React.FC = () => {
                 padding: '0.75rem',
                 borderRadius: 'var(--radius-sm)',
                 border: fieldErrors.fechaNacimiento
-                  ? '1px solid #f87171'
-                  : '1px solid var(--border-color)',
-                backgroundColor: 'rgba(15, 23, 42, 0.7)',
-                color: 'var(--text-primary)',
+                  ? '1px solid var(--color-danger)'
+                  : '1px solid var(--color-border)',
+                backgroundColor: 'var(--color-input-bg)',
+                color: 'var(--color-text)',
                 outline: 'none',
               }}
             />
             {fieldErrors.fechaNacimiento && (
               <span
                 style={{
-                  color: '#f87171',
+                  color: 'var(--color-danger)',
                   fontSize: '0.78rem',
                   marginTop: '0.2rem',
                   display: 'block',
@@ -551,10 +551,10 @@ export const RegisterPage: React.FC = () => {
                 display: 'block',
                 fontSize: '0.85rem',
                 marginBottom: '0.35rem',
-                color: 'var(--text-secondary)',
+                color: 'var(--color-text-secondary)',
               }}
             >
-              Contraseña <span style={{ color: '#f87171' }}>*</span>
+              Contraseña <span style={{ color: 'var(--color-danger)' }}>*</span>
             </label>
             <input
               type="password"
@@ -572,10 +572,10 @@ export const RegisterPage: React.FC = () => {
                 padding: '0.75rem',
                 borderRadius: 'var(--radius-sm)',
                 border: fieldErrors.password
-                  ? '1px solid #f87171'
-                  : '1px solid var(--border-color)',
-                backgroundColor: 'rgba(15, 23, 42, 0.7)',
-                color: 'var(--text-primary)',
+                  ? '1px solid var(--color-danger)'
+                  : '1px solid var(--color-border)',
+                backgroundColor: 'var(--color-input-bg)',
+                color: 'var(--color-text)',
                 outline: 'none',
               }}
             />
@@ -583,7 +583,7 @@ export const RegisterPage: React.FC = () => {
             {fieldErrors.password && (
               <span
                 style={{
-                  color: '#f87171',
+                  color: 'var(--color-danger)',
                   fontSize: '0.78rem',
                   marginTop: '0.2rem',
                   display: 'block',
@@ -600,10 +600,10 @@ export const RegisterPage: React.FC = () => {
                 display: 'block',
                 fontSize: '0.85rem',
                 marginBottom: '0.35rem',
-                color: 'var(--text-secondary)',
+                color: 'var(--color-text-secondary)',
               }}
             >
-              Confirmar Contraseña <span style={{ color: '#f87171' }}>*</span>
+              Confirmar Contraseña <span style={{ color: 'var(--color-danger)' }}>*</span>
             </label>
             <input
               type="password"
@@ -621,17 +621,17 @@ export const RegisterPage: React.FC = () => {
                 padding: '0.75rem',
                 borderRadius: 'var(--radius-sm)',
                 border: fieldErrors.confirmPassword
-                  ? '1px solid #f87171'
-                  : '1px solid var(--border-color)',
-                backgroundColor: 'rgba(15, 23, 42, 0.7)',
-                color: 'var(--text-primary)',
+                  ? '1px solid var(--color-danger)'
+                  : '1px solid var(--color-border)',
+                backgroundColor: 'var(--color-input-bg)',
+                color: 'var(--color-text)',
                 outline: 'none',
               }}
             />
             {fieldErrors.confirmPassword && (
               <span
                 style={{
-                  color: '#f87171',
+                  color: 'var(--color-danger)',
                   fontSize: '0.78rem',
                   marginTop: '0.2rem',
                   display: 'block',
@@ -658,11 +658,11 @@ export const RegisterPage: React.FC = () => {
           marginTop: '1.5rem',
           textAlign: 'center',
           fontSize: '0.85rem',
-          color: 'var(--text-muted)',
+          color: 'var(--color-text-muted)',
         }}
       >
         ¿Ya tenés una cuenta?{' '}
-        <Link to="/auth/login" style={{ color: 'var(--accent-secondary)' }}>
+        <Link to="/auth/login" style={{ color: 'var(--color-text-secondary)' }}>
           Iniciar Sesión
         </Link>
       </div>

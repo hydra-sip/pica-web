@@ -23,8 +23,8 @@ export const AdminSidebar: React.FC = () => {
     <aside
       style={{
         width: '240px',
-        backgroundColor: 'rgba(15, 23, 42, 0.6)',
-        borderRight: '1px solid var(--border-color)',
+        backgroundColor: 'var(--color-input-bg)',
+        borderRight: '1px solid var(--color-border)',
         padding: '1.5rem 1rem',
         display: 'flex',
         flexDirection: 'column',
@@ -38,7 +38,7 @@ export const AdminSidebar: React.FC = () => {
             display: 'block',
             fontSize: '0.75rem',
             fontWeight: 600,
-            color: 'var(--text-muted)',
+            color: 'var(--color-text-muted)',
             textTransform: 'uppercase',
             letterSpacing: '0.05em',
             marginBottom: '0.75rem',
@@ -58,8 +58,8 @@ export const AdminSidebar: React.FC = () => {
               gap: '0.75rem',
               padding: '0.65rem 0.85rem',
               borderRadius: 'var(--radius-sm)',
-              color: isActive('/admin') ? 'var(--accent-primary)' : 'var(--text-secondary)',
-              backgroundColor: isActive('/admin') ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+              color: isActive('/admin') ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+              backgroundColor: isActive('/admin') ? 'var(--color-surface)' : 'transparent',
               fontWeight: isActive('/admin') ? 600 : 400,
               textDecoration: 'none',
               transition: 'all 0.2s ease',
@@ -78,8 +78,8 @@ export const AdminSidebar: React.FC = () => {
                 gap: '0.75rem',
                 padding: '0.65rem 0.85rem',
                 borderRadius: 'var(--radius-sm)',
-                color: isActive('/admin/usuarios') ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                backgroundColor: isActive('/admin/usuarios') ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+                color: isActive('/admin/usuarios') ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                backgroundColor: isActive('/admin/usuarios') ? 'var(--color-surface)' : 'transparent',
                 fontWeight: isActive('/admin/usuarios') ? 600 : 400,
                 textDecoration: 'none',
                 transition: 'all 0.2s ease',
@@ -99,8 +99,8 @@ export const AdminSidebar: React.FC = () => {
                 gap: '0.75rem',
                 padding: '0.65rem 0.85rem',
                 borderRadius: 'var(--radius-sm)',
-                color: isActive('/admin/roles') ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                backgroundColor: isActive('/admin/roles') ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+                color: isActive('/admin/roles') ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                backgroundColor: isActive('/admin/roles') ? 'var(--color-surface)' : 'transparent',
                 fontWeight: isActive('/admin/roles') ? 600 : 400,
                 textDecoration: 'none',
                 transition: 'all 0.2s ease',
@@ -120,8 +120,8 @@ export const AdminSidebar: React.FC = () => {
                 gap: '0.75rem',
                 padding: '0.65rem 0.85rem',
                 borderRadius: 'var(--radius-sm)',
-                color: isActive('/admin/personas') ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                backgroundColor: isActive('/admin/personas') ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+                color: isActive('/admin/personas') ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                backgroundColor: isActive('/admin/personas') ? 'var(--color-surface)' : 'transparent',
                 fontWeight: isActive('/admin/personas') ? 600 : 400,
                 textDecoration: 'none',
                 transition: 'all 0.2s ease',
@@ -132,7 +132,7 @@ export const AdminSidebar: React.FC = () => {
           )}
 
           {!hasAnySection && (
-            <div style={{ padding: '0.75rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+            <div style={{ padding: '0.75rem', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
               Sin secciones adicionales habilitadas para tu perfil.
             </div>
           )}

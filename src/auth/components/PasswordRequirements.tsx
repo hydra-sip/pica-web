@@ -21,8 +21,8 @@ export const PasswordRequirements: React.FC<PasswordRequirementsProps> = ({ pass
         marginTop: '0.45rem',
         padding: '0.6rem 0.75rem',
         borderRadius: 'var(--radius-sm)',
-        backgroundColor: 'rgba(15, 23, 42, 0.5)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
+        backgroundColor: 'var(--color-surface)',
+        border: '1px solid var(--color-surface)',
         display: 'flex',
         flexDirection: 'column',
         gap: '0.35rem',
@@ -33,7 +33,7 @@ export const PasswordRequirements: React.FC<PasswordRequirementsProps> = ({ pass
         style={{
           fontSize: '0.75rem',
           fontWeight: 600,
-          color: 'var(--text-secondary)',
+          color: 'var(--color-text-secondary)',
           letterSpacing: '0.02em',
         }}
       >
@@ -48,7 +48,7 @@ export const PasswordRequirements: React.FC<PasswordRequirementsProps> = ({ pass
               alignItems: 'center',
               gap: '0.45rem',
               fontSize: '0.78rem',
-              color: req.met ? '#34d399' : 'var(--text-muted)',
+              color: req.met ? 'var(--color-success)' : 'var(--color-text-muted)',
               transition: 'color var(--transition-fast)',
             }}
           >
@@ -62,8 +62,8 @@ export const PasswordRequirements: React.FC<PasswordRequirementsProps> = ({ pass
                 borderRadius: '50%',
                 fontSize: '0.65rem',
                 fontWeight: 700,
-                backgroundColor: req.met ? 'rgba(52, 211, 153, 0.18)' : 'rgba(148, 163, 184, 0.12)',
-                color: req.met ? '#34d399' : 'var(--text-muted)',
+                backgroundColor: req.met ? 'var(--color-success-bg)' : 'var(--color-surface)',
+                color: req.met ? 'var(--color-success)' : 'var(--color-text-muted)',
                 transition: 'all var(--transition-fast)',
               }}
             >
