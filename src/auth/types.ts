@@ -124,6 +124,6 @@ export interface UpdateProfileData {
 }
 
 export interface ChangePasswordData {
-  passwordActual: string;
+  passwordActual?: string;
   passwordNueva: string;
 }

@@ -1,0 +1,135 @@
+/* Mi perfil (wireframe EP01.RF003_RF004) */
+.perfil {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.perfil-cabecera {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.perfil-avatar {
+  flex-shrink: 0;
+  width: 80px;
+  height: 80px;
+  display: grid;
+  place-items: center;
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--color-text);
+  background-color: var(--color-border);
+  border-radius: var(--radius-full);
+}
+
+.perfil-identidad {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+}
+
+.perfil-nombre {
+  margin: 0;
+  font-size: var(--text-xl);
+  overflow-wrap: anywhere;
+}
+
+.perfil-usuario {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.perfil-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.perfil-titulo {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: 700;
+}
+
+.perfil-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-2);
+}
+
+.perfil-stat {
+  min-width: 0;
+  padding: var(--space-3) var(--space-2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.perfil-stat-valor {
+  font-size: var(--text-xl);
+  font-weight: 700;
+}
+
+.perfil-stat-dato {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.perfil-vacio {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.perfil-vacio-caja {
+  padding: var(--space-4);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.perfil-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.perfil-fila {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.perfil-acciones {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 560px) {
+  .perfil-fila {
+    grid-template-columns: 1fr;
+  }
+
+  .perfil-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .perfil-acciones .btn {
+    width: 100%;
+  }
+}
