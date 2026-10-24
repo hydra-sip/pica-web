@@ -175,11 +175,7 @@ export async function customFetch<T = unknown>(
     if (!refreshToken) {
       clearSessionTokens();
       notifyUnauthorized();
-      throw new ApiError('No autorizado', 401, {
-        status: 401,
-        codigo: 'CREDENCIALES_INVALIDAS',
-        detail: 'No autorizado',
-      });
+      throw new ApiError('No autorizado', 401, { status: 401, codigo: 'NO_AUTENTICADO' });
     }
 
     if (isRefreshing) {

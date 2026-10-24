@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { httpClient } from '../../api/httpClient';
+import { fechaHora } from '../../shared/formato';
+import { mensajeDeError } from '../../shared/mensajesError';
 
 interface AdminStats {
   totalUsers: number;
@@ -21,8 +23,7 @@ export const AdminDashboardPage: React.FC = () => {
         setLoading(false);
       })
       .catch((err) => {
-        console.error('Error al cargar métricas:', err);
-        setError(err.message || 'Error de conexión');
+        setError(mensajeDeError(err, 'No se pudieron cargar las métricas.'));
         setLoading(false);
       });
   }, []);
@@ -77,7 +78,7 @@ export const AdminDashboardPage: React.FC = () => {
         <p style={{ color: 'var(--color-text-secondary)', marginTop: '0.5rem', fontSize: '0.95rem' }}>
           Última copia de seguridad procesada por MSW Mock Server:{' '}
           <strong style={{ color: 'var(--color-text)' }}>
-            {stats?.lastBackup ? new Date(stats.lastBackup).toLocaleString() : 'Cargando...'}
+            {stats?.lastBackup ? fechaHora(stats.lastBackup) : 'Cargando...'}
           </strong>
         </p>
       </div>

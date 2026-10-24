@@ -4,7 +4,7 @@ import { FormModal, FormFieldSchema } from '../components/FormModal';
 import { StatusChip } from '../components/StatusChip';
 import { personaApi, PersonaResumen, PersonaDetalle, PersonaPayload } from '../../api/personaApi';
 import { useAuth } from '../../auth/hooks/useAuth';
-import { mensajeDeError } from '../mensajesError';
+import { mensajeDeError } from '../../shared/mensajesError';
 import {
   validateNombreApellido,
   validateDocumento,

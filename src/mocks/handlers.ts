@@ -223,7 +223,7 @@ export const handlers = [
       return new HttpResponse(
         JSON.stringify({
           status: 400,
-          codigo: 'CODIGO_OAUTH_INVALIDO',
+          codigo: 'CODIGO_INVALIDO',
           detail: 'El código de autorización OAuth es inválido o ha expirado.',
         }),
         { status: 400, headers: { 'Content-Type': 'application/problem+json' } }
@@ -307,7 +307,7 @@ export const handlers = [
       return new HttpResponse(
         JSON.stringify({
           status: 400,
-          codigo: 'PASSWORD_INCORRECTA',
+          codigo: 'PASSWORD_ACTUAL_INCORRECTA',
           detail: 'La contraseña actual ingresada es incorrecta.',
         }),
         { status: 400, headers: { 'Content-Type': 'application/problem+json' } }
@@ -325,7 +325,7 @@ export const handlers = [
       return new HttpResponse(
         JSON.stringify({
           status: 401,
-          codigo: 'REFRESH_TOKEN_EXPIRED',
+          codigo: 'REFRESH_INVALIDO',
           detail: 'Refresh token expirado o inválido.',
         }),
         { status: 401, headers: { 'Content-Type': 'application/problem+json' } }

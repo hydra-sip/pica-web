@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { erroresPorCampo, mensajeDeError } from '../../shared/mensajesError';
 import { Button, Field, Input, Modal, Select, Textarea } from '../../shared/ui';
 
 export interface FormFieldOption {
@@ -102,23 +103,9 @@ export function FormModal<T extends Record<string, any>>({
     try {
       await onSubmit(formData as T);
       onClose();
-    } catch (err: any) {
-      console.error('Error al guardar:', err);
-      const validationErrors = err?.problemDetail?.errores || err?.errores;
-      if (validationErrors && Array.isArray(validationErrors)) {
-        const fieldErrs: Record<string, string> = {};
-        validationErrors.forEach((item: { campo: string; mensaje: string }) => {
-          if (item.campo) fieldErrs[item.campo] = item.mensaje;
-        });
-        setErrors((prev) => ({ ...prev, ...fieldErrs }));
-      }
-      setServerError(
-        err?.problemDetail?.detail ||
-          err?.problemDetail?.title ||
-          err?.detail ||
-          err?.message ||
-          'Ocurrió un error al guardar los datos.'
-      );
+    } catch (err) {
+      setErrors((prev) => ({ ...prev, ...erroresPorCampo(err) }));
+      setServerError(mensajeDeError(err, 'No se pudieron guardar los datos.'));
     } finally {
       setIsSubmitting(false);
     }

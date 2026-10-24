@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { mensajeDeError } from '../../shared/mensajesError';
 import { useAuth } from '../hooks/useAuth';
 
 // El back vuelve con ?error=<CODIGO> cuando el login con Google falla antes del canje (ver /auth/exchange)
@@ -59,7 +60,7 @@ export const OAuthCallbackPage: React.FC = () => {
         }, 600);
       })
       .catch((err) => {
-        setErrorMsg(err.message || 'Error al completar la autenticación con Google.');
+        setErrorMsg(mensajeDeError(err, 'No se pudo terminar el ingreso con Google.'));
       })
       .finally(() => {
         setLoading(false);

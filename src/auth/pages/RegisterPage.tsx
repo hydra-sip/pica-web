@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authApi } from '../../api/authApi';
 import { FieldErrors } from '../types';
-import { ApiError } from '../../api/httpClient';
+import { erroresDelFormulario, mensajeDeError } from '../../shared/mensajesError';
 import { PasswordRequirements } from '../components/PasswordRequirements';
 import {
   TIPOS_DOC_VALIDOS,
@@ -111,36 +111,16 @@ export const RegisterPage: React.FC = () => {
 
       // Redirigir a la vista "Revisá tu correo"
       navigate('/auth/check-email', { state: { email: email.trim() } });
-    } catch (err: any) {
-      if (err instanceof ApiError && err.problemDetail) {
-        const pd = err.problemDetail;
-        const newFieldErrors: FieldErrors = {};
-
-        // Parse 400 VALIDACION errores[]
-        if (pd.errores && Array.isArray(pd.errores)) {
-          pd.errores.forEach((item) => {
-            if (item.campo) {
-              (newFieldErrors as any)[item.campo] = item.mensaje;
-            }
-          });
-        }
-
-        // Parse 409 Conflict codes
-        if (pd.codigo === 'USERNAME_DUPLICADO') {
-          newFieldErrors.username = pd.detail || 'El nombre de usuario ya se encuentra registrado';
-        } else if (pd.codigo === 'EMAIL_DUPLICADO') {
-          newFieldErrors.email = pd.detail || 'Este correo electrónico ya se encuentra registrado';
-        } else if (pd.codigo === 'DOCUMENTO_DUPLICADO') {
-          newFieldErrors.nroDoc = pd.detail || 'Ya existe un usuario con este documento';
-        }
-
-        if (Object.keys(newFieldErrors).length > 0) {
-          setFieldErrors(newFieldErrors);
-        } else {
-          setGeneralError(pd.detail || pd.codigo || 'Error al procesar el registro');
-        }
+    } catch (err) {
+      const newFieldErrors: FieldErrors = erroresDelFormulario(err, {
+        USERNAME_DUPLICADO: 'username',
+        EMAIL_DUPLICADO: 'email',
+        DOCUMENTO_DUPLICADO: 'nroDoc',
+      });
+      if (Object.keys(newFieldErrors).length > 0) {
+        setFieldErrors(newFieldErrors);
       } else {
-        setGeneralError(err.message || 'Error al procesar el registro');
+        setGeneralError(mensajeDeError(err, 'No se pudo completar el registro.'));
       }
     } finally {
       setLoading(false);
