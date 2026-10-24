@@ -3,6 +3,8 @@ import { useAuth } from '../hooks/useAuth';
 import { authApi } from '../../api/authApi';
 import { erroresDelFormulario, mensajeDeError } from '../../shared/mensajesError';
 import { PasswordRequirements } from '../components/PasswordRequirements';
+import { Badge, BadgeTone, Button, Field, Input, Select } from '../../shared/ui';
+import './ProfilePage.css';
 import {
   TIPOS_DOC_VALIDOS,
   validateNombreApellido,
@@ -12,6 +14,12 @@ import {
   getTodayDateString,
   MIN_FECHA_NACIMIENTO,
 } from '../../shared/validators';
+
+const ESTADOS: Record<string, { texto: string; tono: BadgeTone }> = {
+  ACTIVO: { texto: 'Cuenta activa', tono: 'solido' },
+  PENDIENTE_VERIFICACION: { texto: 'Email sin verificar', tono: 'aviso' },
+  BLOQUEADO: { texto: 'Cuenta bloqueada', tono: 'peligro' },
+};
 
 export const ProfilePage: React.FC = () => {
   const { user, updateUser } = useAuth();
@@ -42,6 +50,9 @@ export const ProfilePage: React.FC = () => {
   const [passwordSuccessMsg, setPasswordSuccessMsg] = useState<string | null>(null);
   const [passwordErrorMsg, setPasswordErrorMsg] = useState<string | null>(null);
   const [passwordFieldErrors, setPasswordFieldErrors] = useState<Record<string, string>>({});
+
+  // Un usuario de Google arranca sin contraseña: la crea sin pasar la actual
+  const tieneContrasena = user?.tieneContrasena !== false;
 
   useEffect(() => {
     if (user) {
@@ -121,7 +132,7 @@ export const ProfilePage: React.FC = () => {
 
     const errors: Record<string, string> = {};
 
-    if (!passwordActual) {
+    if (tieneContrasena && !passwordActual) {
       errors.passwordActual = 'Ingresá tu contraseña actual.';
     }
 
@@ -145,7 +156,10 @@ export const ProfilePage: React.FC = () => {
     setChangingPassword(true);
 
     try {
-      const res = await authApi.changePassword({ passwordActual, passwordNueva });
+      const res = await authApi.changePassword({
+        passwordActual: tieneContrasena ? passwordActual : undefined,
+        passwordNueva,
+      });
       setPasswordSuccessMsg(res.message || 'Contraseña actualizada exitosamente.');
       setPasswordActual('');
       setPasswordNueva('');
@@ -162,249 +176,122 @@ export const ProfilePage: React.FC = () => {
     }
   };
 
+  // Borra el error del campo apenas se lo corrige
+  const limpiarError = (
+    set: React.Dispatch<React.SetStateAction<Record<string, string>>>,
+    campo: string
+  ) => set((prev) => (prev[campo] ? { ...prev, [campo]: '' } : prev));
+
+  const iniciales =
+    `${(user?.persona?.nombres || '').charAt(0)}${(user?.persona?.apellidos || '').charAt(0)}`.toUpperCase() ||
+    (user?.username || '?').slice(0, 2).toUpperCase();
+  const roles = (user?.roles || []).map((r) => r.nombreAmigable || r.nombre).join(', ');
+  const estado = ESTADOS[user?.estado || ''];
+
   return (
-    <div
-      style={{
-        maxWidth: '720px',
-        margin: '2rem auto',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '2rem',
-      }}
-    >
-      <div>
-        <span className="badge">Configuración de Cuenta</span>
-        <h1 style={{ marginTop: '0.5rem' }}>Mi Perfil</h1>
-        <p style={{ color: 'var(--color-text-secondary)' }}>
-          Gestioná tu información personal y la seguridad de tu acceso según la especificación del
-          sistema.
-        </p>
-      </div>
+    <div className="perfil">
+      <header className="perfil-cabecera">
+        <span className="perfil-avatar" aria-hidden="true">
+          {iniciales}
+        </span>
+        <div className="perfil-identidad">
+          <h1 className="perfil-nombre">{user?.name || user?.username}</h1>
+          <p className="perfil-usuario">
+            @{user?.username}
+            {roles && ` · ${roles}`}
+          </p>
+          {estado && <Badge tone={estado.tono}>{estado.texto}</Badge>}
+        </div>
+      </header>
 
       {user && user.datosCompletos === false && (
-        <div
-          style={{
-            background: 'var(--color-warning-bg)',
-            border: '1px solid var(--color-warning-border)',
-            color: 'var(--color-warning)',
-            padding: '1rem',
-            borderRadius: 'var(--radius-sm)',
-            fontSize: '0.9rem',
-            lineHeight: 1.5,
-          }}
-        >
-          <strong>⚠️ Completá tu perfil:</strong> Por favor, ingresá tu <strong>Documento</strong>,{' '}
-          <strong>Fecha de Nacimiento</strong>, <strong>Domicilio Postal</strong> y{' '}
-          <strong>Teléfono</strong> para habilitar todas las funciones operativas de la plataforma.
+        <div className="alerta alerta-aviso">
+          <strong>Completá tus datos:</strong> documento, fecha de nacimiento, domicilio y teléfono.
+          Sin ellos no vas a poder inscribirte en torneos ni comprar rifas.
         </div>
       )}
 
-      {/* Sección 1: Datos Personales */}
-      <div className="card">
-        <h3
-          style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-        >
-          👤 Datos Personales
-        </h3>
+      <section className="perfil-seccion" aria-labelledby="perfil-historial">
+        <h2 id="perfil-historial" className="perfil-titulo">
+          Historial competitivo
+        </h2>
+        <div className="perfil-stats">
+          {['Partidos', 'Ganados', 'Perdidos', '% ganados'].map((dato) => (
+            <div key={dato} className="perfil-stat">
+              <span className="perfil-stat-valor">—</span>
+              <span className="perfil-stat-dato">{dato}</span>
+            </div>
+          ))}
+        </div>
+        <p className="perfil-vacio">Todavía no jugaste partidos en PICA.</p>
+      </section>
+
+      <section className="perfil-seccion" aria-labelledby="perfil-insignias">
+        <h2 id="perfil-insignias" className="perfil-titulo">
+          Insignias obtenidas
+        </h2>
+        <p className="perfil-vacio perfil-vacio-caja">
+          Todavía no tenés insignias. Se ganan jugando y ganando torneos.
+        </p>
+      </section>
+
+      <section className="card perfil-seccion" aria-labelledby="perfil-datos">
+        <h2 id="perfil-datos" className="perfil-titulo">
+          Datos personales
+        </h2>
 
         {profileSuccessMsg && (
-          <div
-            style={{
-              background: 'var(--color-success-bg)',
-              border: '1px solid var(--color-success-border)',
-              color: 'var(--color-success)',
-              padding: '0.75rem',
-              borderRadius: 'var(--radius-sm)',
-              marginBottom: '1.25rem',
-              fontSize: '0.88rem',
-            }}
-          >
+          <div className="alerta alerta-exito" role="status">
             {profileSuccessMsg}
           </div>
         )}
-
         {profileErrorMsg && (
-          <div
-            style={{
-              background: 'var(--color-danger-bg)',
-              border: '1px solid var(--color-danger-border)',
-              color: 'var(--color-danger)',
-              padding: '0.75rem',
-              borderRadius: 'var(--radius-sm)',
-              marginBottom: '1.25rem',
-              fontSize: '0.88rem',
-            }}
-          >
+          <div className="alerta alerta-peligro" role="alert">
             {profileErrorMsg}
           </div>
         )}
 
-        <form
-          onSubmit={handleUpdateProfile}
-          noValidate
-          style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}
-        >
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-              gap: '1.1rem',
-              alignItems: 'start',
-            }}
-          >
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '0.85rem',
-                  marginBottom: '0.35rem',
-                  color: 'var(--color-text-secondary)',
-                }}
-              >
-                Nombres <span style={{ color: 'var(--color-danger)' }}>*</span>
-              </label>
-              <input
+        <form onSubmit={handleUpdateProfile} noValidate className="perfil-form">
+          <div className="perfil-fila">
+            <Field label="Nombres" required error={profileFieldErrors.nombres}>
+              <Input
                 type="text"
-                required
+                autoComplete="given-name"
                 value={nombres}
                 onChange={(e) => {
                   setNombres(e.target.value);
-                  if (profileFieldErrors.nombres) {
-                    setProfileFieldErrors((prev) => ({ ...prev, nombres: undefined as any }));
-                  }
-                }}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  borderRadius: 'var(--radius-sm)',
-                  border: profileFieldErrors.nombres
-                    ? '1px solid var(--color-danger)'
-                    : '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-input-bg)',
-                  color: 'var(--color-text)',
-                  outline: 'none',
+                  limpiarError(setProfileFieldErrors, 'nombres');
                 }}
               />
-              {profileFieldErrors.nombres && (
-                <span
-                  style={{
-                    color: 'var(--color-danger)',
-                    fontSize: '0.78rem',
-                    marginTop: '0.2rem',
-                    display: 'block',
-                  }}
-                >
-                  ⚠️ {profileFieldErrors.nombres}
-                </span>
-              )}
-            </div>
-
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '0.85rem',
-                  marginBottom: '0.35rem',
-                  color: 'var(--color-text-secondary)',
-                }}
-              >
-                Apellidos <span style={{ color: 'var(--color-danger)' }}>*</span>
-              </label>
-              <input
+            </Field>
+            <Field label="Apellidos" required error={profileFieldErrors.apellidos}>
+              <Input
                 type="text"
-                required
+                autoComplete="family-name"
                 value={apellidos}
                 onChange={(e) => {
                   setApellidos(e.target.value);
-                  if (profileFieldErrors.apellidos) {
-                    setProfileFieldErrors((prev) => ({ ...prev, apellidos: undefined as any }));
-                  }
-                }}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  borderRadius: 'var(--radius-sm)',
-                  border: profileFieldErrors.apellidos
-                    ? '1px solid var(--color-danger)'
-                    : '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-input-bg)',
-                  color: 'var(--color-text)',
-                  outline: 'none',
+                  limpiarError(setProfileFieldErrors, 'apellidos');
                 }}
               />
-              {profileFieldErrors.apellidos && (
-                <span
-                  style={{
-                    color: 'var(--color-danger)',
-                    fontSize: '0.78rem',
-                    marginTop: '0.2rem',
-                    display: 'block',
-                  }}
-                >
-                  ⚠️ {profileFieldErrors.apellidos}
-                </span>
-              )}
-            </div>
+            </Field>
+          </div>
 
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '0.85rem',
-                  marginBottom: '0.35rem',
-                  color: 'var(--color-text-secondary)',
-                }}
-              >
-                Correo Electrónico (No editable)
-              </label>
-              <input
-                type="email"
-                disabled
-                value={email}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  borderRadius: 'var(--radius-sm)',
-                  border: '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-surface)',
-                  color: 'var(--color-text-muted)',
-                  cursor: 'not-allowed',
-                }}
-              />
-            </div>
+          <Field label="Correo electrónico" hint="No se puede cambiar.">
+            <Input type="email" readOnly value={email} />
+          </Field>
 
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '0.85rem',
-                  marginBottom: '0.35rem',
-                  color: 'var(--color-text-secondary)',
-                }}
-              >
-                Tipo de Documento
-              </label>
-              <select
+          <div className="perfil-fila">
+            <Field label="Tipo de documento">
+              <Select
                 value={tipoDoc}
                 onChange={(e) => {
                   const nuevoTipo = e.target.value;
                   setTipoDoc(nuevoTipo);
-                  if (nroDoc.trim()) {
+                  if (nroDoc && nroDoc.trim()) {
                     const err = validateDocumento(nroDoc, nuevoTipo, true);
-                    setProfileFieldErrors((prev) => ({
-                      ...prev,
-                      nroDoc: err || (undefined as any),
-                    }));
+                    setProfileFieldErrors((prev) => ({ ...prev, nroDoc: err || '' }));
                   }
-                }}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  borderRadius: 'var(--radius-sm)',
-                  border: '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-input-bg)',
-                  color: 'var(--color-text)',
-                  outline: 'none',
                 }}
               >
                 {TIPOS_DOC_VALIDOS.map((opt) => (
@@ -412,23 +299,14 @@ export const ProfilePage: React.FC = () => {
                     {opt.label}
                   </option>
                 ))}
-              </select>
-            </div>
-
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '0.85rem',
-                  marginBottom: '0.35rem',
-                  color: 'var(--color-text-secondary)',
-                }}
-              >
-                Nro Documento <span style={{ color: 'var(--color-warning)' }}>*</span>
-              </label>
-              <input
+              </Select>
+            </Field>
+            <Field label="Número de documento" error={profileFieldErrors.nroDoc}>
+              <Input
                 type="text"
-                required
+                inputMode={
+                  tipoDoc === 'DNI' || tipoDoc === 'LC' || tipoDoc === 'LE' ? 'numeric' : 'text'
+                }
                 placeholder={
                   tipoDoc === 'DNI' || tipoDoc === 'LC' || tipoDoc === 'LE'
                     ? 'ej: 38123456'
@@ -437,375 +315,135 @@ export const ProfilePage: React.FC = () => {
                 value={nroDoc}
                 onChange={(e) => {
                   setNroDoc(e.target.value);
-                  if (profileFieldErrors.nroDoc) {
-                    setProfileFieldErrors((prev) => ({ ...prev, nroDoc: undefined as any }));
-                  }
-                }}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  borderRadius: 'var(--radius-sm)',
-                  border: profileFieldErrors.nroDoc
-                    ? '1px solid var(--color-danger)'
-                    : !nroDoc
-                      ? '1px solid var(--color-warning-border)'
-                      : '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-input-bg)',
-                  color: 'var(--color-text)',
-                  outline: 'none',
+                  limpiarError(setProfileFieldErrors, 'nroDoc');
                 }}
               />
-              {profileFieldErrors.nroDoc && (
-                <span
-                  style={{
-                    color: 'var(--color-danger)',
-                    fontSize: '0.78rem',
-                    marginTop: '0.2rem',
-                    display: 'block',
-                  }}
-                >
-                  ⚠️ {profileFieldErrors.nroDoc}
-                </span>
-              )}
-            </div>
+            </Field>
+          </div>
 
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '0.85rem',
-                  marginBottom: '0.35rem',
-                  color: 'var(--color-text-secondary)',
-                }}
-              >
-                Fecha de Nacimiento <span style={{ color: 'var(--color-warning)' }}>*</span>
-              </label>
-              <input
-                type="date"
-                required
-                min={MIN_FECHA_NACIMIENTO}
-                max={getTodayDateString()}
-                value={fechaNacimiento}
-                onChange={(e) => {
-                  setFechaNacimiento(e.target.value);
-                  if (profileFieldErrors.fechaNacimiento) {
-                    setProfileFieldErrors((prev) => ({
-                      ...prev,
-                      fechaNacimiento: undefined as any,
-                    }));
-                  }
-                }}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  borderRadius: 'var(--radius-sm)',
-                  border: profileFieldErrors.fechaNacimiento
-                    ? '1px solid var(--color-danger)'
-                    : !fechaNacimiento
-                      ? '1px solid var(--color-warning-border)'
-                      : '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-input-bg)',
-                  color: 'var(--color-text)',
-                  outline: 'none',
-                }}
-              />
-              {profileFieldErrors.fechaNacimiento && (
-                <span
-                  style={{
-                    color: 'var(--color-danger)',
-                    fontSize: '0.78rem',
-                    marginTop: '0.2rem',
-                    display: 'block',
-                  }}
-                >
-                  ⚠️ {profileFieldErrors.fechaNacimiento}
-                </span>
-              )}
-            </div>
+          <Field label="Fecha de nacimiento" error={profileFieldErrors.fechaNacimiento}>
+            <Input
+              type="date"
+              autoComplete="bday"
+              min={MIN_FECHA_NACIMIENTO}
+              max={getTodayDateString()}
+              value={fechaNacimiento}
+              onChange={(e) => {
+                setFechaNacimiento(e.target.value);
+                limpiarError(setProfileFieldErrors, 'fechaNacimiento');
+              }}
+            />
+          </Field>
 
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '0.85rem',
-                  marginBottom: '0.35rem',
-                  color: 'var(--color-text-secondary)',
-                }}
-              >
-                Domicilio Postal <span style={{ color: 'var(--color-warning)' }}>*</span>
-              </label>
-              <input
+          <div className="perfil-fila">
+            <Field label="Domicilio postal" error={profileFieldErrors.domicilioPostal}>
+              <Input
                 type="text"
-                required
+                autoComplete="street-address"
                 placeholder="ej: Av. Constitución 1234, Luján"
                 value={domicilioPostal}
-                onChange={(e) => setDomicilioPostal(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  borderRadius: 'var(--radius-sm)',
-                  border: !domicilioPostal
-                    ? '1px solid var(--color-warning-border)'
-                    : '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-input-bg)',
-                  color: 'var(--color-text)',
-                  outline: 'none',
+                onChange={(e) => {
+                  setDomicilioPostal(e.target.value);
+                  limpiarError(setProfileFieldErrors, 'domicilioPostal');
                 }}
               />
-            </div>
-
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '0.85rem',
-                  marginBottom: '0.35rem',
-                  color: 'var(--color-text-secondary)',
-                }}
-              >
-                Teléfono de Contacto <span style={{ color: 'var(--color-warning)' }}>*</span>
-              </label>
-              <input
-                type="text"
-                required
+            </Field>
+            <Field label="Teléfono" error={profileFieldErrors.telefono}>
+              <Input
+                type="tel"
+                autoComplete="tel"
                 placeholder="ej: +54 11 4455-6677"
                 value={telefono}
-                onChange={(e) => setTelefono(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  borderRadius: 'var(--radius-sm)',
-                  border: !telefono
-                    ? '1px solid var(--color-warning-border)'
-                    : '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-input-bg)',
-                  color: 'var(--color-text)',
-                  outline: 'none',
+                onChange={(e) => {
+                  setTelefono(e.target.value);
+                  limpiarError(setProfileFieldErrors, 'telefono');
                 }}
               />
-            </div>
+            </Field>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-            <button type="submit" className="btn btn-primary" disabled={savingProfile}>
-              {savingProfile ? 'Guardando...' : 'Guardar Datos Personales'}
-            </button>
+          <div className="perfil-acciones">
+            <Button type="submit" loading={savingProfile}>
+              {savingProfile ? 'Guardando...' : 'Guardar cambios'}
+            </Button>
           </div>
         </form>
-      </div>
+      </section>
 
-      {/* Sección 2: Cambio de Contraseña */}
-      <div className="card">
-        <h3
-          style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-        >
-          🔒 Cambiar Contraseña
-        </h3>
+      <section className="card perfil-seccion" aria-labelledby="perfil-clave">
+        <h2 id="perfil-clave" className="perfil-titulo">
+          {tieneContrasena ? 'Cambiar contraseña' : 'Crear una contraseña'}
+        </h2>
+        {!tieneContrasena && (
+          <p className="perfil-vacio">
+            Entrás con Google. Si creás una contraseña, también vas a poder entrar con tu email.
+          </p>
+        )}
 
         {passwordSuccessMsg && (
-          <div
-            style={{
-              background: 'var(--color-success-bg)',
-              border: '1px solid var(--color-success-border)',
-              color: 'var(--color-success)',
-              padding: '0.75rem',
-              borderRadius: 'var(--radius-sm)',
-              marginBottom: '1.25rem',
-              fontSize: '0.88rem',
-            }}
-          >
+          <div className="alerta alerta-exito" role="status">
             {passwordSuccessMsg}
           </div>
         )}
-
         {passwordErrorMsg && (
-          <div
-            style={{
-              background: 'var(--color-danger-bg)',
-              border: '1px solid var(--color-danger-border)',
-              color: 'var(--color-danger)',
-              padding: '0.75rem',
-              borderRadius: 'var(--radius-sm)',
-              marginBottom: '1.25rem',
-              fontSize: '0.88rem',
-            }}
-          >
+          <div className="alerta alerta-peligro" role="alert">
             {passwordErrorMsg}
           </div>
         )}
 
-        <form
-          onSubmit={handleChangePassword}
-          noValidate
-          style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}
-        >
-          <div>
-            <label
-              style={{
-                display: 'block',
-                fontSize: '0.85rem',
-                marginBottom: '0.35rem',
-                color: 'var(--color-text-secondary)',
-              }}
-            >
-              Contraseña Actual <span style={{ color: 'var(--color-danger)' }}>*</span>
-            </label>
-            <input
-              type="password"
-              required
-              placeholder="••••••••"
-              value={passwordActual}
-              onChange={(e) => {
-                setPasswordActual(e.target.value);
-                if (passwordFieldErrors.passwordActual) {
-                  setPasswordFieldErrors((prev) => ({ ...prev, passwordActual: undefined as any }));
-                }
-              }}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                borderRadius: 'var(--radius-sm)',
-                border: passwordFieldErrors.passwordActual
-                  ? '1px solid var(--color-danger)'
-                  : '1px solid var(--color-border)',
-                backgroundColor: 'var(--color-input-bg)',
-                color: 'var(--color-text)',
-                outline: 'none',
-              }}
-            />
-            {passwordFieldErrors.passwordActual && (
-              <span
-                style={{
-                  color: 'var(--color-danger)',
-                  fontSize: '0.78rem',
-                  marginTop: '0.2rem',
-                  display: 'block',
-                }}
-              >
-                ⚠️ {passwordFieldErrors.passwordActual}
-              </span>
-            )}
-          </div>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-              gap: '1.1rem',
-              alignItems: 'start',
-            }}
-          >
-            <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '0.85rem',
-                  marginBottom: '0.35rem',
-                  color: 'var(--color-text-secondary)',
-                }}
-              >
-                Nueva Contraseña <span style={{ color: 'var(--color-danger)' }}>*</span>
-              </label>
-              <input
+        <form onSubmit={handleChangePassword} noValidate className="perfil-form">
+          {tieneContrasena && (
+            <Field label="Contraseña actual" error={passwordFieldErrors.passwordActual}>
+              <Input
                 type="password"
-                required
-                placeholder="Mínimo 8 caracteres"
-                value={passwordNueva}
+                autoComplete="current-password"
+                value={passwordActual}
                 onChange={(e) => {
-                  setPasswordNueva(e.target.value);
-                  if (passwordFieldErrors.passwordNueva) {
-                    setPasswordFieldErrors((prev) => ({
-                      ...prev,
-                      passwordNueva: undefined as any,
-                    }));
-                  }
-                }}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  borderRadius: 'var(--radius-sm)',
-                  border: passwordFieldErrors.passwordNueva
-                    ? '1px solid var(--color-danger)'
-                    : '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-input-bg)',
-                  color: 'var(--color-text)',
-                  outline: 'none',
+                  setPasswordActual(e.target.value);
+                  limpiarError(setPasswordFieldErrors, 'passwordActual');
                 }}
               />
-              <PasswordRequirements password={passwordNueva} />
-              {passwordFieldErrors.passwordNueva && (
-                <span
-                  style={{
-                    color: 'var(--color-danger)',
-                    fontSize: '0.78rem',
-                    marginTop: '0.2rem',
-                    display: 'block',
-                  }}
-                >
-                  ⚠️ {passwordFieldErrors.passwordNueva}
-                </span>
-              )}
-            </div>
-
+            </Field>
+          )}
+          <div className="perfil-fila">
             <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '0.85rem',
-                  marginBottom: '0.35rem',
-                  color: 'var(--color-text-secondary)',
-                }}
-              >
-                Confirmar Nueva Contraseña <span style={{ color: 'var(--color-danger)' }}>*</span>
-              </label>
-              <input
+              <Field label="Contraseña nueva" error={passwordFieldErrors.passwordNueva}>
+                <Input
+                  type="password"
+                  autoComplete="new-password"
+                  value={passwordNueva}
+                  onChange={(e) => {
+                    setPasswordNueva(e.target.value);
+                    limpiarError(setPasswordFieldErrors, 'passwordNueva');
+                  }}
+                />
+              </Field>
+              <PasswordRequirements password={passwordNueva} />
+            </div>
+            <Field label="Confirmar contraseña nueva" error={passwordFieldErrors.confirmPassword}>
+              <Input
                 type="password"
-                required
-                placeholder="••••••••"
+                autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => {
                   setConfirmPassword(e.target.value);
-                  if (passwordFieldErrors.confirmPassword) {
-                    setPasswordFieldErrors((prev) => ({
-                      ...prev,
-                      confirmPassword: undefined as any,
-                    }));
-                  }
-                }}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  borderRadius: 'var(--radius-sm)',
-                  border: passwordFieldErrors.confirmPassword
-                    ? '1px solid var(--color-danger)'
-                    : '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-input-bg)',
-                  color: 'var(--color-text)',
-                  outline: 'none',
+                  limpiarError(setPasswordFieldErrors, 'confirmPassword');
                 }}
               />
-              {passwordFieldErrors.confirmPassword && (
-                <span
-                  style={{
-                    color: 'var(--color-danger)',
-                    fontSize: '0.78rem',
-                    marginTop: '0.2rem',
-                    display: 'block',
-                  }}
-                >
-                  ⚠️ {passwordFieldErrors.confirmPassword}
-                </span>
-              )}
-            </div>
+            </Field>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-            <button type="submit" className="btn btn-secondary" disabled={changingPassword}>
-              {changingPassword ? 'Actualizando...' : 'Actualizar Contraseña'}
-            </button>
+          <div className="perfil-acciones">
+            <Button type="submit" variant="secondary" loading={changingPassword}>
+              {changingPassword
+                ? 'Actualizando...'
+                : tieneContrasena
+                  ? 'Cambiar contraseña'
+                  : 'Crear contraseña'}
+            </Button>
           </div>
         </form>
-      </div>
+      </section>
     </div>
   );
 };
