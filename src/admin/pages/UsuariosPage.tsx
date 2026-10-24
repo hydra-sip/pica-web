@@ -5,9 +5,11 @@ import { personaApi, PersonaResumen } from '../../api/personaApi';
 import { rolApi, RolResumen } from '../../api/rolApi';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { erroresPorCampo, mensajeDeError } from '../../shared/mensajesError';
-import { fecha } from '../../shared/formato';
 import { validateNombreApellido, validateDocumento } from '../../shared/validators';
-import { Button } from '../../shared/ui';
+import { Badge, Button } from '../../shared/ui';
+import { BloqueoModal } from '../components/BloqueoModal';
+import { MotivoBloqueoModal } from '../components/MotivoBloqueoModal';
+import { StatusChip } from '../components/StatusChip';
 
 const TIPOS_DOC = ['DNI', 'LC', 'LE', 'CI', 'PASAPORTE'];
 
@@ -160,6 +162,10 @@ export const UsuariosPage: React.FC = () => {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [resetSuccess, setResetSuccess] = useState<string | null>(null);
   const [isResettingPass, setIsResettingPass] = useState(false);
+
+  // Bloqueo con motivo y duración, y el detalle del bloqueo vigente
+  const [aBloquear, setABloquear] = useState<UsuarioResumen | null>(null);
+  const [motivoDe, setMotivoDe] = useState<UsuarioResumen | null>(null);
 
   // Handle Search Persona by Document / Query using API
   const handleSearchPersona = async () => {
@@ -435,91 +441,51 @@ export const UsuariosPage: React.FC = () => {
     }
   };
 
-  // Table Columns Definition
+  // Columnas del wireframe EP01.RF005_EP08.RF062: persona e identidad, documento, roles y estado
   const columns: ColumnDef<UsuarioResumen>[] = [
     {
-      key: 'username',
-      label: 'Usuario',
+      key: 'persona',
+      label: 'Persona / identidad',
       sortable: true,
       render: (u) => (
-        <div>
-          <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            {u.username}
-            {u.protegido && (
-              <span
-                style={{
-                  fontSize: '0.65rem',
-                  padding: '0.1rem 0.4rem',
-                  borderRadius: '9999px',
-                  backgroundColor: 'var(--color-warning-border)',
-                  color: 'var(--color-warning)',
-                  border: '1px solid var(--color-warning-border)',
-                }}
-              >
-                🔒 Admin Sistema
-              </span>
-            )}
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+            {u.persona?.nombreCompleto || u.username}
+            {u.protegido && <Badge tone="aviso">Admin del sistema</Badge>}
           </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>{u.email}</div>
+          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>@{u.username}</div>
+          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>{u.email}</div>
         </div>
       ),
     },
     {
-      key: 'persona',
-      label: 'Persona Vinculada',
-      sortable: true,
-      render: (u) => (
-        <div>
-          <div style={{ fontSize: '0.875rem' }}>{u.persona?.nombreCompleto || 'Sin vincular'}</div>
-          {u.persona?.nroDoc && (
-            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
-              {u.persona.tipoDoc || 'DOC'}: {u.persona.nroDoc}
-            </div>
-          )}
-        </div>
-      ),
+      key: 'documento',
+      label: 'Documento',
+      render: (u) =>
+        u.persona?.nroDoc ? (
+          <span style={{ whiteSpace: 'nowrap' }}>
+            {u.persona.tipoDoc || 'DOC'} {u.persona.nroDoc}
+          </span>
+        ) : (
+          '-'
+        ),
     },
     {
       key: 'roles',
       label: 'Roles',
       render: (u) => (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
-          {u.roles.map((r) => (
-            <span
-              key={r.id}
-              style={{
-                fontSize: '0.7rem',
-                fontWeight: 600,
-                padding: '0.15rem 0.5rem',
-                borderRadius: 'var(--radius-sm)',
-                backgroundColor:
-                  r.nombre === 'SUPER_USUARIO' || r.nombre === 'ADMINISTRADOR'
-                    ? 'var(--color-danger-bg)'
-                    : r.nombre === 'ORGANIZADOR'
-                      ? 'var(--color-info-bg)'
-                      : 'var(--color-surface)',
-                color:
-                  r.nombre === 'SUPER_USUARIO' || r.nombre === 'ADMINISTRADOR'
-                    ? 'var(--color-danger)'
-                    : r.nombre === 'ORGANIZADOR'
-                      ? 'var(--color-text-secondary)'
-                      : 'var(--color-primary)',
-                border: '1px solid var(--color-border)',
-              }}
-            >
-              {r.nombreAmigable || r.nombre}
-            </span>
-          ))}
+          {u.roles.length === 0
+            ? '-'
+            : u.roles.map((r) => (
+                <Badge key={r.id} tone={r.nombre === 'ORGANIZADOR' ? 'solido' : 'borde'}>
+                  {r.nombreAmigable || r.nombre}
+                </Badge>
+              ))}
         </div>
       ),
     },
     { key: 'estado', label: 'Estado', sortable: true },
-    {
-      key: 'creadoEn',
-      label: 'Fecha Registro',
-      sortable: true,
-      render: (u) => fecha(u.creadoEn),
-    },
   ];
 
   // Custom Row Actions: Roles & Password Reset (un usuario dado de baja primero se reactiva)
@@ -562,6 +528,24 @@ export const UsuariosPage: React.FC = () => {
             Reset
           </Button>
         )}
+
+        {user.estado === 'BLOQUEADO' ? (
+          <Button size="sm" variant="secondary" title="Ver el motivo y la duración" onClick={() => setMotivoDe(user)}>
+            Motivo
+          </Button>
+        ) : (
+          puedeEditar && (
+            <Button
+              size="sm"
+              variant="danger"
+              title={esYo(user) ? 'No podés bloquearte a vos mismo' : 'Bloquear con motivo y duración'}
+              onClick={() => setABloquear(user)}
+              disabled={user.protegido || esYo(user)}
+            >
+              Bloquear
+            </Button>
+          )
+        )}
       </>
     );
   };
@@ -569,10 +553,9 @@ export const UsuariosPage: React.FC = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       <div>
-        <span className="badge">Permiso: USUARIO_VER</span>
-        <h1 style={{ marginTop: '0.5rem' }}>Gestión de Cuentas de Usuario</h1>
-        <p style={{ color: 'var(--color-text-secondary)' }}>
-          Administración centralizada conectada al contrato OpenAPI del backend (`pica-back`).
+        <h1 style={{ margin: 0 }}>Usuarios y roles</h1>
+        <p style={{ color: 'var(--color-text-secondary)', margin: '0.25rem 0 0' }}>
+          Cuentas, roles, bloqueos y reseteo de claves.
         </p>
       </div>
 
@@ -602,8 +585,8 @@ export const UsuariosPage: React.FC = () => {
       )}
 
       <DataTable<UsuarioResumen>
-        title="Directorio de Usuarios"
-        description="Listado paginado desde el servidor con búsqueda, filtros, roles numéricos y reseteo de claves."
+        title="Listado de cuentas"
+        description="Buscá por usuario, email, apellido o documento, y filtrá por rol o estado."
         data={usuarios}
         columns={columns}
         searchFields={['username', 'email']}
@@ -669,7 +652,15 @@ export const UsuariosPage: React.FC = () => {
         customActions={renderCustomRowActions}
         isReadOnly={(u) => u.protegido}
         canDelete={(u) => !esYo(u)}
-        createButtonText="Alta de Usuario"
+        createButtonText="Crear usuario"
+      />
+
+      <BloqueoModal usuario={aBloquear} onClose={() => setABloquear(null)} onBloqueado={fetchUsuarios} />
+      <MotivoBloqueoModal
+        usuario={motivoDe}
+        puedeLevantar={puedeEditar}
+        onClose={() => setMotivoDe(null)}
+        onLevantado={fetchUsuarios}
       />
 
       {/* MODAL 1: ALTA DE USUARIO */}
@@ -1357,22 +1348,14 @@ export const UsuariosPage: React.FC = () => {
 
               <div>
                 <label style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>Estado</label>
-                <select
-                  value={editForm.estado}
-                  onChange={(e) => setEditForm({ ...editForm, estado: e.target.value as any })}
-                  style={{
-                    width: '100%',
-                    padding: '0.55rem',
-                    borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--color-border)',
-                    backgroundColor: 'var(--color-input-bg)',
-                    color: 'var(--color-text)',
-                    fontSize: '0.875rem',
-                  }}
-                >
-                  <option value="ACTIVO">ACTIVO</option>
-                  {!esYo(editingUser) && <option value="BLOQUEADO">BLOQUEADO</option>}
-                </select>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
+                  <StatusChip status={editingUser.estado} />
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                    {editingUser.estado === 'BLOQUEADO'
+                      ? 'Para levantarlo, usá Motivo en la tabla.'
+                      : 'Para bloquearlo, usá Bloquear en la tabla: pide motivo y duración.'}
+                  </span>
+                </div>
                 {editingUser.estado === 'PENDIENTE_VERIFICACION' && (
                   <span
                     style={{
