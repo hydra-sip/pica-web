@@ -97,3 +97,47 @@ export const IconoSitio = () => (
     <path d="M5 10v10h14V10" />
   </Icono>
 );
+
+export const IconoOjo = () => (
+  <Icono>
+    <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" />
+    <circle cx="12" cy="12" r="3" />
+  </Icono>
+);
+
+export const IconoOjoTachado = () => (
+  <Icono>
+    <path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-2.6 3.5M6.6 6.6C3.7 8.4 2 12 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6" />
+    <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+    <path d="m3 3 18 18" />
+  </Icono>
+);
+
+export const IconoCorreo = () => (
+  <Icono>
+    <rect x="3" y="5" width="18" height="14" rx="2" />
+    <path d="m3 7 9 6 9-6" />
+  </Icono>
+);
+
+export const IconoListo = () => (
+  <Icono>
+    <circle cx="12" cy="12" r="9" />
+    <path d="m8 12 3 3 5-6" />
+  </Icono>
+);
+
+export const IconoAlerta = () => (
+  <Icono>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v6" />
+    <path d="M12 16.5v.5" />
+  </Icono>
+);
+
+export const IconoEspera = () => (
+  <Icono>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5l3 2" />
+  </Icono>
+);

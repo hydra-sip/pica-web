@@ -249,7 +249,9 @@ export async function customFetch<T = unknown>(
     throw new ApiError(errorMsg, response.status, problemDetail);
   }
 
-  return await response.json();
+  // 202 y otros éxitos pueden venir sin cuerpo
+  const texto = await response.text();
+  return (texto ? JSON.parse(texto) : {}) as T;
 }
 
 export const httpClient = {
