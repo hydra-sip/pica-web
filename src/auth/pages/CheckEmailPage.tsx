@@ -1,59 +1,114 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { authApi } from '../../api/authApi';
+import { mensajeDeError } from '../../shared/mensajesError';
+import { Badge, Button, Field, Input } from '../../shared/ui';
+import { IconoCorreo } from '../../shared/ui/Iconos';
+import { EstadoAuth } from '../components/EstadoAuth';
+
+const ESPERA_REENVIO = 60;
+const MOCKS_ACTIVOS = import.meta.env.DEV && import.meta.env.VITE_ENABLE_MOCKS !== 'false';
+
+const reloj = (segundos: number) =>
+  `${String(Math.floor(segundos / 60)).padStart(2, '0')}:${String(segundos % 60).padStart(2, '0')}`;
 
 export const CheckEmailPage: React.FC = () => {
   const location = useLocation();
-  const email = (location.state as { email?: string })?.email || 'tu casilla de correo';
+  // Viene del registro o del login con el mail; si se entra directo, se lo pide para reenviar
+  const emailRecibido = (location.state as { email?: string } | null)?.email || '';
+  const [email, setEmail] = useState(emailRecibido);
+  const [espera, setEspera] = useState(0);
+  const [enviando, setEnviando] = useState(false);
+  const [aviso, setAviso] = useState<{ tono: 'exito' | 'peligro'; texto: string } | null>(null);
+
+  useEffect(() => {
+    if (espera <= 0) return;
+    const t = setTimeout(() => setEspera((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [espera]);
+
+  const reenviar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setEnviando(true);
+    setAviso(null);
+    try {
+      await authApi.reenviarVerificacion(email.trim());
+      setAviso({
+        tono: 'exito',
+        texto: 'Si el email está registrado y sin verificar, te llega un enlace nuevo.',
+      });
+      setEspera(ESPERA_REENVIO);
+    } catch (err) {
+      setAviso({ tono: 'peligro', texto: mensajeDeError(err, 'No se pudo reenviar el correo.') });
+    } finally {
+      setEnviando(false);
+    }
+  };
 
   return (
-    <div style={{ maxWidth: '480px', margin: '3rem auto', textAlign: 'center' }} className="card">
-      <div style={{ fontSize: '3.5rem', marginBottom: '1rem' }}>✉️</div>
-      <h2 style={{ marginBottom: '0.75rem' }}>¡Revisá tu correo electrónico!</h2>
-      <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem', lineHeight: 1.5, marginBottom: '1.5rem' }}>
-        Hemos enviado un enlace de verificación a <strong style={{ color: 'var(--color-text)' }}>{email}</strong>.
-        Por favor, hacé clic en el enlace para activar tu cuenta e iniciar sesión en PICA Web.
-      </p>
-
-      <div
-        style={{
-          background: 'var(--color-info-bg)',
-          border: '1px solid var(--color-info-border)',
-          padding: '1rem',
-          borderRadius: 'var(--radius-sm)',
-          fontSize: '0.85rem',
-          color: 'var(--color-text-secondary)',
-          marginBottom: '1.5rem',
-          textAlign: 'left',
-        }}
-      >
-        <p style={{ margin: 0, fontWeight: 600, color: 'var(--color-primary)', marginBottom: '0.35rem' }}>
-          💡 Para pruebas en entorno local:
-        </p>
-        <p style={{ margin: 0 }}>
-          Podés simular la verificación con un token válido haciendo clic abajo:
-        </p>
-        <div style={{ marginTop: '0.5rem' }}>
-          <Link
-            to="/verificar?token=valid-demo-token-123"
-            style={{ color: 'var(--accent-teal)', textDecoration: 'underline', fontWeight: 500 }}
-          >
-            👉 Probar Verificación con Token Válido
-          </Link>
+    <EstadoAuth icono={<IconoCorreo />} titulo="Revisá tu correo">
+      {emailRecibido ? (
+        <p className="auth-estado-texto">
+          Te mandamos un enlace de activación a:
           <br />
-          <Link
-            to="/verificar?token=expired-token"
-            style={{ color: 'var(--color-danger)', textDecoration: 'underline', fontWeight: 500, fontSize: '0.8rem', marginTop: '0.25rem', display: 'inline-block' }}
-          >
-            👉 Probar Token Expirado/Inválido
-          </Link>
-        </div>
+          <strong style={{ color: 'var(--color-text)' }}>{emailRecibido}</strong>
+        </p>
+      ) : (
+        <p className="auth-estado-texto">Te mandamos un enlace de activación a tu correo.</p>
+      )}
+
+      <Badge>Estado: pendiente</Badge>
+
+      <div className="alerta">
+        <strong>¿Por qué me tengo que verificar?</strong>
+        <br />
+        Para inscribirte en torneos y comprar rifas tu cuenta tiene que estar activa. El enlace
+        vence en 24 horas.
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem' }}>
-        <Link to="/auth/login" className="btn btn-secondary">
-          Ir a Iniciar Sesión
-        </Link>
-      </div>
-    </div>
+      {aviso && (
+        <div
+          className={`alerta alerta-${aviso.tono}`}
+          role={aviso.tono === 'peligro' ? 'alert' : 'status'}
+        >
+          {aviso.texto}
+        </div>
+      )}
+
+      <form onSubmit={reenviar} className="auth-form">
+        {!emailRecibido && (
+          <Field label="Tu email">
+            <Input
+              type="email"
+              required
+              autoComplete="email"
+              placeholder="ejemplo@correo.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </Field>
+        )}
+        <Button type="submit" variant="secondary" block loading={enviando} disabled={espera > 0}>
+          Reenviar correo de activación
+        </Button>
+        {espera > 0 && (
+          <p className="auth-espera">Vas a poder pedir otro reenvío en {reloj(espera)}</p>
+        )}
+      </form>
+
+      {MOCKS_ACTIVOS && (
+        <div className="alerta alerta-info">
+          <strong>Con los mocks:</strong>{' '}
+          <Link to="/verificar?token=valid-demo-token-123">enlace válido</Link>
+          {' · '}
+          <Link to="/verificar?token=expired-token">enlace vencido</Link>
+        </div>
+      )}
+
+      <Link to="/auth/login" className="auth-link">
+        Volver al inicio de sesión
+      </Link>
+    </EstadoAuth>
   );
 };

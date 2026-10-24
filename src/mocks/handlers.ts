@@ -96,7 +96,7 @@ export const handlers = [
       return new HttpResponse(
         JSON.stringify({
           status: 400,
-          codigo: 'TOKEN_INVALIDO',
+          codigo: token === 'expired-token' ? 'TOKEN_EXPIRADO' : 'TOKEN_INVALIDO',
           detail: 'El enlace de verificación es inválido o ha expirado.',
         }),
         { status: 400, headers: { 'Content-Type': 'application/problem+json' } }
@@ -105,6 +105,9 @@ export const handlers = [
 
     return new HttpResponse(null, { status: 204 });
   }),
+
+  // Auth: Reenviar verificación (POST /auth/reenviar-verificacion) -> 202 siempre, exista o no el mail
+  http.post(`${API_URL}/auth/reenviar-verificacion`, () => new HttpResponse(null, { status: 202 })),
 
   // Auth: Login Endpoint (POST /auth/login) -> { accessToken, refreshToken, tokenType, expiresIn }
   http.post(`${API_URL}/auth/login`, async ({ request }) => {

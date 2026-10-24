@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { authApi } from '../../api/authApi';
 import { FieldErrors } from '../types';
 import { erroresDelFormulario, mensajeDeError } from '../../shared/mensajesError';
 import { PasswordRequirements } from '../components/PasswordRequirements';
+import { AuthTarjeta } from '../components/AuthTarjeta';
+import { Button, Field, Input, InputClave, Select } from '../../shared/ui';
 import {
   TIPOS_DOC_VALIDOS,
   validateNombreApellido,
@@ -127,270 +129,73 @@ export const RegisterPage: React.FC = () => {
     }
   };
 
-  return (
-    <div style={{ maxWidth: '560px', margin: '2rem auto' }} className="card">
-      <h2 style={{ textAlign: 'center', marginBottom: '0.5rem' }}>Crear Cuenta</h2>
-      <p
-        style={{
-          textAlign: 'center',
-          color: 'var(--color-text-secondary)',
-          fontSize: '0.9rem',
-          marginBottom: '1.5rem',
-        }}
-      >
-        Sumate a la plataforma PICA Web
-      </p>
+  // Cambia el valor y borra el error del campo apenas se lo corrige
+  const cambiar =
+    (campo: keyof FieldErrors, set: (valor: string) => void) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      set(e.target.value);
+      if (fieldErrors[campo]) {
+        setFieldErrors((prev) => ({ ...prev, [campo]: undefined }));
+      }
+    };
 
+  return (
+    <AuthTarjeta>
       {generalError && (
-        <div
-          style={{
-            background: 'var(--color-danger-bg)',
-            border: '1px solid var(--color-danger-border)',
-            color: 'var(--color-danger)',
-            padding: '0.75rem',
-            borderRadius: 'var(--radius-sm)',
-            marginBottom: '1rem',
-            fontSize: '0.9rem',
-          }}
-        >
+        <div className="alerta alerta-peligro" role="alert">
           {generalError}
         </div>
       )}
 
-      <form
-        onSubmit={handleSubmit}
-        noValidate
-        style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
-      >
-        {/* Nombres y Apellidos */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '1rem',
-            alignItems: 'start',
-          }}
-        >
-          <div>
-            <label
-              style={{
-                display: 'block',
-                fontSize: '0.85rem',
-                marginBottom: '0.35rem',
-                color: 'var(--color-text-secondary)',
-              }}
-            >
-              Nombre/s <span style={{ color: 'var(--color-danger)' }}>*</span>
-            </label>
-            <input
+      <form onSubmit={handleSubmit} noValidate className="auth-form">
+        <div className="auth-fila">
+          <Field label="Nombre/s" error={fieldErrors.nombres}>
+            <Input
               type="text"
               required
+              autoComplete="given-name"
               placeholder="Juan"
               value={nombres}
-              onChange={(e) => {
-                setNombres(e.target.value);
-                if (fieldErrors.nombres) {
-                  setFieldErrors((prev) => ({ ...prev, nombres: undefined }));
-                }
-              }}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                borderRadius: 'var(--radius-sm)',
-                border: fieldErrors.nombres ? '1px solid var(--color-danger)' : '1px solid var(--color-border)',
-                backgroundColor: 'var(--color-input-bg)',
-                color: 'var(--color-text)',
-                outline: 'none',
-              }}
+              onChange={cambiar('nombres', setNombres)}
             />
-            {fieldErrors.nombres && (
-              <span
-                style={{
-                  color: 'var(--color-danger)',
-                  fontSize: '0.78rem',
-                  marginTop: '0.2rem',
-                  display: 'block',
-                }}
-              >
-                ⚠️ {fieldErrors.nombres}
-              </span>
-            )}
-          </div>
-
-          <div>
-            <label
-              style={{
-                display: 'block',
-                fontSize: '0.85rem',
-                marginBottom: '0.35rem',
-                color: 'var(--color-text-secondary)',
-              }}
-            >
-              Apellido/s <span style={{ color: 'var(--color-danger)' }}>*</span>
-            </label>
-            <input
+          </Field>
+          <Field label="Apellido/s" error={fieldErrors.apellidos}>
+            <Input
               type="text"
               required
+              autoComplete="family-name"
               placeholder="Pérez"
               value={apellidos}
-              onChange={(e) => {
-                setApellidos(e.target.value);
-                if (fieldErrors.apellidos) {
-                  setFieldErrors((prev) => ({ ...prev, apellidos: undefined }));
-                }
-              }}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                borderRadius: 'var(--radius-sm)',
-                border: fieldErrors.apellidos
-                  ? '1px solid var(--color-danger)'
-                  : '1px solid var(--color-border)',
-                backgroundColor: 'var(--color-input-bg)',
-                color: 'var(--color-text)',
-                outline: 'none',
-              }}
+              onChange={cambiar('apellidos', setApellidos)}
             />
-            {fieldErrors.apellidos && (
-              <span
-                style={{
-                  color: 'var(--color-danger)',
-                  fontSize: '0.78rem',
-                  marginTop: '0.2rem',
-                  display: 'block',
-                }}
-              >
-                ⚠️ {fieldErrors.apellidos}
-              </span>
-            )}
-          </div>
+          </Field>
         </div>
 
-        {/* Username y Email */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '1rem',
-            alignItems: 'start',
-          }}
-        >
-          <div>
-            <label
-              style={{
-                display: 'block',
-                fontSize: '0.85rem',
-                marginBottom: '0.35rem',
-                color: 'var(--color-text-secondary)',
-              }}
-            >
-              Nombre de Usuario <span style={{ color: 'var(--color-danger)' }}>*</span>
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="juanperez"
-              value={username}
-              onChange={(e) => {
-                setUsername(e.target.value);
-                if (fieldErrors.username) {
-                  setFieldErrors((prev) => ({ ...prev, username: undefined }));
-                }
-              }}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                borderRadius: 'var(--radius-sm)',
-                border: fieldErrors.username
-                  ? '1px solid var(--color-danger)'
-                  : '1px solid var(--color-border)',
-                backgroundColor: 'var(--color-input-bg)',
-                color: 'var(--color-text)',
-                outline: 'none',
-              }}
-            />
-            {fieldErrors.username && (
-              <span
-                style={{
-                  color: 'var(--color-danger)',
-                  fontSize: '0.78rem',
-                  marginTop: '0.2rem',
-                  display: 'block',
-                }}
-              >
-                ⚠️ {fieldErrors.username}
-              </span>
-            )}
-          </div>
+        <Field label="Nombre de usuario" error={fieldErrors.username}>
+          <Input
+            type="text"
+            required
+            autoComplete="username"
+            placeholder="juanperez"
+            value={username}
+            onChange={cambiar('username', setUsername)}
+          />
+        </Field>
 
-          <div>
-            <label
-              style={{
-                display: 'block',
-                fontSize: '0.85rem',
-                marginBottom: '0.35rem',
-                color: 'var(--color-text-secondary)',
-              }}
-            >
-              Correo Electrónico <span style={{ color: 'var(--color-danger)' }}>*</span>
-            </label>
-            <input
-              type="email"
-              required
-              placeholder="juan@unlu.edu.ar"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                if (fieldErrors.email) {
-                  setFieldErrors((prev) => ({ ...prev, email: undefined }));
-                }
-              }}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                borderRadius: 'var(--radius-sm)',
-                border: fieldErrors.email ? '1px solid var(--color-danger)' : '1px solid var(--color-border)',
-                backgroundColor: 'var(--color-input-bg)',
-                color: 'var(--color-text)',
-                outline: 'none',
-              }}
-            />
-            {fieldErrors.email && (
-              <span
-                style={{
-                  color: 'var(--color-danger)',
-                  fontSize: '0.78rem',
-                  marginTop: '0.2rem',
-                  display: 'block',
-                }}
-              >
-                ⚠️ {fieldErrors.email}
-              </span>
-            )}
-          </div>
-        </div>
+        <Field label="Correo electrónico" error={fieldErrors.email}>
+          <Input
+            type="email"
+            required
+            autoComplete="email"
+            placeholder="juan@correo.com"
+            value={email}
+            onChange={cambiar('email', setEmail)}
+          />
+        </Field>
 
-        {/* Documento y Fecha Nacimiento */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1.5fr 1fr',
-            gap: '0.75rem',
-            alignItems: 'start',
-          }}
-        >
-          <div>
-            <label
-              style={{
-                display: 'block',
-                fontSize: '0.85rem',
-                marginBottom: '0.35rem',
-                color: 'var(--color-text-secondary)',
-              }}
-            >
-              Tipo Doc <span style={{ color: 'var(--color-danger)' }}>*</span>
-            </label>
-            <select
+        <div className="auth-fila auth-fila-doc">
+          <Field label="Tipo de documento">
+            <Select
               value={tipoDoc}
               onChange={(e) => {
                 const nuevoTipo = e.target.value;
@@ -400,252 +205,61 @@ export const RegisterPage: React.FC = () => {
                   setFieldErrors((prev) => ({ ...prev, nroDoc: err || undefined }));
                 }
               }}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--color-border)',
-                backgroundColor: 'var(--color-input-bg)',
-                color: 'var(--color-text)',
-                outline: 'none',
-              }}
             >
               {TIPOS_DOC_VALIDOS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>
               ))}
-            </select>
-          </div>
-
-          <div>
-            <label
-              style={{
-                display: 'block',
-                fontSize: '0.85rem',
-                marginBottom: '0.35rem',
-                color: 'var(--color-text-secondary)',
-              }}
-            >
-              Nro Documento <span style={{ color: 'var(--color-danger)' }}>*</span>
-            </label>
-            <input
+            </Select>
+          </Field>
+          <Field label="Número de documento" error={fieldErrors.nroDoc}>
+            <Input
               type="text"
               required
-              placeholder={
-                tipoDoc === 'DNI' || tipoDoc === 'LC' || tipoDoc === 'LE' ? '38123456' : 'A1234567'
-              }
+              inputMode={tipoDoc === 'DNI' || tipoDoc === 'LC' || tipoDoc === 'LE' ? 'numeric' : 'text'}
+              placeholder={tipoDoc === 'DNI' || tipoDoc === 'LC' || tipoDoc === 'LE' ? '38123456' : 'A1234567'}
               value={nroDoc}
-              onChange={(e) => {
-                setNroDoc(e.target.value);
-                if (fieldErrors.nroDoc) {
-                  setFieldErrors((prev) => ({ ...prev, nroDoc: undefined }));
-                }
-              }}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                borderRadius: 'var(--radius-sm)',
-                border: fieldErrors.nroDoc ? '1px solid var(--color-danger)' : '1px solid var(--color-border)',
-                backgroundColor: 'var(--color-input-bg)',
-                color: 'var(--color-text)',
-                outline: 'none',
-              }}
+              onChange={cambiar('nroDoc', setNroDoc)}
             />
-            {fieldErrors.nroDoc && (
-              <span
-                style={{
-                  color: 'var(--color-danger)',
-                  fontSize: '0.78rem',
-                  marginTop: '0.2rem',
-                  display: 'block',
-                }}
-              >
-                ⚠️ {fieldErrors.nroDoc}
-              </span>
-            )}
-          </div>
-
-          <div>
-            <label
-              style={{
-                display: 'block',
-                fontSize: '0.85rem',
-                marginBottom: '0.35rem',
-                color: 'var(--color-text-secondary)',
-              }}
-            >
-              Nacimiento <span style={{ color: 'var(--color-danger)' }}>*</span>
-            </label>
-            <input
-              type="date"
-              required
-              min={MIN_FECHA_NACIMIENTO}
-              max={getTodayDateString()}
-              value={fechaNacimiento}
-              onChange={(e) => {
-                setFechaNacimiento(e.target.value);
-                if (fieldErrors.fechaNacimiento) {
-                  setFieldErrors((prev) => ({ ...prev, fechaNacimiento: undefined }));
-                }
-              }}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                borderRadius: 'var(--radius-sm)',
-                border: fieldErrors.fechaNacimiento
-                  ? '1px solid var(--color-danger)'
-                  : '1px solid var(--color-border)',
-                backgroundColor: 'var(--color-input-bg)',
-                color: 'var(--color-text)',
-                outline: 'none',
-              }}
-            />
-            {fieldErrors.fechaNacimiento && (
-              <span
-                style={{
-                  color: 'var(--color-danger)',
-                  fontSize: '0.78rem',
-                  marginTop: '0.2rem',
-                  display: 'block',
-                }}
-              >
-                ⚠️ {fieldErrors.fechaNacimiento}
-              </span>
-            )}
-          </div>
+          </Field>
         </div>
 
-        {/* Contraseñas */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '1rem',
-            alignItems: 'start',
-          }}
-        >
-          <div>
-            <label
-              style={{
-                display: 'block',
-                fontSize: '0.85rem',
-                marginBottom: '0.35rem',
-                color: 'var(--color-text-secondary)',
-              }}
-            >
-              Contraseña <span style={{ color: 'var(--color-danger)' }}>*</span>
-            </label>
-            <input
-              type="password"
-              required
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                if (fieldErrors.password) {
-                  setFieldErrors((prev) => ({ ...prev, password: undefined }));
-                }
-              }}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                borderRadius: 'var(--radius-sm)',
-                border: fieldErrors.password
-                  ? '1px solid var(--color-danger)'
-                  : '1px solid var(--color-border)',
-                backgroundColor: 'var(--color-input-bg)',
-                color: 'var(--color-text)',
-                outline: 'none',
-              }}
-            />
-            <PasswordRequirements password={password} />
-            {fieldErrors.password && (
-              <span
-                style={{
-                  color: 'var(--color-danger)',
-                  fontSize: '0.78rem',
-                  marginTop: '0.2rem',
-                  display: 'block',
-                }}
-              >
-                ⚠️ {fieldErrors.password}
-              </span>
-            )}
-          </div>
+        <Field label="Fecha de nacimiento" error={fieldErrors.fechaNacimiento}>
+          <Input
+            type="date"
+            required
+            autoComplete="bday"
+            min={MIN_FECHA_NACIMIENTO}
+            max={getTodayDateString()}
+            value={fechaNacimiento}
+            onChange={cambiar('fechaNacimiento', setFechaNacimiento)}
+          />
+        </Field>
 
-          <div>
-            <label
-              style={{
-                display: 'block',
-                fontSize: '0.85rem',
-                marginBottom: '0.35rem',
-                color: 'var(--color-text-secondary)',
-              }}
-            >
-              Confirmar Contraseña <span style={{ color: 'var(--color-danger)' }}>*</span>
-            </label>
-            <input
-              type="password"
-              required
-              placeholder="••••••••"
-              value={confirmPassword}
-              onChange={(e) => {
-                setConfirmPassword(e.target.value);
-                if (fieldErrors.confirmPassword) {
-                  setFieldErrors((prev) => ({ ...prev, confirmPassword: undefined }));
-                }
-              }}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                borderRadius: 'var(--radius-sm)',
-                border: fieldErrors.confirmPassword
-                  ? '1px solid var(--color-danger)'
-                  : '1px solid var(--color-border)',
-                backgroundColor: 'var(--color-input-bg)',
-                color: 'var(--color-text)',
-                outline: 'none',
-              }}
-            />
-            {fieldErrors.confirmPassword && (
-              <span
-                style={{
-                  color: 'var(--color-danger)',
-                  fontSize: '0.78rem',
-                  marginTop: '0.2rem',
-                  display: 'block',
-                }}
-              >
-                ⚠️ {fieldErrors.confirmPassword}
-              </span>
-            )}
-          </div>
-        </div>
+        <Field label="Contraseña" error={fieldErrors.password}>
+          <InputClave
+            required
+            autoComplete="new-password"
+            value={password}
+            onChange={cambiar('password', setPassword)}
+          />
+        </Field>
+        <PasswordRequirements password={password} style={{ marginTop: '-0.5rem' }} />
 
-        <button
-          type="submit"
-          className="btn btn-primary"
-          disabled={loading}
-          style={{ marginTop: '0.5rem' }}
-        >
-          {loading ? 'Procesando registro...' : 'Registrarse'}
-        </button>
+        <Field label="Confirmar contraseña" error={fieldErrors.confirmPassword}>
+          <InputClave
+            required
+            autoComplete="new-password"
+            value={confirmPassword}
+            onChange={cambiar('confirmPassword', setConfirmPassword)}
+          />
+        </Field>
+
+        <Button type="submit" block loading={loading}>
+          {loading ? 'Creando la cuenta...' : 'Registrarse'}
+        </Button>
       </form>
-
-      <div
-        style={{
-          marginTop: '1.5rem',
-          textAlign: 'center',
-          fontSize: '0.85rem',
-          color: 'var(--color-text-muted)',
-        }}
-      >
-        ¿Ya tenés una cuenta?{' '}
-        <Link to="/auth/login" style={{ color: 'var(--color-text-secondary)' }}>
-          Iniciar Sesión
-        </Link>
-      </div>
-    </div>
+    </AuthTarjeta>
   );
 };

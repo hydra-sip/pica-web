@@ -151,6 +151,44 @@
   cursor: not-allowed;
 }
 
+/* Contraseña con botón para verla */
+.input-clave {
+  position: relative;
+}
+
+.input-clave .input {
+  padding-right: 2.75rem;
+}
+
+.input-clave .input:focus {
+  padding-right: calc(2.75rem - 1px);
+}
+
+.input-clave-ver {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 44px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.input-clave-ver:hover {
+  color: var(--color-text);
+}
+
+.input-clave-ver:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -4px;
+}
+
 textarea.input {
   min-height: 88px;
   resize: vertical;
