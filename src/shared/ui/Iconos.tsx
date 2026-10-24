@@ -98,6 +98,16 @@ export const IconoSitio = () => (
   </Icono>
 );
 
+// Ticket de rifa: borde con muesca a los costados y la línea punteada del troquel
+export const IconoRifas = () => (
+  <Icono>
+    <path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a3 3 0 0 0 0 6v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a3 3 0 0 0 0-6z" />
+    <path d="M14 5v2" />
+    <path d="M14 11v2" />
+    <path d="M14 17v2" />
+  </Icono>
+);
+
 export const IconoOjo = () => (
   <Icono>
     <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" />

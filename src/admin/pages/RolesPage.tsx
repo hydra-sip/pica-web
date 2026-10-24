@@ -22,6 +22,7 @@ const MODULO_UI: Record<ModuloPermisosApi['modulo'], { modulo: string; icono: st
   USUARIOS: { modulo: 'Módulo Usuarios', icono: '👥' },
   ROLES: { modulo: 'Módulo Roles y Seguridad', icono: '🛡️' },
   PERSONAS: { modulo: 'Módulo Personas y Padrón', icono: '📇' },
+  RIFAS: { modulo: 'Módulo Rifas', icono: '🎟️' },
 };
 
 const aModulosUi = (catalogo: ModuloPermisosApi[]): ModuloPermisos[] =>

@@ -6,6 +6,7 @@ import {
   IconoPanel,
   IconoPerfil,
   IconoPersonas,
+  IconoRifas,
   IconoRoles,
   IconoUsuarios,
 } from '../ui/Iconos';
@@ -33,6 +34,8 @@ export const PERMISOS_BACKOFFICE = ['USUARIO_VER', 'ROL_VER', 'PERSONA_VER'];
 export const NAVEGACION: Record<Seccion, ItemNavegacion[]> = {
   sitio: [
     { ruta: '/', texto: 'Explorar', icono: <IconoExplorar />, exacta: true },
+    // PICA-227: RIFA_GESTIONAR lo tienen ORGANIZADOR y ADMINISTRADOR
+    { ruta: '/mis-rifas', texto: 'Mis rifas', icono: <IconoRifas />, permisos: ['RIFA_GESTIONAR'] },
     { ruta: '/mi-perfil', texto: 'Perfil', icono: <IconoPerfil />, soloConSesion: true },
     { ruta: '/admin', texto: 'Backoffice', icono: <IconoBackoffice />, permisos: PERMISOS_BACKOFFICE },
     { ruta: '/auth/login', texto: 'Ingresar', icono: <IconoIngresar />, soloSinSesion: true },

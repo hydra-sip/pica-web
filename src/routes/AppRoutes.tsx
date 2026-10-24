@@ -16,6 +16,8 @@ import { NotFoundPage } from '../shared/pages/NotFoundPage';
 import { UnauthorizedPage } from '../shared/pages/UnauthorizedPage';
 import { RequireAuth } from '../auth/components/RequireAuth';
 import { RequirePermiso } from '../auth/components/RequirePermiso';
+import { MisRifasPage } from '../rifas/pages/MisRifasPage';
+import { RifaFormPage } from '../rifas/pages/RifaFormPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -33,6 +35,13 @@ export const AppRoutes: React.FC = () => {
         {/* Rutas Autenticadas Públicas / Perfil */}
         <Route element={<RequireAuth />}>
           <Route path="mi-perfil" element={<ProfilePage />} />
+
+          {/* Rifas del organizador (PICA-227): RIFA_GESTIONAR lo tienen ORGANIZADOR y ADMINISTRADOR */}
+          <Route element={<RequirePermiso permisos="RIFA_GESTIONAR" />}>
+            <Route path="mis-rifas" element={<MisRifasPage />} />
+            <Route path="rifas/nueva" element={<RifaFormPage />} />
+            <Route path="rifas/:id/editar" element={<RifaFormPage />} />
+          </Route>
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />

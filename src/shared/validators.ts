@@ -159,3 +159,101 @@ export const validateFechaNacimiento = (
 
   return null;
 };
+
+// --- Rifas (PICA-227) ---------------------------------------------------------
+// Las mismas reglas que valida el back en RifaService (PICA-226); el back sigue siendo el que decide.
+
+export interface DatosRifaForm {
+  titulo: string;
+  numeroDesde: string;
+  numeroHasta: string;
+  precioNumero: string;
+  ventaDesde: string;
+  ventaHasta: string;
+}
+
+/** Errores por campo de la pestaña "Datos generales". `premiosCargados` evita achicar el rango por debajo. */
+export const validateDatosRifa = (
+  datos: DatosRifaForm,
+  premiosCargados: number = 0
+): Partial<Record<keyof DatosRifaForm, string>> => {
+  const errores: Partial<Record<keyof DatosRifaForm, string>> = {};
+  const titulo = datos.titulo.trim();
+  if (!titulo) {
+    errores.titulo = 'El título es obligatorio.';
+  } else if (titulo.length > 100) {
+    errores.titulo = 'El título no puede superar los 100 caracteres.';
+  }
+
+  const desde = Number(datos.numeroDesde);
+  const hasta = Number(datos.numeroHasta);
+  if (datos.numeroDesde === '' || !Number.isInteger(desde) || desde < 0) {
+    errores.numeroDesde = 'Ingresá un número entero mayor o igual a 0.';
+  }
+  if (datos.numeroHasta === '' || !Number.isInteger(hasta) || hasta < 0) {
+    errores.numeroHasta = 'Ingresá un número entero mayor o igual a 0.';
+  } else if (!errores.numeroDesde && hasta < desde) {
+    errores.numeroHasta = 'Tiene que ser mayor o igual que el número inicial.';
+  } else if (!errores.numeroDesde && hasta - desde + 1 < premiosCargados) {
+    errores.numeroHasta = `La rifa tiene ${premiosCargados} premios: no puede tener menos números.`;
+  }
+
+  const precio = Number(datos.precioNumero);
+  if (datos.precioNumero === '' || !(precio > 0)) {
+    errores.precioNumero = 'El precio tiene que ser mayor a 0.';
+  } else if (!/^\d+(\.\d{1,2})?$/.test(datos.precioNumero)) {
+    errores.precioNumero = 'Hasta 2 decimales.';
+  }
+
+  if (!datos.ventaDesde !== !datos.ventaHasta) {
+    const falta = datos.ventaDesde ? 'ventaHasta' : 'ventaDesde';
+    errores[falta] = 'Las dos fechas van juntas: completá ambas o ninguna.';
+  } else if (datos.ventaDesde && datos.ventaHasta) {
+    const inicio = new Date(datos.ventaDesde).getTime();
+    const fin = new Date(datos.ventaHasta).getTime();
+    if (fin <= inicio) {
+      errores.ventaHasta = 'Tiene que ser posterior al inicio de la venta.';
+    } else if (fin <= Date.now()) {
+      errores.ventaHasta = 'La venta no puede terminar en el pasado.';
+    }
+  }
+  return errores;
+};
+
+export interface PremioForm {
+  pct: string;
+  descripcion: string;
+}
+
+export interface ErroresPremios {
+  general?: string;
+  porFila: Record<number, string>;
+}
+
+/**
+ * Cada % es un entero de 1 a 100 (la pantalla no usa decimales, aunque el back acepta hasta 2);
+ * la suma no pasa de 100 ni hay más premios que números.
+ */
+export const validatePremios = (premios: PremioForm[], cantidadNumeros: number): ErroresPremios => {
+  const porFila: Record<number, string> = {};
+  premios.forEach((premio, i) => {
+    const pct = Number(premio.pct);
+    if (!/^\d+$/.test(premio.pct) || pct < 1 || pct > 100) {
+      porFila[i] = 'El porcentaje tiene que ser un número entero de 1 a 100.';
+    } else if (premio.descripcion.trim().length > 255) {
+      porFila[i] = 'La descripción no puede superar los 255 caracteres.';
+    }
+  });
+
+  let general: string | undefined;
+  const suma = sumaPorcentajes(premios);
+  if (suma > 100) {
+    general = `Los premios suman ${suma} %: no pueden pasar de 100.`;
+  } else if (premios.length > cantidadNumeros) {
+    general = `Hay ${premios.length} premios y la rifa tiene solo ${cantidadNumeros} números.`;
+  }
+  return { general, porFila };
+};
+
+export const sumaPorcentajes = (premios: PremioForm[]): number =>
+  premios.reduce((total, p) => total + (Number(p.pct) || 0), 0);

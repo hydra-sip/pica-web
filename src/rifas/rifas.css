@@ -1,0 +1,327 @@
+/*
+ * Pantallas de rifas del organizador (PICA-227), con los tokens del UI kit (global.css).
+ * Botones, campos, tarjetas, tablas, badges y alertas son los de src/shared/ui; acá queda solo lo
+ * propio de estas pantallas: la barra de pasos, las filas de premios y los filtros por estado.
+ */
+
+.rifas-page {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.rifas-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.rifas-titulo-con-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.rifas-titulo-con-chip h1 {
+  margin: 0;
+  font-size: var(--text-2xl);
+  overflow-wrap: anywhere;
+}
+
+.rifas-subtitulo {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-md);
+}
+
+.rifas-volver {
+  display: inline-block;
+  margin-bottom: var(--space-3);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  text-decoration: none;
+}
+
+.rifas-volver:hover {
+  color: var(--color-text);
+}
+
+.rifas-vacio {
+  margin: 0;
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.rifas-vacio h2 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-lg);
+  color: var(--color-text);
+}
+
+/* --- Asistente por pasos (como "Crear Nueva Competencia") ------------------- */
+
+.pasos-asistente {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.paso button {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.paso button:hover:not(:disabled) {
+  border-color: var(--color-border-strong);
+}
+
+.paso button:disabled {
+  cursor: default;
+}
+
+.paso.pendiente button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.paso.actual button {
+  border-color: var(--color-primary);
+}
+
+.paso-numero {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.paso.actual .paso-numero,
+.paso.hecho .paso-numero {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.paso-textos {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.paso-titulo {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.paso-subtitulo {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+/* --- Formularios de cada paso ---------------------------------------------- */
+
+.rifas-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.rifas-tarjeta-titulo {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.rifas-tarjeta-titulo h2 {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.rifas-tarjeta-titulo span {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.rifas-grilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+/* Pie del asistente: "Paso 1 de 2" a la izquierda y los botones a la derecha */
+.rifas-pie {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.rifas-pie > span {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.rifas-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-left: auto;
+}
+
+/* --- Premios --------------------------------------------------------------- */
+
+.premios-lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.premio-fila {
+  display: grid;
+  grid-template-columns: 3rem 7rem minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.premio-puesto {
+  padding-top: 0.6rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.premio-botones {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.premio-error {
+  display: block;
+  margin: var(--space-1) 0 0 calc(3rem + var(--space-3));
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+}
+
+.premios-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.premios-total strong {
+  font-size: var(--text-lg);
+  color: var(--color-text);
+}
+
+.premios-total strong.excedido {
+  color: var(--color-danger);
+}
+
+.premios-total strong.completo {
+  color: var(--color-success);
+}
+
+@media (max-width: 640px) {
+  .premio-fila {
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+  }
+
+  .premio-fila .premio-descripcion,
+  .premio-fila .premio-botones {
+    grid-column: 2;
+  }
+
+  .premio-error {
+    margin-left: calc(2.5rem + var(--space-3));
+  }
+}
+
+/* --- Mis rifas: filtros y tabla -------------------------------------------- */
+
+.rifas-filtros {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.chips-estado {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.chip-estado {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background-color: var(--color-card);
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.chip-estado:hover {
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+}
+
+.chip-estado.activo {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.rifas-celda-secundaria {
+  display: block;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.rifas-titulo-fila {
+  font-weight: 600;
+}
+
+.rifas-pie-tabla {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
