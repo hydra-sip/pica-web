@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { authApi } from '../../api/authApi';
+import { mensajeDeError } from '../../shared/mensajesError';
 
 export const VerifyEmailPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -32,7 +33,11 @@ export const VerifyEmailPage: React.FC = () => {
       })
       .catch((err) => {
         setSuccess(false);
-        setErrorMsg(err.message || 'El enlace de verificación es inválido o ha expirado.');
+        setErrorMsg(
+          mensajeDeError(err, 'El enlace de verificación no es válido o venció.', {
+            TOKEN_INVALIDO: 'El enlace de verificación no es válido.',
+          })
+        );
       })
       .finally(() => {
         setLoading(false);

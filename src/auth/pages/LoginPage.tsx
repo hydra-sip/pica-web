@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { ApiError, API_BASE_URL } from '../../api/httpClient';
+import { API_BASE_URL } from '../../api/httpClient';
+import { codigoDeError, mensajeDeError } from '../../shared/mensajesError';
 import { Button } from '../../shared/ui';
 
 export const LoginPage: React.FC = () => {
@@ -57,25 +58,16 @@ export const LoginPage: React.FC = () => {
       setTimeout(() => {
         navigate(targetPath, { replace: true });
       }, 500);
-    } catch (err: any) {
-      let code = '';
-      let detail = err.message || '';
-
-      if (err instanceof ApiError && err.problemDetail) {
-        code = err.problemDetail.codigo || '';
-        detail = err.problemDetail.detail || detail;
-      }
-
-      if (code === 'EMAIL_NO_VERIFICADO' || detail.toLowerCase().includes('verificad')) {
-        setErrorType('unverified');
-        setErrorMessage('Tu cuenta aún no ha sido verificada. Revisá tu casilla de correo para activarla.');
-      } else if (code === 'USUARIO_BLOQUEADO' || detail.toLowerCase().includes('bloquead')) {
-        setErrorType('locked');
-        setErrorMessage('Tu cuenta ha sido bloqueada. Por favor, contactá al administrador.');
-      } else {
-        setErrorType('invalid');
-        setErrorMessage(detail || 'Usuario/email o contraseña incorrectos.');
-      }
+    } catch (err) {
+      const codigo = codigoDeError(err);
+      setErrorType(
+        codigo === 'EMAIL_NO_VERIFICADO' ? 'unverified' : codigo === 'USUARIO_BLOQUEADO' ? 'locked' : 'invalid'
+      );
+      setErrorMessage(
+        mensajeDeError(err, 'No se pudo iniciar sesión.', {
+          EMAIL_NO_VERIFICADO: 'Tu cuenta todavía no está verificada. Revisá tu correo para activarla.',
+        })
+      );
     } finally {
       setLoading(false);
     }
@@ -96,10 +88,10 @@ export const LoginPage: React.FC = () => {
       {/* Alertas Contextuales según ProblemDetail del contrato OpenAPI */}
       {errorType === 'unverified' && (
         <div style={{ background: 'var(--color-warning-bg)', border: '1px solid var(--color-warning-border)', color: 'var(--color-warning)', padding: '0.85rem', borderRadius: 'var(--radius-sm)', marginBottom: '1.25rem', fontSize: '0.88rem', lineHeight: 1.4 }}>
-          <strong>⚠️ EMAIL_NO_VERIFICADO (403):</strong> {errorMessage}
+          {errorMessage}
           <div style={{ marginTop: '0.5rem' }}>
             <Link to="/auth/check-email" style={{ color: 'var(--accent-teal)', fontWeight: 500, textDecoration: 'underline' }}>
-              👉 Ir a pantalla de verificación
+              Ir a la pantalla de verificación
             </Link>
           </div>
         </div>
@@ -107,13 +99,13 @@ export const LoginPage: React.FC = () => {
 
       {errorType === 'locked' && (
         <div style={{ background: 'var(--color-danger-border)', border: '1px solid var(--color-danger-border)', color: 'var(--color-danger)', padding: '0.85rem', borderRadius: 'var(--radius-sm)', marginBottom: '1.25rem', fontSize: '0.88rem', lineHeight: 1.4 }}>
-          <strong>🚫 USUARIO_BLOQUEADO (403):</strong> {errorMessage}
+          {errorMessage}
         </div>
       )}
 
       {errorType === 'invalid' && (
         <div style={{ background: 'var(--color-danger-bg)', border: '1px solid var(--color-danger-border)', color: 'var(--color-danger)', padding: '0.85rem', borderRadius: 'var(--radius-sm)', marginBottom: '1.25rem', fontSize: '0.88rem' }}>
-          ❌ CREDENCIALES_INVALIDAS: {errorMessage}
+          {errorMessage}
         </div>
       )}
 

@@ -4,7 +4,8 @@ import { usuarioApi, UsuarioResumen, UsuarioDetalle } from '../../api/usuarioApi
 import { personaApi, PersonaResumen } from '../../api/personaApi';
 import { rolApi, RolResumen } from '../../api/rolApi';
 import { useAuth } from '../../auth/hooks/useAuth';
-import { erroresPorCampo, mensajeDeError } from '../mensajesError';
+import { erroresPorCampo, mensajeDeError } from '../../shared/mensajesError';
+import { fecha } from '../../shared/formato';
 import { validateNombreApellido, validateDocumento } from '../../shared/validators';
 import { Button } from '../../shared/ui';
 
@@ -517,7 +518,7 @@ export const UsuariosPage: React.FC = () => {
       key: 'creadoEn',
       label: 'Fecha Registro',
       sortable: true,
-      render: (u) => (u.creadoEn ? new Date(u.creadoEn).toLocaleDateString() : '-'),
+      render: (u) => fecha(u.creadoEn),
     },
   ];
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { authApi } from '../../api/authApi';
-import { ApiError } from '../../api/httpClient';
+import { erroresDelFormulario, mensajeDeError } from '../../shared/mensajesError';
 import { PasswordRequirements } from '../components/PasswordRequirements';
 import {
   TIPOS_DOC_VALIDOS,
@@ -98,33 +98,15 @@ export const ProfilePage: React.FC = () => {
       });
       updateUser(updatedUser);
       setProfileSuccessMsg('¡Datos de perfil guardados correctamente!');
-    } catch (err: any) {
-      if (err instanceof ApiError && err.problemDetail) {
-        const pd = err.problemDetail;
-        const newFieldErrors: Record<string, string> = {};
-
-        if (pd.errores && Array.isArray(pd.errores)) {
-          pd.errores.forEach((item) => {
-            if (item.campo) {
-              newFieldErrors[item.campo] = item.mensaje;
-            }
-          });
-        }
-
-        if (pd.codigo === 'DOCUMENTO_DUPLICADO') {
-          newFieldErrors.nroDoc = pd.detail || 'Ya existe una persona con ese documento.';
-        } else if (pd.codigo === 'DOCUMENTO_NO_EDITABLE') {
-          newFieldErrors.nroDoc =
-            pd.detail || 'El documento no se puede modificar una vez cargado.';
-        }
-
-        if (Object.keys(newFieldErrors).length > 0) {
-          setProfileFieldErrors(newFieldErrors);
-        } else {
-          setProfileErrorMsg(pd.detail || pd.codigo || 'Error al actualizar el perfil.');
-        }
+    } catch (err) {
+      const newFieldErrors = erroresDelFormulario(err, {
+        DOCUMENTO_DUPLICADO: 'nroDoc',
+        DOCUMENTO_NO_EDITABLE: 'nroDoc',
+      });
+      if (Object.keys(newFieldErrors).length > 0) {
+        setProfileFieldErrors(newFieldErrors);
       } else {
-        setProfileErrorMsg(err.message || 'Error al actualizar el perfil.');
+        setProfileErrorMsg(mensajeDeError(err, 'No se pudo actualizar el perfil.'));
       }
     } finally {
       setSavingProfile(false);
@@ -168,26 +150,12 @@ export const ProfilePage: React.FC = () => {
       setPasswordActual('');
       setPasswordNueva('');
       setConfirmPassword('');
-    } catch (err: any) {
-      if (err instanceof ApiError && err.problemDetail) {
-        const pd = err.problemDetail;
-        if (pd.codigo === 'PASSWORD_INCORRECTA') {
-          setPasswordFieldErrors({
-            passwordActual: 'La contraseña actual ingresada es incorrecta.',
-          });
-        } else if (pd.errores && Array.isArray(pd.errores)) {
-          const errs: Record<string, string> = {};
-          pd.errores.forEach((item) => {
-            if (item.campo) errs[item.campo] = item.mensaje;
-          });
-          setPasswordFieldErrors(errs);
-        } else {
-          setPasswordErrorMsg(pd.detail || pd.codigo || 'Error al cambiar la contraseña.');
-        }
+    } catch (err) {
+      const errs = erroresDelFormulario(err, { PASSWORD_ACTUAL_INCORRECTA: 'passwordActual' });
+      if (Object.keys(errs).length > 0) {
+        setPasswordFieldErrors(errs);
       } else {
-        setPasswordErrorMsg(
-          err.message || 'Error al cambiar la contraseña. Verificá tu contraseña actual.'
-        );
+        setPasswordErrorMsg(mensajeDeError(err, 'No se pudo cambiar la contraseña.'));
       }
     } finally {
       setChangingPassword(false);
