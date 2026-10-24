@@ -23,6 +23,8 @@ const POR_CODIGO: Record<string, string> = {
   ULTIMO_ASIGNADOR: 'No podés quitarte tu último rol que permite asignar roles.',
   ACCION_SOBRE_SI_MISMO:
     'No podés darte de baja, bloquearte ni resetear tu contraseña desde acá. Tu contraseña se cambia en Mi perfil.',
+  RIFA_NO_ENCONTRADA: 'La rifa no existe o no es tuya.',
+  RIFA_NO_EDITABLE: 'La rifa ya no está en borrador: no se puede modificar.',
 };
 
 const POR_CODIGO_DE_CAMPO: Record<string, string> = {
@@ -31,6 +33,9 @@ const POR_CODIGO_DE_CAMPO: Record<string, string> = {
   LONGITUD: 'El largo no es válido.',
   FECHA_FUTURA: 'No puede ser una fecha futura.',
   PASSWORD_DEBIL: 'Mínimo 8 caracteres, una mayúscula y un número.',
+  RANGO_INVALIDO: 'El rango de números no es válido.',
+  VENTANA_INVALIDA: 'Las fechas de venta no son válidas.',
+  PREMIOS_INVALIDOS: 'Los premios no son válidos.',
   VALOR_INVALIDO: 'El valor no es válido.',
 };
 

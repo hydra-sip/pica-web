@@ -1,0 +1,483 @@
+/* Pantallas de rifas del organizador (PICA-227). Mismos tokens que global.css. */
+
+.rifas-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 2rem 0 3rem;
+}
+
+.rifas-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.rifas-encabezado p {
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
+.rifas-volver {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.rifas-volver:hover {
+  color: var(--text-primary);
+}
+
+/* --- Avisos ---------------------------------------------------------------- */
+
+.rifas-aviso {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.rifas-aviso-exito {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #34d399;
+}
+
+.rifas-aviso-error {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+.rifas-aviso-info {
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: var(--text-primary);
+}
+
+/* --- Asistente por pasos (como "Crear Nueva Competencia") ------------------- */
+
+.pasos-asistente {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+  list-style: none;
+}
+
+.paso button {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: inherit;
+  cursor: pointer;
+  font-family: var(--font-primary);
+  text-align: left;
+  transition:
+    border-color var(--transition-fast),
+    background var(--transition-fast);
+}
+
+.paso button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.paso button:disabled {
+  cursor: default;
+}
+
+.paso.pendiente button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.paso-numero {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+.paso.actual button {
+  border-color: var(--accent-primary);
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.paso.actual .paso-numero,
+.paso.hecho .paso-numero {
+  background: var(--accent-gradient);
+  border-color: transparent;
+  color: #fff;
+}
+
+.paso-textos {
+  display: flex;
+  flex-direction: column;
+}
+
+.paso-titulo {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.paso-subtitulo {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.rifas-tarjeta-titulo {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.rifas-tarjeta-titulo span {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+/* Barra del pie del asistente: "Paso 1 de 2" a la izquierda y los botones a la derecha. */
+.rifas-pie {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  border-top: 1px solid var(--border-color);
+  padding-top: 1rem;
+  margin-top: 0.5rem;
+}
+
+.rifas-pie > span {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.rifas-pie .rifas-acciones {
+  margin-left: auto;
+}
+
+/* --- Chips (contador del encabezado y filtros por estado) ------------------ */
+
+.rifas-titulo-con-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.chip-contador {
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.rifas-filtros {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.chips-estado {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chip-estado {
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: var(--font-primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.chip-estado:hover {
+  color: var(--text-primary);
+}
+
+.chip-estado.activo {
+  background: var(--accent-gradient);
+  border-color: transparent;
+  color: #fff;
+}
+
+/* --- Formulario ------------------------------------------------------------ */
+
+.rifas-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.rifas-grilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.1rem;
+  align-items: start;
+}
+
+.rifas-campo label {
+  display: block;
+  font-size: 0.85rem;
+  margin-bottom: 0.35rem;
+  color: var(--text-secondary);
+}
+
+.rifas-campo .requerido {
+  color: #f87171;
+}
+
+.rifas-input {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background-color: rgba(15, 23, 42, 0.7);
+  color: var(--text-primary);
+  font-family: var(--font-primary);
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.rifas-input:focus {
+  border-color: var(--border-color-focus);
+}
+
+.rifas-input.con-error {
+  border-color: #f87171;
+}
+
+.rifas-input:disabled {
+  opacity: 0.6;
+}
+
+textarea.rifas-input {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.rifas-error-campo {
+  color: #f87171;
+  display: block;
+  font-size: 0.78rem;
+  margin-top: 0.2rem;
+}
+
+.rifas-ayuda {
+  color: var(--text-muted);
+  display: block;
+  font-size: 0.78rem;
+  margin-top: 0.2rem;
+}
+
+.rifas-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
+/* --- Premios --------------------------------------------------------------- */
+
+.premios-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.premio-fila {
+  display: grid;
+  grid-template-columns: 3.5rem 8rem 1fr auto;
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.premio-puesto {
+  color: var(--accent-secondary);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  padding-top: 0.7rem;
+}
+
+.premio-botones {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.btn-icono {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+  height: 2.75rem;
+  width: 2.5rem;
+}
+
+.btn-icono:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-icono:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.premios-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  border-top: 1px solid var(--border-color);
+  padding-top: 1rem;
+  color: var(--text-secondary);
+}
+
+.premios-total strong {
+  color: var(--text-primary);
+  font-size: 1.1rem;
+}
+
+.premios-total .excedido {
+  color: #f87171;
+}
+
+.premios-total .completo {
+  color: #34d399;
+}
+
+@media (max-width: 640px) {
+  .premio-fila {
+    grid-template-columns: 3rem 1fr;
+  }
+
+  .premio-fila .premio-descripcion,
+  .premio-fila .premio-botones {
+    grid-column: 2;
+  }
+}
+
+/* --- Listado --------------------------------------------------------------- */
+
+.rifas-tabla-contenedor {
+  overflow-x: auto;
+}
+
+.rifas-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.rifas-tabla th {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 0.75rem;
+  text-align: left;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.rifas-tabla td {
+  padding: 0.85rem 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+}
+
+.rifas-tabla tr:last-child td {
+  border-bottom: none;
+}
+
+.rifas-tabla .titulo {
+  font-weight: 600;
+}
+
+.rifas-tabla .secundario {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.estado-rifa {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  background: rgba(148, 163, 184, 0.15);
+  color: var(--text-secondary);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.estado-rifa.BORRADOR {
+  background: rgba(234, 179, 8, 0.12);
+  color: #facc15;
+  border-color: rgba(234, 179, 8, 0.3);
+}
+
+.estado-rifa.EN_VENTA {
+  background: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.estado-rifa.CANCELADA {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.rifas-vacio {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: var(--text-secondary);
+}
+
+.rifas-vacio h3 {
+  margin-bottom: 0.5rem;
+}
+
+.rifas-paginado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+}

@@ -9,6 +9,9 @@ export const Navbar: React.FC = () => {
   const { user, isAuthenticated, logout, hasPermission } = useAuth();
   // Mismo criterio que el guard de /admin (RF-008)
   const veBackoffice = hasPermission(['USUARIO_VER', 'ROL_VER', 'PERSONA_VER']);
+  // Mismo criterio que el guard de /mis-rifas (PICA-227)
+  const veRifas = hasPermission('RIFA_GESTIONAR');
+  const enRifas = /^\/(mis-rifas|rifas)(\/|$)/.test(location.pathname);
 
   const toggleMenu = () => {
     setIsMobileMenuOpen((prev) => !prev);
@@ -61,6 +64,16 @@ export const Navbar: React.FC = () => {
               onClick={closeMenu}
             >
               Administración
+            </Link>
+          )}
+
+          {veRifas && (
+            <Link
+              to="/mis-rifas"
+              className={`nav-link ${enRifas ? 'active' : ''}`}
+              onClick={closeMenu}
+            >
+              Mis Rifas
             </Link>
           )}
 
