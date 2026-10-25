@@ -14,8 +14,8 @@ const PERMISOS_SUPER_USUARIO = [
 // El PARTICIPANTE puede inscribirse a torneos (seed del back); el organizador de los mocks no.
 const PERMISOS_PARTICIPANTE = ['INSCRIPCION_GESTIONAR'];
 
-// In-memory mock store for current user profile state according to openapi.yaml
-let mockCurrentUserState = {
+// Perfil del usuario de la sesión según openapi.yaml; es el que devuelve GET /me hasta que alguien inicia sesión.
+const USUARIO_INICIAL = {
   usuario: {
     id: 1,
     username: 'admin',
@@ -35,6 +35,30 @@ let mockCurrentUserState = {
   roles: [{ id: 1, nombre: 'SUPER_USUARIO', nombreAmigable: 'Super Usuario' }],
   permisos: [...PERMISOS_SUPER_USUARIO],
   datosCompletos: true,
+};
+
+// El refresh token vive en localStorage y sobrevive a recargar la página; el usuario de los mocks también tiene
+// que sobrevivir, si no al escribir una URL a mano /me devolvería otra vez al admin.
+const CLAVE_USUARIO_MOCK = 'pica_mock_usuario';
+
+const usuarioGuardado = (): typeof USUARIO_INICIAL | null => {
+  try {
+    const guardado = localStorage.getItem(CLAVE_USUARIO_MOCK);
+    return guardado ? (JSON.parse(guardado) as typeof USUARIO_INICIAL) : null;
+  } catch {
+    return null;
+  }
+};
+
+let mockCurrentUserState = usuarioGuardado() ?? USUARIO_INICIAL;
+
+const establecerUsuario = (usuario: typeof USUARIO_INICIAL) => {
+  mockCurrentUserState = usuario;
+  try {
+    localStorage.setItem(CLAVE_USUARIO_MOCK, JSON.stringify(usuario));
+  } catch {
+    // sin localStorage (por ejemplo, navegación privada): el usuario dura lo que dure la página
+  }
 };
 
 export const handlers = [
@@ -148,13 +172,13 @@ export const handlers = [
     }
 
     if ((id === 'admin@pica.edu.ar' || id === 'admin') && body.password === 'admin123') {
-      mockCurrentUserState = {
+      establecerUsuario({
         usuario: { id: 1, username: 'admin', email: 'admin@pica.edu.ar', estado: 'ACTIVO', tieneContrasena: true },
         persona: { nombres: 'Administrador', apellidos: 'PICA', tipoDoc: 'DNI', nroDoc: '30111222', fechaNacimiento: '1990-01-01', domicilioPostal: 'Av. Constitución 1234, Luján', telefono: '1122334455' },
         roles: [{ id: 1, nombre: 'SUPER_USUARIO', nombreAmigable: 'Super Usuario' }],
         permisos: [...PERMISOS_SUPER_USUARIO],
         datosCompletos: true,
-      };
+      });
 
       return HttpResponse.json({
         accessToken: 'mock-jwt-access-token-admin-12345',
@@ -165,13 +189,13 @@ export const handlers = [
     }
 
     if ((id === 'organizador@pica.edu.ar' || id === 'organizador') && body.password === 'org123') {
-      mockCurrentUserState = {
+      establecerUsuario({
         usuario: { id: 4, username: 'organizador', email: 'organizador@pica.edu.ar', estado: 'ACTIVO', tieneContrasena: true },
         persona: { nombres: 'Organizador', apellidos: 'Eventos', tipoDoc: 'DNI', nroDoc: '34555666', fechaNacimiento: '1987-03-20', domicilioPostal: 'Mitre 200, Luján', telefono: '1133221100' },
         roles: [{ id: 4, nombre: 'ORGANIZADOR', nombreAmigable: 'Organizador de Eventos' }],
         permisos: ['USUARIO_VER', 'PERSONA_VER'],
         datosCompletos: true,
-      };
+      });
 
       return HttpResponse.json({
         accessToken: 'mock-jwt-access-token-organizador-12345',
@@ -182,13 +206,13 @@ export const handlers = [
     }
 
     if ((id === 'user@pica.edu.ar' || id === 'usuario') && body.password === 'user123') {
-      mockCurrentUserState = {
+      establecerUsuario({
         usuario: { id: 2, username: 'usuario', email: 'user@pica.edu.ar', estado: 'ACTIVO', tieneContrasena: true },
         persona: { nombres: 'Usuario', apellidos: 'PICA', tipoDoc: 'DNI', nroDoc: '38123456', fechaNacimiento: '1995-05-15', domicilioPostal: 'San Martín 500, Luján', telefono: '1144556677' },
         roles: [{ id: 2, nombre: 'PARTICIPANTE', nombreAmigable: 'Participante Estándar' }],
         permisos: [...PERMISOS_PARTICIPANTE],
         datosCompletos: true,
-      };
+      });
 
       return HttpResponse.json({
         accessToken: 'mock-jwt-access-token-user-12345',
@@ -199,13 +223,13 @@ export const handlers = [
     }
 
     if (id && body.password) {
-      mockCurrentUserState = {
+      establecerUsuario({
         usuario: { id: 3, username: id.split('@')[0], email: id.includes('@') ? id : `${id}@pica.edu.ar`, estado: 'ACTIVO', tieneContrasena: true },
         persona: { nombres: id.split('@')[0], apellidos: 'Usuario', tipoDoc: 'DNI', nroDoc: '', fechaNacimiento: '', domicilioPostal: '', telefono: '' },
         roles: [{ id: 2, nombre: 'PARTICIPANTE', nombreAmigable: 'Participante' }],
         permisos: [...PERMISOS_PARTICIPANTE],
         datosCompletos: false,
-      };
+      });
 
       return HttpResponse.json({
         accessToken: `mock-jwt-access-token-${Date.now()}`,
@@ -241,13 +265,13 @@ export const handlers = [
     }
 
     // Usuario Google que nace sin datos completos (requiere nroDoc, fechaNacimiento, domicilioPostal, telefono)
-    mockCurrentUserState = {
+    establecerUsuario({
       usuario: { id: 10, username: 'google_user', email: 'google.user@pica.edu.ar', estado: 'ACTIVO', tieneContrasena: false },
       persona: { nombres: 'Usuario Google', apellidos: 'PICA', tipoDoc: 'DNI', nroDoc: '', fechaNacimiento: '', domicilioPostal: '', telefono: '' },
       roles: [{ id: 2, nombre: 'PARTICIPANTE', nombreAmigable: 'Participante' }],
       permisos: [],
       datosCompletos: false,
-    };
+    });
 
     return HttpResponse.json({
       accessToken: 'mock-oauth-access-token-google-888',
@@ -297,11 +321,11 @@ export const handlers = [
     const hasDom = Boolean(newPersona.domicilioPostal && newPersona.domicilioPostal.trim().length > 0);
     const hasTel = Boolean(newPersona.telefono && newPersona.telefono.trim().length > 0);
 
-    mockCurrentUserState = {
+    establecerUsuario({
       ...mockCurrentUserState,
       persona: newPersona,
       datosCompletos: hasDoc && hasFecha && hasDom && hasTel,
-    };
+    });
 
     return HttpResponse.json(mockCurrentUserState);
   }),
@@ -352,6 +376,12 @@ export const handlers = [
 
   // Auth: Logout (POST /auth/logout)
   http.post(`${API_URL}/auth/logout`, () => {
+    try {
+      localStorage.removeItem(CLAVE_USUARIO_MOCK);
+    } catch {
+      // sin localStorage no hay nada que limpiar
+    }
+    mockCurrentUserState = USUARIO_INICIAL;
     return HttpResponse.json({ message: 'Sesión cerrada exitosamente' });
   }),
 ];
