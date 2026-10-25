@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { AppLayout } from '../shared/layouts/AppLayout';
+import { PublicLayout } from '../shared/layouts/PublicLayout';
+import { AdminLayout } from '../admin/layouts/AdminLayout';
 import { HomePage } from '../shared/pages/HomePage';
 import { LoginPage } from '../auth/pages/LoginPage';
 import { RegisterPage } from '../auth/pages/RegisterPage';
@@ -24,8 +25,8 @@ import { TorneoDetallePage } from '../torneos/pages/TorneoDetallePage';
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
-      {/* Sitio: sidebar en escritorio, barra inferior en el celular */}
-      <Route path="/" element={<AppLayout seccion="sitio" />}>
+      {/* Layout Público con Hydra Navbar, BottomNav (móvil) y Footer */}
+      <Route path="/" element={<PublicLayout />}>
         <Route index element={<HomePage />} />
         <Route path="torneos" element={<TorneosCatalogoPage />} />
         <Route path="torneos/:slug" element={<TorneoDetallePage />} />
@@ -40,7 +41,7 @@ export const AppRoutes: React.FC = () => {
         <Route element={<RequireAuth />}>
           <Route path="mi-perfil" element={<ProfilePage />} />
 
-          {/* Rifas del organizador (PICA-227): RIFA_GESTIONAR lo tienen ORGANIZADOR y ADMINISTRADOR */}
+          {/* Rifas del organizador (PICA-227 / Hydra): RIFA_GESTIONAR */}
           <Route element={<RequirePermiso permisos="RIFA_GESTIONAR" />}>
             <Route path="mis-rifas" element={<MisRifasPage />} />
             <Route path="rifas/nueva" element={<RifaFormPage />} />
@@ -51,12 +52,12 @@ export const AppRoutes: React.FC = () => {
         <Route path="*" element={<NotFoundPage />} />
       </Route>
 
-      {/* Layout de Administración Protegido (HU-107 Backoffice Protection) */}
+      {/* Layout de Administración Protegido (Backoffice Hydra) */}
       <Route element={<RequireAuth />}>
         <Route
           element={
             <RequirePermiso permisos={['USUARIO_VER', 'ROL_VER', 'PERSONA_VER']}>
-              <AppLayout seccion="admin" />
+              <AdminLayout />
             </RequirePermiso>
           }
         >

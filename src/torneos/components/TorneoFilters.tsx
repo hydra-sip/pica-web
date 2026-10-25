@@ -10,6 +10,8 @@ interface TorneoFiltersProps {
   onReset: () => void;
 }
 
+const CATEGORIAS_FIGMA = ['Todos', 'Fútbol 5', 'Pádel', 'Presencial', 'Online'];
+
 const OPCIONES_ESTADO: { label: string; value: EstadoTorneo | '' }[] = [
   { label: 'Todos los estados', value: '' },
   { label: 'Inscripción abierta', value: 'INSCRIPCION_ABIERTA' },
@@ -26,7 +28,6 @@ export const TorneoFilters: React.FC<TorneoFiltersProps> = ({
   onEstadoChange,
   onReset,
 }) => {
-  // Input local para debounce
   const [searchTerm, setSearchTerm] = useState(disciplina);
 
   useEffect(() => {
@@ -43,34 +44,83 @@ export const TorneoFilters: React.FC<TorneoFiltersProps> = ({
     return () => clearTimeout(timer);
   }, [searchTerm, disciplina, onDisciplinaChange]);
 
+  const handleChipClick = (cat: string) => {
+    if (cat === 'Todos') {
+      setSearchTerm('');
+      onDisciplinaChange('');
+    } else {
+      setSearchTerm(cat);
+      onDisciplinaChange(cat);
+    }
+  };
+
   const hayFiltros = Boolean(disciplina || estado);
 
   return (
-    <div className="torneo-filters-bar">
-      <div className="torneo-filters-grid">
-        {/* Filtro por disciplina */}
-        <div className="torneo-filter-field">
-          <label htmlFor="filtro-disciplina" className="torneo-filter-label">
-            Disciplina
-          </label>
+    <div className="torneo-figma-filters">
+      {/* Search Bar + Notification Bell (Figma Wireframe #37:2) */}
+      <div className="torneo-search-row">
+        <div className="torneo-search-input-wrap">
+          <span className="torneo-search-icon" aria-hidden="true">
+            🔍
+          </span>
           <input
             id="filtro-disciplina"
             type="text"
-            className="input"
-            placeholder="Buscar por disciplina (ej. Fútbol, Pádel, Ajedrez)..."
+            className="torneo-search-input"
+            placeholder="Buscar torneos, clubes o disciplinas..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
+          {searchTerm && (
+            <button
+              type="button"
+              className="torneo-search-clear"
+              onClick={() => {
+                setSearchTerm('');
+                onDisciplinaChange('');
+              }}
+              title="Borrar búsqueda"
+            >
+              ✕
+            </button>
+          )}
         </div>
 
-        {/* Filtro por estado (Selector sin borrador) */}
-        <div className="torneo-filter-field">
-          <label htmlFor="filtro-estado" className="torneo-filter-label">
-            Estado
-          </label>
+        <button
+          type="button"
+          className="torneo-notification-bell"
+          aria-label="Notificaciones"
+          title="Notificaciones de torneos"
+        >
+          🔔
+        </button>
+      </div>
+
+      {/* Category Pills (Figma Wireframe #37:2) & State Filter */}
+      <div className="torneo-chips-and-status-row">
+        <div className="torneo-category-chips">
+          {CATEGORIAS_FIGMA.map((cat) => {
+            const isSelected =
+              (cat === 'Todos' && !disciplina) ||
+              disciplina.toLowerCase() === cat.toLowerCase();
+            return (
+              <button
+                key={cat}
+                type="button"
+                className={`torneo-chip ${isSelected ? 'active' : ''}`}
+                onClick={() => handleChipClick(cat)}
+              >
+                {cat}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="torneo-status-dropdown-wrap">
           <select
             id="filtro-estado"
-            className="input select"
+            className="torneo-status-select"
             value={estado}
             onChange={(e) => onEstadoChange(e.target.value as EstadoTorneo | '')}
           >
@@ -80,24 +130,20 @@ export const TorneoFilters: React.FC<TorneoFiltersProps> = ({
               </option>
             ))}
           </select>
-        </div>
 
-        {/* Botón para limpiar filtros */}
-        {hayFiltros && (
-          <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+          {hayFiltros && (
             <button
               type="button"
-              className="btn btn-secondary"
+              className="btn btn-secondary torneo-reset-btn"
               onClick={() => {
                 setSearchTerm('');
                 onReset();
               }}
-              style={{ width: '100%', whiteSpace: 'nowrap' }}
             >
-              Limpiar filtros ✕
+              Limpiar ✕
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

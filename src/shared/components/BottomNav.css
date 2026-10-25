@@ -1,0 +1,60 @@
+.hydra-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background-color: var(--bg-surface);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  z-index: 999;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.hydra-bottom-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: var(--text-secondary);
+  gap: 3px;
+  flex: 1;
+  height: 100%;
+  transition: color var(--transition-fast);
+  user-select: none;
+}
+
+.hydra-bottom-icon {
+  width: 20px;
+  height: 20px;
+  stroke: var(--text-secondary);
+  transition: stroke var(--transition-fast);
+}
+
+.hydra-bottom-text {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.hydra-bottom-item.active {
+  color: var(--brand-black);
+}
+
+.hydra-bottom-item.active .hydra-bottom-icon {
+  stroke: var(--brand-black);
+}
+
+.hydra-bottom-item.active .hydra-bottom-text {
+  font-weight: 700;
+}
+
+/* Hide on desktop/tablet */
+@media (min-width: 768px) {
+  .hydra-bottom-nav {
+    display: none;
+  }
+}

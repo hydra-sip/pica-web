@@ -1,160 +1,244 @@
-.torneo-detalle-container {
-  max-width: 1050px;
-  margin: 0 auto;
-  width: 100%;
+.torneo-detalle-figma-container {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: 1.25rem;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
 }
 
-.torneo-breadcrumb {
+/* Header bar */
+.torneo-figma-header {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
-}
-
-.torneo-breadcrumb a {
-  color: var(--color-text-secondary);
-  text-decoration: none;
-  transition: color var(--transition-fast);
-}
-
-.torneo-breadcrumb a:hover {
-  color: var(--color-text);
-  text-decoration: underline;
-}
-
-/* Hero Section */
-.torneo-hero-card {
-  position: relative;
-  overflow: hidden;
-  border-radius: var(--radius-md);
-  padding: 2rem 1.75rem;
-  background-color: var(--color-card);
-  border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-sm);
-}
-
-.torneo-hero-top {
-  display: flex;
   justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  margin-bottom: var(--space-3);
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-color);
 }
 
-.torneo-hero-title {
-  font-size: clamp(1.75rem, 4vw, 2.25rem);
-  color: var(--color-text);
-  margin-bottom: var(--space-3);
-  line-height: 1.25;
-}
-
-.torneo-hero-desc {
-  font-size: var(--text-md);
-  color: var(--color-text-secondary);
-  line-height: 1.6;
-  margin-bottom: var(--space-4);
-  max-width: 800px;
-}
-
-.torneo-hero-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-4);
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--color-border);
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
-}
-
-.torneo-organizador-box {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.torneo-organizador-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background-color: var(--color-primary);
-  display: flex;
+.torneo-back-btn {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  color: var(--color-on-primary);
-  font-size: var(--text-sm);
-}
-
-/* Grid of blocks */
-.torneo-detalle-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: var(--space-4);
-}
-
-.torneo-block-card {
-  background-color: var(--color-card);
-  border: 1px solid var(--color-border);
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius-md);
-  padding: var(--space-4);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.torneo-block-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: var(--text-md);
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 1.2rem;
   font-weight: 700;
-  color: var(--color-text);
-  border-bottom: 1px solid var(--color-border);
-  padding-bottom: var(--space-2);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--transition-fast);
 }
 
-.torneo-info-row {
-  display: flex;
-  justify-content: space-between;
+.torneo-back-btn:hover {
+  background-color: var(--bg-subtle);
+  border-color: #d4d4d8;
+}
+
+.torneo-header-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+  text-align: center;
+}
+
+.torneo-options-btn {
+  display: inline-flex;
   align-items: center;
-  padding: 0.35rem 0;
-  font-size: var(--text-sm);
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  cursor: pointer;
 }
 
-.torneo-info-label {
-  color: var(--color-text-secondary);
-}
-
-.torneo-info-value {
-  font-weight: 600;
-  color: var(--color-text);
-  text-align: right;
-}
-
-/* Call to action bar */
-.torneo-cta-bar {
+/* Bolsa de Premios Card (Figma #33:634) */
+.bolsa-premios-card {
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.15rem 1.4rem;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  align-items: center;
-  text-align: center;
-  margin-bottom: var(--space-4);
+  gap: 0.5rem;
 }
 
-@media (min-width: 640px) {
-  .torneo-cta-bar {
-    flex-direction: row;
-    justify-content: space-between;
-    text-align: left;
-  }
+.bolsa-premios-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 0.25rem 0;
+}
+
+.bolsa-premios-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+}
+
+.bolsa-premios-label {
+  color: var(--text-secondary);
+}
+
+.bolsa-premios-val-bold {
+  font-weight: 800;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+/* Tabs */
+.torneo-tabs-bar {
+  display: flex;
+  background-color: var(--bg-subtle);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  gap: 4px;
+  overflow-x: auto;
+}
+
+.torneo-tab-btn {
+  flex: 1;
+  text-align: center;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+.torneo-tab-btn.active {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-xs);
+  font-weight: 700;
+}
+
+/* Tab Content Areas */
+.torneo-tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Bracket styling */
+.bracket-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.bracket-updating-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.bracket-pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--brand-black);
+}
+
+.bracket-tree-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.bracket-match-box {
+  background-color: var(--bg-surface);
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.65rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  transition: all var(--transition-fast);
+}
+
+.bracket-match-box.active {
+  border-color: var(--brand-black);
+}
+
+.bracket-team-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+}
+
+.bracket-team-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.bracket-team-name.winner {
+  font-weight: 800;
+}
+
+.bracket-team-name.muted {
+  color: var(--text-secondary);
+}
+
+.bracket-team-score {
+  font-weight: 700;
+}
+
+/* Captain banner (Figma #33:686) */
+.captain-match-banner {
+  background-color: var(--bg-subtle);
+  border: 1.5px solid var(--brand-black);
+  border-radius: var(--radius-md);
+  padding: 1.15rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.captain-banner-subtitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--brand-black);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.captain-banner-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.captain-banner-details {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.captain-report-btn {
+  margin-top: 0.5rem;
+  width: 100%;
 }

@@ -90,7 +90,7 @@ export const AdminDashboardPage: React.FC = () => {
     <div className="panel">
       <div>
         <h1 className="panel-titulo">Panel</h1>
-        <p className="panel-subtitulo">Resumen del backoffice de PICA.</p>
+        <p className="panel-subtitulo">Resumen del backoffice de Hydra.</p>
       </div>
 
       {error && (
