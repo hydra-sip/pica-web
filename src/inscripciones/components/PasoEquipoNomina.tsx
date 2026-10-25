@@ -34,6 +34,8 @@ const cantidad = (n: number) => `${n} ${n === 1 ? 'jugador' : 'jugadores'}`;
 export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, inscripcion }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  // El torneo individual se reduce al reglamento: no hay equipo ni nómina.
+  const individual = torneo.tipoParticipante === 'INDIVIDUAL';
   const minimo = torneo.tamanioEquipo ?? 1;
   const maximo = torneo.nominaMaxima;
 
@@ -41,7 +43,7 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
     equipos,
     error: errorEquipos,
     agregar,
-  } = useEquiposDelTorneo(torneo.id, inscripcion?.id, true);
+  } = useEquiposDelTorneo(torneo.id, inscripcion?.id, !individual);
   const [equipoElegido, setEquipoElegido] = useState(
     inscripcion?.equipo ? String(inscripcion.equipo.id) : ''
   );
@@ -61,8 +63,8 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
 
   const gratis = torneo.valorInscripcion === 0;
   const creaNuevo = equipos?.length === 0 || equipoElegido === EQUIPO_NUEVO;
-  const equipoListo = creaNuevo ? nombreNuevo.trim() !== '' : equipoElegido !== '';
-  const nominaValida = total >= minimo && (maximo === null || total <= maximo);
+  const equipoListo = individual || (creaNuevo ? nombreNuevo.trim() !== '' : equipoElegido !== '');
+  const nominaValida = individual || (total >= minimo && (maximo === null || total <= maximo));
   const puedeContinuar = reglamentoAceptado && equipoListo && nominaValida;
 
   // El borrador que ya existe en la API: el que se retoma o el que este paso guardó.
@@ -70,8 +72,14 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /** Crea el borrador o reemplaza el que ya hay con el equipo y la nómina de la pantalla. */
+  /** Crea el borrador o reemplaza el que ya hay con el equipo y la nómina de la pantalla (la individual, solo lo crea). */
   const guardar = async (): Promise<InscripcionDetalle> => {
+    // La individual no lleva cuerpo: si ya hay borrador no hay nada que guardar.
+    if (individual) {
+      const guardada = borrador ?? (await inscripcionApi.crear(torneo.id));
+      setBorrador(guardada);
+      return guardada;
+    }
     const payload: InscripcionEquipoPayload = {
       ...(creaNuevo
         ? { nombreEquipoNuevo: nombreNuevo.trim() }
@@ -124,76 +132,85 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
   return (
     <div className="inscripcion-page">
       <header className="inscripcion-encabezado">
-        <h1>Inscripción de Equipo</h1>
+        <h1>{individual ? 'Inscripción individual' : 'Inscripción de Equipo'}</h1>
         {!gratis && <span className="inscripcion-paso">Paso 1/2</span>}
       </header>
 
       <Card className="inscripcion-torneo">
         <strong>{torneo.nombre}</strong>
-        <span>
-          Nómina de {minimo} a {maximo} jugadores
-        </span>
+        {!individual && (
+          <span>
+            {maximo === null
+              ? `Nómina de al menos ${minimo} jugadores`
+              : `Nómina de ${minimo} a ${maximo} jugadores`}
+          </span>
+        )}
       </Card>
 
-      {errorEquipos && (
-        <div className="alerta alerta-peligro" role="alert">
-          {errorEquipos}
-        </div>
+      {!individual && (
+        <>
+          {errorEquipos && (
+            <div className="alerta alerta-peligro" role="alert">
+              {errorEquipos}
+            </div>
+          )}
+
+          <SelectorEquipo
+            equipos={equipos}
+            valor={equipoElegido}
+            onValor={setEquipoElegido}
+            nombreNuevo={nombreNuevo}
+            onNombreNuevo={setNombreNuevo}
+          />
+
+          <section aria-labelledby="nomina-titulo" className="inscripcion-bloque">
+            <h2 id="nomina-titulo" className="inscripcion-etiqueta">
+              Armado de Nómina (Buscar por @usuario o nombre)
+            </h2>
+            <BuscadorJugadores
+              enNomina={new Set([capitanId, ...jugadores.map((j) => j.id)])}
+              lleno={lleno}
+              onSumar={sumar}
+            />
+            <ul className="nomina-lista" aria-label="Nómina">
+              <li className="nomina-fila">
+                <span className="nomina-avatar nomina-avatar-capitan" aria-hidden="true">
+                  C
+                </span>
+                <span className="nomina-datos">
+                  <strong>{user?.name || user?.username} (Capitán)</strong>
+                  <small>@{user?.username}</small>
+                </span>
+              </li>
+              {jugadores.map((j, i) => (
+                <li key={j.id} className="nomina-fila">
+                  <span className="nomina-avatar" aria-hidden="true">
+                    {i + 2}
+                  </span>
+                  <span className="nomina-datos">
+                    <strong>
+                      {j.nombres} {j.apellidos}
+                    </strong>
+                    <small>@{j.username}</small>
+                  </span>
+                  <button
+                    type="button"
+                    className="nomina-sacar"
+                    onClick={() => sacar(j.id)}
+                    aria-label={`Sacar a ${j.nombres} ${j.apellidos}`}
+                  >
+                    ✕
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <p className="inscripcion-contador">
+              {cantidad(total)} (mínimo {minimo}
+              {maximo !== null && `, máximo ${maximo}`})
+            </p>
+          </section>
+        </>
       )}
-
-      <SelectorEquipo
-        equipos={equipos}
-        valor={equipoElegido}
-        onValor={setEquipoElegido}
-        nombreNuevo={nombreNuevo}
-        onNombreNuevo={setNombreNuevo}
-      />
-
-      <section aria-labelledby="nomina-titulo" className="inscripcion-bloque">
-        <h2 id="nomina-titulo" className="inscripcion-etiqueta">
-          Armado de Nómina (Buscar por @usuario o nombre)
-        </h2>
-        <BuscadorJugadores
-          enNomina={new Set([capitanId, ...jugadores.map((j) => j.id)])}
-          lleno={lleno}
-          onSumar={sumar}
-        />
-        <ul className="nomina-lista" aria-label="Nómina">
-          <li className="nomina-fila">
-            <span className="nomina-avatar nomina-avatar-capitan" aria-hidden="true">
-              C
-            </span>
-            <span className="nomina-datos">
-              <strong>{user?.name || user?.username} (Capitán)</strong>
-              <small>@{user?.username}</small>
-            </span>
-          </li>
-          {jugadores.map((j, i) => (
-            <li key={j.id} className="nomina-fila">
-              <span className="nomina-avatar" aria-hidden="true">
-                {i + 2}
-              </span>
-              <span className="nomina-datos">
-                <strong>
-                  {j.nombres} {j.apellidos}
-                </strong>
-                <small>@{j.username}</small>
-              </span>
-              <button
-                type="button"
-                className="nomina-sacar"
-                onClick={() => sacar(j.id)}
-                aria-label={`Sacar a ${j.nombres} ${j.apellidos}`}
-              >
-                ✕
-              </button>
-            </li>
-          ))}
-        </ul>
-        <p className="inscripcion-contador">
-          {cantidad(total)} (mínimo {minimo}, máximo {maximo})
-        </p>
-      </section>
 
       <Card className="reglamento">
         <label className="reglamento-casilla">
