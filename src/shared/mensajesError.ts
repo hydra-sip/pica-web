@@ -34,8 +34,7 @@ const POR_CODIGO: Record<string, string> = {
   PERSONA_CON_USUARIO: 'La persona ya tiene un usuario.',
   DOCUMENTO_NO_EDITABLE: 'El documento no se puede cambiar una vez cargado.',
   ROL_INACTIVO: 'El rol está inactivo.',
-  USUARIO_NO_ACTIVO:
-    'El usuario no está activo (cuenta bloqueada o sin verificar), así que no se puede continuar.',
+  USUARIO_NO_ACTIVO: 'Solo se le pueden cambiar los roles a un usuario activo.',
   USUARIO_YA_BLOQUEADO: 'El usuario ya está bloqueado. Para cambiar el motivo o la duración, levantá el bloqueo y volvé a bloquearlo.',
   USUARIO_PROTEGIDO: 'El usuario Admin del sistema no se puede modificar.',
   ROL_PROTEGIDO: 'Ese cambio no está permitido en este rol del sistema.',

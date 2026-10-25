@@ -3,7 +3,7 @@ import { Link, Navigate, useParams } from 'react-router-dom';
 import { InscripcionResumen, inscripcionApi } from '../../api/inscripcionApi';
 import { Torneo, torneoApi } from '../../api/torneoApi';
 import { mensajeDeError } from '../../shared/mensajesError';
-import { MENSAJES_PASO_1 } from '../mensajesPaso1';
+import { MENSAJES_PASO_1 } from '../mensajesInscripcion';
 import { PasoEquipoNomina } from '../components/PasoEquipoNomina';
 import '../inscripciones.css';
 

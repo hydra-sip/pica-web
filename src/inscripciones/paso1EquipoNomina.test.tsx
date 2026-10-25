@@ -261,7 +261,10 @@ describe('paso 1: equipo y nómina (alta)', () => {
       'zoe',
       'Tu cuenta, o la de un jugador de la nómina, tiene un bloqueo vigente. Si creés que es un error, escribile a un administrador.',
     ],
-    ['tardio', 'El usuario no está activo'],
+    [
+      'tardio',
+      'El usuario no está activo (cuenta bloqueada o sin verificar), así que no se puede continuar.',
+    ],
   ])(
     'si al guardar el back rechaza a un jugador (%s), lo avisa en la página y no navega',
     async (texto, mensaje) => {

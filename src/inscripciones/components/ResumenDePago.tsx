@@ -4,6 +4,7 @@ import { InscripcionDetalle, inscripcionApi, ResumenPago } from '../../api/inscr
 import { fecha, pesos } from '../../shared/formato';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { Button, Card, Modal } from '../../shared/ui';
+import { MENSAJES_INSCRIPCION } from '../mensajesInscripcion';
 
 interface ResumenDePagoProps {
   resumen: ResumenPago;
@@ -32,7 +33,7 @@ export const ResumenDePago: React.FC<ResumenDePagoProps> = ({ resumen, onPagada 
     try {
       onPagada(await inscripcionApi.pagar(resumen.inscripcionId));
     } catch (err) {
-      setAviso(mensajeDeError(err, 'No se pudo confirmar el pago.'));
+      setAviso(mensajeDeError(err, 'No se pudo confirmar el pago.', MENSAJES_INSCRIPCION));
       cobroEnCurso.current = false;
       setPagando(false);
     }

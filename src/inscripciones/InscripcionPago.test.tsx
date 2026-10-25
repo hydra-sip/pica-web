@@ -147,6 +147,26 @@ describe('paso 2: confirmar y pagar', () => {
     expect((await inscripcionApi.obtener(ID)).estado).toBe('PENDIENTE_PAGO');
   });
 
+  it('si la cuenta no está activa lo explica con el texto de la inscripción y sigue pendiente de pago', async () => {
+    const { user } = await renderRuta(RUTA_PAGO, {
+      prepara: pendienteDePago('torneo-apertura-f5'),
+    });
+    await screen.findByText('Cuota de inscripción');
+    server.use(
+      http.post('*/inscripciones/:id/pago', () =>
+        problema(409, 'USUARIO_NO_ACTIVO', 'El usuario no está activo')
+      )
+    );
+
+    await user.click(botonPagar('20.000'));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'El usuario no está activo (cuenta bloqueada o sin verificar), así que no se puede continuar.'
+    );
+    expect(botonPagar('20.000')).toBeEnabled();
+    expect((await inscripcionApi.obtener(ID)).estado).toBe('PENDIENTE_PAGO');
+  });
+
   it('al tocar dos veces el botón de pagar manda un solo cobro y muestra que está en curso', async () => {
     const { user } = await renderRuta(RUTA_PAGO, {
       prepara: pendienteDePago('torneo-apertura-f5'),

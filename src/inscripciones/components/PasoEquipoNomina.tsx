@@ -10,7 +10,7 @@ import { Torneo } from '../../api/torneoApi';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { pesos } from '../../shared/formato';
 import { mensajeDeError } from '../../shared/mensajesError';
-import { MENSAJES_PASO_1 } from '../mensajesPaso1';
+import { MENSAJES_PASO_1 } from '../mensajesInscripcion';
 import { Button, Card } from '../../shared/ui';
 import { useEquiposDelTorneo } from '../hooks/useEquiposDelTorneo';
 import { BuscadorJugadores } from './BuscadorJugadores';
