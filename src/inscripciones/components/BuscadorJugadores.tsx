@@ -15,7 +15,6 @@ interface BuscadorJugadoresProps {
   /** La nómina ya tiene el máximo de jugadores. */
   lleno: boolean;
   onSumar: (jugador: UsuarioPublico) => void;
-  disabled?: boolean;
 }
 
 /** La consulta como la entiende el back: sin espacios de los costados ni la @ del usuario. */
@@ -26,7 +25,6 @@ export const BuscadorJugadores: React.FC<BuscadorJugadoresProps> = ({
   enNomina,
   lleno,
   onSumar,
-  disabled,
 }) => {
   const [texto, setTexto] = useState('');
   const [encontrados, setEncontrados] = useState<UsuarioPublico[] | null>(null);
@@ -71,12 +69,13 @@ export const BuscadorJugadores: React.FC<BuscadorJugadoresProps> = ({
           placeholder="Buscar jugador registrado..."
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
-          disabled={disabled}
           autoComplete="off"
         />
       </div>
 
-      {corto && <p className="inscripcion-ayuda">Escribí al menos 3 letras para buscar.</p>}
+      {corto && (
+        <p className="inscripcion-ayuda">Escribí al menos {MINIMO_LETRAS} letras para buscar.</p>
+      )}
       {buscando && (
         <p className="inscripcion-ayuda" role="status">
           Buscando...
@@ -106,7 +105,7 @@ export const BuscadorJugadores: React.FC<BuscadorJugadoresProps> = ({
                   size="sm"
                   variant="secondary"
                   onClick={() => onSumar(j)}
-                  disabled={disabled || yaEsta || lleno}
+                  disabled={yaEsta || lleno}
                   aria-label={`Sumar a ${nombre}`}
                 >
                   {yaEsta ? 'En la nómina' : 'Sumar'}

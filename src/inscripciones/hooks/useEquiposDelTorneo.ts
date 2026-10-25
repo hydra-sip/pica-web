@@ -3,7 +3,8 @@ import { equipoApi, EquipoResumen } from '../../api/equipoApi';
 import { inscripcionApi } from '../../api/inscripcionApi';
 import { mensajeDeError } from '../../shared/mensajesError';
 
-const TAMANIO = 100;
+/** Tamaño de página para traer todos los equipos y todas las inscripciones propias de una vez. */
+export const TAMANIO = 100;
 
 export interface EquipoElegible extends EquipoResumen {
   /** Ya tiene una inscripción (en cualquier estado) en este torneo distinta del borrador que se retoma. */

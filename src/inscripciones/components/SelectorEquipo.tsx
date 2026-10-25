@@ -13,7 +13,6 @@ interface SelectorEquipoProps {
   onValor: (valor: string) => void;
   nombreNuevo: string;
   onNombreNuevo: (nombre: string) => void;
-  disabled?: boolean;
 }
 
 /** Equipo propio o nombre nuevo: exactamente uno de los dos (como pide el back). */
@@ -23,7 +22,6 @@ export const SelectorEquipo: React.FC<SelectorEquipoProps> = ({
   onValor,
   nombreNuevo,
   onNombreNuevo,
-  disabled,
 }) => {
   if (!equipos)
     return (
@@ -46,7 +44,7 @@ export const SelectorEquipo: React.FC<SelectorEquipoProps> = ({
           label="Equipo"
           hint="Si un equipo ya está inscripto en este torneo no se puede elegir."
         >
-          <Select value={valor} onChange={(e) => onValor(e.target.value)} disabled={disabled}>
+          <Select value={valor} onChange={(e) => onValor(e.target.value)}>
             <option value="" disabled>
               Elegí uno de tus equipos
             </option>
@@ -65,7 +63,6 @@ export const SelectorEquipo: React.FC<SelectorEquipoProps> = ({
             value={nombreNuevo}
             onChange={(e) => onNombreNuevo(e.target.value)}
             maxLength={100}
-            disabled={disabled}
             autoComplete="off"
           />
         </Field>

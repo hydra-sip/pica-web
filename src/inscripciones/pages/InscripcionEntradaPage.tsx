@@ -4,6 +4,7 @@ import { InscripcionResumen, inscripcionApi } from '../../api/inscripcionApi';
 import { Torneo, torneoApi } from '../../api/torneoApi';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { MENSAJES_PASO_1 } from '../mensajesInscripcion';
+import { TAMANIO } from '../hooks/useEquiposDelTorneo';
 import { PasoEquipoNomina } from '../components/PasoEquipoNomina';
 import '../inscripciones.css';
 
@@ -41,7 +42,7 @@ export const InscripcionEntradaPage: React.FC = () => {
     (async () => {
       try {
         const torneo = await torneoApi.obtenerPorSlug(slug ?? '');
-        const propias = await inscripcionApi.listarMias({ torneoId: torneo.id, size: 100 });
+        const propias = await inscripcionApi.listarMias({ torneoId: torneo.id, size: TAMANIO });
         if (vigente) setDatos({ torneo, propias: propias.content });
       } catch (err) {
         if (vigente) setError(mensajeDeError(err, 'No se pudo cargar el torneo.', MENSAJES_PASO_1));
