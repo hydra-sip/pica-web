@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { http, HttpResponse } from 'msw';
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
 import { equipoApi } from '../api/equipoApi';
+import { inscripcionApi } from '../api/inscripcionApi';
 import { server } from '../mocks/server';
 import { renderRuta } from '../test/renderRuta';
 
@@ -13,6 +14,8 @@ const idDeEquipo = async (nombre: string) =>
   (await equipoApi.listarMios()).content.find((e) => e.nombre === nombre)!.id;
 
 const ALTA_F5 = '/torneos/torneo-apertura-f5/inscripcion';
+
+const idDeLaUbicacion = (ruta: string) => Number(/\/inscripciones\/(\d+)\//.exec(ruta)![1]);
 
 // Busca por `texto` y suma al primer resultado.
 const sumarJugador = async (user: UserEvent, texto: string) => {
@@ -161,7 +164,7 @@ describe('paso 1: equipo y nómina (alta)', () => {
     await user.click(screen.getByLabelText('Acepto el Reglamento y Código de Conducta'));
     expect(continuar).toBeDisabled(); // con un solo jugador no llega al mínimo
 
-    for (const texto of ['lucas', 'mrossi', 'joaco', 'ana_r']) await sumarJugador(user, texto);
+    for (const texto of ['lucas', 'mrossi', 'joaco', 'salva']) await sumarJugador(user, texto);
     expect(continuar).toBeEnabled(); // 5 jugadores
 
     await user.click(screen.getByLabelText('Acepto el Reglamento y Código de Conducta'));
@@ -180,5 +183,27 @@ describe('paso 1: equipo y nómina (alta)', () => {
     expect(confirmar).toBeDisabled();
     await user.type(screen.getByLabelText('Nombre del equipo nuevo'), 'Los Nuevos');
     expect(confirmar).toBeEnabled();
+  });
+
+  it('"Continuar al pago" guarda el borrador, confirma con el reglamento y lleva al paso 2', async () => {
+    const { user, ubicacion } = await renderRuta(ALTA_F5);
+    await user.selectOptions(await screen.findByLabelText('Equipo'), 'Los Galácticos');
+    for (const texto of ['lucas', 'mrossi', 'joaco', 'salva']) await sumarJugador(user, texto);
+    await user.click(screen.getByLabelText('Acepto el Reglamento y Código de Conducta'));
+
+    await user.click(screen.getByRole('button', { name: /^Continuar al pago/ }));
+
+    await waitFor(() => expect(ubicacion()).toMatch(/^\/inscripciones\/\d+\/pago$/));
+    const inscripcion = await inscripcionApi.obtener(idDeLaUbicacion(ubicacion()));
+    expect(inscripcion.estado).toBe('PENDIENTE_PAGO');
+    expect(inscripcion.equipo?.nombre).toBe('Los Galácticos');
+    expect(inscripcion.nomina?.map((j) => j.username)).toEqual([
+      'usuario',
+      'lucas_f99',
+      'mrossi',
+      'joaco_g',
+      'salva_b',
+    ]);
+    expect(inscripcion.reglamentoAceptadoEn).toBeTruthy();
   });
 });

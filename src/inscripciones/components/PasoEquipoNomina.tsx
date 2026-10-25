@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
-import { InscripcionDetalle } from '../../api/inscripcionApi';
+import {
+  InscripcionDetalle,
+  InscripcionEquipoPayload,
+  inscripcionApi,
+} from '../../api/inscripcionApi';
+import { useNavigate } from 'react-router-dom';
 import { UsuarioPublico } from '../../api/jugadorApi';
 import { Torneo } from '../../api/torneoApi';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { pesos } from '../../shared/formato';
+import { mensajeDeError } from '../../shared/mensajesError';
 import { Button, Card } from '../../shared/ui';
 import { useEquiposDelTorneo } from '../hooks/useEquiposDelTorneo';
 import { BuscadorJugadores } from './BuscadorJugadores';
@@ -27,10 +33,15 @@ const cantidad = (n: number) => `${n} ${n === 1 ? 'jugador' : 'jugadores'}`;
  */
 export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, inscripcion }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const minimo = torneo.tamanioEquipo ?? 1;
   const maximo = torneo.nominaMaxima;
 
-  const { equipos, error: errorEquipos } = useEquiposDelTorneo(torneo.id, inscripcion?.id, true);
+  const {
+    equipos,
+    error: errorEquipos,
+    agregar,
+  } = useEquiposDelTorneo(torneo.id, inscripcion?.id, true);
   const [equipoElegido, setEquipoElegido] = useState(
     inscripcion?.equipo ? String(inscripcion.equipo.id) : ''
   );
@@ -53,6 +64,48 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
   const equipoListo = creaNuevo ? nombreNuevo.trim() !== '' : equipoElegido !== '';
   const nominaValida = total >= minimo && (maximo === null || total <= maximo);
   const puedeContinuar = reglamentoAceptado && equipoListo && nominaValida;
+
+  // El borrador que ya existe en la API: el que se retoma o el que este paso guardó.
+  const [borrador, setBorrador] = useState<InscripcionDetalle | null>(inscripcion ?? null);
+  const [ocupado, setOcupado] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  /** Crea el borrador o reemplaza el que ya hay con el equipo y la nómina de la pantalla. */
+  const guardar = async (): Promise<InscripcionDetalle> => {
+    const payload: InscripcionEquipoPayload = {
+      ...(creaNuevo
+        ? { nombreEquipoNuevo: nombreNuevo.trim() }
+        : { equipoId: Number(equipoElegido) }),
+      nomina: jugadores.map((j) => j.id),
+    };
+    const guardada = borrador
+      ? await inscripcionApi.reemplazar(borrador.id, payload)
+      : await inscripcionApi.crear(torneo.id, payload);
+    setBorrador(guardada);
+    // Si se creó un equipo por nombre, desde acá se lo elige como a cualquier otro: reintentar no crea otro.
+    if (creaNuevo && guardada.equipo) {
+      agregar(guardada.equipo);
+      setEquipoElegido(String(guardada.equipo.id));
+      setNombreNuevo('');
+    }
+    return guardada;
+  };
+
+  const continuar = async () => {
+    setOcupado(true);
+    setError(null);
+    let guardada: InscripcionDetalle | null = null;
+    try {
+      guardada = await guardar();
+      await inscripcionApi.confirmar(guardada.id, true);
+      navigate(`/inscripciones/${guardada.id}/pago`);
+    } catch (err) {
+      const mensaje = mensajeDeError(err, 'No se pudo guardar la inscripción.');
+      setError(guardada ? `${mensaje} Tu borrador quedó guardado.` : mensaje);
+    } finally {
+      setOcupado(false);
+    }
+  };
 
   return (
     <div className="inscripcion-page">
@@ -148,13 +201,19 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
         )}
       </Card>
 
+      {error && (
+        <div className="alerta alerta-peligro" role="alert">
+          {error}
+        </div>
+      )}
+
       <div className="inscripcion-acciones">
-        <Button block disabled={!puedeContinuar}>
+        <Button block disabled={!puedeContinuar} loading={ocupado} onClick={continuar}>
           {gratis
             ? 'Confirmar inscripción'
             : `Continuar al pago (${pesos(torneo.valorInscripcion)})`}
         </Button>
-        <Button block variant="secondary" disabled={!equipoListo}>
+        <Button block variant="secondary" disabled={!equipoListo || ocupado}>
           Guardar como borrador y salir
         </Button>
       </div>
