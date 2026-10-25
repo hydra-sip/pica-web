@@ -60,7 +60,9 @@ export const InscripcionNominaPage: React.FC = () => {
   if (!datos) {
     return (
       <div className="inscripcion-page">
-        <p className="inscripcion-cargando">Cargando inscripción...</p>
+        <p className="inscripcion-cargando" role="status">
+          Cargando inscripción...
+        </p>
       </div>
     );
   }
@@ -72,7 +74,7 @@ export const InscripcionNominaPage: React.FC = () => {
   if (inscripcion.estado !== 'BORRADOR') {
     return (
       <div className="inscripcion-page">
-        <div className="alerta alerta-aviso" role="alert">
+        <div className="alerta alerta-aviso" role="status">
           Esta inscripción está cancelada y ya no se puede modificar.
         </div>
         <Link to="/">Volver al inicio</Link>

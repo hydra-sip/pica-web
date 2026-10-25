@@ -3,7 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import { equipoApi } from '../api/equipoApi';
 import { inscripcionApi } from '../api/inscripcionApi';
 import { torneoApi } from '../api/torneoApi';
-import { http } from 'msw';
+import { delay, http } from 'msw';
 import { problema } from '../mocks/adminHandlers';
 import { server } from '../mocks/server';
 import { renderRuta } from '../test/renderRuta';
@@ -300,11 +300,19 @@ describe('pantalla final y otros estados de la inscripción', () => {
     await waitFor(() => expect(ubicacion()).toBe(`/inscripciones/${ID}/nomina`));
   });
 
+  it('mientras carga la inscripción avisa que está cargando', async () => {
+    server.use(http.get('*/inscripciones/:id', () => delay('infinite')));
+    await renderRuta(RUTA_PAGO);
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Cargando inscripción');
+  });
+
   it('una inscripción cancelada se avisa con claridad', async () => {
     // 901 es la inscripción cancelada de Los Halcones en torneo-apertura-f5 (datos de los mocks).
     await renderRuta('/inscripciones/901/pago');
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Esta inscripción fue cancelada');
+    await screen.findByText(/Esta inscripción fue cancelada/);
+    expect(screen.getByRole('status')).toHaveTextContent('Esta inscripción fue cancelada');
     expect(screen.queryByRole('button', { name: /Confirmar pago/ })).not.toBeInTheDocument();
   });
 

@@ -25,7 +25,12 @@ export const SelectorEquipo: React.FC<SelectorEquipoProps> = ({
   onNombreNuevo,
   disabled,
 }) => {
-  if (!equipos) return <p className="inscripcion-cargando">Cargando tus equipos...</p>;
+  if (!equipos)
+    return (
+      <p className="inscripcion-cargando" role="status">
+        Cargando tus equipos...
+      </p>
+    );
 
   const sinEquipos = equipos.length === 0;
   const creaNuevo = sinEquipos || valor === EQUIPO_NUEVO;

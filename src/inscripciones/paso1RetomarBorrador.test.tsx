@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { http } from 'msw';
+import { delay, http } from 'msw';
 import { screen, waitFor, within } from '@testing-library/react';
 import { authApi } from '../api/authApi';
 import { equipoApi } from '../api/equipoApi';
@@ -100,6 +100,24 @@ describe('paso 1: retomar un borrador', () => {
     const { ubicacion } = await renderRuta(`/inscripciones/${id}/nomina`);
 
     await waitFor(() => expect(ubicacion()).toBe(`/inscripciones/${id}/pago`));
+  });
+
+  it('mientras carga el borrador avisa que está cargando', async () => {
+    server.use(http.get('*/inscripciones/:id', () => delay('infinite')));
+    await renderRuta('/inscripciones/1000/nomina');
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Cargando inscripción');
+  });
+
+  it('una inscripción cancelada se avisa y no se edita', async () => {
+    // 901 es la inscripción cancelada de Los Halcones en torneo-apertura-f5 (datos de los mocks).
+    await renderRuta('/inscripciones/901/nomina');
+
+    await screen.findByText(/Esta inscripción está cancelada/);
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Esta inscripción está cancelada y ya no se puede modificar'
+    );
+    expect(screen.queryByLabelText('Equipo')).not.toBeInTheDocument();
   });
 
   it('avisa si la inscripción no existe', async () => {

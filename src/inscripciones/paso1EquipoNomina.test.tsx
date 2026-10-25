@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { http, HttpResponse } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import { screen, waitFor, within } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
 import { equipoApi } from '../api/equipoApi';
@@ -106,6 +106,23 @@ describe('paso 1: equipo y nómina (alta)', () => {
     const resultado = await screen.findByRole('listitem', { name: /Lucas Fernández/ });
     expect(within(resultado).getByText('@lucas_f99')).toBeInTheDocument();
     expect(screen.queryByText('Escribí al menos 3 letras para buscar.')).not.toBeInTheDocument();
+  });
+
+  it('mientras busca jugadores avisa que está buscando', async () => {
+    server.use(http.get(`${API_URL}/usuarios`, () => delay('infinite')));
+    const { user } = await renderRuta(ALTA_F5);
+
+    await user.type(await screen.findByRole('searchbox', { name: /buscar jugador/i }), 'lucas');
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Buscando');
+  });
+
+  it('mientras cargan los equipos avisa que está cargando', async () => {
+    server.use(http.get(`${API_URL}/equipos/mios`, () => delay('infinite')));
+    await renderRuta(ALTA_F5);
+
+    await screen.findByText('Cargando tus equipos...');
+    expect(screen.getByRole('status')).toHaveTextContent('Cargando tus equipos');
   });
 
   it('avisa si la búsqueda no encuentra a nadie', async () => {

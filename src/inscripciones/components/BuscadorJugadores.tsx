@@ -77,7 +77,11 @@ export const BuscadorJugadores: React.FC<BuscadorJugadoresProps> = ({
       </div>
 
       {corto && <p className="inscripcion-ayuda">Escribí al menos 3 letras para buscar.</p>}
-      {buscando && <p className="inscripcion-ayuda">Buscando...</p>}
+      {buscando && (
+        <p className="inscripcion-ayuda" role="status">
+          Buscando...
+        </p>
+      )}
       {error && (
         <div className="alerta alerta-peligro" role="alert">
           {error}

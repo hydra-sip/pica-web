@@ -43,7 +43,9 @@ export const InscripcionPagoPage: React.FC = () => {
 
   const cargando = (
     <div className="inscripcion-page">
-      <p className="inscripcion-cargando">Cargando inscripción...</p>
+      <p className="inscripcion-cargando" role="status">
+        Cargando inscripción...
+      </p>
     </div>
   );
 
@@ -76,7 +78,7 @@ export const InscripcionPagoPage: React.FC = () => {
     default:
       return (
         <div className="inscripcion-page">
-          <div className="alerta alerta-aviso" role="alert">
+          <div className="alerta alerta-aviso" role="status">
             {inscripcion.estado === 'CANCELADA'
               ? 'Esta inscripción fue cancelada, así que ya no se puede pagar.'
               : 'A esta inscripción ya se le reintegró el pago.'}

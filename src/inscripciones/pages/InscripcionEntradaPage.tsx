@@ -64,7 +64,9 @@ export const InscripcionEntradaPage: React.FC = () => {
   if (!datos) {
     return (
       <div className="inscripcion-page">
-        <p className="inscripcion-cargando">Cargando torneo...</p>
+        <p className="inscripcion-cargando" role="status">
+          Cargando torneo...
+        </p>
       </div>
     );
   }
@@ -73,7 +75,7 @@ export const InscripcionEntradaPage: React.FC = () => {
   if (confirmada) {
     return (
       <div className="inscripcion-page">
-        <div className="alerta alerta-aviso" role="alert">
+        <div className="alerta alerta-aviso" role="status">
           Ya estás inscripto en este torneo.
         </div>
         <div className="inscripcion-acciones">
@@ -90,7 +92,7 @@ export const InscripcionEntradaPage: React.FC = () => {
   if (!inscripcionAbierta(datos.torneo)) {
     return (
       <div className="inscripcion-page">
-        <div className="alerta alerta-aviso" role="alert">
+        <div className="alerta alerta-aviso" role="status">
           La inscripción a {datos.torneo.nombre} no está abierta o ya cerró.
         </div>
         <div className="inscripcion-acciones">

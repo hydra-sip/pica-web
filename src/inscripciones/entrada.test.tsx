@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { http } from 'msw';
+import { delay, http } from 'msw';
 import { screen, waitFor } from '@testing-library/react';
 import { equipoApi } from '../api/equipoApi';
 import { inscripcionApi } from '../api/inscripcionApi';
@@ -34,6 +34,13 @@ describe('entrada a la inscripción', () => {
     vi.useRealTimers();
   });
 
+  it('mientras carga el torneo avisa que está cargando', async () => {
+    server.use(http.get('*/torneos/slug/:slug', () => delay('infinite')));
+    await renderRuta(ENTRADA_F5);
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Cargando torneo');
+  });
+
   it('con una inscripción pendiente de pago, lleva al paso 2', async () => {
     const { ubicacion } = await renderRuta(ENTRADA_F5, {
       prepara: inscripcionDeLosGalacticos('torneo-apertura-f5', true),
@@ -56,7 +63,8 @@ describe('entrada a la inscripción', () => {
       prepara: inscripcionDeLosGalacticos('torneo-gratis', true), // gratis: confirmar la deja CONFIRMADA
     });
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Ya estás inscripto en este torneo');
+    await screen.findByText('Ya estás inscripto en este torneo.');
+    expect(screen.getByRole('status')).toHaveTextContent('Ya estás inscripto en este torneo');
     expect(screen.getByRole('link', { name: 'Volver al inicio' })).toHaveAttribute('href', '/');
     expect(screen.getByRole('link', { name: 'Ver mi inscripción' })).toHaveAttribute(
       'href',
@@ -88,7 +96,8 @@ describe('entrada a la inscripción', () => {
   it('con la inscripción cerrada avisa en la página y no muestra el formulario', async () => {
     await renderRuta('/torneos/torneo-cerrado/inscripcion');
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(
+    await screen.findByText(/La inscripción a Torneo Clausura 2025/);
+    expect(screen.getByRole('status')).toHaveTextContent(
       'La inscripción a Torneo Clausura 2025 no está abierta o ya cerró'
     );
     expect(screen.queryByLabelText('Equipo')).not.toBeInTheDocument();
@@ -104,7 +113,8 @@ describe('entrada a la inscripción', () => {
       },
     });
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('no está abierta o ya cerró');
+    await screen.findByText(/no está abierta o ya cerró/);
+    expect(screen.getByRole('status')).toHaveTextContent('no está abierta o ya cerró');
     expect(ubicacion()).toBe(ENTRADA_F5);
   });
 
