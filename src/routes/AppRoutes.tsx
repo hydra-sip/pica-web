@@ -25,11 +25,9 @@ import { TorneoDetallePage } from '../torneos/pages/TorneoDetallePage';
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
-      {/* Layout Público con Hydra Navbar, BottomNav (móvil) y Footer */}
+      {/* Layout Principal de la Plataforma */}
       <Route path="/" element={<PublicLayout />}>
-        <Route index element={<HomePage />} />
-        <Route path="torneos" element={<TorneosCatalogoPage />} />
-        <Route path="torneos/:slug" element={<TorneoDetallePage />} />
+        {/* Rutas de autenticación y verificación (libres para ingresar o registrarse) */}
         <Route path="auth/login" element={<LoginPage />} />
         <Route path="auth/register" element={<RegisterPage />} />
         <Route path="auth/check-email" element={<CheckEmailPage />} />
@@ -37,8 +35,11 @@ export const AppRoutes: React.FC = () => {
         <Route path="oauth/callback" element={<OAuthCallbackPage />} />
         <Route path="unauthorized" element={<UnauthorizedPage />} />
 
-        {/* Rutas Autenticadas Públicas / Perfil */}
+        {/* Acceso protegido: No se puede acceder sin loguearse primero */}
         <Route element={<RequireAuth />}>
+          <Route index element={<HomePage />} />
+          <Route path="torneos" element={<TorneosCatalogoPage />} />
+          <Route path="torneos/:slug" element={<TorneoDetallePage />} />
           <Route path="mi-perfil" element={<ProfilePage />} />
 
           {/* Rifas del organizador (PICA-227 / Hydra): RIFA_GESTIONAR */}

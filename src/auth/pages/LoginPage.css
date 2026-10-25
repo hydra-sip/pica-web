@@ -1,0 +1,279 @@
+/* Hydra Dual-Mode Login (Figma Wireframes #35:2 & #134:2) */
+
+.login-page-wrapper {
+  width: 100%;
+  min-height: calc(100vh - 180px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+}
+
+/* Selector superior de Modo de Ingreso */
+.login-mode-bar {
+  display: inline-flex;
+  background-color: var(--bg-subtle, #f4f4f5);
+  border: 1px solid var(--border-color, #e4e4e7);
+  border-radius: var(--radius-full, 9999px);
+  padding: 4px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  max-width: 100%;
+}
+
+.login-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 1.1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: var(--radius-full, 9999px);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #71717a);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.login-mode-btn:hover {
+  color: var(--text-primary, #18181b);
+}
+
+.login-mode-btn.active {
+  background-color: var(--brand-black, #18181b);
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+}
+
+/* Modo Cliente (Figma Wireframe #35:2 - Inicio de Sesión) */
+.login-client-container {
+  width: 100%;
+  max-width: 440px;
+}
+
+.login-client-card {
+  background-color: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e4e4e7);
+  border-radius: var(--radius-lg, 16px);
+  padding: 2.25rem 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* Modo Backoffice (Figma Wireframe #134:2 - Ingreso Administrador) */
+.login-backoffice-container {
+  width: 100%;
+  max-width: 1020px;
+  background-color: var(--bg-surface, #ffffff);
+  border: 1px solid var(--border-color, #e4e4e7);
+  border-radius: var(--radius-lg, 16px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.login-backoffice-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 560px;
+}
+
+.login-backoffice-hero {
+  background: linear-gradient(145deg, #18181b 0%, #27272a 100%);
+  color: #ffffff;
+  padding: 3rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.login-backoffice-hero-title {
+  font-size: 1.85rem;
+  font-weight: 800;
+  line-height: 1.25;
+  margin: 1.5rem 0 1rem;
+  letter-spacing: -0.02em;
+}
+
+.login-backoffice-hero-subtitle {
+  color: #a1a1aa;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  margin-bottom: 2rem;
+}
+
+.login-backoffice-features {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+.login-backoffice-feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.login-backoffice-feature-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.login-backoffice-feature-title {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #ffffff;
+}
+
+.login-backoffice-feature-desc {
+  font-size: 0.8rem;
+  color: #a1a1aa;
+  margin-top: 0.15rem;
+  line-height: 1.4;
+}
+
+.login-backoffice-form-col {
+  padding: 3rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.login-backoffice-title {
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: var(--text-primary, #18181b);
+  margin: 0 0 0.4rem;
+}
+
+.login-backoffice-subtitle {
+  color: var(--text-secondary, #71717a);
+  font-size: 0.88rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Selector de rol: Organizador | Administrador */
+.login-role-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background-color: var(--bg-subtle, #f4f4f5);
+  border: 1px solid var(--border-color, #e4e4e7);
+  border-radius: var(--radius-md, 8px);
+  padding: 3px;
+  margin-bottom: 1.5rem;
+}
+
+.login-role-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #71717a);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.login-role-tab.active {
+  background-color: var(--brand-black, #18181b);
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Tarjeta Footer con candado de auditoría */
+.login-audit-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 0.9rem;
+  background-color: var(--bg-subtle, #f4f4f5);
+  border: 1px solid var(--border-color, #e4e4e7);
+  border-radius: var(--radius-md, 8px);
+  font-size: 0.78rem;
+  color: var(--text-secondary, #71717a);
+  margin-top: 1.25rem;
+  line-height: 1.4;
+}
+
+/* Test Helper Chips */
+.login-test-helper {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--border-color, #e4e4e7);
+  font-size: 0.76rem;
+  color: var(--text-secondary, #71717a);
+}
+
+.login-test-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.login-test-chip {
+  padding: 0.25rem 0.55rem;
+  background-color: var(--bg-subtle, #f4f4f5);
+  border: 1px solid var(--border-color, #e4e4e7);
+  border-radius: 4px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.72rem;
+  color: var(--text-primary, #18181b);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.login-test-chip:hover {
+  background-color: var(--brand-black, #18181b);
+  color: #ffffff;
+  border-color: var(--brand-black, #18181b);
+}
+
+/* Responsividad Mobile / Tablet */
+@media (max-width: 860px) {
+  .login-backoffice-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .login-backoffice-hero {
+    padding: 2rem 1.75rem;
+  }
+
+  .login-backoffice-form-col {
+    padding: 2rem 1.75rem;
+  }
+
+  .login-backoffice-hero-title {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-page-wrapper {
+    padding: 1rem 0.5rem;
+  }
+
+  .login-client-card {
+    padding: 1.75rem 1.25rem;
+    border-radius: var(--radius-md, 12px);
+  }
+
+  .login-mode-btn {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.78rem;
+  }
+}
