@@ -18,6 +18,9 @@ import { RequireAuth } from '../auth/components/RequireAuth';
 import { RequirePermiso } from '../auth/components/RequirePermiso';
 import { MisRifasPage } from '../rifas/pages/MisRifasPage';
 import { RifaFormPage } from '../rifas/pages/RifaFormPage';
+import { InscripcionEntradaPage } from '../inscripciones/pages/InscripcionEntradaPage';
+import { InscripcionNominaPage } from '../inscripciones/pages/InscripcionNominaPage';
+import { InscripcionPagoPage } from '../inscripciones/pages/InscripcionPagoPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -41,6 +44,13 @@ export const AppRoutes: React.FC = () => {
             <Route path="mis-rifas" element={<MisRifasPage />} />
             <Route path="rifas/nueva" element={<RifaFormPage />} />
             <Route path="rifas/:id/editar" element={<RifaFormPage />} />
+          </Route>
+
+          {/* Inscripción en dos pasos (PICA-211): INSCRIPCION_GESTIONAR lo tiene PARTICIPANTE */}
+          <Route element={<RequirePermiso permisos="INSCRIPCION_GESTIONAR" />}>
+            <Route path="torneos/:slug/inscripcion" element={<InscripcionEntradaPage />} />
+            <Route path="inscripciones/:id/nomina" element={<InscripcionNominaPage />} />
+            <Route path="inscripciones/:id/pago" element={<InscripcionPagoPage />} />
           </Route>
         </Route>
 

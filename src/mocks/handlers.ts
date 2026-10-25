@@ -10,6 +10,9 @@ const PERMISOS_SUPER_USUARIO = [
   'ROL_VER', 'ROL_CREAR', 'ROL_EDITAR', 'ROL_ELIMINAR', 'ROL_ASIGNAR',
 ];
 
+// El PARTICIPANTE puede inscribirse a torneos (seed del back); el organizador de los mocks no.
+const PERMISOS_PARTICIPANTE = ['INSCRIPCION_GESTIONAR'];
+
 // In-memory mock store for current user profile state according to openapi.yaml
 let mockCurrentUserState = {
   usuario: {
@@ -179,7 +182,7 @@ export const handlers = [
         usuario: { id: 2, username: 'usuario', email: 'user@pica.edu.ar', estado: 'ACTIVO', tieneContrasena: true },
         persona: { nombres: 'Usuario', apellidos: 'PICA', tipoDoc: 'DNI', nroDoc: '38123456', fechaNacimiento: '1995-05-15', domicilioPostal: 'San Martín 500, Luján', telefono: '1144556677' },
         roles: [{ id: 2, nombre: 'PARTICIPANTE', nombreAmigable: 'Participante Estándar' }],
-        permisos: [],
+        permisos: [...PERMISOS_PARTICIPANTE],
         datosCompletos: true,
       };
 
@@ -196,7 +199,7 @@ export const handlers = [
         usuario: { id: 3, username: id.split('@')[0], email: id.includes('@') ? id : `${id}@pica.edu.ar`, estado: 'ACTIVO', tieneContrasena: true },
         persona: { nombres: id.split('@')[0], apellidos: 'Usuario', tipoDoc: 'DNI', nroDoc: '', fechaNacimiento: '', domicilioPostal: '', telefono: '' },
         roles: [{ id: 2, nombre: 'PARTICIPANTE', nombreAmigable: 'Participante' }],
-        permisos: [],
+        permisos: [...PERMISOS_PARTICIPANTE],
         datosCompletos: false,
       };
 
