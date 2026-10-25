@@ -43,6 +43,7 @@ const POR_CODIGO: Record<string, string> = {
     'No podés darte de baja, bloquearte ni resetear tu contraseña desde acá. Tu contraseña se cambia en Mi perfil.',
   RIFA_NO_ENCONTRADA: 'La rifa no existe o no es tuya.',
   RIFA_NO_EDITABLE: 'La rifa ya no está en borrador: no se puede modificar.',
+  RIFA_INCOMPLETA: 'A la rifa le falta completar datos para publicarse.',
 };
 
 const POR_CODIGO_DE_CAMPO: Record<string, string> = {
