@@ -34,3 +34,17 @@ export const fechaHora = (valor: Fecha): string => {
   const d = aDate(valor);
   return d ? `${fecha(d)} ${dos(d.getHours())}:${dos(d.getMinutes())}` : '-';
 };
+
+/** ISO de la API → valor de un <input type="datetime-local"> en la hora local del navegador. */
+export const isoAInputLocal = (iso: string | null): string => {
+  if (!iso) {
+    return '';
+  }
+  const instante = new Date(iso);
+  const local = new Date(instante.getTime() - instante.getTimezoneOffset() * 60_000);
+  return local.toISOString().slice(0, 16);
+};
+
+/** Valor de un <input type="datetime-local"> → ISO en UTC para la API (null si está vacío). */
+export const inputLocalAIso = (valor: string): string | null =>
+  valor ? new Date(valor).toISOString() : null;

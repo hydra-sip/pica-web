@@ -1,0 +1,361 @@
+/*
+ * Mis torneos y el asistente de crear torneo (PICA-202), con los tokens del UI kit (global.css).
+ * Botones, campos, tarjetas, tablas, badges y alertas son los de src/shared/ui; la barra de pasos es
+ * shared/components/PasosAsistente. Acá queda lo propio: las tarjetas de opción, las canchas y los filtros.
+ */
+
+.torneos-page {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.torneos-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.torneos-titulo-con-chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.torneos-titulo-con-chip h1 {
+  margin: 0;
+  font-size: var(--text-2xl);
+  overflow-wrap: anywhere;
+}
+
+.torneos-subtitulo {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-md);
+}
+
+.torneos-volver {
+  display: inline-block;
+  margin-bottom: var(--space-3);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  text-decoration: none;
+}
+
+.torneos-volver:hover {
+  color: var(--color-text);
+}
+
+.torneos-vacio {
+  margin: 0;
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.torneos-vacio h2 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-lg);
+  color: var(--color-text);
+}
+
+.torneos-vacio .btn {
+  margin-top: var(--space-4);
+}
+
+/* --- Mis torneos: filtros, pestañas y tabla -------------------------------- */
+
+.torneos-filtros {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+@media (max-width: 767px) {
+  .torneos-filtros {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.torneos-pestanas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.torneos-pestana {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background-color: var(--color-card);
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.torneos-pestana:hover {
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+}
+
+.torneos-pestana.activa {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.torneos-celda-secundaria {
+  display: block;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.torneos-nombre-fila {
+  font-weight: 600;
+}
+
+.torneos-paginacion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.torneos-paginacion div {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* --- Asistente: formularios de cada paso ----------------------------------- */
+
+.torneos-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.torneos-tarjeta-titulo {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.torneos-tarjeta-titulo h2 {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.torneos-tarjeta-titulo span {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.torneos-grilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+/* Grupo de tarjetas elegibles (deporte, formato) o de botones (modalidad, cupo) con su leyenda */
+.torneos-opciones {
+  margin: 0;
+  padding: 0;
+  border: none;
+  min-width: 0;
+}
+
+.torneos-opciones legend {
+  margin-bottom: var(--space-2);
+  padding: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.torneos-opciones-grilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-3);
+}
+
+/* En el celular, dos tarjetas por fila: los deportes en una sola columna ocupan varias pantallas */
+@media (max-width: 767px) {
+  .torneos-opciones-grilla {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+
+  .torneos-opciones-grilla .torneos-opcion {
+    padding: var(--space-2) var(--space-3);
+  }
+}
+
+.torneos-opciones-fila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.torneos-opcion {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.torneos-opcion:hover:not(:disabled) {
+  border-color: var(--color-border-strong);
+}
+
+.torneos-opcion[aria-pressed='true'] {
+  border-color: var(--color-primary);
+  box-shadow: inset 0 0 0 1px var(--color-primary);
+}
+
+.torneos-opcion:disabled {
+  cursor: not-allowed;
+  background-color: var(--color-disabled-bg);
+  color: var(--color-disabled-text);
+}
+
+.torneos-opcion-titulo {
+  font-weight: 600;
+}
+
+.torneos-opcion-detalle {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.torneos-opcion:disabled .torneos-opcion-detalle {
+  color: var(--color-disabled-text);
+}
+
+/* Botones chicos del mismo grupo: presencial/online, individual/equipos, 8/16/24/32 */
+.torneos-opciones-fila .torneos-opcion {
+  flex: 0 0 auto;
+  min-width: 7rem;
+  align-items: center;
+  text-align: center;
+}
+
+.torneos-opciones-error {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+}
+
+/* Canchas: chips con su ✕ y un campo para sumar otra */
+.torneos-canchas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.torneos-cancha {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-1) 2px var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background-color: var(--color-surface);
+  font-size: var(--text-sm);
+}
+
+.torneos-cancha button {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: none;
+  border-radius: var(--radius-full);
+  background: none;
+  color: var(--color-text-secondary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.torneos-cancha button:hover:not(:disabled) {
+  background-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.torneos-cancha-nueva {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.torneos-contador {
+  display: block;
+  margin-top: var(--space-1);
+  text-align: right;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+/* Recuadro del PDF del reglamento, que todavía no se puede subir */
+.torneos-anexo {
+  padding: var(--space-4);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.torneos-anexo strong {
+  display: block;
+  margin-bottom: var(--space-1);
+  color: var(--color-text);
+}
+
+/* Pie del asistente: "Paso 1 de 3" a la izquierda y los botones a la derecha */
+.torneos-pie {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.torneos-pie > span {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.torneos-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-left: auto;
+}

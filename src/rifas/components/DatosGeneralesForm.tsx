@@ -3,7 +3,7 @@ import { rifaApi, RifaDetalle, RifaPayload } from '../../api/rifaApi';
 import { erroresPorCampo, mensajeDeError } from '../../shared/mensajesError';
 import { DatosRifaForm, validateDatosRifa } from '../../shared/validators';
 import { Button, Field, Input, Textarea } from '../../shared/ui';
-import { inputLocalAIso, isoAInputLocal } from '../formato';
+import { inputLocalAIso, isoAInputLocal } from '../../shared/formato';
 
 interface DatosGeneralesFormProps {
   /** null en el alta. */

@@ -43,6 +43,8 @@ const POR_CODIGO: Record<string, string> = {
     'No podés darte de baja, bloquearte ni resetear tu contraseña desde acá. Tu contraseña se cambia en Mi perfil.',
   RIFA_NO_ENCONTRADA: 'La rifa no existe o no es tuya.',
   RIFA_NO_EDITABLE: 'La rifa ya no está en borrador: no se puede modificar.',
+  TORNEO_NO_ENCONTRADO: 'El torneo no existe o no es tuyo.',
+  TORNEO_NO_EDITABLE: 'El torneo ya no está en borrador: no se puede modificar desde acá.',
 };
 
 const POR_CODIGO_DE_CAMPO: Record<string, string> = {
@@ -56,6 +58,7 @@ const POR_CODIGO_DE_CAMPO: Record<string, string> = {
   RANGO_INVALIDO: 'El rango de números no es válido.',
   VENTANA_INVALIDA: 'Las fechas de venta no son válidas.',
   PREMIOS_INVALIDOS: 'Los premios no son válidos.',
+  FECHAS_INVALIDAS: 'Las fechas no son válidas.',
   VALOR_INVALIDO: 'El valor no es válido.',
 };
 
@@ -81,12 +84,15 @@ export const mensajeDeError = (
   return problema?.detail || (err instanceof Error && err.message) || porDefecto;
 };
 
-/** Errores de un 400 VALIDACION por campo del JSON. */
-export const erroresPorCampo = (err: unknown): Record<string, string> => {
+/** Errores de un 400 VALIDACION por campo del JSON; `propios` pisa el texto de un código en una pantalla. */
+export const erroresPorCampo = (
+  err: unknown,
+  propios: Record<string, string> = {}
+): Record<string, string> => {
   const errores: Record<string, string> = {};
   (problemaDe(err)?.errores || []).forEach((e) => {
     if (e.campo && !errores[e.campo]) {
-      errores[e.campo] = POR_CODIGO_DE_CAMPO[e.codigo] || e.mensaje;
+      errores[e.campo] = propios[e.codigo] || POR_CODIGO_DE_CAMPO[e.codigo] || e.mensaje;
     }
   });
   return errores;
