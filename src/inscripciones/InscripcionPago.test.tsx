@@ -230,3 +230,49 @@ describe('paso 2: confirmar y pagar', () => {
     expect(screen.queryByRole('button', { name: 'Modificar nómina' })).not.toBeInTheDocument();
   });
 });
+
+describe('pantalla final y otros estados de la inscripción', () => {
+  it('una de equipo de un torneo gratis, que quedó confirmada sin pago, muestra la pantalla final', async () => {
+    await renderRuta(RUTA_PAGO, { prepara: pendienteDePago('torneo-gratis') });
+
+    expect(await screen.findByRole('heading', { name: '¡Inscripción confirmada!' })).toBeInTheDocument();
+    expect(screen.getByText(/Los Galácticos/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /inicio/i })).toHaveAttribute('href', '/');
+    expect(screen.queryByRole('button', { name: /Confirmar pago/ })).not.toBeInTheDocument();
+  });
+
+  it('una individual gratis confirmada muestra al participante en la pantalla final', async () => {
+    await renderRuta(RUTA_PAGO, { prepara: individualPendienteDePago('individual-gratis') });
+
+    expect(await screen.findByRole('heading', { name: '¡Inscripción confirmada!' })).toBeInTheDocument();
+    expect(screen.getByText(/Participante: Usuario PICA/)).toBeInTheDocument();
+  });
+
+  it('un borrador lleva al paso 1 para completarlo', async () => {
+    const { ubicacion } = await renderRuta(RUTA_PAGO, {
+      prepara: async () => {
+        const torneo = await torneoApi.obtenerPorSlug('torneo-apertura-f5');
+        await inscripcionApi.crear(torneo.id, { nombreEquipoNuevo: 'Los Nuevos', nomina: [101] });
+      },
+    });
+
+    await waitFor(() => expect(ubicacion()).toBe(`/inscripciones/${ID}/nomina`));
+  });
+
+  it('una inscripción cancelada se avisa con claridad', async () => {
+    // 901 es la inscripción cancelada de Los Halcones en torneo-apertura-f5 (datos de los mocks).
+    await renderRuta('/inscripciones/901/pago');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Esta inscripción fue cancelada');
+    expect(screen.queryByRole('button', { name: /Confirmar pago/ })).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ['ajena', '/inscripciones/900/pago'],
+    ['inexistente', '/inscripciones/4242/pago'],
+  ])('una inscripción %s se avisa como que no existe o no es tuya', async (_caso, ruta) => {
+    await renderRuta(ruta);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('La inscripción no existe o no es tuya');
+  });
+});
