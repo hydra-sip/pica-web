@@ -116,7 +116,7 @@ describe('entrada a la inscripción', () => {
     );
     await renderRuta(ENTRADA_F5);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('La cuenta está bloqueada');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Tu cuenta, o la de un jugador de la nómina, tiene un bloqueo vigente');
     expect(screen.queryByLabelText('Equipo')).not.toBeInTheDocument();
   });
 

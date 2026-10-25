@@ -257,7 +257,10 @@ describe('paso 1: equipo y nómina (alta)', () => {
       'sofi',
       'Hay un jugador (o vos como capitán) que ya figura en otra inscripción de este torneo',
     ],
-    ['zoe', 'La cuenta está bloqueada'],
+    [
+      'zoe',
+      'Tu cuenta, o la de un jugador de la nómina, tiene un bloqueo vigente. Si creés que es un error, escribile a un administrador.',
+    ],
     ['tardio', 'El usuario no está activo'],
   ])(
     'si al guardar el back rechaza a un jugador (%s), lo avisa en la página y no navega',

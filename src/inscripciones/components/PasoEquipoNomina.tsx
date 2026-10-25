@@ -10,6 +10,7 @@ import { Torneo } from '../../api/torneoApi';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { pesos } from '../../shared/formato';
 import { mensajeDeError } from '../../shared/mensajesError';
+import { MENSAJES_PASO_1 } from '../mensajesPaso1';
 import { Button, Card } from '../../shared/ui';
 import { useEquiposDelTorneo } from '../hooks/useEquiposDelTorneo';
 import { BuscadorJugadores } from './BuscadorJugadores';
@@ -108,7 +109,7 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
       await inscripcionApi.confirmar(guardada.id, true);
       navigate(`/inscripciones/${guardada.id}/pago`);
     } catch (err) {
-      const mensaje = mensajeDeError(err, 'No se pudo guardar la inscripción.');
+      const mensaje = mensajeDeError(err, 'No se pudo guardar la inscripción.', MENSAJES_PASO_1);
       setError(guardada ? `${mensaje} Tu borrador quedó guardado.` : mensaje);
     } finally {
       setOcupado(false);
@@ -123,7 +124,7 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
       // TODO (PICA-198): volver al detalle del torneo cuando tenga ruta; por ahora, al inicio.
       navigate('/');
     } catch (err) {
-      setError(mensajeDeError(err, 'No se pudo guardar el borrador.'));
+      setError(mensajeDeError(err, 'No se pudo guardar el borrador.', MENSAJES_PASO_1));
     } finally {
       setOcupado(false);
     }

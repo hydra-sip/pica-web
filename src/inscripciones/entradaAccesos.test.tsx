@@ -51,7 +51,7 @@ describe('accesos a la entrada de la inscripción', () => {
 
     await user.click(screen.getByRole('button', { name: 'Confirmar inscripción' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('La cuenta está bloqueada');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Tu cuenta, o la de un jugador de la nómina, tiene un bloqueo vigente');
     expect(ubicacion()).toBe('/torneos/individual-gratis/inscripcion');
   });
 });
