@@ -4,6 +4,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
 import { equipoApi } from '../api/equipoApi';
 import { inscripcionApi } from '../api/inscripcionApi';
+import { problema } from '../mocks/adminHandlers';
 import { server } from '../mocks/server';
 import { renderRuta } from '../test/renderRuta';
 
@@ -17,13 +18,23 @@ const ALTA_F5 = '/torneos/torneo-apertura-f5/inscripcion';
 
 const idDeLaUbicacion = (ruta: string) => Number(/\/inscripciones\/(\d+)\//.exec(ruta)![1]);
 
-// Busca por `texto` y suma al primer resultado.
+// Nombre de cada jugador de los mocks según lo que se escribe para buscarlo.
+const JUGADOR: Record<string, string> = {
+  lucas: 'Lucas Fernández',
+  mrossi: 'Matías Rossi',
+  joaco: 'Joaquín Gómez',
+  salva: 'Salvador Báez',
+  sofi: 'Sofía Martínez',
+  zoe: 'Zoe Bloqueada',
+  tardio: 'Tomás Tardío',
+};
+
+// Busca por `texto` y suma al jugador que corresponde, esperando a que llegue su resultado.
 const sumarJugador = async (user: UserEvent, texto: string) => {
   const buscador = await screen.findByRole('searchbox', { name: /buscar jugador/i });
   await user.clear(buscador);
   await user.type(buscador, texto);
-  const sumar = await screen.findByRole('button', { name: /^Sumar a / });
-  await user.click(sumar);
+  await user.click(await screen.findByRole('button', { name: `Sumar a ${JUGADOR[texto]}` }));
 };
 
 describe('paso 1: equipo y nómina (alta)', () => {
@@ -234,5 +245,75 @@ describe('paso 1: equipo y nómina (alta)', () => {
     const inscripcion = await inscripcionApi.obtener(idDeLaUbicacion(ubicacion()));
     expect(inscripcion.equipo?.nombre).toBe('Los Nuevos');
     expect(inscripcion.estado).toBe('CONFIRMADA'); // torneo gratis: no hay pago
+  });
+
+  it.each([
+    [
+      'sofi',
+      'Hay un jugador (o vos como capitán) que ya figura en otra inscripción de este torneo',
+    ],
+    ['zoe', 'La cuenta está bloqueada'],
+    ['tardio', 'El usuario no está activo'],
+  ])(
+    'si al guardar el back rechaza a un jugador (%s), lo avisa en la página y no navega',
+    async (texto, mensaje) => {
+      const { user, ubicacion } = await renderRuta(ALTA_F5);
+      await user.selectOptions(await screen.findByLabelText('Equipo'), 'Los Galácticos');
+      await sumarJugador(user, 'lucas');
+      await sumarJugador(user, texto);
+
+      await user.click(screen.getByRole('button', { name: 'Guardar como borrador y salir' }));
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(mensaje);
+      expect(ubicacion()).toBe(ALTA_F5);
+      expect(screen.getByRole('button', { name: 'Guardar como borrador y salir' })).toBeEnabled();
+    }
+  );
+
+  it('con la inscripción cerrada muestra el aviso del torneo', async () => {
+    const { user } = await renderRuta('/torneos/torneo-cerrado/inscripcion');
+    await user.selectOptions(await screen.findByLabelText('Equipo'), 'Los Galácticos');
+    for (const texto of ['lucas', 'mrossi']) await sumarJugador(user, texto);
+
+    await user.click(screen.getByRole('button', { name: 'Guardar como borrador y salir' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'La inscripción a este torneo no está abierta o ya cerró.'
+    );
+  });
+
+  it('si falla la confirmación el borrador queda guardado, se muestra el error y reintentar no crea otro', async () => {
+    server.use(
+      http.put(`${API_URL}/inscripciones/:id/confirmar`, () =>
+        problema(409, 'COBRO_RECHAZADO', 'No se aprobó el pago')
+      )
+    );
+    const { user, ubicacion } = await renderRuta('/torneos/torneo-gratis/inscripcion'); // 3 a 4
+    await user.selectOptions(await screen.findByLabelText('Equipo'), 'Crear un equipo nuevo');
+    await user.type(screen.getByLabelText('Nombre del equipo nuevo'), 'Los Reintentos');
+    for (const texto of ['lucas', 'mrossi']) await sumarJugador(user, texto);
+    await user.click(screen.getByLabelText('Acepto el Reglamento y Código de Conducta'));
+
+    await user.click(screen.getByRole('button', { name: 'Confirmar inscripción' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Tu borrador quedó guardado.');
+    expect(ubicacion()).toBe('/torneos/torneo-gratis/inscripcion');
+    const borradores = async () =>
+      (await inscripcionApi.listarMias({ torneoId: 3 })).content.filter(
+        (i) => i.estado === 'BORRADOR'
+      );
+    expect(await borradores()).toHaveLength(1);
+
+    await user.click(screen.getByRole('button', { name: 'Confirmar inscripción' }));
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Confirmar inscripción' })).toBeEnabled()
+    );
+
+    // El reintento reemplaza el borrador y vuelve a fallar en la confirmación, no en el guardado.
+    expect(screen.getByRole('alert')).toHaveTextContent('Tu borrador quedó guardado.');
+    expect(await borradores()).toHaveLength(1);
+    expect(
+      (await equipoApi.listarMios()).content.filter((e) => e.nombre === 'Los Reintentos')
+    ).toHaveLength(1);
   });
 });
