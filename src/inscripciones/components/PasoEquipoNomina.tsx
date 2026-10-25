@@ -107,6 +107,20 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
     }
   };
 
+  const guardarYSalir = async () => {
+    setOcupado(true);
+    setError(null);
+    try {
+      await guardar();
+      // TODO (PICA-198): volver al detalle del torneo cuando tenga ruta; por ahora, al inicio.
+      navigate('/');
+    } catch (err) {
+      setError(mensajeDeError(err, 'No se pudo guardar el borrador.'));
+    } finally {
+      setOcupado(false);
+    }
+  };
+
   return (
     <div className="inscripcion-page">
       <header className="inscripcion-encabezado">
@@ -213,7 +227,12 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
             ? 'Confirmar inscripción'
             : `Continuar al pago (${pesos(torneo.valorInscripcion)})`}
         </Button>
-        <Button block variant="secondary" disabled={!equipoListo || ocupado}>
+        <Button
+          block
+          variant="secondary"
+          disabled={!equipoListo || ocupado}
+          onClick={guardarYSalir}
+        >
           Guardar como borrador y salir
         </Button>
       </div>

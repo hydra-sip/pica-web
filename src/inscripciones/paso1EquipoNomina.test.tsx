@@ -206,4 +206,33 @@ describe('paso 1: equipo y nómina (alta)', () => {
     ]);
     expect(inscripcion.reglamentoAceptadoEn).toBeTruthy();
   });
+
+  it('"Guardar como borrador y salir" guarda sin confirmar y vuelve al inicio, sin pedir el reglamento', async () => {
+    const { user, ubicacion } = await renderRuta(ALTA_F5);
+    await user.selectOptions(await screen.findByLabelText('Equipo'), 'Los Galácticos');
+    await sumarJugador(user, 'lucas');
+
+    await user.click(screen.getByRole('button', { name: 'Guardar como borrador y salir' }));
+
+    await waitFor(() => expect(ubicacion()).toBe('/'));
+    const [borrador] = (await inscripcionApi.listarMias({ torneoId: 1 })).content;
+    expect(borrador.estado).toBe('BORRADOR');
+    expect(borrador.equipo?.nombre).toBe('Los Galácticos');
+    expect((await inscripcionApi.obtener(borrador.id)).nomina).toHaveLength(2);
+  });
+
+  it('con un nombre nuevo crea el equipo junto con la inscripción', async () => {
+    const { user, ubicacion } = await renderRuta('/torneos/torneo-gratis/inscripcion'); // 3 a 4, gratis
+    await user.selectOptions(await screen.findByLabelText('Equipo'), 'Crear un equipo nuevo');
+    await user.type(screen.getByLabelText('Nombre del equipo nuevo'), 'Los Nuevos');
+    for (const texto of ['lucas', 'mrossi']) await sumarJugador(user, texto);
+    await user.click(screen.getByLabelText('Acepto el Reglamento y Código de Conducta'));
+
+    await user.click(screen.getByRole('button', { name: 'Confirmar inscripción' }));
+
+    await waitFor(() => expect(ubicacion()).toMatch(/^\/inscripciones\/\d+\/pago$/));
+    const inscripcion = await inscripcionApi.obtener(idDeLaUbicacion(ubicacion()));
+    expect(inscripcion.equipo?.nombre).toBe('Los Nuevos');
+    expect(inscripcion.estado).toBe('CONFIRMADA'); // torneo gratis: no hay pago
+  });
 });
