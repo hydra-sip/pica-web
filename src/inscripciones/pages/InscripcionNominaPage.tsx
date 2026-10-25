@@ -1,9 +1,78 @@
-import React from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, Navigate, useParams } from 'react-router-dom';
+import { InscripcionDetalle, inscripcionApi } from '../../api/inscripcionApi';
+import { Torneo, torneoApi } from '../../api/torneoApi';
+import { mensajeDeError } from '../../shared/mensajesError';
+import { PasoEquipoNomina } from '../components/PasoEquipoNomina';
+import '../inscripciones.css';
 
-// TODO (PICA-211, F2): paso 1, equipo y nómina (también el alta, retomando un borrador). Hoy es solo
-// un relleno para que exista la ruta.
+interface Datos {
+  inscripcion: InscripcionDetalle;
+  /** Solo se carga si la inscripción está en borrador. */
+  torneo: Torneo | null;
+}
+
+/**
+ * Paso 1 de la inscripción retomando un borrador (`/inscripciones/:id/nomina`). Si la inscripción ya
+ * pasó del borrador, lleva al paso 2, que también muestra la inscripción confirmada.
+ */
 export const InscripcionNominaPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  return <p>Equipo y nómina de la inscripción {id}</p>;
+  const [datos, setDatos] = useState<Datos | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let vigente = true;
+    setDatos(null);
+    setError(null);
+    inscripcionApi
+      .obtener(Number(id))
+      .then(async (inscripcion) => {
+        // Si no está en borrador no hace falta el torneo: se redirige o se avisa.
+        const torneo =
+          inscripcion.estado === 'BORRADOR'
+            ? await torneoApi.obtenerPorId(inscripcion.torneoId)
+            : null;
+        if (vigente) setDatos({ inscripcion, torneo });
+      })
+      .catch(
+        (err) => vigente && setError(mensajeDeError(err, 'No se pudo cargar la inscripción.'))
+      );
+    return () => {
+      vigente = false;
+    };
+  }, [id]);
+
+  if (error) {
+    return (
+      <div className="inscripcion-page">
+        <div className="alerta alerta-peligro" role="alert">
+          {error}
+        </div>
+      </div>
+    );
+  }
+  if (!datos) {
+    return (
+      <div className="inscripcion-page">
+        <p className="inscripcion-cargando">Cargando inscripción...</p>
+      </div>
+    );
+  }
+
+  const { inscripcion, torneo } = datos;
+  if (inscripcion.estado === 'PENDIENTE_PAGO' || inscripcion.estado === 'CONFIRMADA') {
+    return <Navigate to={`/inscripciones/${inscripcion.id}/pago`} replace />;
+  }
+  if (inscripcion.estado !== 'BORRADOR') {
+    return (
+      <div className="inscripcion-page">
+        <div className="alerta alerta-aviso" role="alert">
+          Esta inscripción está cancelada y ya no se puede modificar.
+        </div>
+        <Link to="/">Volver al inicio</Link>
+      </div>
+    );
+  }
+  return torneo && <PasoEquipoNomina torneo={torneo} inscripcion={inscripcion} />;
 };

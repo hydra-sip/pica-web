@@ -34,4 +34,11 @@ export const torneoApi = {
   obtenerPorSlug: async (slug: string): Promise<Torneo> => {
     return httpClient.get<Torneo>(`/torneos/slug/${encodeURIComponent(slug)}`);
   },
+
+  // TODO (PICA-196): ruta provisional. openapi.yaml solo tiene el torneo por slug, y una inscripción
+  // trae el `torneoId` pero no el slug: para retomar un borrador en /inscripciones/:id/nomina hace
+  // falta el torneo por id. Hay que pedírselo a Salvador (o que la inscripción traiga el slug).
+  obtenerPorId: async (id: number): Promise<Torneo> => {
+    return httpClient.get<Torneo>(`/torneos/${id}`);
+  },
 };

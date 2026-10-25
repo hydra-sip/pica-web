@@ -473,6 +473,14 @@ export const crearInscripcionesHandlers = (sesion: () => SesionMock) => {
         : noEncontrado('TORNEO_NO_ENCONTRADO', 'El torneo no existe');
     }),
 
+    // Torneo por id. TODO (PICA-196): provisional, ver torneoApi.obtenerPorId; es público.
+    http.get(`${API_URL}/torneos/:id`, ({ params }) => {
+      const t = buscarTorneo(idDe(params));
+      return t
+        ? HttpResponse.json(torneoPublico(t))
+        : noEncontrado('TORNEO_NO_ENCONTRADO', 'El torneo no existe');
+    }),
+
     // Buscar jugadores: cualquier usuario logueado, solo activos, sin datos personales.
     http.get(`${API_URL}/usuarios`, ({ request }) => {
       const s = conSesion(request);
