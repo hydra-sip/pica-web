@@ -18,6 +18,8 @@ import { RequireAuth } from '../auth/components/RequireAuth';
 import { RequirePermiso } from '../auth/components/RequirePermiso';
 import { MisRifasPage } from '../rifas/pages/MisRifasPage';
 import { RifaFormPage } from '../rifas/pages/RifaFormPage';
+import { TorneosCatalogoPage } from '../torneos/pages/TorneosCatalogoPage';
+import { TorneoDetallePage } from '../torneos/pages/TorneoDetallePage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -25,6 +27,8 @@ export const AppRoutes: React.FC = () => {
       {/* Sitio: sidebar en escritorio, barra inferior en el celular */}
       <Route path="/" element={<AppLayout seccion="sitio" />}>
         <Route index element={<HomePage />} />
+        <Route path="torneos" element={<TorneosCatalogoPage />} />
+        <Route path="torneos/:slug" element={<TorneoDetallePage />} />
         <Route path="auth/login" element={<LoginPage />} />
         <Route path="auth/register" element={<RegisterPage />} />
         <Route path="auth/check-email" element={<CheckEmailPage />} />
@@ -51,9 +55,7 @@ export const AppRoutes: React.FC = () => {
       <Route element={<RequireAuth />}>
         <Route
           element={
-            <RequirePermiso
-              permisos={['USUARIO_VER', 'ROL_VER', 'PERSONA_VER']}
-            >
+            <RequirePermiso permisos={['USUARIO_VER', 'ROL_VER', 'PERSONA_VER']}>
               <AppLayout seccion="admin" />
             </RequirePermiso>
           }
