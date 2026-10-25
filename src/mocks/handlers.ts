@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { adminHandlers } from './adminHandlers';
+import { crearInscripcionesHandlers } from './inscripcionesHandlers';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
@@ -39,6 +40,9 @@ let mockCurrentUserState = {
 export const handlers = [
   // Backoffice (usuarios, personas, roles y permisos) según el contrato
   ...adminHandlers,
+
+  // Inscripción en dos pasos: el capitán es el usuario logueado de estos mocks
+  ...crearInscripcionesHandlers(() => mockCurrentUserState),
 
   // Auth: Registro Endpoint (POST /auth/registro) -> 201 { id }
   http.post(`${API_URL}/auth/registro`, async ({ request }) => {

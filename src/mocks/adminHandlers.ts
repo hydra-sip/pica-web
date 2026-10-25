@@ -233,19 +233,19 @@ const TITULOS: Record<number, string> = {
   409: 'Conflict',
 };
 
-const problema = (status: number, codigo: string, detail: string, extra: Cuerpo = {}) =>
+export const problema = (status: number, codigo: string, detail: string, extra: Cuerpo = {}) =>
   HttpResponse.json(
     { type: 'about:blank', title: TITULOS[status], status, detail, codigo, ...extra },
     { status, headers: { 'Content-Type': 'application/problem+json' } }
   );
 
-interface ErrorCampo {
+export interface ErrorCampo {
   campo: string;
   codigo: string;
   mensaje: string;
 }
 
-const validacion = (errores: ErrorCampo[]) =>
+export const validacion = (errores: ErrorCampo[]) =>
   problema(400, 'VALIDACION', 'Hay campos inválidos', { errores });
 
 const noEncontrado = (codigo: string, que: string) => problema(404, codigo, `${que} no existe`);
