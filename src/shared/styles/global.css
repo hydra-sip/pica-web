@@ -1,7 +1,7 @@
 /*
  * Tema de PICA, sacado del UI kit del Figma "Hydra" (página "Info, UI Kit & Navegación"): claro,
- * en grises, con Inter. El Figma no define colores de estado; los de --color-success/warning/
- * danger/info son nuestros y pasan contraste AA sobre blanco.
+ * con Inter. El Figma es un wireframe en grises: la marca sale del ícono (la pica azul sobre negro)
+ * y los colores de estado (--color-success/warning/danger/info) son nuestros. Todo pasa AA.
  * Los componentes base (src/shared/ui) usan estos tokens; las pantallas no deberían escribir
  * colores a mano.
  */
@@ -10,23 +10,30 @@
   --font-heading: var(--font-primary);
   --font-mono: ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
-  /* Grises del Figma */
+  /* Marca: el azul de la pica y el fondo del ícono */
+  --color-brand: #1b4468;
+  --color-brand-dark: #102a43;
+  --color-brand-light: #2f6496;
+  --color-brand-soft: #e8eef5;
+  --color-ink: #0b1724;
+
+  /* Neutros, apenas azulados para que combinen con la marca */
   --color-bg: #ffffff;
-  --color-surface: #f5f5f5;
+  --color-surface: #f3f6f9;
   --color-card: #ffffff;
-  --color-border: #e0e0e0;
-  --color-border-strong: #757575;
-  --color-text: #1e1e1e;
-  --color-text-secondary: #757575;
-  --color-text-muted: #9e9e9e;
-  --color-primary: #1e1e1e;
-  --color-primary-hover: #000000;
+  --color-border: #dbe2ea;
+  --color-border-strong: #66788a;
+  --color-text: #0f1d2b;
+  --color-text-secondary: #5b6b7c;
+  --color-text-muted: #8796a6;
+  --color-primary: var(--color-brand);
+  --color-primary-hover: var(--color-brand-dark);
   --color-on-primary: #ffffff;
   --color-input-bg: #ffffff;
-  --color-disabled-bg: #f5f5f5;
-  --color-disabled-text: #9e9e9e;
-  --color-overlay: rgba(30, 30, 30, 0.45);
-  --color-focus: #1e1e1e;
+  --color-disabled-bg: #f3f6f9;
+  --color-disabled-text: #8796a6;
+  --color-overlay: rgba(11, 23, 36, 0.5);
+  --color-focus: var(--color-brand-light);
 
   /* Estados */
   --color-success: #15803d;

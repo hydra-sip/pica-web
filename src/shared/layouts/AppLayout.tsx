@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { IncompleteProfileBanner } from '../components/IncompleteProfileBanner';
 import { IconoSalir, IconoSitio } from '../ui/Iconos';
+import { LogoPica } from '../ui/LogoPica';
 import { ItemNavegacion, NAVEGACION, Seccion } from './navegacion';
 import './AppLayout.css';
 
@@ -51,7 +52,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ seccion }) => {
     <div className="app">
       <aside className="app-sidebar">
         <Link to="/" className="app-logo">
-          <span className="app-logo-icono">P</span>
+          <LogoPica className="app-logo-icono" />
           <span className="app-logo-texto">PICA</span>
           {seccion === 'admin' && <span className="app-logo-seccion">Backoffice</span>}
         </Link>
@@ -85,7 +86,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ seccion }) => {
       <div className="app-cuerpo">
         <header className="app-barra-celular">
           <Link to="/" className="app-logo">
-            <span className="app-logo-icono">P</span>
+            <LogoPica className="app-logo-icono" />
             <span className="app-logo-texto">PICA</span>
           </Link>
           <span style={{ display: 'flex', gap: 'var(--space-1)' }}>

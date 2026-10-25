@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { API_BASE_URL } from '../../api/httpClient';
-import { Button } from '../../shared/ui';
+import { Button, LogoPica } from '../../shared/ui';
 import '../auth.css';
 
 const LogoGoogle = () => (
@@ -38,9 +38,7 @@ export const AuthTarjeta: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <div className="auth card">
       <header className="auth-marca">
-        <span className="auth-logo" aria-hidden="true">
-          P
-        </span>
+        <LogoPica className="auth-logo" />
         <h1 className="auth-nombre">PICA</h1>
         <p className="auth-lema">Plataforma de torneos y rifas</p>
       </header>

@@ -17,16 +17,10 @@
 }
 
 .auth-logo {
-  width: 48px;
-  height: 48px;
-  display: grid;
-  place-items: center;
+  height: 64px;
+  width: auto;
   margin-bottom: var(--space-2);
-  font-size: var(--text-xl);
-  font-weight: 700;
-  color: var(--color-on-primary);
-  background-color: var(--color-primary);
-  border-radius: var(--radius-md);
+  color: var(--color-primary);
 }
 
 .auth-nombre {
