@@ -34,9 +34,9 @@ export const useEquiposDelTorneo = (
       .then(([propios, inscripciones]) => {
         if (!vigente) return;
         const ocupados = new Set(
-          inscripciones.content
-            .filter((i) => i.id !== borradorId && i.equipo)
-            .map((i) => i.equipo!.id)
+          inscripciones.content.flatMap((i) =>
+            i.id !== borradorId && i.equipo ? [i.equipo.id] : []
+          )
         );
         setEquipos(propios.content.map((e) => ({ ...e, inscripto: ocupados.has(e.id) })));
       })
