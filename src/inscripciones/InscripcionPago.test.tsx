@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { screen } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { equipoApi } from '../api/equipoApi';
 import { inscripcionApi } from '../api/inscripcionApi';
 import { torneoApi } from '../api/torneoApi';
@@ -37,6 +37,13 @@ const botonPagar = (monto: string) =>
 afterEach(() => {
   vi.useRealTimers();
 });
+
+/** Una inscripción individual ya confirmada con el reglamento: PENDIENTE_PAGO. */
+const individualPendienteDePago = (slug: string) => async () => {
+  const torneo = await torneoApi.obtenerPorSlug(slug);
+  const borrador = await inscripcionApi.crear(torneo.id);
+  await inscripcionApi.confirmar(borrador.id, true);
+};
 
 describe('paso 2: confirmar y pagar', () => {
   it('muestra el torneo, el equipo, una sola línea de cuota y el total a pagar', async () => {
@@ -138,5 +145,88 @@ describe('paso 2: confirmar y pagar', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('La cuenta está bloqueada');
     expect(botonPagar('20.000')).toBeEnabled();
     expect((await inscripcionApi.obtener(ID)).estado).toBe('PENDIENTE_PAGO');
+  });
+
+  it('al tocar dos veces el botón de pagar manda un solo cobro y muestra que está en curso', async () => {
+    const { user } = await renderRuta(RUTA_PAGO, {
+      prepara: pendienteDePago('torneo-apertura-f5'),
+    });
+    await screen.findByText('Cuota de inscripción');
+    // El primer cobro queda esperando hasta que el test lo suelta; después responde el mock de siempre.
+    let cobros = 0;
+    let soltar = () => {};
+    const espera = new Promise<void>((resolver) => {
+      soltar = resolver;
+    });
+    server.use(
+      http.post('*/inscripciones/:id/pago', async () => {
+        cobros += 1;
+        await espera;
+      })
+    );
+
+    await user.dblClick(botonPagar('20.000'));
+
+    expect(screen.getByRole('button', { name: 'Confirmando el pago...' })).toBeDisabled();
+    soltar();
+    expect(await screen.findByRole('heading', { name: '¡Inscripción confirmada!' })).toBeInTheDocument();
+    expect(cobros).toBe(1);
+  });
+
+  it('"Modificar nómina" avisa que hay que aceptar el reglamento de nuevo, reabre y vuelve al paso 1', async () => {
+    const { user, ubicacion } = await renderRuta(RUTA_PAGO, {
+      prepara: pendienteDePago('torneo-apertura-f5'),
+    });
+    await screen.findByText('Cuota de inscripción');
+
+    await user.click(screen.getByRole('button', { name: 'Modificar nómina' }));
+    const aviso = await screen.findByRole('dialog');
+    expect(aviso).toHaveTextContent('vas a tener que aceptar el reglamento otra vez');
+    await user.click(within(aviso).getByRole('button', { name: 'Sí, modificar la nómina' }));
+
+    await waitFor(() => expect(ubicacion()).toBe(`/inscripciones/${ID}/nomina`));
+    expect((await inscripcionApi.obtener(ID)).estado).toBe('BORRADOR');
+  });
+
+  it('si se arrepiente en el aviso de "Modificar nómina" la inscripción sigue pendiente de pago', async () => {
+    const { user, ubicacion } = await renderRuta(RUTA_PAGO, {
+      prepara: pendienteDePago('torneo-apertura-f5'),
+    });
+    await screen.findByText('Cuota de inscripción');
+
+    await user.click(screen.getByRole('button', { name: 'Modificar nómina' }));
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Volver' }));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(ubicacion()).toBe(RUTA_PAGO);
+    expect((await inscripcionApi.obtener(ID)).estado).toBe('PENDIENTE_PAGO');
+  });
+
+  it('si no se puede reabrir muestra el error en el aviso y no sale del paso 2', async () => {
+    const { user, ubicacion } = await renderRuta(RUTA_PAGO, {
+      prepara: pendienteDePago('torneo-apertura-f5'),
+    });
+    await screen.findByText('Cuota de inscripción');
+    server.use(
+      http.put('*/inscripciones/:id/reabrir', () =>
+        problema(409, 'INSCRIPCION_NO_EDITABLE', 'Solo se reabre una inscripción pendiente de pago')
+      )
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Modificar nómina' }));
+    const aviso = await screen.findByRole('dialog');
+    await user.click(within(aviso).getByRole('button', { name: 'Sí, modificar la nómina' }));
+
+    expect(await within(aviso).findByRole('alert')).toHaveTextContent('cambió de estado');
+    expect(ubicacion()).toBe(RUTA_PAGO);
+  });
+
+  it('en una inscripción individual muestra al participante y no ofrece modificar la nómina', async () => {
+    await renderRuta(RUTA_PAGO, { prepara: individualPendienteDePago('individual-pago') });
+
+    expect(await screen.findByText(/Desafío Individual de Ping Pong/)).toBeInTheDocument();
+    expect(screen.getByText(/Participante: Usuario PICA/)).toBeInTheDocument();
+    expect(botonPagar('5.000')).toBeEnabled();
+    expect(screen.queryByRole('button', { name: 'Modificar nómina' })).not.toBeInTheDocument();
   });
 });

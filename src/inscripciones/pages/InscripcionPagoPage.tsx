@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { InscripcionDetalle, inscripcionApi, ResumenPago } from '../../api/inscripcionApi';
 import { fecha, pesos } from '../../shared/formato';
 import { mensajeDeError } from '../../shared/mensajesError';
-import { Button, Card } from '../../shared/ui';
+import { Button, Card, Modal } from '../../shared/ui';
 import '../inscripciones.css';
 
 /** Paso 2: resumen de pago de una inscripción pendiente de pago y pantalla final de confirmada. */
@@ -35,12 +35,40 @@ export const InscripcionPagoPage: React.FC = () => {
     };
   }, [id]);
 
-  const pagar = async () => {
+  const [pagando, setPagando] = useState(false);
+  // El estado se actualiza después del primer toque; la referencia corta un segundo toque en el acto.
+  const cobroEnCurso = useRef(false);
+
+  const navigate = useNavigate();
+  const [modificando, setModificando] = useState(false);
+  const [reabriendo, setReabriendo] = useState(false);
+  const [errorReabrir, setErrorReabrir] = useState<string | null>(null);
+
+  const reabrir = async () => {
     if (!inscripcion) return;
+    setReabriendo(true);
+    setErrorReabrir(null);
+    try {
+      await inscripcionApi.reabrir(inscripcion.id);
+      navigate(`/inscripciones/${inscripcion.id}/nomina`);
+    } catch (err) {
+      setErrorReabrir(mensajeDeError(err, 'No se pudo volver a la nómina.'));
+      setReabriendo(false);
+    }
+  };
+
+  const pagar = async () => {
+    if (!inscripcion || cobroEnCurso.current) return;
+    cobroEnCurso.current = true;
+    setPagando(true);
+    setAviso(null);
     try {
       setInscripcion(await inscripcionApi.pagar(inscripcion.id));
     } catch (err) {
       setAviso(mensajeDeError(err, 'No se pudo confirmar el pago.'));
+    } finally {
+      cobroEnCurso.current = false;
+      setPagando(false);
     }
   };
 
@@ -73,7 +101,7 @@ export const InscripcionPagoPage: React.FC = () => {
 
   const nombreParticipante = resumen.equipo
     ? `Equipo: ${resumen.equipo.nombre}`
-    : resumen.participante && `${resumen.participante.nombres} ${resumen.participante.apellidos}`;
+    : resumen.participante && `Participante: ${resumen.participante.nombres} ${resumen.participante.apellidos}`;
 
   return (
     <div className="inscripcion-page">
@@ -126,9 +154,52 @@ export const InscripcionPagoPage: React.FC = () => {
         </div>
       )}
 
-      <Button block onClick={pagar}>
-        Confirmar pago de {pesos(resumen.monto)}
+      <Button block onClick={pagar} loading={pagando}>
+        {pagando ? 'Confirmando el pago...' : `Confirmar pago de ${pesos(resumen.monto)}`}
       </Button>
+
+      {/* En una inscripción individual no hay nómina que modificar */}
+      {resumen.equipo && (
+        <Button
+          variant="secondary"
+          block
+          disabled={pagando}
+          onClick={() => {
+            setErrorReabrir(null);
+            setModificando(true);
+          }}
+        >
+          Modificar nómina
+        </Button>
+      )}
+
+      <Modal
+        isOpen={modificando}
+        title="Modificar nómina"
+        size="sm"
+        closeDisabled={reabriendo}
+        onClose={() => setModificando(false)}
+        footer={
+          <>
+            <Button variant="secondary" disabled={reabriendo} onClick={() => setModificando(false)}>
+              Volver
+            </Button>
+            <Button loading={reabriendo} onClick={reabrir}>
+              Sí, modificar la nómina
+            </Button>
+          </>
+        }
+      >
+        <p>
+          Para cambiar la nómina la inscripción vuelve a borrador y vas a tener que aceptar el
+          reglamento otra vez antes de pagar. El equipo se mantiene.
+        </p>
+        {errorReabrir && (
+          <div className="alerta alerta-peligro" role="alert">
+            {errorReabrir}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };
