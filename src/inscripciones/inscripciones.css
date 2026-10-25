@@ -1,20 +1,28 @@
 /*
- * Inscripción en dos pasos (PICA-211), mobile-first como el frame 40:2 del Figma. Los colores y
- * medidas salen de los tokens del UI kit (global.css); acá queda lo propio del paso 1.
+ * Inscripción en dos pasos (PICA-211), con los tokens del UI kit (global.css) y las medidas del
+ * frame 40:3 del Figma "Hydra" (celular de 393 px: 24 px a los costados, tarjetas de 345 px).
+ * Botones, tarjetas, alertas y modal son los de src/shared/ui; acá queda solo lo propio del paso 2
+ * y de la pantalla final.
  */
 
 .inscripcion-page {
   width: 100%;
-  max-width: 600px;
+  max-width: 480px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
 }
 
+.inscripcion-cargando {
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+/* Título y "Paso 2/2" (wireframe: 16 px en negrita y 12 px en gris) */
 .inscripcion-encabezado {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   gap: var(--space-3);
 }
@@ -22,12 +30,167 @@
 .inscripcion-encabezado h1 {
   margin: 0;
   font-size: var(--text-lg);
+  overflow-wrap: anywhere;
 }
 
 .inscripcion-paso {
-  font-size: var(--text-sm);
+  flex-shrink: 0;
+  font-size: var(--text-xs);
   color: var(--color-text-secondary);
 }
+
+/* Resumen de inscripción: tarjeta gris con líneas separadas por filetes */
+.resumen-pago {
+  background-color: var(--color-surface);
+  padding: var(--space-4);
+}
+
+.resumen-pago h2 {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.resumen-pago-detalle {
+  margin: var(--space-1) 0 0;
+  padding-bottom: var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-border);
+  overflow-wrap: anywhere;
+}
+
+.resumen-pago-lineas {
+  margin: 0;
+}
+
+.resumen-pago-lineas > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.resumen-pago-lineas dt {
+  color: var(--color-text-secondary);
+}
+
+.resumen-pago-lineas dd {
+  margin: 0;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.resumen-pago-lineas .resumen-pago-total {
+  margin-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.resumen-pago-total dt {
+  font-size: var(--text-md);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.resumen-pago-total dd {
+  font-size: var(--text-lg);
+}
+
+.resumen-pago-extra {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.resumen-pago-lineas + .resumen-pago-extra {
+  margin-top: var(--space-4);
+}
+
+/* Garantía de fondos en custodia */
+.custodia {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.custodia-icono {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  margin-top: 1px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.custodia h2 {
+  margin: 0;
+  font-size: var(--text-xs);
+}
+
+.custodia p {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.inscripcion-acciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.inscripcion-acciones .btn {
+  min-height: 2.75rem;
+}
+
+/* Pantalla final */
+.inscripcion-confirmada {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+}
+
+.inscripcion-confirmada h1 {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-xl);
+}
+
+.inscripcion-confirmada-icono {
+  width: 3.5rem;
+  height: 3.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.inscripcion-confirmada-detalle {
+  margin: 0;
+  font-size: var(--text-md);
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.inscripcion-confirmada .btn {
+  margin-top: var(--space-4);
+  text-decoration: none;
+}
+
+/* --- Paso 1: equipo, nómina y reglamento (frame 40:2) ---------------------- */
 
 .inscripcion-torneo {
   display: flex;
@@ -113,7 +276,6 @@
   color: var(--color-text-secondary);
 }
 
-.inscripcion-cargando,
 .inscripcion-ayuda {
   margin: 0;
   font-size: var(--text-sm);
@@ -179,10 +341,4 @@
   font-size: var(--text-xs);
   font-weight: 700;
   color: var(--color-text);
-}
-
-.inscripcion-acciones {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
 }
