@@ -28,8 +28,9 @@ import { type ErrorCampo, problema, validacion } from './adminHandlers';
 //     INSCRIPCION_GESTIONAR). `organizador` / `org123` no tiene el permiso: 403 SIN_PERMISO.
 //   - Sus equipos (GET /equipos/mios): Deportivo Luján, Los Galácticos y Los Halcones. Los Halcones
 //     ya tienen una inscripción CANCELADA en torneo-apertura-f5 (no pueden reinscribirse ahí).
-//   - En torneo-apertura-f5 hay una inscripción CONFIRMADA de otro equipo ("Los Rivales") con Carlos
-//     Rivas y Sofía Martínez: sumar a cualquiera de los dos responde 409 JUGADOR_YA_INSCRIPTO.
+//   - En torneo-apertura-f5 hay una inscripción CONFIRMADA de otro equipo ("Los Rivales", capitán Carlos
+//     Rivas) con Sofía Martínez, Pablo López, Ana Rodríguez y Juan Pérez: sumar a cualquiera de los cinco
+//     responde 409 JUGADOR_YA_INSCRIPTO.
 //   - Jugadores (GET /usuarios?q=, mínimo 3 caracteres, solo activos): Lucas Fernández (lucas_f99),
 //     Matías Rossi (mrossi), Joaquín Gómez (joaco_g), Salvador Báez (salva_b), Sofía Martínez (sofi_m),
 //     Pablo López (pablo_l), Ana Rodríguez (ana_r), Juan Pérez (juanp), Carlos Rivas (rival_c),
