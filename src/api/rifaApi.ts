@@ -15,6 +15,8 @@ export interface RifaResumen {
   moneda: string;
   ventaDesde: string | null;
   ventaHasta: string | null;
+  /** Fecha programada del sorteo; la aplicación sortea sola en esa fecha. */
+  fechaSorteo: string | null;
   creadoEn: string;
 }
 
@@ -27,15 +29,16 @@ export interface PremioRifa {
   numeroGanador: number | null;
 }
 
-/** GET /rifas/{id}; también lo devuelven el alta, la edición y el reemplazo de premios. */
+/** GET /rifas/{id}; también lo devuelven el alta, la edición, el reemplazo de premios y publicar. */
 export interface RifaDetalle extends RifaResumen {
   descripcion: string | null;
   terminosAceptadosEn: string | null;
+  loteriaDeclaradaEn: string | null;
   premios: PremioRifa[];
   modificadoEn: string | null;
 }
 
-/** Datos generales (pestaña 1). Las fechas van en ISO-8601 UTC o null. */
+/** Datos generales (paso 1). Las fechas van en ISO-8601 UTC o null. */
 export interface RifaPayload {
   titulo: string;
   descripcion?: string | null;
@@ -44,15 +47,20 @@ export interface RifaPayload {
   precioNumero: number;
   ventaDesde: string | null;
   ventaHasta: string | null;
+  fechaSorteo: string | null;
 }
 
-/** Un premio de la pestaña 2; el puesto es la posición en la lista. */
+/** Un premio del paso 2; el puesto es la posición en la lista. */
 export interface PremioPayload {
   pct: number;
   descripcion?: string | null;
 }
 
-// PICA-226 / PICA-227: todas exigen RIFA_GESTIONAR y cada organizador ve solo las suyas.
+/** Lo que le falta a una rifa para publicarse (`faltantes` del 409 RIFA_INCOMPLETA). */
+export type FaltantePublicacion =
+  'VENTANA' | 'VENTA_YA_EMPEZO' | 'FECHA_SORTEO' | 'SIN_PREMIOS' | 'PREMIOS_NO_SUMAN_100';
+
+// PICA-226, PICA-227, PICA-219: todas exigen RIFA_GESTIONAR y cada organizador ve solo las suyas.
 export const rifaApi = {
   listarMias: async (params?: {
     page?: number;
@@ -75,5 +83,13 @@ export const rifaApi = {
 
   reemplazarPremios: async (id: number, premios: PremioPayload[]): Promise<RifaDetalle> => {
     return httpClient.put<RifaDetalle>(`/rifas/${id}/premios`, { premios });
+  },
+
+  /** Pasa la rifa a EN_VENTA; 409 RIFA_INCOMPLETA con `faltantes` si le falta algo. */
+  publicar: async (id: number): Promise<RifaDetalle> => {
+    return httpClient.post<RifaDetalle>(`/rifas/${id}/publicar`, {
+      aceptaTerminos: true,
+      declaraAutorizacionLoteria: true,
+    });
   },
 };
