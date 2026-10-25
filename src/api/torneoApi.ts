@@ -32,6 +32,6 @@ export interface Torneo {
 export const torneoApi = {
   // TODO (PICA-196): ruta provisional.
   obtenerPorSlug: async (slug: string): Promise<Torneo> => {
-    return httpClient.get<Torneo>(`/torneos/${encodeURIComponent(slug)}`);
+    return httpClient.get<Torneo>(`/torneos/slug/${encodeURIComponent(slug)}`);
   },
 };

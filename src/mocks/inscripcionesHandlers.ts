@@ -9,7 +9,7 @@ import { type ErrorCampo, problema, validacion } from './adminHandlers';
 // pica-back/docs/api/openapi.yaml. Se reinicia al recargar la página y, en las pruebas, con
 // `reiniciarInscripciones()`.
 //
-// Torneos de ejemplo (GET /torneos/{slug}); todos están abiertos salvo `torneo-cerrado`:
+// Torneos de ejemplo (GET /torneos/slug/{slug}); todos están abiertos salvo `torneo-cerrado`:
 //   torneo-apertura-f5     Por equipos con costo, como el wireframe: "Torneo Apertura F5", nómina de 5 a 7
 //                          (5 titulares + 2 suplentes), $ 20.000, cupo 16 (quedan 10).
 //   individual-pago        Individual con costo: $ 5.000, cupo 32.
@@ -466,7 +466,7 @@ export const crearInscripcionesHandlers = (sesion: () => SesionMock) => {
 
   return [
     // Torneo por slug. TODO (PICA-196): ruta y forma provisionales; es público.
-    http.get(`${API_URL}/torneos/:slug`, ({ params }) => {
+    http.get(`${API_URL}/torneos/slug/:slug`, ({ params }) => {
       const t = TORNEOS.find((x) => x.slug === params.slug);
       return t
         ? HttpResponse.json(torneoPublico(t))
