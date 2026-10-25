@@ -10,15 +10,29 @@ interface TorneoFiltersProps {
   onReset: () => void;
 }
 
-const CATEGORIAS_FIGMA = ['Todos', 'Fútbol 5', 'Pádel', 'Presencial', 'Online'];
+interface CategoriaFiltro {
+  label: string;
+  query: string;
+  icon: string;
+}
+
+const CATEGORIAS_FILTRO: CategoriaFiltro[] = [
+  { label: 'Todos', query: '', icon: '🔥' },
+  { label: 'Fútbol 5', query: 'Fútbol 5', icon: '⚽' },
+  { label: 'Pádel', query: 'Pádel', icon: '🎾' },
+  { label: 'Básquet', query: 'Básquet', icon: '🏀' },
+  { label: 'Esports', query: 'Esports', icon: '🎮' },
+  { label: 'Presencial', query: 'Presencial', icon: '📍' },
+  { label: 'Online', query: 'Online', icon: '🌐' },
+];
 
 const OPCIONES_ESTADO: { label: string; value: EstadoTorneo | '' }[] = [
-  { label: 'Todos los estados', value: '' },
-  { label: 'Inscripción abierta', value: 'INSCRIPCION_ABIERTA' },
-  { label: 'Inscripción cerrada', value: 'INSCRIPCION_CERRADA' },
-  { label: 'En curso', value: 'EN_CURSO' },
-  { label: 'Finalizado', value: 'FINALIZADO' },
-  { label: 'Cancelado', value: 'CANCELADO' },
+  { label: '⚡ Todos los estados', value: '' },
+  { label: '🟢 Inscripción abierta', value: 'INSCRIPCION_ABIERTA' },
+  { label: '🟡 Inscripción cerrada', value: 'INSCRIPCION_CERRADA' },
+  { label: '🔵 En curso (En vivo)', value: 'EN_CURSO' },
+  { label: '🏁 Finalizado', value: 'FINALIZADO' },
+  { label: '🔴 Cancelado', value: 'CANCELADO' },
 ];
 
 export const TorneoFilters: React.FC<TorneoFiltersProps> = ({
@@ -44,14 +58,9 @@ export const TorneoFilters: React.FC<TorneoFiltersProps> = ({
     return () => clearTimeout(timer);
   }, [searchTerm, disciplina, onDisciplinaChange]);
 
-  const handleChipClick = (cat: string) => {
-    if (cat === 'Todos') {
-      setSearchTerm('');
-      onDisciplinaChange('');
-    } else {
-      setSearchTerm(cat);
-      onDisciplinaChange(cat);
-    }
+  const handleChipClick = (query: string) => {
+    setSearchTerm(query);
+    onDisciplinaChange(query);
   };
 
   const hayFiltros = Boolean(disciplina || estado);
@@ -68,7 +77,7 @@ export const TorneoFilters: React.FC<TorneoFiltersProps> = ({
             id="filtro-disciplina"
             type="text"
             className="torneo-search-input"
-            placeholder="Buscar torneos, clubes o disciplinas..."
+            placeholder="Buscar por disciplina, sede, club o torneo..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -90,28 +99,30 @@ export const TorneoFilters: React.FC<TorneoFiltersProps> = ({
         <button
           type="button"
           className="torneo-notification-bell"
-          aria-label="Notificaciones"
-          title="Notificaciones de torneos"
+          aria-label="Notificaciones de torneos"
+          title="Alertas de nuevos pozos y torneos"
         >
-          🔔
+          <span className="bell-icon">🔔</span>
+          <span className="bell-dot" aria-hidden="true" />
         </button>
       </div>
 
-      {/* Category Pills (Figma Wireframe #37:2) & State Filter */}
+      {/* Category Pills & State Dropdown */}
       <div className="torneo-chips-and-status-row">
         <div className="torneo-category-chips">
-          {CATEGORIAS_FIGMA.map((cat) => {
+          {CATEGORIAS_FILTRO.map((cat) => {
             const isSelected =
-              (cat === 'Todos' && !disciplina) ||
-              disciplina.toLowerCase() === cat.toLowerCase();
+              (!disciplina && cat.query === '') ||
+              (cat.query !== '' && disciplina.toLowerCase() === cat.query.toLowerCase());
             return (
               <button
-                key={cat}
+                key={cat.label}
                 type="button"
                 className={`torneo-chip ${isSelected ? 'active' : ''}`}
-                onClick={() => handleChipClick(cat)}
+                onClick={() => handleChipClick(cat.query)}
               >
-                {cat}
+                <span className="torneo-chip-icon">{cat.icon}</span>
+                <span>{cat.label}</span>
               </button>
             );
           })}
@@ -139,6 +150,7 @@ export const TorneoFilters: React.FC<TorneoFiltersProps> = ({
                 setSearchTerm('');
                 onReset();
               }}
+              title="Restablecer filtros"
             >
               Limpiar ✕
             </button>

@@ -2,10 +2,12 @@
   position: sticky;
   top: 0;
   z-index: 1000;
-  background-color: var(--bg-surface);
+  background-color: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-color);
   padding: 0.75rem 0;
-  box-shadow: var(--shadow-xs);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
 .navbar-container {
@@ -23,18 +25,24 @@
 }
 
 .logo-icon-hydra {
-  width: 36px;
-  height: 36px;
-  background-color: var(--brand-black);
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
   color: #ffffff;
-  border-radius: 9px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-heading);
-  font-weight: 800;
-  font-size: 1.15rem;
-  box-shadow: var(--shadow-xs);
+  font-weight: 900;
+  font-size: 1.25rem;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.navbar-logo:hover .logo-icon-hydra {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.35);
 }
 
 .logo-info {
@@ -44,18 +52,19 @@
 
 .logo-text-hydra {
   font-family: var(--font-heading);
-  font-weight: 800;
-  font-size: 1.15rem;
+  font-weight: 900;
+  font-size: 1.2rem;
   color: var(--text-primary);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   line-height: 1.1;
 }
 
 .logo-subtext-hydra {
   font-size: 0.7rem;
   color: var(--text-secondary);
-  font-weight: 500;
+  font-weight: 600;
   display: none;
+  letter-spacing: -0.01em;
 }
 
 @media (min-width: 640px) {
@@ -108,13 +117,13 @@
   right: 0;
   background-color: var(--bg-surface);
   border-bottom: 1px solid var(--border-color);
-  padding: 1.5rem 1rem;
+  padding: 1.5rem 1.25rem;
   gap: 1.25rem;
   transform: translateY(-150%);
   opacity: 0;
   visibility: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.1);
 }
 
 .navbar-nav.nav-open {
@@ -125,15 +134,23 @@
 
 .nav-link {
   font-size: 0.92rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-secondary);
   text-decoration: none;
   transition: color var(--transition-fast);
+  padding: 0.35rem 0.65rem;
+  border-radius: var(--radius-md);
 }
 
-.nav-link:hover, .nav-link.active {
+.nav-link:hover {
   color: var(--text-primary);
-  font-weight: 600;
+  background-color: var(--bg-subtle);
+}
+
+.nav-link.active {
+  color: var(--text-primary);
+  background-color: var(--bg-subtle);
+  font-weight: 800;
 }
 
 .nav-actions {
@@ -161,7 +178,7 @@
     transform: none;
     opacity: 1;
     visibility: visible;
-    gap: 1.5rem;
+    gap: 1.25rem;
     box-shadow: none;
   }
 

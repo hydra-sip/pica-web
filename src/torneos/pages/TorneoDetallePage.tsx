@@ -157,16 +157,19 @@ export const TorneoDetallePage: React.FC = () => {
 
       {/* Bolsa de Premios del Torneo (Figma Wireframe #33:634) */}
       <div className="bolsa-premios-card">
-        <div className="bolsa-premios-title">Bolsa de Premios del Torneo</div>
-        <div className="bolsa-premios-row">
-          <span className="bolsa-premios-label">Custodiado (Garantizado Hydra):</span>
-          <span className="bolsa-premios-val-bold">{pesos(torneo.pozoEstimado)}</span>
+        <div className="bolsa-premios-header">
+          <div className="bolsa-premios-title">
+            <span>🏆 Bolsa de Premios del Torneo</span>
+          </div>
+          <span className="bolsa-escrow-badge">🛡️ Custodia Criptográfica OK</span>
         </div>
         <div className="bolsa-premios-row">
-          <span className="bolsa-premios-label">Efectivo declarado (No regulado):</span>
-          <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-            $ 0 ARS (100% plataforma)
-          </span>
+          <span className="bolsa-premios-label">Pozo Total en Custodia Hydra:</span>
+          <span className="bolsa-premios-val-bold">{pesos(torneo.pozoEstimado)}</span>
+        </div>
+        <div className="bolsa-premios-secondary">
+          <span>Distribución automatizada por acta arbitral homologada</span>
+          <span>100% fondos garantizados</span>
         </div>
       </div>
 
@@ -227,6 +230,27 @@ export const TorneoDetallePage: React.FC = () => {
             )}
 
             {/* Cupos y Valor de Inscripción */}
+            <div style={{ marginBottom: '0.85rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', marginBottom: '0.35rem' }}>
+                <span style={{ fontWeight: 700, color: torneo.cupoDisponible <= 2 ? '#b45309' : 'var(--text-primary)' }}>
+                  {torneo.cupoDisponible === 0
+                    ? '🚫 Cupos agotados'
+                    : torneo.cupoDisponible <= 2
+                    ? `🔥 ¡Últimos ${torneo.cupoDisponible} cupos disponibles!`
+                    : `Ocupación: ${cuposOcupados} de ${torneo.cupoMaximo} cupos confirmados`}
+                </span>
+                <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>
+                  {Math.min(100, Math.round((cuposOcupados / (torneo.cupoMaximo || 1)) * 100))}%
+                </span>
+              </div>
+              <div className="torneo-cupos-progress-track" style={{ height: '8px' }}>
+                <div
+                  className={`torneo-cupos-progress-fill ${torneo.cupoDisponible === 0 ? 'fill-agotado' : torneo.cupoDisponible <= 2 ? 'fill-alerta' : 'fill-normal'}`}
+                  style={{ width: `${Math.min(100, Math.round((cuposOcupados / (torneo.cupoMaximo || 1)) * 100))}%` }}
+                />
+              </div>
+            </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', backgroundColor: 'var(--bg-subtle)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem' }}>
               <div>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'block', fontWeight: 600 }}>
@@ -501,19 +525,26 @@ export const TorneoDetallePage: React.FC = () => {
                 {torneo.reglamentoHash && (
                   <div
                     style={{
-                      fontSize: '0.78rem',
-                      color: 'var(--text-secondary)',
-                      backgroundColor: 'var(--bg-subtle)',
-                      border: '1px solid var(--border-color)',
-                      padding: '0.75rem 1rem',
+                      fontSize: '0.8rem',
+                      backgroundColor: '#0f172a',
+                      color: '#e2e8f0',
+                      border: '1px solid #334155',
+                      padding: '1rem 1.25rem',
                       borderRadius: 'var(--radius-md)',
-                      wordBreak: 'break-all',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                     }}
                   >
-                    <strong style={{ color: 'var(--brand-black)', display: 'block', marginBottom: '0.25rem' }}>
-                      🔒 Certificado de Integridad SHA-256:
-                    </strong>
-                    <code>{torneo.reglamentoHash}</code>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      <strong style={{ color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.82rem' }}>
+                        <span>🛡️</span> Sello de Integridad Criptográfica SHA-256
+                      </strong>
+                      <span style={{ fontSize: '0.7rem', color: '#94a3b8', backgroundColor: 'rgba(255,255,255,0.08)', padding: '0.15rem 0.5rem', borderRadius: '4px' }}>
+                        Inmutable • Verificado
+                      </span>
+                    </div>
+                    <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: '#38bdf8', wordBreak: 'break-all', display: 'block' }}>
+                      {torneo.reglamentoHash}
+                    </code>
                   </div>
                 )}
               </div>

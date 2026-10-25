@@ -11,16 +11,44 @@ interface TorneoPremiosListProps {
   moneda: string;
 }
 
-const getMedalIcon = (puesto: number): string => {
+const getPodiumConfig = (puesto: number) => {
   switch (puesto) {
     case 1:
-      return '🥇';
+      return {
+        icon: '🥇',
+        badge: 'Campeón',
+        cardClass: 'podium-card-gold',
+        border: 'var(--color-gold-border)',
+        bg: 'linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(251, 191, 36, 0.16) 100%)',
+        amountColor: '#78350f',
+      };
     case 2:
-      return '🥈';
+      return {
+        icon: '🥈',
+        badge: 'Subcampeón',
+        cardClass: 'podium-card-silver',
+        border: '#cbd5e1',
+        bg: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+        amountColor: '#1e293b',
+      };
     case 3:
-      return '🥉';
+      return {
+        icon: '🥉',
+        badge: '3° Puesto',
+        cardClass: 'podium-card-bronze',
+        border: '#fed7aa',
+        bg: 'linear-gradient(135deg, rgba(249, 115, 22, 0.06) 0%, rgba(254, 215, 170, 0.14) 100%)',
+        amountColor: '#7c2d12',
+      };
     default:
-      return '🎖️';
+      return {
+        icon: '🎖️',
+        badge: `${puesto}° Puesto`,
+        cardClass: 'podium-card-default',
+        border: 'var(--border-color)',
+        bg: 'var(--bg-surface)',
+        amountColor: 'var(--text-primary)',
+      };
   }
 };
 
@@ -37,39 +65,42 @@ export const TorneoPremiosList: React.FC<TorneoPremiosListProps> = ({
   const premiosOrdenados = [...premios].sort((a, b) => a.puesto - b.puesto);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       {/* Resumen del pozo y partición */}
       <div
         style={{
           display: 'grid',
           gridTemplateColumns: pctPremioRifa > 0 ? '1fr 1fr' : '1fr',
-          gap: 'var(--space-3)',
+          gap: '0.85rem',
         }}
       >
         <div
           style={{
-            backgroundColor: 'var(--color-surface)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 'var(--radius-sm)',
-            padding: 'var(--space-3) var(--space-4)',
+            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.06) 0%, rgba(5, 150, 105, 0.12) 100%)',
+            border: '1px solid var(--color-emerald-border)',
+            borderRadius: 'var(--radius-md)',
+            padding: '1rem 1.25rem',
+            boxShadow: '0 1px 3px rgba(16, 185, 129, 0.08)',
           }}
         >
           <div
             style={{
-              fontSize: 'var(--text-xs)',
-              color: 'var(--color-text-secondary)',
+              fontSize: '0.72rem',
+              color: 'var(--color-emerald-dark)',
               textTransform: 'uppercase',
-              fontWeight: 700,
+              fontWeight: 800,
+              letterSpacing: '0.04em',
             }}
           >
-            Pozo para Competidores ({pctPozoCompetidores}%)
+            🏆 Pozo Competidores ({pctPozoCompetidores}%)
           </div>
           <div
             style={{
-              fontSize: 'var(--text-xl)',
-              fontWeight: 700,
-              color: 'var(--color-text)',
-              marginTop: '0.2rem',
+              fontSize: '1.45rem',
+              fontWeight: 900,
+              color: 'var(--text-primary)',
+              marginTop: '0.25rem',
+              letterSpacing: '-0.02em',
             }}
           >
             {pesos(montoCompetidores)}
@@ -79,28 +110,31 @@ export const TorneoPremiosList: React.FC<TorneoPremiosListProps> = ({
         {pctPremioRifa > 0 && (
           <div
             style={{
-              backgroundColor: 'var(--color-surface)',
-              border: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-sm)',
-              padding: 'var(--space-3) var(--space-4)',
+              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.06) 0%, rgba(67, 56, 202, 0.12) 100%)',
+              border: '1px solid var(--color-indigo-border)',
+              borderRadius: 'var(--radius-md)',
+              padding: '1rem 1.25rem',
+              boxShadow: '0 1px 3px rgba(99, 102, 241, 0.08)',
             }}
           >
             <div
               style={{
-                fontSize: 'var(--text-xs)',
-                color: 'var(--color-text-secondary)',
+                fontSize: '0.72rem',
+                color: 'var(--color-indigo-dark)',
                 textTransform: 'uppercase',
-                fontWeight: 700,
+                fontWeight: 800,
+                letterSpacing: '0.04em',
               }}
             >
-              Premio Rifa / Espectadores ({pctPremioRifa}%)
+              🎟️ Pozo Rifa Espectadores ({pctPremioRifa}%)
             </div>
             <div
               style={{
-                fontSize: 'var(--text-xl)',
-                fontWeight: 700,
-                color: 'var(--color-text)',
-                marginTop: '0.2rem',
+                fontSize: '1.45rem',
+                fontWeight: 900,
+                color: 'var(--text-primary)',
+                marginTop: '0.25rem',
+                letterSpacing: '-0.02em',
               }}
             >
               {pesos(montoRifa)}
@@ -109,25 +143,30 @@ export const TorneoPremiosList: React.FC<TorneoPremiosListProps> = ({
         )}
       </div>
 
-      {/* Lista de puestos y premios */}
+      {/* Lista de puestos y premios (Podio) */}
       {premiosOrdenados.length === 0 ? (
         <div
           style={{
-            color: 'var(--color-text-muted)',
-            fontSize: 'var(--text-sm)',
+            color: 'var(--text-muted)',
+            fontSize: '0.88rem',
             fontStyle: 'italic',
+            padding: '1.5rem',
+            backgroundColor: 'var(--bg-subtle)',
+            borderRadius: 'var(--radius-md)',
+            textAlign: 'center',
           }}
         >
-          La distribución de premios no ha sido detallada por el organizador.
+          La distribución de premios por puesto no ha sido detallada por el organizador.
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
           {premiosOrdenados.map((premio) => {
             const montoEstimado = calcularPremioPuesto(
               pozoEstimado,
               pctPozoCompetidores,
               premio.pct
             );
+            const podium = getPodiumConfig(premio.puesto);
 
             return (
               <div
@@ -136,28 +175,49 @@ export const TorneoPremiosList: React.FC<TorneoPremiosListProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  backgroundColor: 'var(--color-surface)',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: 'var(--radius-sm)',
-                  padding: 'var(--space-3) var(--space-4)',
+                  background: podium.bg,
+                  border: `1px solid ${podium.border}`,
+                  borderRadius: 'var(--radius-md)',
+                  padding: '0.85rem 1.15rem',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+                  transition: 'all 0.15s ease',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                  <span style={{ fontSize: '1.35rem' }}>{getMedalIcon(premio.puesto)}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                  <span style={{ fontSize: '1.6rem', lineHeight: 1 }}>{podium.icon}</span>
                   <div>
                     <div
                       style={{
-                        fontWeight: 600,
-                        color: 'var(--color-text)',
-                        fontSize: 'var(--text-sm)',
+                        fontWeight: 800,
+                        color: 'var(--text-primary)',
+                        fontSize: '0.95rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.45rem',
                       }}
                     >
-                      {premio.puesto}° Puesto
+                      <span>{podium.badge}</span>
+                      <span
+                        style={{
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          padding: '0.1rem 0.45rem',
+                          borderRadius: 'var(--radius-full)',
+                          backgroundColor: 'rgba(0,0,0,0.05)',
+                          color: 'var(--text-secondary)',
+                        }}
+                      >
+                        {premio.pct}% del pozo
+                      </span>
                     </div>
                     <div
-                      style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}
+                      style={{
+                        fontSize: '0.75rem',
+                        color: 'var(--text-secondary)',
+                        marginTop: '0.15rem',
+                      }}
                     >
-                      {premio.pct}% del pozo de competidores
+                      Puesto {premio.puesto} oficial
                     </div>
                   </div>
                 </div>
@@ -165,15 +225,23 @@ export const TorneoPremiosList: React.FC<TorneoPremiosListProps> = ({
                 <div style={{ textAlign: 'right' }}>
                   <div
                     style={{
-                      fontWeight: 700,
-                      color: 'var(--color-text)',
-                      fontSize: 'var(--text-md)',
+                      fontWeight: 900,
+                      color: podium.amountColor,
+                      fontSize: '1.25rem',
+                      letterSpacing: '-0.01em',
                     }}
                   >
                     {pesos(montoEstimado)}
                   </div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>
-                    estimado
+                  <div
+                    style={{
+                      fontSize: '0.68rem',
+                      color: 'var(--text-muted)',
+                      textTransform: 'uppercase',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Premio en Custodia
                   </div>
                 </div>
               </div>
@@ -181,6 +249,26 @@ export const TorneoPremiosList: React.FC<TorneoPremiosListProps> = ({
           })}
         </div>
       )}
+
+      {/* Escrow Guarantee Footer Note */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          padding: '0.6rem 0.85rem',
+          backgroundColor: 'var(--bg-subtle)',
+          borderRadius: 'var(--radius-sm)',
+          fontSize: '0.74rem',
+          color: 'var(--text-secondary)',
+          border: '1px solid var(--border-color)',
+        }}
+      >
+        <span style={{ fontSize: '0.9rem' }}>🛡️</span>
+        <span>
+          <strong>Garantía Hydra Escrow:</strong> Los premios se liquidan automáticamente a las billeteras de los ganadores tras la homologación del acta arbitral.
+        </span>
+      </div>
     </div>
   );
 };

@@ -194,7 +194,7 @@ export const AdminDashboardPage: React.FC = () => {
             <>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span className="panel-metrica-titulo">{m.titulo}</span>
-                <span style={{ fontSize: '1.25rem' }}>{m.icono}</span>
+                <div className="panel-metrica-icon-wrap">{m.icono}</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginTop: '0.35rem' }}>
                 <span className="panel-metrica-valor">{loading ? '...' : m.valor}</span>
@@ -219,11 +219,11 @@ export const AdminDashboardPage: React.FC = () => {
           );
 
           return m.ruta ? (
-            <Link key={m.id} to={m.ruta} className="card panel-metrica">
+            <Link key={m.id} to={m.ruta} className={`card panel-metrica panel-metrica-${m.id}`}>
               {Content}
             </Link>
           ) : (
-            <div key={m.id} className="card panel-metrica">
+            <div key={m.id} className={`card panel-metrica panel-metrica-${m.id}`}>
               {Content}
             </div>
           );
@@ -277,8 +277,8 @@ export const AdminDashboardPage: React.FC = () => {
                     <div>{ev.actor}</div>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{ev.rol}</span>
                   </td>
-                  <td style={{ padding: '0.85rem 1rem', fontFamily: 'var(--font-mono, monospace)', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                    {ev.hash}
+                  <td style={{ padding: '0.85rem 1rem' }}>
+                    <code className="audit-hash-code">{ev.hash}</code>
                   </td>
                   <td style={{ padding: '0.85rem 1rem', color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
                     {ev.fecha}
