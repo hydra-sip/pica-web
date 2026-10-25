@@ -3,6 +3,7 @@ import { Link, Navigate, useParams } from 'react-router-dom';
 import { InscripcionDetalle, inscripcionApi } from '../../api/inscripcionApi';
 import { Torneo, torneoApi } from '../../api/torneoApi';
 import { mensajeDeError } from '../../shared/mensajesError';
+import { MENSAJES_PASO_1 } from '../mensajesInscripcion';
 import { PasoEquipoNomina } from '../components/PasoEquipoNomina';
 import '../inscripciones.css';
 
@@ -38,7 +39,9 @@ export const InscripcionNominaPage: React.FC = () => {
         if (vigente) setDatos({ inscripcion, torneo });
       })
       .catch(
-        (err) => vigente && setError(mensajeDeError(err, 'No se pudo cargar la inscripción.'))
+        (err) =>
+          vigente &&
+          setError(mensajeDeError(err, 'No se pudo cargar la inscripción.', MENSAJES_PASO_1))
       );
     return () => {
       vigente = false;

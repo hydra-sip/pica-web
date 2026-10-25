@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import { http } from 'msw';
 import { screen, waitFor, within } from '@testing-library/react';
 import { authApi } from '../api/authApi';
 import { equipoApi } from '../api/equipoApi';
 import { inscripcionApi } from '../api/inscripcionApi';
+import { problema } from '../mocks/adminHandlers';
 import { server } from '../mocks/server';
 import { renderRuta } from '../test/renderRuta';
 
@@ -105,6 +107,19 @@ describe('paso 1: retomar un borrador', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'La inscripción no existe o no es tuya.'
+    );
+  });
+
+  it('si la cuenta está bloqueada al cargar el borrador, lo explica con el texto de la inscripción', async () => {
+    server.use(
+      http.get('*/inscripciones/:id', () =>
+        problema(403, 'USUARIO_BLOQUEADO', 'La cuenta tiene un bloqueo vigente')
+      )
+    );
+    await renderRuta('/inscripciones/1000/nomina');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Tu cuenta, o la de un jugador de la nómina, tiene un bloqueo vigente'
     );
   });
 });
