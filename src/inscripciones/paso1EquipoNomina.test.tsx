@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { screen, waitFor, within } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
@@ -38,6 +38,11 @@ const sumarJugador = async (user: UserEvent, texto: string) => {
 };
 
 describe('paso 1: equipo y nómina (alta)', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+
   it('muestra el torneo con lo que pide la nómina y al capitán fijo, sin poder sacarlo', async () => {
     await renderRuta(ALTA_F5);
 
@@ -270,10 +275,14 @@ describe('paso 1: equipo y nómina (alta)', () => {
     }
   );
 
-  it('con la inscripción cerrada muestra el aviso del torneo', async () => {
-    const { user } = await renderRuta('/torneos/torneo-cerrado/inscripcion');
+  it('si la inscripción cierra mientras arma la nómina, muestra el aviso del torneo', async () => {
+    // Un torneo cerrado ya no abre el formulario (la entrada lo avisa): acá cierra después de abrirlo.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-25T12:00:00Z'));
+    const { user } = await renderRuta(ALTA_F5);
     await user.selectOptions(await screen.findByLabelText('Equipo'), 'Los Galácticos');
     for (const texto of ['lucas', 'mrossi']) await sumarJugador(user, texto);
+    vi.setSystemTime(new Date('2031-01-02T12:00:00Z')); // pasó el cierre (2030-12-31)
 
     await user.click(screen.getByRole('button', { name: 'Guardar como borrador y salir' }));
 
