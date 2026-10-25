@@ -1,5 +1,10 @@
 import { http, HttpResponse } from 'msw';
-import type { EquipoInscripto, EstadoInscripcion, InscripcionDetalle } from '../api/inscripcionApi';
+import type {
+  EquipoInscripto,
+  EstadoInscripcion,
+  InscripcionDetalle,
+  TorneoDeInscripcion,
+} from '../api/inscripcionApi';
 import type { UsuarioPublico } from '../api/jugadorApi';
 import type { Torneo } from '../api/torneoApi';
 import { type ErrorCampo, problema, validacion } from './adminHandlers';
@@ -300,9 +305,15 @@ const equipoInscripto = (equipoId: number | null): EquipoInscripto | null => {
   return e ? { id: e.id, nombre: e.nombre } : null;
 };
 
+const torneoDeInscripcion = (torneoId: number): TorneoDeInscripcion => {
+  const t = buscarTorneo(torneoId)!;
+  return { id: t.id, nombre: t.nombre, slug: t.slug };
+};
+
 const resumen = (i: InscripcionMock) => ({
   id: i.id,
   torneoId: i.torneoId,
+  torneo: torneoDeInscripcion(i.torneoId),
   usuarioId: i.usuarioId,
   estado: i.estado,
   creadoEn: i.creadoEn,

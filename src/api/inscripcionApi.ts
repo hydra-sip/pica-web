@@ -11,10 +11,19 @@ export interface EquipoInscripto {
   nombre: string;
 }
 
+/** El torneo de una inscripción, para mostrarlo y llegar a su ficha con `torneoApi.obtenerPorSlug`. */
+export interface TorneoDeInscripcion {
+  id: number;
+  nombre: string;
+  /** Null mientras el torneo no se publicó, cosa que no pasa con uno que ya tiene inscripciones. */
+  slug: string | null;
+}
+
 /** Fila de GET /inscripciones/mias. La individual lleva `usuarioId`; la de equipo, `equipo`. */
 export interface InscripcionResumen {
   id: number;
   torneoId: number;
+  torneo: TorneoDeInscripcion;
   usuarioId?: number | null;
   estado: EstadoInscripcion;
   creadoEn: string;

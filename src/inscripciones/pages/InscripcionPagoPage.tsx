@@ -68,7 +68,6 @@ export const InscripcionPagoPage: React.FC = () => {
         <InscripcionConfirmada
           inscripcion={inscripcion}
           participante={user?.name ? `Participante: ${user.name}` : null}
-          torneo={resumen?.torneo.nombre ?? null}
         />
       );
 

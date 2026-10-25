@@ -248,6 +248,27 @@ describe('pantalla final y otros estados de la inscripción', () => {
     expect(screen.getByText(/Participante: Usuario PICA/)).toBeInTheDocument();
   });
 
+  it('en un torneo gratis la pantalla final muestra el nombre del torneo', async () => {
+    await renderRuta(RUTA_PAGO, { prepara: pendienteDePago('torneo-gratis') });
+
+    expect(await screen.findByRole('heading', { name: '¡Inscripción confirmada!' })).toBeInTheDocument();
+    expect(screen.getByText('Torneo: Torneo Amistoso 3x3')).toBeInTheDocument();
+    expect(screen.queryByText(/Ya estás inscripto en el torneo/)).not.toBeInTheDocument();
+  });
+
+  it('al recargar una inscripción ya pagada la pantalla final sigue mostrando el nombre del torneo', async () => {
+    await renderRuta(RUTA_PAGO, {
+      prepara: async () => {
+        await pendienteDePago('torneo-apertura-f5')();
+        await inscripcionApi.pagar(ID);
+      },
+    });
+
+    expect(await screen.findByRole('heading', { name: '¡Inscripción confirmada!' })).toBeInTheDocument();
+    expect(screen.getByText('Torneo: Torneo Apertura F5')).toBeInTheDocument();
+    expect(screen.queryByText(/Ya estás inscripto en el torneo/)).not.toBeInTheDocument();
+  });
+
   it('un borrador lleva al paso 1 para completarlo', async () => {
     const { ubicacion } = await renderRuta(RUTA_PAGO, {
       prepara: async () => {

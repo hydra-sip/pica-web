@@ -7,18 +7,12 @@ interface InscripcionConfirmadaProps {
   inscripcion: InscripcionDetalle;
   /** Quien se inscribió, si la inscripción es individual. */
   participante: string | null;
-  /**
-   * El nombre del torneo solo se conoce si se llegó desde el resumen de pago: la inscripción trae
-   * únicamente `torneoId` y no hay endpoint para leer un torneo por id.
-   */
-  torneo: string | null;
 }
 
 /** Pantalla final: la inscripción quedó confirmada (pagada, o confirmada sin pago en un torneo gratis). */
 export const InscripcionConfirmada: React.FC<InscripcionConfirmadaProps> = ({
   inscripcion,
   participante,
-  torneo,
 }) => (
   <div className="inscripcion-page">
     <Card className="inscripcion-confirmada">
@@ -32,7 +26,7 @@ export const InscripcionConfirmada: React.FC<InscripcionConfirmadaProps> = ({
         {inscripcion.equipo ? `Equipo: ${inscripcion.equipo.nombre}` : participante}
       </p>
       <p className="inscripcion-confirmada-detalle">
-        {torneo ? `Torneo: ${torneo}` : 'Ya estás inscripto en el torneo.'}
+        Torneo: {inscripcion.torneo.nombre}
       </p>
       {/* TODO (PICA-198): llevar al detalle del torneo cuando tenga ruta; hasta entonces, al inicio. */}
       <Link to="/" className="btn btn-primary btn-block">
