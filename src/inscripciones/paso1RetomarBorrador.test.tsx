@@ -51,25 +51,18 @@ describe('paso 1: retomar un borrador', () => {
     ).toHaveLength(1);
   });
 
-  it('carga el torneo por el slug que trae la inscripción, con el endpoint público', async () => {
+  it('muestra los datos del torneo de la inscripción: su nombre y el rango de la nómina', async () => {
     const { id } = await comoParticipante(() =>
-      inscripcionApi.crear(TORNEO_F5, { nombreEquipoNuevo: 'Los Del Slug', nomina: [JUGADOR_LUCAS] })
+      inscripcionApi.crear(TORNEO_GRATIS, {
+        nombreEquipoNuevo: 'Los Del Slug',
+        nomina: [JUGADOR_LUCAS],
+      })
     );
-    const pedidos: string[] = [];
-    const alPedir = ({ request }: { request: Request }) => {
-      pedidos.push(new URL(request.url).pathname);
-    };
-    server.events.on('request:start', alPedir);
-    try {
-      await renderRuta(`/inscripciones/${id}/nomina`);
-      expect(await screen.findByText('Torneo Apertura F5')).toBeInTheDocument();
-    } finally {
-      server.events.removeListener('request:start', alPedir);
-    }
+    await renderRuta(`/inscripciones/${id}/nomina`);
 
-    expect(pedidos.filter((ruta) => ruta.includes('/torneos/'))).toEqual([
-      expect.stringMatching(/\/torneos\/slug\/torneo-apertura-f5$/),
-    ]);
+    expect(await screen.findByText('Torneo Amistoso 3x3')).toBeInTheDocument();
+    expect(screen.getByText('Nómina de 3 a 4 jugadores')).toBeInTheDocument();
+    expect(screen.queryByText('Torneo Apertura F5')).not.toBeInTheDocument();
   });
 
   it('una inscripción pendiente de pago no se edita acá: lleva al paso 2', async () => {
