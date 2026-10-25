@@ -34,7 +34,8 @@ const POR_CODIGO: Record<string, string> = {
   PERSONA_CON_USUARIO: 'La persona ya tiene un usuario.',
   DOCUMENTO_NO_EDITABLE: 'El documento no se puede cambiar una vez cargado.',
   ROL_INACTIVO: 'El rol está inactivo.',
-  USUARIO_NO_ACTIVO: 'Solo se le pueden cambiar los roles a un usuario activo.',
+  USUARIO_NO_ACTIVO:
+    'El usuario no está activo (cuenta bloqueada o sin verificar), así que no se puede continuar.',
   USUARIO_YA_BLOQUEADO: 'El usuario ya está bloqueado. Para cambiar el motivo o la duración, levantá el bloqueo y volvé a bloquearlo.',
   USUARIO_PROTEGIDO: 'El usuario Admin del sistema no se puede modificar.',
   ROL_PROTEGIDO: 'Ese cambio no está permitido en este rol del sistema.',
@@ -43,6 +44,23 @@ const POR_CODIGO: Record<string, string> = {
     'No podés darte de baja, bloquearte ni resetear tu contraseña desde acá. Tu contraseña se cambia en Mi perfil.',
   RIFA_NO_ENCONTRADA: 'La rifa no existe o no es tuya.',
   RIFA_NO_EDITABLE: 'La rifa ya no está en borrador: no se puede modificar.',
+  TORNEO_NO_ENCONTRADO: 'El torneo no existe o ya no está disponible.',
+  INSCRIPCION_NO_ENCONTRADA: 'La inscripción no existe o no es tuya.',
+  EQUIPO_NO_ENCONTRADO: 'El equipo no existe o no es tuyo.',
+  INSCRIPCION_NO_ABIERTA: 'La inscripción a este torneo no está abierta o ya cerró.',
+  INSCRIPCION_DUPLICADA: 'Ya hay una inscripción tuya, o de ese equipo, en este torneo.',
+  INSCRIPCION_NO_EDITABLE:
+    'La inscripción cambió de estado y ya no se puede hacer esto. Recargá la pantalla para ver cómo quedó.',
+  REGLAMENTO_NO_ACEPTADO: 'Tenés que aceptar el reglamento para continuar.',
+  CUPO_COMPLETO: 'Se completó el cupo del torneo y no queda lugar. No se te cobró nada.',
+  JUGADOR_YA_INSCRIPTO:
+    'Hay un jugador (o vos como capitán) que ya figura en otra inscripción de este torneo. Reemplazalo por otro.',
+  NOMINA_INVALIDA:
+    'La nómina no cumple lo que pide el torneo: revisá la cantidad de jugadores y que estés vos como capitán.',
+  COBRO_RECHAZADO:
+    'No se aprobó el pago y no se cobró nada. Tu inscripción sigue pendiente: probá de nuevo.',
+  INSCRIPCION_NO_PERMITIDA_EN_TORNEO:
+    'El organizador y los árbitros de un torneo no pueden inscribirse en él.',
 };
 
 const POR_CODIGO_DE_CAMPO: Record<string, string> = {
