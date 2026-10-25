@@ -41,6 +41,12 @@ export const InscripcionPagoPage: React.FC = () => {
     };
   }, [id]);
 
+  const cargando = (
+    <div className="inscripcion-page">
+      <p className="inscripcion-cargando">Cargando inscripción...</p>
+    </div>
+  );
+
   if (error) {
     return (
       <div className="inscripcion-page">
@@ -50,18 +56,14 @@ export const InscripcionPagoPage: React.FC = () => {
       </div>
     );
   }
-  if (!inscripcion) return <p className="inscripcion-cargando">Cargando inscripción...</p>;
+  if (!inscripcion) return cargando;
 
   switch (inscripcion.estado) {
     case 'BORRADOR':
       return <Navigate to={`/inscripciones/${inscripcion.id}/nomina`} replace />;
 
     case 'PENDIENTE_PAGO':
-      return resumen ? (
-        <ResumenDePago resumen={resumen} onPagada={setInscripcion} />
-      ) : (
-        <p className="inscripcion-cargando">Cargando inscripción...</p>
-      );
+      return resumen ? <ResumenDePago resumen={resumen} onPagada={setInscripcion} /> : cargando;
 
     case 'CONFIRMADA':
       return (
