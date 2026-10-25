@@ -3,10 +3,11 @@ import { InscripcionDetalle } from '../../api/inscripcionApi';
 import { UsuarioPublico } from '../../api/jugadorApi';
 import { Torneo } from '../../api/torneoApi';
 import { useAuth } from '../../auth/hooks/useAuth';
-import { Card } from '../../shared/ui';
+import { pesos } from '../../shared/formato';
+import { Button, Card } from '../../shared/ui';
 import { useEquiposDelTorneo } from '../hooks/useEquiposDelTorneo';
 import { BuscadorJugadores } from './BuscadorJugadores';
-import { SelectorEquipo } from './SelectorEquipo';
+import { EQUIPO_NUEVO, SelectorEquipo } from './SelectorEquipo';
 import '../inscripciones.css';
 
 export interface PasoEquipoNominaProps {
@@ -45,11 +46,19 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
   const sumar = (j: UsuarioPublico) => setJugadores((prev) => [...prev, j]);
   const sacar = (id: number) => setJugadores((prev) => prev.filter((j) => j.id !== id));
 
+  const [reglamentoAceptado, setReglamentoAceptado] = useState(false);
+
+  const gratis = torneo.valorInscripcion === 0;
+  const creaNuevo = equipos?.length === 0 || equipoElegido === EQUIPO_NUEVO;
+  const equipoListo = creaNuevo ? nombreNuevo.trim() !== '' : equipoElegido !== '';
+  const nominaValida = total >= minimo && (maximo === null || total <= maximo);
+  const puedeContinuar = reglamentoAceptado && equipoListo && nominaValida;
+
   return (
     <div className="inscripcion-page">
       <header className="inscripcion-encabezado">
         <h1>Inscripción de Equipo</h1>
-        <span className="inscripcion-paso">Paso 1/2</span>
+        {!gratis && <span className="inscripcion-paso">Paso 1/2</span>}
       </header>
 
       <Card className="inscripcion-torneo">
@@ -118,6 +127,37 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
           {cantidad(total)} (mínimo {minimo}, máximo {maximo})
         </p>
       </section>
+
+      <Card className="reglamento">
+        <label className="reglamento-casilla">
+          <input
+            type="checkbox"
+            checked={reglamentoAceptado}
+            onChange={(e) => setReglamentoAceptado(e.target.checked)}
+          />
+          <strong>Acepto el Reglamento y Código de Conducta</strong>
+        </label>
+        <p className="inscripcion-ayuda">
+          He leído las bases del {torneo.nombre} y acepto las penalidades por W.O. y conducta
+          antideportiva.
+        </p>
+        {torneo.reglamentoUrl && (
+          <a href={torneo.reglamentoUrl} target="_blank" rel="noopener noreferrer">
+            Ver reglamento oficial en PDF
+          </a>
+        )}
+      </Card>
+
+      <div className="inscripcion-acciones">
+        <Button block disabled={!puedeContinuar}>
+          {gratis
+            ? 'Confirmar inscripción'
+            : `Continuar al pago (${pesos(torneo.valorInscripcion)})`}
+        </Button>
+        <Button block variant="secondary" disabled={!equipoListo}>
+          Guardar como borrador y salir
+        </Button>
+      </div>
     </div>
   );
 };

@@ -137,4 +137,48 @@ describe('paso 1: equipo y nómina (alta)', () => {
 
     expect(await screen.findByRole('button', { name: 'Sumar a Salvador Báez' })).toBeDisabled();
   });
+
+  it('muestra el reglamento con el enlace al PDF en otra pestaña', async () => {
+    await renderRuta(ALTA_F5);
+
+    const enlace = await screen.findByRole('link', { name: 'Ver reglamento oficial en PDF' });
+    expect(enlace).toHaveAttribute(
+      'href',
+      'https://example.com/reglamentos/torneo-apertura-f5.pdf'
+    );
+    expect(enlace).toHaveAttribute('target', '_blank');
+    expect(screen.getByLabelText('Acepto el Reglamento y Código de Conducta')).not.toBeChecked();
+  });
+
+  it('el botón de continuar muestra el monto y sigue deshabilitado hasta tener reglamento, equipo y nómina válida', async () => {
+    const { user } = await renderRuta(ALTA_F5); // nómina de 5 a 7
+    const continuar = await screen.findByRole('button', {
+      name: /^Continuar al pago \(\$\s20\.000,00\)$/,
+    });
+    expect(continuar).toBeDisabled();
+
+    await user.selectOptions(await screen.findByLabelText('Equipo'), 'Los Galácticos');
+    await user.click(screen.getByLabelText('Acepto el Reglamento y Código de Conducta'));
+    expect(continuar).toBeDisabled(); // con un solo jugador no llega al mínimo
+
+    for (const texto of ['lucas', 'mrossi', 'joaco', 'ana_r']) await sumarJugador(user, texto);
+    expect(continuar).toBeEnabled(); // 5 jugadores
+
+    await user.click(screen.getByLabelText('Acepto el Reglamento y Código de Conducta'));
+    expect(continuar).toBeDisabled();
+  });
+
+  it('con un nombre de equipo nuevo en blanco no deja continuar', async () => {
+    const { user } = await renderRuta('/torneos/torneo-gratis/inscripcion'); // 3 a 4, gratis
+    await user.selectOptions(await screen.findByLabelText('Equipo'), 'Crear un equipo nuevo');
+    await user.click(screen.getByLabelText('Acepto el Reglamento y Código de Conducta'));
+    for (const texto of ['lucas', 'mrossi']) await sumarJugador(user, texto);
+    const confirmar = screen.getByRole('button', { name: 'Confirmar inscripción' });
+    expect(confirmar).toBeDisabled();
+
+    await user.type(screen.getByLabelText('Nombre del equipo nuevo'), '   ');
+    expect(confirmar).toBeDisabled();
+    await user.type(screen.getByLabelText('Nombre del equipo nuevo'), 'Los Nuevos');
+    expect(confirmar).toBeEnabled();
+  });
 });

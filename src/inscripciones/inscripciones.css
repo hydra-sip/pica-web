@@ -146,3 +146,43 @@
   background-color: var(--color-surface);
   color: var(--color-text);
 }
+
+.reglamento {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  background-color: var(--color-surface);
+}
+
+.reglamento-casilla {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.reglamento-casilla input {
+  flex-shrink: 0;
+  width: 1.125rem;
+  height: 1.125rem;
+  accent-color: var(--color-primary);
+}
+
+.reglamento p {
+  margin: 0 0 0 calc(1.125rem + var(--space-3));
+}
+
+.reglamento a {
+  margin-left: calc(1.125rem + var(--space-3));
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.inscripcion-acciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
