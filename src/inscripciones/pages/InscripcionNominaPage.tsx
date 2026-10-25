@@ -29,10 +29,12 @@ export const InscripcionNominaPage: React.FC = () => {
       .obtener(Number(id))
       .then(async (inscripcion) => {
         // Si no está en borrador no hace falta el torneo: se redirige o se avisa.
+        const slug = inscripcion.torneo.slug;
+        if (inscripcion.estado === 'BORRADOR' && !slug) {
+          throw new Error('No se pudo cargar el torneo de la inscripción.');
+        }
         const torneo =
-          inscripcion.estado === 'BORRADOR'
-            ? await torneoApi.obtenerPorId(inscripcion.torneoId)
-            : null;
+          inscripcion.estado === 'BORRADOR' && slug ? await torneoApi.obtenerPorSlug(slug) : null;
         if (vigente) setDatos({ inscripcion, torneo });
       })
       .catch(

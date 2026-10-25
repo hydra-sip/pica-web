@@ -27,6 +27,7 @@ import { type ErrorCampo, problema, validacion } from './adminHandlers';
 //   torneo-cerrado         Con la inscripción cerrada: crear, reemplazar, confirmar y pagar responden
 //                          409 INSCRIPCION_NO_ABIERTA.
 //   Cualquier otro slug: 404 TORNEO_NO_ENCONTRADO.
+// Cada inscripción (detalle y resumen) trae `torneo {id, nombre, slug}` del torneo de esta lista.
 //
 // Datos de ejemplo:
 //   - El capitán es el usuario de la sesión (en los mocks, `usuario` / `user123`, id 2, con
@@ -480,14 +481,6 @@ export const crearInscripcionesHandlers = (sesion: () => SesionMock) => {
     // Torneo por slug. TODO (PICA-196): ruta y forma provisionales; es público.
     http.get(`${API_URL}/torneos/slug/:slug`, ({ params }) => {
       const t = TORNEOS.find((x) => x.slug === params.slug);
-      return t
-        ? HttpResponse.json(torneoPublico(t))
-        : noEncontrado('TORNEO_NO_ENCONTRADO', 'El torneo no existe');
-    }),
-
-    // Torneo por id. TODO (PICA-196): provisional, ver torneoApi.obtenerPorId; es público.
-    http.get(`${API_URL}/torneos/:id`, ({ params }) => {
-      const t = buscarTorneo(idDe(params));
       return t
         ? HttpResponse.json(torneoPublico(t))
         : noEncontrado('TORNEO_NO_ENCONTRADO', 'El torneo no existe');

@@ -3,6 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import { authApi } from '../api/authApi';
 import { equipoApi } from '../api/equipoApi';
 import { inscripcionApi } from '../api/inscripcionApi';
+import { server } from '../mocks/server';
 import { renderRuta } from '../test/renderRuta';
 
 const TORNEO_F5 = 1;
@@ -46,6 +47,27 @@ describe('paso 1: retomar un borrador', () => {
     expect(
       (await equipoApi.listarMios()).content.filter((e) => e.nombre === 'Los Retomados')
     ).toHaveLength(1);
+  });
+
+  it('carga el torneo por el slug que trae la inscripción, con el endpoint público', async () => {
+    const { id } = await comoParticipante(() =>
+      inscripcionApi.crear(TORNEO_F5, { nombreEquipoNuevo: 'Los Del Slug', nomina: [JUGADOR_LUCAS] })
+    );
+    const pedidos: string[] = [];
+    const alPedir = ({ request }: { request: Request }) => {
+      pedidos.push(new URL(request.url).pathname);
+    };
+    server.events.on('request:start', alPedir);
+    try {
+      await renderRuta(`/inscripciones/${id}/nomina`);
+      expect(await screen.findByText('Torneo Apertura F5')).toBeInTheDocument();
+    } finally {
+      server.events.removeListener('request:start', alPedir);
+    }
+
+    expect(pedidos.filter((ruta) => ruta.includes('/torneos/'))).toEqual([
+      expect.stringMatching(/\/torneos\/slug\/torneo-apertura-f5$/),
+    ]);
   });
 
   it('una inscripción pendiente de pago no se edita acá: lleva al paso 2', async () => {
