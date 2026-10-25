@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { http, HttpResponse } from 'msw';
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
+import type { UserEvent } from '@testing-library/user-event';
 import { equipoApi } from '../api/equipoApi';
 import { server } from '../mocks/server';
 import { renderRuta } from '../test/renderRuta';
@@ -12,6 +13,15 @@ const idDeEquipo = async (nombre: string) =>
   (await equipoApi.listarMios()).content.find((e) => e.nombre === nombre)!.id;
 
 const ALTA_F5 = '/torneos/torneo-apertura-f5/inscripcion';
+
+// Busca por `texto` y suma al primer resultado.
+const sumarJugador = async (user: UserEvent, texto: string) => {
+  const buscador = await screen.findByRole('searchbox', { name: /buscar jugador/i });
+  await user.clear(buscador);
+  await user.type(buscador, texto);
+  const sumar = await screen.findByRole('button', { name: /^Sumar a / });
+  await user.click(sumar);
+};
 
 describe('paso 1: equipo y nómina (alta)', () => {
   it('muestra el torneo con lo que pide la nómina y al capitán fijo, sin poder sacarlo', async () => {
@@ -63,5 +73,68 @@ describe('paso 1: equipo y nómina (alta)', () => {
     expect(await screen.findByLabelText('Nombre del equipo nuevo')).toBeInTheDocument();
     expect(screen.getByText(/todavía no tenés equipos/i)).toBeInTheDocument();
     expect(screen.queryByLabelText('Equipo')).not.toBeInTheDocument();
+  });
+
+  it('la búsqueda espera al menos tres letras y muestra nombre y @usuario de cada jugador', async () => {
+    const { user } = await renderRuta(ALTA_F5);
+    const buscador = await screen.findByRole('searchbox', { name: /buscar jugador/i });
+
+    await user.type(buscador, 'lu');
+    expect(screen.getByText('Escribí al menos 3 letras para buscar.')).toBeInTheDocument();
+    expect(screen.queryByText('Lucas Fernández')).not.toBeInTheDocument();
+
+    await user.type(buscador, 'c');
+    const resultado = await screen.findByRole('listitem', { name: /Lucas Fernández/ });
+    expect(within(resultado).getByText('@lucas_f99')).toBeInTheDocument();
+    expect(screen.queryByText('Escribí al menos 3 letras para buscar.')).not.toBeInTheDocument();
+  });
+
+  it('avisa si la búsqueda no encuentra a nadie', async () => {
+    const { user } = await renderRuta(ALTA_F5);
+
+    await user.type(await screen.findByRole('searchbox', { name: /buscar jugador/i }), 'zzzz');
+
+    expect(
+      await screen.findByText('No encontramos jugadores con esa búsqueda.')
+    ).toBeInTheDocument();
+  });
+
+  it('suma un jugador a la nómina con un toque, lo cuenta y no deja sumarlo dos veces', async () => {
+    const { user } = await renderRuta(ALTA_F5);
+
+    await sumarJugador(user, 'lucas');
+
+    const nomina = screen.getByRole('list', { name: 'Nómina' });
+    expect(within(nomina).getByText('Lucas Fernández')).toBeInTheDocument();
+    expect(within(nomina).getByText('@lucas_f99')).toBeInTheDocument();
+    expect(screen.getByText('2 jugadores (mínimo 5, máximo 7)')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sumar a Lucas Fernández' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Sumar a Lucas Fernández' })).toHaveTextContent(
+      'En la nómina'
+    );
+  });
+
+  it('saca a un jugador de la nómina', async () => {
+    const { user } = await renderRuta(ALTA_F5);
+    await sumarJugador(user, 'lucas');
+
+    await user.click(screen.getByRole('button', { name: 'Sacar a Lucas Fernández' }));
+
+    const nomina = screen.getByRole('list', { name: 'Nómina' });
+    expect(within(nomina).queryByText('Lucas Fernández')).not.toBeInTheDocument();
+    expect(screen.getByText('1 jugador (mínimo 5, máximo 7)')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sumar a Lucas Fernández' })).toBeEnabled();
+  });
+
+  it('con la nómina en el máximo no deja sumar a nadie más', async () => {
+    const { user } = await renderRuta('/torneos/torneo-gratis/inscripcion'); // nómina de 3 a 4
+    await sumarJugador(user, 'lucas');
+    await sumarJugador(user, 'mrossi');
+    await sumarJugador(user, 'joaco');
+
+    await user.clear(screen.getByRole('searchbox', { name: /buscar jugador/i }));
+    await user.type(screen.getByRole('searchbox', { name: /buscar jugador/i }), 'salva');
+
+    expect(await screen.findByRole('button', { name: 'Sumar a Salvador Báez' })).toBeDisabled();
   });
 });

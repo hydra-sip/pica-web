@@ -119,3 +119,30 @@
   font-size: var(--text-sm);
   color: var(--color-text-secondary);
 }
+
+.buscador {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.buscador .input {
+  background-color: var(--color-surface);
+}
+
+.nomina-sacar {
+  flex-shrink: 0;
+  padding: var(--space-1) var(--space-2);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.nomina-sacar:hover {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+}

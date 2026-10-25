@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { InscripcionDetalle } from '../../api/inscripcionApi';
+import { UsuarioPublico } from '../../api/jugadorApi';
 import { Torneo } from '../../api/torneoApi';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { Card } from '../../shared/ui';
 import { useEquiposDelTorneo } from '../hooks/useEquiposDelTorneo';
+import { BuscadorJugadores } from './BuscadorJugadores';
 import { SelectorEquipo } from './SelectorEquipo';
 import '../inscripciones.css';
 
@@ -16,7 +18,7 @@ export interface PasoEquipoNominaProps {
   inscripcion?: InscripcionDetalle | null;
 }
 
-const jugadores = (n: number) => `${n} ${n === 1 ? 'jugador' : 'jugadores'}`;
+const cantidad = (n: number) => `${n} ${n === 1 ? 'jugador' : 'jugadores'}`;
 
 /**
  * Paso 1 de la inscripción (HU-204): equipo, nómina y reglamento. Sirve para el alta y para retomar
@@ -32,6 +34,16 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
     inscripcion?.equipo ? String(inscripcion.equipo.id) : ''
   );
   const [nombreNuevo, setNombreNuevo] = useState('');
+
+  const capitanId = Number(user?.id);
+  // El capitán va aparte (fijo y primero): acá quedan los demás jugadores.
+  const [jugadores, setJugadores] = useState<UsuarioPublico[]>(
+    () => inscripcion?.nomina?.filter((j) => j.id !== capitanId) ?? []
+  );
+  const total = jugadores.length + 1;
+  const lleno = maximo !== null && total >= maximo;
+  const sumar = (j: UsuarioPublico) => setJugadores((prev) => [...prev, j]);
+  const sacar = (id: number) => setJugadores((prev) => prev.filter((j) => j.id !== id));
 
   return (
     <div className="inscripcion-page">
@@ -63,9 +75,14 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
 
       <section aria-labelledby="nomina-titulo" className="inscripcion-bloque">
         <h2 id="nomina-titulo" className="inscripcion-etiqueta">
-          Armado de Nómina
+          Armado de Nómina (Buscar por @usuario o nombre)
         </h2>
-        <ul className="nomina-lista">
+        <BuscadorJugadores
+          enNomina={new Set([capitanId, ...jugadores.map((j) => j.id)])}
+          lleno={lleno}
+          onSumar={sumar}
+        />
+        <ul className="nomina-lista" aria-label="Nómina">
           <li className="nomina-fila">
             <span className="nomina-avatar nomina-avatar-capitan" aria-hidden="true">
               C
@@ -75,9 +92,30 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
               <small>@{user?.username}</small>
             </span>
           </li>
+          {jugadores.map((j, i) => (
+            <li key={j.id} className="nomina-fila">
+              <span className="nomina-avatar" aria-hidden="true">
+                {i + 2}
+              </span>
+              <span className="nomina-datos">
+                <strong>
+                  {j.nombres} {j.apellidos}
+                </strong>
+                <small>@{j.username}</small>
+              </span>
+              <button
+                type="button"
+                className="nomina-sacar"
+                onClick={() => sacar(j.id)}
+                aria-label={`Sacar a ${j.nombres} ${j.apellidos}`}
+              >
+                ✕
+              </button>
+            </li>
+          ))}
         </ul>
         <p className="inscripcion-contador">
-          {jugadores(1)} (mínimo {minimo}, máximo {maximo})
+          {cantidad(total)} (mínimo {minimo}, máximo {maximo})
         </p>
       </section>
     </div>
