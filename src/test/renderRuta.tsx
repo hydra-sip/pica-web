@@ -15,6 +15,11 @@ const CREDENCIALES = {
 export interface OpcionesRuta {
   /** Con quién se entra. `anonimo` es sin sesión. Por defecto, `participante`. */
   usuario?: keyof typeof CREDENCIALES | 'anonimo';
+  /**
+   * Arma el estado de partida con la API (por ejemplo un borrador con `inscripcionApi.crear`). Corre
+   * con la sesión ya iniciada y antes de renderizar; los mocks se reinician solos entre test y test.
+   */
+  prepara?: () => Promise<void>;
 }
 
 /**
@@ -22,11 +27,15 @@ export interface OpcionesRuta {
  * contra los handlers de MSW, con el usuario ya logueado. Devuelve el resultado de Testing Library,
  * un `user` de user-event y `ubicacion()` con la ruta actual (path y query) para chequear redirecciones.
  */
-export const renderRuta = async (ruta: string, { usuario = 'participante' }: OpcionesRuta = {}) => {
+export const renderRuta = async (
+  ruta: string,
+  { usuario = 'participante', prepara }: OpcionesRuta = {}
+) => {
   if (usuario !== 'anonimo') {
     const { identificador, password } = CREDENCIALES[usuario];
     await authApi.login(identificador, password);
   }
+  await prepara?.();
 
   let actual = ruta;
   const SeguirUbicacion: React.FC = () => {
