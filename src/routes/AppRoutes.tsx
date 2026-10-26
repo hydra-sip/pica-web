@@ -35,11 +35,13 @@ export const AppRoutes: React.FC = () => {
         <Route path="oauth/callback" element={<OAuthCallbackPage />} />
         <Route path="unauthorized" element={<UnauthorizedPage />} />
 
-        {/* Acceso protegido: No se puede acceder sin loguearse primero */}
+        {/* Rutas Públicas (HU-208: Catálogo y detalle público sin iniciar sesión) */}
+        <Route index element={<HomePage />} />
+        <Route path="torneos" element={<TorneosCatalogoPage />} />
+        <Route path="torneos/:slug" element={<TorneoDetallePage />} />
+
+        {/* Rutas que requieren autenticación */}
         <Route element={<RequireAuth />}>
-          <Route index element={<HomePage />} />
-          <Route path="torneos" element={<TorneosCatalogoPage />} />
-          <Route path="torneos/:slug" element={<TorneoDetallePage />} />
           <Route path="mi-perfil" element={<ProfilePage />} />
 
           {/* Rifas del organizador (PICA-227 / Hydra): RIFA_GESTIONAR */}
