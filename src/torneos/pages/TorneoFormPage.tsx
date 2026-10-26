@@ -52,8 +52,11 @@ const MENSAJES_DE_CAMPO = { RANGO_INVALIDO: 'Está fuera de lo permitido.' };
  * Asistente "Crear Nueva Competencia" (PICA-202 y PICA-205). Los pasos 1 y 2 editan el mismo formulario y se
  * guardan juntos, porque PUT /torneos/{id}/informacion reemplaza todo: el alta es POST /torneos y después cada
  * guardado es un PUT. El paso 3 se guarda aparte (PUT /torneos/{id}/economia; los gastos, cada uno en el momento)
- * y desde ahí se publica. "Continuar edición" abre en el paso que quedó pendiente. Fuera de BORRADOR todo queda
- * de solo lectura.
+ * y desde ahí se publica. "Continuar edición" abre en el paso que quedó pendiente.
+ *
+ * Publicado y sin empezar (PICA-207), los pasos 1 y 2 se siguen editando salvo lo que el back marca en
+ * `camposBloqueados`; el paso 3 queda de solo lectura porque el esquema se selló al publicar. Después, todo es de
+ * solo lectura.
  */
 export const TorneoFormPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -82,7 +85,11 @@ export const TorneoFormPage: React.FC = () => {
   const pedido = pasoDe(searchParams.get('paso'));
   // Sin el borrador guardado no hay paso 3: los gastos y la economía cuelgan del torneo.
   const paso: Paso = !torneo && pedido === 3 ? 2 : pedido;
+  // editable: el borrador, con el paso 3 y la publicación; publicado: solo los pasos 1 y 2, con campos bloqueados
   const editable = !torneo || torneo.estado === 'BORRADOR';
+  const publicado =
+    torneo?.estado === 'INSCRIPCION_ABIERTA' || torneo?.estado === 'INSCRIPCION_CERRADA';
+  const bloqueados = torneo?.camposBloqueados ?? [];
   const estado = torneo?.estado ?? 'BORRADOR';
   const cupoTope = opciones?.cupoMaximo ?? 64;
 
@@ -144,7 +151,7 @@ export const TorneoFormPage: React.FC = () => {
   // Canchas que ya existen en la sede, para sugerirlas mientras se escribe.
   useEffect(() => {
     const sede = form.sede.trim();
-    if (!editable || form.modalidad === 'ONLINE' || !sede) {
+    if ((!editable && !publicado) || form.modalidad === 'ONLINE' || !sede) {
       setSugerenciasCanchas([]);
       return;
     }
@@ -159,7 +166,7 @@ export const TorneoFormPage: React.FC = () => {
       vigente = false;
       clearTimeout(espera);
     };
-  }, [form.sede, form.modalidad, editable]);
+  }, [form.sede, form.modalidad, editable, publicado]);
 
   const cambiar = (cambios: Partial<FormTorneo>) => {
     setForm((prev) => ({ ...prev, ...cambios }));
@@ -192,7 +199,7 @@ export const TorneoFormPage: React.FC = () => {
     setMensaje(null);
     const encontrados = seguir
       ? validarPaso(paso === 1 ? 1 : 2, form, cupoTope, Boolean(torneo?.reglamentoUrl))
-      : validarBorrador(form, cupoTope);
+      : validarBorrador(form, cupoTope, publicado && torneo ? desdeTorneo(torneo) : undefined);
     setErrores(encontrados);
     if (Object.keys(encontrados).length > 0) {
       setMensaje({ tipo: 'error', texto: 'Revisá los campos marcados.' });
@@ -202,11 +209,11 @@ export const TorneoFormPage: React.FC = () => {
     setGuardando(true);
     try {
       const guardado = torneo
-        ? await torneoApi.actualizarInformacion(torneo.id, aPayload(form))
+        ? await torneoApi.actualizarInformacion(torneo.id, aPayload(form, torneo))
         : await torneoApi.crear(aPayload(form));
       setTorneo(guardado);
       setForm(desdeTorneo(guardado));
-      setMensaje({ tipo: 'exito', texto: 'Borrador guardado.' });
+      setMensaje({ tipo: 'exito', texto: publicado ? 'Cambios guardados.' : 'Borrador guardado.' });
       const destino: Paso = seguir ? (paso === 1 ? 2 : 3) : paso;
       if (!torneo) {
         // Recién creado: pasa a la URL de edición, que es la que se puede recargar o compartir.
@@ -220,6 +227,10 @@ export const TorneoFormPage: React.FC = () => {
       }
     } catch (err) {
       const delBack = erroresPorCampo(err, MENSAJES_DE_CAMPO) as ErroresTorneo;
+      // el rango ya lo miró el front: publicado, lo único que puede rechazar el back es bajar de los inscriptos
+      if (publicado && delBack.cupoMaximo) {
+        delBack.cupoMaximo = 'No puede quedar por debajo de los que ya se inscribieron.';
+      }
       setErrores(delBack);
       const enElOtroPaso = (Object.keys(delBack) as (keyof FormTorneo)[]).some(
         (campo) => CAMPOS_PASO_2.includes(campo) !== (paso === 2)
@@ -335,6 +346,9 @@ export const TorneoFormPage: React.FC = () => {
   }
 
   const habilitado = editable && !guardando;
+  const habilitadoPasos = (editable || publicado) && !guardando;
+  // los árbitros se cambian hasta que el torneo termina (HU-203)
+  const conArbitros = !guardando && estado !== 'FINALIZADO' && estado !== 'CANCELADO';
 
   return (
     <div className="torneos-page">
@@ -353,7 +367,11 @@ export const TorneoFormPage: React.FC = () => {
 
       {!editable && torneo && (
         <div className="alerta alerta-info" role="status">
-          El torneo ya no está en borrador: se muestra de solo lectura.{' '}
+          {!publicado
+            ? 'El torneo ya empezó o terminó: se muestra de solo lectura.'
+            : bloqueados.includes('sede')
+              ? 'Ya hay inscripciones pagas: sede, fechas y formato no se pueden cambiar. Sí el nombre, la descripción y el cupo máximo.'
+              : 'El torneo está publicado: la disciplina, el reglamento y el esquema económico quedaron sellados; lo demás se puede cambiar.'}{' '}
           {torneo.slug && (
             <Link to={`/torneos/${torneo.id}/publicado`}>Ver el enlace y el sello</Link>
           )}
@@ -413,7 +431,8 @@ export const TorneoFormPage: React.FC = () => {
               form={form}
               onCambio={cambiar}
               errores={errores}
-              habilitado={habilitado}
+              habilitado={habilitadoPasos}
+              bloqueados={bloqueados}
               opciones={opciones}
               sugerenciasCanchas={sugerenciasCanchas}
               torneo={torneo}
@@ -432,10 +451,11 @@ export const TorneoFormPage: React.FC = () => {
                 form={form}
                 onCambio={cambiar}
                 errores={errores}
-                habilitado={habilitado}
+                habilitado={habilitadoPasos}
+                bloqueados={bloqueados}
                 cupoTope={cupoTope}
               />
-              <ArbitrosTorneo torneoId={torneo?.id ?? null} habilitado={habilitado} />
+              <ArbitrosTorneo torneoId={torneo?.id ?? null} habilitado={conArbitros} />
             </>
           )}
           {paso === 3 && torneo && formEco && (
@@ -486,6 +506,11 @@ export const TorneoFormPage: React.FC = () => {
               {editable && (
                 <Button type="submit" variant="secondary" loading={guardando}>
                   Guardar como borrador
+                </Button>
+              )}
+              {publicado && paso < 3 && (
+                <Button type="submit" variant="secondary" loading={guardando}>
+                  Guardar cambios
                 </Button>
               )}
               {paso === 1 && (
