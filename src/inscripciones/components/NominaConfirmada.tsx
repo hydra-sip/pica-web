@@ -86,7 +86,10 @@ export const NominaConfirmada: React.FC<NominaConfirmadaProps> = ({
   };
 
   return (
-    <section>
+    <section aria-labelledby="nomina-titulo" className="inscripcion-bloque">
+      <h2 id="nomina-titulo" className="inscripcion-etiqueta">
+        Nómina
+      </h2>
       {aviso && (
         <div className="alerta alerta-exito" role="status">
           {aviso}

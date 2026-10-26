@@ -95,14 +95,16 @@ export const MiInscripcionPage: React.FC = () => {
 
   return (
     <div className="inscripcion-page">
-      <h1>Mi inscripción</h1>
-      <Card>
-        <p className="inscripcion-confirmada-detalle">
+      <header className="inscripcion-encabezado">
+        <h1>Mi inscripción</h1>
+      </header>
+      <Card className="inscripcion-torneo">
+        <strong>{inscripcion.torneo.nombre}</strong>
+        <span>
           {inscripcion.equipo
             ? `Equipo: ${inscripcion.equipo.nombre}`
             : `Participante: ${user?.name}`}
-        </p>
-        <p className="inscripcion-confirmada-detalle">Torneo: {inscripcion.torneo.nombre}</p>
+        </span>
       </Card>
       {inscripcion.equipo && (
         <>

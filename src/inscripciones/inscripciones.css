@@ -372,17 +372,6 @@
 
 /* --- Mi inscripción: historial de reemplazos --- */
 
-.historial-reemplazos {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.historial-reemplazos h2 {
-  margin: 0;
-  font-size: var(--text-md);
-}
-
 .historial-reemplazos p {
   margin: 0;
   font-size: var(--text-sm);

@@ -35,8 +35,10 @@ export const HistorialReemplazos: React.FC<HistorialReemplazosProps> = ({
   }, [inscripcionId, recarga]);
 
   return (
-    <section className="historial-reemplazos">
-      <h2>Historial de reemplazos</h2>
+    <section aria-labelledby="historial-titulo" className="inscripcion-bloque historial-reemplazos">
+      <h2 id="historial-titulo" className="inscripcion-etiqueta">
+        Historial de reemplazos
+      </h2>
       {error && (
         <div className="alerta alerta-peligro" role="alert">
           No se pudo cargar el historial de reemplazos.
