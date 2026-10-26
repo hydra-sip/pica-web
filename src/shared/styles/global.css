@@ -6,7 +6,8 @@
   --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
   /* =========================================================================
-     HYDRA COLOR SYSTEM - Competitive Sports, High Stakes & Escrow Security
+     PICA COLOR SYSTEM - Plataforma Integral de Competencia Amateur
+     Competitive Sports, High Stakes, Fluid Performance & Cryptographic Security
      ========================================================================= */
 
   /* Neutral Surfaces - Clean Obsidian & Premium Slate */
@@ -17,10 +18,10 @@
   --bg-nav: rgba(255, 255, 255, 0.95);
   --bg-nav-dark: #0b0f19;
 
-  /* Typography Colors */
+  /* Typography Colors - High contrast for outdoor daylight readability */
   --text-primary: #0f172a;   /* Slate 900 */
-  --text-secondary: #475569; /* Slate 600 */
-  --text-muted: #94a3b8;     /* Slate 400 */
+  --text-secondary: #334155; /* Slate 700 - optimized contrast */
+  --text-muted: #64748b;     /* Slate 500 - legible in direct sunlight */
   --text-on-dark: #ffffff;
   --text-on-dark-muted: #94a3b8;
 
@@ -166,8 +167,8 @@ h1, h2, h3, h4, .font-heading {
   padding: 0 1.25rem;
 }
 
-/* Tarjetas Base Hydra */
-.hydra-card, .card {
+/* Tarjetas Base PICA */
+.pica-card, .hydra-card, .card {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
@@ -175,12 +176,12 @@ h1, h2, h3, h4, .font-heading {
   transition: all var(--transition-fast);
 }
 
-.hydra-card:hover {
+.pica-card:hover, .hydra-card:hover {
   box-shadow: var(--shadow-md);
 }
 
-/* Isotipo Hydra con brillo dinámico */
-.hydra-logo-badge {
+/* Isotipo PICA con brillo dinámico */
+.pica-logo-badge, .hydra-logo-badge {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -193,7 +194,7 @@ h1, h2, h3, h4, .font-heading {
   user-select: none;
 }
 
-.hydra-logo-badge:hover {
+.pica-logo-badge:hover, .hydra-logo-badge:hover {
   transform: scale(1.05);
 }
 
@@ -325,7 +326,7 @@ h1, h2, h3, h4, .font-heading {
 }
 
 /* Segmented Control Base */
-.hydra-segmented-control {
+.pica-segmented-control, .hydra-segmented-control {
   display: flex;
   background-color: var(--bg-subtle);
   border: 1px solid var(--border-color);
@@ -334,7 +335,7 @@ h1, h2, h3, h4, .font-heading {
   gap: 2px;
 }
 
-.hydra-segmented-tab {
+.pica-segmented-tab, .hydra-segmented-tab {
   flex: 1;
   text-align: center;
   padding: 0.55rem 0.85rem;
@@ -349,11 +350,11 @@ h1, h2, h3, h4, .font-heading {
   transition: all var(--transition-fast);
 }
 
-.hydra-segmented-tab:hover {
+.pica-segmented-tab:hover, .hydra-segmented-tab:hover {
   color: var(--text-primary);
 }
 
-.hydra-segmented-tab.active {
+.pica-segmented-tab.active, .hydra-segmented-tab.active {
   background-color: var(--bg-surface);
   color: var(--text-primary);
   font-weight: 700;

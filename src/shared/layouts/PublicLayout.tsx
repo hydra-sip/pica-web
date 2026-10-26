@@ -8,10 +8,10 @@ import './PublicLayout.css';
 
 export const PublicLayout: React.FC = () => {
   return (
-    <div className="hydra-public-layout">
+    <div className="pica-public-layout hydra-public-layout">
       <IncompleteProfileBanner />
       <Navbar />
-      <main className="container hydra-public-main">
+      <main className="container pica-public-main hydra-public-main">
         <Outlet />
       </main>
       <Footer />

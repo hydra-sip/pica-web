@@ -4,27 +4,18 @@ import { TorneoResumen } from '../types/torneo';
 import { StatusChip } from '../../admin/components/StatusChip';
 import { fecha, pesos, valorInscripcion } from '../../shared/formato';
 import { formatFormatoTorneo } from '../utils/formatters';
+import { IconoTrofeo } from '../../shared/ui/Iconos';
 import './TorneoCard.css';
 
 interface TorneoCardProps {
   torneo: TorneoResumen;
 }
 
-const getDisciplinaIcon = (disciplina: string = ''): string => {
-  const d = disciplina.toLowerCase();
-  if (d.includes('fútbol') || d.includes('futbol') || d.includes('soccer')) return '⚽';
-  if (d.includes('pádel') || d.includes('padel') || d.includes('tenis')) return '🎾';
-  if (d.includes('básquet') || d.includes('basquet') || d.includes('basket')) return '🏀';
-  if (d.includes('esport') || d.includes('gaming') || d.includes('fifa') || d.includes('valorant') || d.includes('lol')) return '🎮';
-  if (d.includes('vóley') || d.includes('voley') || d.includes('voleibol')) return '🏐';
-  return '🏆';
-};
-
 export const TorneoCard: React.FC<TorneoCardProps> = ({ torneo }) => {
   const pozoLabel =
     torneo.estado === 'EN_CURSO' || torneo.estado === 'FINALIZADO'
-      ? 'Pozo Garantizado en Custodia'
-      : 'Pozo Estimado en Custodia';
+      ? 'Pozo Garantizado en Custodia PICA'
+      : 'Pozo Estimado en Custodia PICA';
 
   let btnLabel = 'Ver Detalle del Torneo';
   let btnClass = 'btn-secondary';
@@ -46,12 +37,11 @@ export const TorneoCard: React.FC<TorneoCardProps> = ({ torneo }) => {
   const esCasiLleno = torneo.cupoDisponible > 0 && torneo.cupoDisponible <= 2;
 
   return (
-    <article className="hydra-card torneo-card-elevated">
+    <article className="pica-card torneo-card-elevated">
       <div className="torneo-card-top">
         <StatusChip status={torneo.estado} />
         {torneo.disciplina && (
           <span className="torneo-card-disciplina-pill">
-            <span className="disciplina-emoji">{getDisciplinaIcon(torneo.disciplina)}</span>
             <span>{torneo.disciplina}</span>
           </span>
         )}
@@ -65,18 +55,18 @@ export const TorneoCard: React.FC<TorneoCardProps> = ({ torneo }) => {
 
       <p className="torneo-card-subtitle">{sedeFormato}</p>
 
-      {/* Pozo de Premios Destacado (High-Stakes Trophy Box) */}
+      {/* Pozo de Premios Destacado */}
       <div className="torneo-pozo-box">
         <div className="torneo-pozo-left">
           <div className="torneo-pozo-icon" aria-hidden="true">
-            🏆
+            <IconoTrofeo size={18} />
           </div>
           <div>
             <span className="torneo-pozo-label">{pozoLabel}</span>
             <span className="torneo-pozo-amount">{pesos(torneo.pozoEstimado)}</span>
           </div>
         </div>
-        <span className="torneo-pozo-tag">Escrow</span>
+        <span className="torneo-pozo-tag">PICA Escrow</span>
       </div>
 
       {/* Barra de Progreso de Cupos */}
@@ -84,9 +74,9 @@ export const TorneoCard: React.FC<TorneoCardProps> = ({ torneo }) => {
         <div className="torneo-cupos-header">
           <span className={`torneo-cupos-status ${esAgotado ? 'status-agotado' : esCasiLleno ? 'status-alerta' : ''}`}>
             {esAgotado
-              ? '🚫 Cupos agotados'
+              ? 'Cupos agotados'
               : esCasiLleno
-              ? `🔥 ¡Últimos ${torneo.cupoDisponible} cupos!`
+              ? `Últimos ${torneo.cupoDisponible} cupos disponibles`
               : `Quedan ${torneo.cupoDisponible} cupos`}
           </span>
           <span className="torneo-cupos-ratio">

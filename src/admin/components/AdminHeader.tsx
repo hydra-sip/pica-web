@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/hooks/useAuth';
+import { IconoSitio } from '../../shared/ui/Iconos';
 
 export const AdminHeader: React.FC = () => {
   const { user, logout } = useAuth();
@@ -30,11 +31,11 @@ export const AdminHeader: React.FC = () => {
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
         <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-          <div className="hydra-logo-badge" style={{ width: '32px', height: '32px', fontSize: '1rem', borderRadius: '8px' }}>
-            H
+          <div className="pica-logo-badge" style={{ width: '32px', height: '32px', fontSize: '1rem', borderRadius: '8px' }}>
+            P
           </div>
           <span style={{ fontWeight: 800, fontSize: '1.1rem', letterSpacing: '0.04em', color: 'var(--text-primary)' }}>
-            HYDRA
+            PICA
           </span>
         </Link>
 
@@ -54,7 +55,7 @@ export const AdminHeader: React.FC = () => {
             SISTEMA SHA-256 OK
           </span>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            Última actualización de nodos: Hace 2 min
+            Última sincronización: Hace 2 min
           </span>
         </div>
       </div>
@@ -69,10 +70,10 @@ export const AdminHeader: React.FC = () => {
             fontWeight: 500,
             display: 'flex',
             alignItems: 'center',
-            gap: '0.35rem',
+            gap: '0.45rem',
           }}
         >
-          <span>🌐</span> Ver Portal Público
+          <IconoSitio size={16} /> Ver Portal Público
         </Link>
 
         {user && (
@@ -84,7 +85,7 @@ export const AdminHeader: React.FC = () => {
         <button
           onClick={handleLogout}
           className="btn btn-secondary"
-          style={{ padding: '0.4rem 0.85rem', fontSize: '0.82rem', fontWeight: 600 }}
+          style={{ padding: '0.45rem 0.85rem', fontSize: '0.82rem', fontWeight: 600 }}
         >
           Cerrar Sesión
         </button>

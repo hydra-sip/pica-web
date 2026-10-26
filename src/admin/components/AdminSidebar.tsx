@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../auth/hooks/useAuth';
+import { IconoPanel, IconoUsuarios, IconoRoles, IconoPersonas } from '../../shared/ui/Iconos';
 
 export const AdminSidebar: React.FC = () => {
   const { hasPermission, user } = useAuth();
@@ -58,11 +59,11 @@ export const AdminSidebar: React.FC = () => {
       <div>
         {/* Brand in Sidebar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', padding: '0 0.5rem 1.5rem', borderBottom: '1px solid var(--border-color)', marginBottom: '1.25rem' }}>
-          <div className="hydra-logo-badge" style={{ width: '28px', height: '28px', fontSize: '0.9rem', borderRadius: '7px' }}>
-            H
+          <div className="pica-logo-badge" style={{ width: '28px', height: '28px', fontSize: '0.9rem', borderRadius: '7px' }}>
+            P
           </div>
           <span style={{ fontSize: '0.95rem', fontWeight: 800, letterSpacing: '0.03em' }}>
-            Backoffice Admin
+            Backoffice PICA
           </span>
         </div>
 
@@ -73,24 +74,24 @@ export const AdminSidebar: React.FC = () => {
           </div>
 
           <Link to="/admin" style={navItemStyle(isActive('/admin'))}>
-            <span style={{ fontSize: '1.1rem' }}>📊</span> Dashboard
+            <IconoPanel size={18} /> Dashboard
           </Link>
 
           {canViewUsuarios && (
             <Link to="/admin/usuarios" style={navItemStyle(isActive('/admin/usuarios'))}>
-              <span style={{ fontSize: '1.1rem' }}>👥</span> Usuarios
+              <IconoUsuarios size={18} /> Usuarios
             </Link>
           )}
 
           {canViewRoles && (
             <Link to="/admin/roles" style={navItemStyle(isActive('/admin/roles'))}>
-              <span style={{ fontSize: '1.1rem' }}>🛡️</span> Roles & Permisos
+              <IconoRoles size={18} /> Roles & Permisos
             </Link>
           )}
 
           {canViewPersonas && (
             <Link to="/admin/personas" style={navItemStyle(isActive('/admin/personas'))}>
-              <span style={{ fontSize: '1.1rem' }}>📇</span> Personas
+              <IconoPersonas size={18} /> Personas
             </Link>
           )}
         </div>

@@ -9,6 +9,21 @@ import { TorneoDetalleSkeleton } from '../components/TorneoSkeleton';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { fecha, fechaHora, pesos, valorInscripcion } from '../../shared/formato';
 import { formatFormatoTorneo, formatModalidad, formatTipoParticipante } from '../utils/formatters';
+import {
+  IconoTrofeo,
+  IconoEscudo,
+  IconoAlerta,
+  IconoRefrescar,
+  IconoDocumento,
+  IconoDescargar,
+  IconoCheck,
+  IconoReloj,
+  IconoCalendario,
+  IconoUsuarios,
+  IconoConfiguracion,
+  IconoFlechaIzquierda,
+  IconoPuntos,
+} from '../../shared/ui/Iconos';
 import './TorneoDetallePage.css';
 
 type DetalleTab = 'info' | 'bracket' | 'pronosticos' | 'reglas';
@@ -54,7 +69,12 @@ export const TorneoDetallePage: React.FC = () => {
     fetchTorneoDetalle();
   }, [fetchTorneoDetalle]);
 
-  // Pantalla de Carga
+  // Scroll to top on slug change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [slug]);
+
+  // Pantalla de Carga Skeleton
   if (isLoading) {
     return (
       <div className="torneo-detalle-figma-container">
@@ -63,12 +83,12 @@ export const TorneoDetallePage: React.FC = () => {
     );
   }
 
-  // Pantalla 404 Amigable
+  // Pantalla de No Encontrado (404)
   if (isNotFound) {
     return (
       <div className="torneo-detalle-figma-container">
         <div
-          className="hydra-card"
+          className="pica-card hydra-card"
           style={{
             textAlign: 'center',
             padding: '3rem 1.5rem',
@@ -76,15 +96,22 @@ export const TorneoDetallePage: React.FC = () => {
             maxWidth: '560px',
           }}
         >
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏟️❌</div>
+          <div style={{ marginBottom: '1.25rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'center' }}>
+            <IconoAlerta size={48} />
+          </div>
           <h1 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '0.5rem' }}>
             Torneo no encontrado
           </h1>
           <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '1.5rem' }}>
             El torneo que estás buscando no existe, aún se encuentra en estado borrador o el enlace público ha caducado.
           </p>
-          <Link to="/" className="btn btn-primary">
-            🏆 Volver al Inicio y Explorar Torneos
+          <Link
+            to="/"
+            className="btn btn-primary"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <IconoTrofeo size={16} />
+            <span>Volver al Catálogo de Torneos</span>
           </Link>
         </div>
       </div>
@@ -96,7 +123,7 @@ export const TorneoDetallePage: React.FC = () => {
     return (
       <div className="torneo-detalle-figma-container">
         <div
-          className="hydra-card"
+          className="pica-card hydra-card"
           style={{
             textAlign: 'center',
             padding: '3rem 1.5rem',
@@ -104,15 +131,23 @@ export const TorneoDetallePage: React.FC = () => {
             maxWidth: '560px',
           }}
         >
-          <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚠️</div>
+          <div style={{ marginBottom: '1.25rem', color: 'var(--color-danger)', display: 'flex', justifyContent: 'center' }}>
+            <IconoAlerta size={48} />
+          </div>
           <h2 style={{ fontSize: '1.3rem', fontWeight: 800, marginBottom: '0.5rem' }}>
             Error al consultar el torneo
           </h2>
           <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
             {errorMsg || 'No se pudo obtener la información solicitada.'}
           </p>
-          <button type="button" className="btn btn-primary" onClick={fetchTorneoDetalle}>
-            🔄 Reintentar
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={fetchTorneoDetalle}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}
+          >
+            <IconoRefrescar size={16} />
+            <span>Reintentar</span>
           </button>
         </div>
       </div>
@@ -135,8 +170,14 @@ export const TorneoDetallePage: React.FC = () => {
     <div className="torneo-detalle-figma-container">
       {/* Header bar (Figma #37:3) */}
       <div className="torneo-figma-header">
-        <Link to="/" className="torneo-back-btn" title="Volver al catálogo" aria-label="Volver">
-          ←
+        <Link
+          to="/"
+          className="torneo-back-btn"
+          title="Volver al catálogo"
+          aria-label="Volver al catálogo"
+          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <IconoFlechaIzquierda size={18} />
         </Link>
         <h1 className="torneo-header-title">{torneo.nombre}</h1>
         <button
@@ -150,8 +191,9 @@ export const TorneoDetallePage: React.FC = () => {
               alert('Enlace del torneo copiado al portapapeles');
             }
           }}
+          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
         >
-          ⋯
+          <IconoPuntos size={18} />
         </button>
       </div>
 
@@ -159,12 +201,16 @@ export const TorneoDetallePage: React.FC = () => {
       <div className="bolsa-premios-card">
         <div className="bolsa-premios-header">
           <div className="bolsa-premios-title">
-            <span>🏆 Bolsa de Premios del Torneo</span>
+            <IconoTrofeo size={18} />
+            <span>Bolsa de Premios del Torneo</span>
           </div>
-          <span className="bolsa-escrow-badge">🛡️ Custodia Criptográfica OK</span>
+          <span className="bolsa-escrow-badge">
+            <IconoEscudo size={14} />
+            <span>Custodia Criptográfica PICA</span>
+          </span>
         </div>
         <div className="bolsa-premios-row">
-          <span className="bolsa-premios-label">Pozo Total en Custodia Hydra:</span>
+          <span className="bolsa-premios-label">Pozo Total en Custodia PICA:</span>
           <span className="bolsa-premios-val-bold">{pesos(torneo.pozoEstimado)}</span>
         </div>
         <div className="bolsa-premios-secondary">
@@ -216,11 +262,11 @@ export const TorneoDetallePage: React.FC = () => {
       {/* Tab 1: Info (Criterio 2: cupo disponible, valor inscripción, pozo estimado, fechas, reglamento) */}
       {activeTab === 'info' && (
         <div className="torneo-tab-content">
-          <div className="hydra-card" style={{ padding: '1.5rem' }}>
+          <div className="pica-card hydra-card" style={{ padding: '1.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
               <StatusChip status={torneo.estado} />
-              <span className="badge">⚽ {torneo.disciplina}</span>
-              {torneo.sede && <span className="badge">🏟️ {torneo.sede}</span>}
+              <span className="badge">{torneo.disciplina}</span>
+              {torneo.sede && <span className="badge">{torneo.sede}</span>}
             </div>
 
             {torneo.descripcion && (
@@ -234,9 +280,9 @@ export const TorneoDetallePage: React.FC = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', marginBottom: '0.35rem' }}>
                 <span style={{ fontWeight: 700, color: torneo.cupoDisponible <= 2 ? '#b45309' : 'var(--text-primary)' }}>
                   {torneo.cupoDisponible === 0
-                    ? '🚫 Cupos agotados'
+                    ? 'Cupos agotados'
                     : torneo.cupoDisponible <= 2
-                    ? `🔥 ¡Últimos ${torneo.cupoDisponible} cupos disponibles!`
+                    ? `¡Últimos ${torneo.cupoDisponible} cupos disponibles!`
                     : `Ocupación: ${cuposOcupados} de ${torneo.cupoMaximo} cupos confirmados`}
                 </span>
                 <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>
@@ -292,19 +338,31 @@ export const TorneoDetallePage: React.FC = () => {
             {/* Fechas Clave */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1.5rem', fontSize: '0.88rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.4rem' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>⏳ Cierre de Inscripción:</span>
+                <span style={{ color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <IconoReloj size={14} />
+                  <span>Cierre de Inscripción:</span>
+                </span>
                 <strong>{torneo.cierreInscripcionEn ? fechaHora(torneo.cierreInscripcionEn) : 'A definir'}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.4rem' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>🚀 Inicio de Competencia:</span>
+                <span style={{ color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <IconoCalendario size={14} />
+                  <span>Inicio de Competencia:</span>
+                </span>
                 <strong>{torneo.fechaInicio ? fecha(torneo.fechaInicio) : 'A definir'}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.4rem' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>👥 Participación:</span>
+                <span style={{ color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <IconoUsuarios size={14} />
+                  <span>Participación:</span>
+                </span>
                 <strong>{formatTipoParticipante(torneo.tipoParticipante, torneo.tamanioEquipo)}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.4rem' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>🎯 Formato y Modalidad:</span>
+                <span style={{ color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <IconoConfiguracion size={14} />
+                  <span>Formato y Modalidad:</span>
+                </span>
                 <strong>{formatFormatoTorneo(torneo.formato)} • {formatModalidad(torneo.modalidad)}</strong>
               </div>
             </div>
@@ -319,25 +377,26 @@ export const TorneoDetallePage: React.FC = () => {
               >
                 {isAuthenticated
                   ? torneo.tipoParticipante === 'EQUIPO'
-                    ? '⚡ Inscribir Mi Equipo'
-                    : '⚡ Inscribirme al Torneo'
-                  : '🔐 Iniciar Sesión para Inscribirme'}
+                    ? 'Inscribir Equipo'
+                    : 'Inscribirme al Torneo'
+                  : 'Iniciar Sesión para Inscribirme'}
               </button>
             ) : torneo.cupoDisponible === 0 && torneo.estado === 'INSCRIPCION_ABIERTA' ? (
               <button type="button" className="btn btn-secondary" disabled style={{ width: '100%', padding: '0.85rem' }}>
-                🚫 Cupos Agotados
+                Cupos Agotados
               </button>
             ) : (
               <button type="button" className="btn btn-secondary" disabled style={{ width: '100%', padding: '0.85rem' }}>
-                🔒 Inscripción No Disponible
+                Inscripción No Disponible
               </button>
             )}
           </div>
 
           {/* Premiación por puesto */}
-          <div className="hydra-card" style={{ padding: '1.5rem' }}>
-            <h2 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.75rem', color: 'var(--text-primary)' }}>
-              🏆 Distribución de Premios
+          <div className="pica-card hydra-card" style={{ padding: '1.5rem' }}>
+            <h2 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.75rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <IconoTrofeo size={18} />
+              <span>Distribución de Premios</span>
             </h2>
             <TorneoPremiosList
               premios={torneo.premios}
@@ -458,9 +517,9 @@ export const TorneoDetallePage: React.FC = () => {
       {/* Tab 3: Pronósticos */}
       {activeTab === 'pronosticos' && (
         <div className="torneo-tab-content">
-          <div className="hydra-card" style={{ padding: '1.5rem' }}>
+          <div className="pica-card hydra-card" style={{ padding: '1.5rem' }}>
             <h2 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.5rem' }}>
-              🎯 Pronósticos de la Comunidad
+              Pronósticos de la Comunidad
             </h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
               Votá por los equipos favoritos de los cruces y acumulá puntos en el ranking de la plataforma.
@@ -502,12 +561,13 @@ export const TorneoDetallePage: React.FC = () => {
       {/* Tab 4: Reglas (Reglamento Oficial PDF + SHA-256) */}
       {activeTab === 'reglas' && (
         <div className="torneo-tab-content">
-          <div className="hydra-card" style={{ padding: '1.5rem' }}>
-            <h2 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.5rem' }}>
-              📜 Reglamento Oficial de la Competencia
+          <div className="pica-card hydra-card" style={{ padding: '1.5rem' }}>
+            <h2 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+              <IconoDocumento size={18} />
+              <span>Reglamento Oficial de la Competencia</span>
             </h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '1.25rem' }}>
-              Consultá las normas oficiales, sistema de puntuación, desempates y condiciones de fair play aprobadas para esta competencia bajo la custodia y trazabilidad de Hydra.
+              Consultá las normas oficiales, sistema de puntuación, desempates y condiciones de fair play aprobadas para esta competencia bajo la custodia y trazabilidad de PICA.
             </p>
 
             {torneo.reglamentoUrl ? (
@@ -517,9 +577,10 @@ export const TorneoDetallePage: React.FC = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-primary"
-                  style={{ width: '100%', padding: '0.75rem' }}
+                  style={{ width: '100%', padding: '0.75rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
                 >
-                  📄 Descargar Reglamento Oficial (PDF) ↗
+                  <IconoDescargar size={16} />
+                  <span>Descargar Reglamento Oficial (PDF)</span>
                 </a>
 
                 {torneo.reglamentoHash && (
@@ -536,7 +597,8 @@ export const TorneoDetallePage: React.FC = () => {
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                       <strong style={{ color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.82rem' }}>
-                        <span>🛡️</span> Sello de Integridad Criptográfica SHA-256
+                        <IconoEscudo size={15} />
+                        <span>Sello de Integridad Criptográfica SHA-256 PICA</span>
                       </strong>
                       <span style={{ fontSize: '0.7rem', color: '#94a3b8', backgroundColor: 'rgba(255,255,255,0.08)', padding: '0.15rem 0.5rem', borderRadius: '4px' }}>
                         Inmutable • Verificado
@@ -586,11 +648,13 @@ export const TorneoDetallePage: React.FC = () => {
           onClick={() => setShowInscripcionModal(false)}
         >
           <div
-            className="hydra-card"
+            className="pica-card hydra-card"
             style={{ maxWidth: '480px', width: '100%', padding: '2rem' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem', textAlign: 'center' }}>🎉</div>
+            <div style={{ marginBottom: '1rem', textAlign: 'center', color: 'var(--color-emerald)', display: 'flex', justifyContent: 'center' }}>
+              <IconoCheck size={42} />
+            </div>
             <h3 style={{ fontSize: '1.2rem', textAlign: 'center', marginBottom: '0.5rem', fontWeight: 800 }}>
               Inscripción a {torneo.nombre}
             </h3>
@@ -631,7 +695,7 @@ export const TorneoDetallePage: React.FC = () => {
           onClick={() => setShowReportarModal(false)}
         >
           <div
-            className="hydra-card"
+            className="pica-card hydra-card"
             style={{ maxWidth: '440px', width: '100%', padding: '2rem' }}
             onClick={(e) => e.stopPropagation()}
           >

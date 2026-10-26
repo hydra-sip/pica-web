@@ -44,7 +44,7 @@ export const AppRoutes: React.FC = () => {
         <Route element={<RequireAuth />}>
           <Route path="mi-perfil" element={<ProfilePage />} />
 
-          {/* Rifas del organizador (PICA-227 / Hydra): RIFA_GESTIONAR */}
+          {/* Rifas del organizador (PICA-227): RIFA_GESTIONAR */}
           <Route element={<RequirePermiso permisos="RIFA_GESTIONAR" />}>
             <Route path="mis-rifas" element={<MisRifasPage />} />
             <Route path="rifas/nueva" element={<RifaFormPage />} />
@@ -55,7 +55,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="*" element={<NotFoundPage />} />
       </Route>
 
-      {/* Layout de Administración Protegido (Backoffice Hydra) */}
+      {/* Layout de Administración Protegido (Backoffice PICA) */}
       <Route element={<RequireAuth />}>
         <Route
           element={

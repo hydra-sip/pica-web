@@ -2,6 +2,7 @@ import React from 'react';
 import { PremioDetalle } from '../types/torneo';
 import { pesos } from '../../shared/formato';
 import { calcularPremioPuesto } from '../utils/formatters';
+import { IconoTrofeo, IconoBilletera, IconoEscudo, IconoMedalla } from '../../shared/ui/Iconos';
 
 interface TorneoPremiosListProps {
   premios: PremioDetalle[];
@@ -15,39 +16,47 @@ const getPodiumConfig = (puesto: number) => {
   switch (puesto) {
     case 1:
       return {
-        icon: '🥇',
         badge: 'Campeón',
+        tag: '1° Puesto',
         cardClass: 'podium-card-gold',
         border: 'var(--color-gold-border)',
         bg: 'linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(251, 191, 36, 0.16) 100%)',
         amountColor: '#78350f',
+        badgeBg: 'rgba(245, 158, 11, 0.18)',
+        badgeColor: '#b45309',
       };
     case 2:
       return {
-        icon: '🥈',
         badge: 'Subcampeón',
+        tag: '2° Puesto',
         cardClass: 'podium-card-silver',
         border: '#cbd5e1',
         bg: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
         amountColor: '#1e293b',
+        badgeBg: 'rgba(100, 116, 139, 0.15)',
+        badgeColor: '#334155',
       };
     case 3:
       return {
-        icon: '🥉',
         badge: '3° Puesto',
+        tag: '3° Puesto',
         cardClass: 'podium-card-bronze',
         border: '#fed7aa',
         bg: 'linear-gradient(135deg, rgba(249, 115, 22, 0.06) 0%, rgba(254, 215, 170, 0.14) 100%)',
         amountColor: '#7c2d12',
+        badgeBg: 'rgba(249, 115, 22, 0.15)',
+        badgeColor: '#c2410c',
       };
     default:
       return {
-        icon: '🎖️',
         badge: `${puesto}° Puesto`,
+        tag: `${puesto}° Puesto`,
         cardClass: 'podium-card-default',
         border: 'var(--border-color)',
         bg: 'var(--bg-surface)',
         amountColor: 'var(--text-primary)',
+        badgeBg: 'var(--bg-subtle)',
+        badgeColor: 'var(--text-secondary)',
       };
   }
 };
@@ -90,9 +99,13 @@ export const TorneoPremiosList: React.FC<TorneoPremiosListProps> = ({
               textTransform: 'uppercase',
               fontWeight: 800,
               letterSpacing: '0.04em',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
             }}
           >
-            🏆 Pozo Competidores ({pctPozoCompetidores}%)
+            <IconoTrofeo size={15} />
+            <span>Pozo Competidores ({pctPozoCompetidores}%)</span>
           </div>
           <div
             style={{
@@ -124,9 +137,13 @@ export const TorneoPremiosList: React.FC<TorneoPremiosListProps> = ({
                 textTransform: 'uppercase',
                 fontWeight: 800,
                 letterSpacing: '0.04em',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
               }}
             >
-              🎟️ Pozo Rifa Espectadores ({pctPremioRifa}%)
+              <IconoBilletera size={15} />
+              <span>Pozo Rifa Espectadores ({pctPremioRifa}%)</span>
             </div>
             <div
               style={{
@@ -143,7 +160,7 @@ export const TorneoPremiosList: React.FC<TorneoPremiosListProps> = ({
         )}
       </div>
 
-      {/* Lista de puestos y premios (Podio) */}
+      {/* Lista de puestos y premios (Podio sin emojis) */}
       {premiosOrdenados.length === 0 ? (
         <div
           style={{
@@ -184,7 +201,24 @@ export const TorneoPremiosList: React.FC<TorneoPremiosListProps> = ({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                  <span style={{ fontSize: '1.6rem', lineHeight: 1 }}>{podium.icon}</span>
+                  <div
+                    style={{
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '10px',
+                      backgroundColor: podium.badgeBg,
+                      color: podium.badgeColor,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 800,
+                      fontSize: '0.85rem',
+                      letterSpacing: '-0.02em',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {premio.puesto === 1 ? <IconoTrofeo size={18} /> : <IconoMedalla size={18} />}
+                  </div>
                   <div>
                     <div
                       style={{
@@ -255,18 +289,18 @@ export const TorneoPremiosList: React.FC<TorneoPremiosListProps> = ({
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '0.5rem',
-          padding: '0.6rem 0.85rem',
+          gap: '0.55rem',
+          padding: '0.65rem 0.95rem',
           backgroundColor: 'var(--bg-subtle)',
           borderRadius: 'var(--radius-sm)',
-          fontSize: '0.74rem',
+          fontSize: '0.76rem',
           color: 'var(--text-secondary)',
           border: '1px solid var(--border-color)',
         }}
       >
-        <span style={{ fontSize: '0.9rem' }}>🛡️</span>
+        <IconoEscudo size={16} />
         <span>
-          <strong>Garantía Hydra Escrow:</strong> Los premios se liquidan automáticamente a las billeteras de los ganadores tras la homologación del acta arbitral.
+          <strong>Garantía PICA Escrow:</strong> Los premios se liquidan automáticamente a las billeteras de los ganadores tras la homologación del acta arbitral.
         </span>
       </div>
     </div>

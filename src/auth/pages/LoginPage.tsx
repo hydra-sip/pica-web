@@ -2,6 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { ApiError, API_BASE_URL } from '../../api/httpClient';
+import {
+  IconoPerfil,
+  IconoBackoffice,
+  IconoEscudo,
+  IconoBilletera,
+  IconoUsuarios,
+  IconoRoles,
+  IconoRifas,
+  IconoAlerta,
+  IconoCandado,
+} from '../../shared/ui/Iconos';
 import './LoginPage.css';
 
 type LoginMode = 'cliente' | 'backoffice';
@@ -128,7 +139,7 @@ export const LoginPage: React.FC = () => {
 
   return (
     <div className="login-page-wrapper">
-      {/* Barra de alternancia de modo: Usuario vs Backoffice (Requisito clave) */}
+      {/* Barra de alternancia de modo: Usuario vs Backoffice */}
       <div className="login-mode-bar" role="tablist" aria-label="Modo de autenticación">
         <button
           type="button"
@@ -137,7 +148,8 @@ export const LoginPage: React.FC = () => {
           role="tab"
           aria-selected={mode === 'cliente'}
         >
-          <span>👤</span> Plataforma Clientes
+          <IconoPerfil size={16} />
+          <span>Plataforma Clientes</span>
         </button>
         <button
           type="button"
@@ -146,38 +158,39 @@ export const LoginPage: React.FC = () => {
           role="tab"
           aria-selected={mode === 'backoffice'}
         >
-          <span>🛡️</span> Backoffice (Admin / Org)
+          <IconoBackoffice size={16} />
+          <span>Backoffice (Admin / Org)</span>
         </button>
       </div>
 
       {/* ============================================================== */}
-      {/* MODO 1: INICIO DE SESIÓN CLIENTES (Figma Wireframe #35:2)      */}
+      {/* MODO 1: INICIO DE SESIÓN CLIENTES (PICA)                       */}
       {/* ============================================================== */}
       {mode === 'cliente' && (
         <div className="login-client-container">
           <div className="login-client-card">
-            {/* Encabezado Institucional Hydra */}
+            {/* Encabezado Institucional PICA */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.75rem' }}>
               <div
-                className="hydra-logo-badge"
+                className="pica-logo-badge hydra-logo-badge"
                 style={{ width: '52px', height: '52px', fontSize: '1.65rem', borderRadius: '14px', marginBottom: '0.85rem' }}
               >
-                H
+                P
               </div>
               <h1 style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '0.04em', margin: 0, color: 'var(--text-primary)' }}>
-                HYDRA
+                PICA
               </h1>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
-                Plataforma Integral de Torneos
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.25rem', textAlign: 'center' }}>
+                Plataforma Integral de Competencia Amateur
               </p>
             </div>
 
             {/* Segmented Control: Iniciar Sesión / Registrarse */}
-            <div className="hydra-segmented-control" style={{ marginBottom: '1.5rem' }}>
-              <button type="button" className="hydra-segmented-tab active">
+            <div className="pica-segmented-control hydra-segmented-control" style={{ marginBottom: '1.5rem' }}>
+              <button type="button" className="pica-segmented-tab hydra-segmented-tab active">
                 Iniciar Sesión
               </button>
-              <Link to="/auth/register" className="hydra-segmented-tab">
+              <Link to="/auth/register" className="pica-segmented-tab hydra-segmented-tab">
                 Registrarse
               </Link>
             </div>
@@ -225,10 +238,14 @@ export const LoginPage: React.FC = () => {
             {/* Alertas Contextuales */}
             {errorType === 'unverified' && (
               <div style={{ background: '#fffbeb', border: '1px solid #fde68a', color: '#92400e', padding: '0.85rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem', fontSize: '0.85rem', lineHeight: 1.4 }}>
-                <strong>⚠️ EMAIL_NO_VERIFICADO (403):</strong> {errorMessage}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.25rem' }}>
+                  <IconoAlerta size={16} />
+                  <strong>EMAIL_NO_VERIFICADO (403):</strong>
+                </div>
+                <div>{errorMessage}</div>
                 <div style={{ marginTop: '0.5rem' }}>
                   <Link to="/auth/check-email" style={{ color: 'var(--brand-black)', fontWeight: 600, textDecoration: 'underline' }}>
-                    👉 Ir a pantalla de verificación
+                    Ir a pantalla de verificación →
                   </Link>
                 </div>
               </div>
@@ -236,13 +253,18 @@ export const LoginPage: React.FC = () => {
 
             {errorType === 'locked' && (
               <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', padding: '0.85rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem', fontSize: '0.85rem', lineHeight: 1.4 }}>
-                <strong>🚫 USUARIO_BLOQUEADO (403):</strong> {errorMessage}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <IconoAlerta size={16} />
+                  <strong>USUARIO_BLOQUEADO (403):</strong>
+                </div>
+                <div style={{ marginTop: '0.25rem' }}>{errorMessage}</div>
               </div>
             )}
 
             {errorType === 'invalid' && (
-              <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', padding: '0.85rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem', fontSize: '0.85rem' }}>
-                ❌ {errorMessage}
+              <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', padding: '0.85rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <IconoAlerta size={16} />
+                <span>{errorMessage}</span>
               </div>
             )}
 
@@ -355,7 +377,7 @@ export const LoginPage: React.FC = () => {
 
             {/* Accesos rápidos para pruebas locales */}
             <div className="login-test-helper">
-              <span>⚡ Usuarios de prueba para localhost:</span>
+              <span>Usuarios de prueba para localhost:</span>
               <div className="login-test-chips">
                 <button
                   type="button"
@@ -393,21 +415,22 @@ export const LoginPage: React.FC = () => {
                   borderRadius: 'var(--radius-sm)',
                 }}
               >
-                <span>🛡️</span> ¿Sos administrador u organizador? <strong style={{ color: 'var(--brand-black)' }}>Ir al Backoffice →</strong>
+                <IconoBackoffice size={15} />
+                <span>¿Sos administrador u organizador? <strong style={{ color: 'var(--brand-black)' }}>Ir al Backoffice →</strong></span>
               </button>
             </div>
 
             {/* Footer Legal Notice */}
             <div style={{ marginTop: '1.75rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
               Al continuar, aceptas las Bases y Condiciones<br />
-              <strong style={{ color: 'var(--text-primary)' }}>y la Política de Privacidad de Hydra</strong>
+              <strong style={{ color: 'var(--text-primary)' }}>y la Política de Privacidad de PICA</strong>
             </div>
           </div>
         </div>
       )}
 
       {/* ============================================================== */}
-      {/* MODO 2: INGRESO BACKOFFICE (Figma Wireframe #134:2)            */}
+      {/* MODO 2: INGRESO BACKOFFICE (PICA)                             */}
       {/* ============================================================== */}
       {mode === 'backoffice' && (
         <div className="login-backoffice-container">
@@ -417,17 +440,17 @@ export const LoginPage: React.FC = () => {
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <div
-                    className="hydra-logo-badge"
+                    className="pica-logo-badge hydra-logo-badge"
                     style={{ width: '40px', height: '40px', fontSize: '1.3rem', borderRadius: '10px', background: '#ffffff', color: '#18181b' }}
                   >
-                    H
+                    P
                   </div>
                   <div>
                     <div style={{ fontWeight: 800, fontSize: '1.25rem', letterSpacing: '0.04em', lineHeight: 1 }}>
-                      HYDRA
+                      PICA
                     </div>
                     <div style={{ fontSize: '0.75rem', color: '#a1a1aa', marginTop: '0.2rem' }}>
-                      Plataforma Integral de Torneos
+                      Plataforma Integral de Competencia Amateur
                     </div>
                   </div>
                 </div>
@@ -441,7 +464,9 @@ export const LoginPage: React.FC = () => {
 
                 <div className="login-backoffice-features">
                   <div className="login-backoffice-feature-item">
-                    <div className="login-backoffice-feature-icon">🛡️</div>
+                    <div className="login-backoffice-feature-icon">
+                      <IconoEscudo size={20} />
+                    </div>
                     <div>
                       <div className="login-backoffice-feature-title">Auditoría Criptográfica SHA-256</div>
                       <div className="login-backoffice-feature-desc">Sellado de actas arbitrales, brackets inmutables y trazabilidad de eventos.</div>
@@ -449,7 +474,9 @@ export const LoginPage: React.FC = () => {
                   </div>
 
                   <div className="login-backoffice-feature-item">
-                    <div className="login-backoffice-feature-icon">💰</div>
+                    <div className="login-backoffice-feature-icon">
+                      <IconoBilletera size={20} />
+                    </div>
                     <div>
                       <div className="login-backoffice-feature-title">Custodia de Fondos y Escrow</div>
                       <div className="login-backoffice-feature-desc">Control formal de pozos, rifas y liquidación automática a los ganadores.</div>
@@ -457,7 +484,9 @@ export const LoginPage: React.FC = () => {
                   </div>
 
                   <div className="login-backoffice-feature-item">
-                    <div className="login-backoffice-feature-icon">⚖️</div>
+                    <div className="login-backoffice-feature-icon">
+                      <IconoUsuarios size={20} />
+                    </div>
                     <div>
                       <div className="login-backoffice-feature-title">Gestión de Usuarios y Sanciones</div>
                       <div className="login-backoffice-feature-desc">Padrón de personas, asignación de roles y régimen disciplinario de bloqueo.</div>
@@ -478,40 +507,51 @@ export const LoginPage: React.FC = () => {
                 Acceso restringido para personal autorizado de la plataforma.
               </p>
 
-              {/* Selector de Rol Figma #134:17: Organizador | Administrador */}
+              {/* Selector de Rol: Organizador | Administrador */}
               <div className="login-role-selector" role="tablist">
                 <button
                   type="button"
                   className={`login-role-tab ${backofficeRole === 'ORGANIZADOR' ? 'active' : ''}`}
                   onClick={() => handleBackofficeRoleTab('ORGANIZADOR')}
                 >
-                  <span>🎟️</span> Organizador
+                  <IconoRifas size={16} />
+                  <span>Organizador</span>
                 </button>
                 <button
                   type="button"
                   className={`login-role-tab ${backofficeRole === 'ADMIN' ? 'active' : ''}`}
                   onClick={() => handleBackofficeRoleTab('ADMIN')}
                 >
-                  <span>👑</span> Administrador
+                  <IconoRoles size={16} />
+                  <span>Administrador</span>
                 </button>
               </div>
 
               {/* Alertas Contextuales */}
               {errorType === 'unverified' && (
                 <div style={{ background: '#fffbeb', border: '1px solid #fde68a', color: '#92400e', padding: '0.85rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem', fontSize: '0.85rem' }}>
-                  <strong>⚠️ EMAIL_NO_VERIFICADO:</strong> {errorMessage}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.25rem' }}>
+                    <IconoAlerta size={16} />
+                    <strong>EMAIL_NO_VERIFICADO:</strong>
+                  </div>
+                  <div>{errorMessage}</div>
                 </div>
               )}
 
               {errorType === 'locked' && (
                 <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', padding: '0.85rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem', fontSize: '0.85rem' }}>
-                  <strong>🚫 CUENTA_BLOQUEADA:</strong> {errorMessage}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <IconoAlerta size={16} />
+                    <strong>CUENTA_BLOQUEADA:</strong>
+                  </div>
+                  <div style={{ marginTop: '0.25rem' }}>{errorMessage}</div>
                 </div>
               )}
 
               {errorType === 'invalid' && (
-                <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', padding: '0.85rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem', fontSize: '0.85rem' }}>
-                  ❌ {errorMessage}
+                <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', padding: '0.85rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <IconoAlerta size={16} />
+                  <span>{errorMessage}</span>
                 </div>
               )}
 
@@ -622,29 +662,29 @@ export const LoginPage: React.FC = () => {
                 </button>
               </form>
 
-              {/* Aviso de auditoría formal (Figma #134:50) */}
+              {/* Aviso de auditoría formal */}
               <div className="login-audit-notice">
-                <span>🔒</span>
+                <IconoCandado size={16} />
                 <span>Acceso restringido. Toda acción queda auditada bajo hash SHA-256 inmutable.</span>
               </div>
 
               {/* Accesos rápidos de desarrollo para localhost */}
               <div className="login-test-helper">
-                <span>⚡ Credenciales de prueba:</span>
+                <span>Credenciales de prueba:</span>
                 <div className="login-test-chips">
                   <button
                     type="button"
                     className="login-test-chip"
                     onClick={() => handleFillCredentials('admin', 'admin123')}
                   >
-                    👑 admin / admin123
+                    admin / admin123
                   </button>
                   <button
                     type="button"
                     className="login-test-chip"
                     onClick={() => handleFillCredentials('organizador', 'org123')}
                   >
-                    🎟️ organizador / org123
+                    organizador / org123
                   </button>
                   <button
                     type="button"

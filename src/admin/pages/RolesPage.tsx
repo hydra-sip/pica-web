@@ -11,23 +11,32 @@ export interface PermisoItem {
   label: string;
 }
 
-export interface ModuloPermisos {
+import {
+  IconoUsuarios,
+  IconoEscudo,
+  IconoPersonas,
+  IconoRifas,
+  IconoCandado,
+  IconoCruz,
+} from '../../shared/ui/Iconos';
+
+interface ModuloPermisos {
   modulo: string;
-  icono: string;
+  icono: React.ReactNode;
   permisos: PermisoItem[];
 }
 
 // Solo presentación: los módulos y permisos salen de GET /admin/permisos
-const MODULO_UI: Record<ModuloPermisosApi['modulo'], { modulo: string; icono: string }> = {
-  USUARIOS: { modulo: 'Módulo Usuarios', icono: '👥' },
-  ROLES: { modulo: 'Módulo Roles y Seguridad', icono: '🛡️' },
-  PERSONAS: { modulo: 'Módulo Personas y Padrón', icono: '📇' },
-  RIFAS: { modulo: 'Módulo Rifas', icono: '🎟️' },
+const MODULO_UI: Record<ModuloPermisosApi['modulo'], { modulo: string; icono: React.ReactNode }> = {
+  USUARIOS: { modulo: 'Módulo Usuarios', icono: <IconoUsuarios size={18} /> },
+  ROLES: { modulo: 'Módulo Roles y Seguridad', icono: <IconoEscudo size={18} /> },
+  PERSONAS: { modulo: 'Módulo Personas y Padrón', icono: <IconoPersonas size={18} /> },
+  RIFAS: { modulo: 'Módulo Rifas', icono: <IconoRifas size={18} /> },
 };
 
 const aModulosUi = (catalogo: ModuloPermisosApi[]): ModuloPermisos[] =>
   catalogo.map((m) => ({
-    ...(MODULO_UI[m.modulo] ?? { modulo: m.modulo, icono: '🔑' }),
+    ...(MODULO_UI[m.modulo] ?? { modulo: m.modulo, icono: <IconoCandado size={18} /> }),
     permisos: m.permisos.map((p) => ({ id: p.codigo, label: p.descripcion })),
   }));
 
@@ -338,8 +347,8 @@ export const RolesPage: React.FC = () => {
           style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', background: 'var(--color-danger-bg)', border: '1px solid var(--color-danger-border)', color: 'var(--color-danger)', padding: '0.75rem', borderRadius: 'var(--radius-sm)' }}
         >
           <span>{aviso}</span>
-          <button type="button" onClick={() => setAviso(null)} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}>
-            ✕
+          <button type="button" onClick={() => setAviso(null)} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+            <IconoCruz size={14} />
           </button>
         </div>
       )}

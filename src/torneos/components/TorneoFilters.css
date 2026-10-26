@@ -182,6 +182,9 @@
 }
 
 .torneo-reset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   padding: 0.45rem 0.85rem;
   font-size: 0.85rem;
   border-radius: var(--radius-md);

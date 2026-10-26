@@ -13,6 +13,7 @@ import {
   getTodayDateString,
   MIN_FECHA_NACIMIENTO,
 } from '../../shared/validators';
+import { IconoAlerta } from '../../shared/ui/Iconos';
 
 export const RegisterPage: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -165,29 +166,29 @@ export const RegisterPage: React.FC = () => {
 
   return (
     <div style={{ maxWidth: '480px', margin: '2rem auto', padding: '0 0.5rem' }}>
-      <div className="hydra-card" style={{ padding: '2.25rem 2rem' }}>
+      <div className="pica-card hydra-card" style={{ padding: '2.25rem 2rem' }}>
         {/* Logo and Brand Header */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.75rem' }}>
           <div
-            className="hydra-logo-badge"
+            className="pica-logo-badge hydra-logo-badge"
             style={{ width: '52px', height: '52px', fontSize: '1.65rem', borderRadius: '14px', marginBottom: '0.85rem' }}
           >
-            H
+            P
           </div>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '0.04em', margin: 0, color: 'var(--text-primary)' }}>
-            HYDRA
+            PICA
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
-            Plataforma Integral de Torneos
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.25rem', textAlign: 'center' }}>
+            Plataforma Integral de Competencia Amateur
           </p>
         </div>
 
         {/* Segmented Control: Iniciar Sesión / Registrarse */}
-        <div className="hydra-segmented-control" style={{ marginBottom: '1.5rem' }}>
-          <Link to="/auth/login" className="hydra-segmented-tab">
+        <div className="pica-segmented-control hydra-segmented-control" style={{ marginBottom: '1.5rem' }}>
+          <Link to="/auth/login" className="pica-segmented-tab hydra-segmented-tab">
             Iniciar Sesión
           </Link>
-          <button type="button" className="hydra-segmented-tab active">
+          <button type="button" className="pica-segmented-tab hydra-segmented-tab active">
             Registrarse
           </button>
         </div>
@@ -242,9 +243,13 @@ export const RegisterPage: React.FC = () => {
               borderRadius: 'var(--radius-md)',
               marginBottom: '1rem',
               fontSize: '0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.45rem',
             }}
           >
-            ❌ {generalError}
+            <IconoAlerta size={16} />
+            <span>{generalError}</span>
           </div>
         )}
 
@@ -267,8 +272,8 @@ export const RegisterPage: React.FC = () => {
                 style={{ borderColor: fieldErrors.nombres ? '#ef4444' : undefined }}
               />
               {fieldErrors.nombres && (
-                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'block' }}>
-                  ⚠️ {fieldErrors.nombres}
+                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <IconoAlerta size={13} /> {fieldErrors.nombres}
                 </span>
               )}
             </div>
@@ -289,8 +294,8 @@ export const RegisterPage: React.FC = () => {
                 style={{ borderColor: fieldErrors.apellidos ? '#ef4444' : undefined }}
               />
               {fieldErrors.apellidos && (
-                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'block' }}>
-                  ⚠️ {fieldErrors.apellidos}
+                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <IconoAlerta size={13} /> {fieldErrors.apellidos}
                 </span>
               )}
             </div>
@@ -313,8 +318,8 @@ export const RegisterPage: React.FC = () => {
               style={{ borderColor: fieldErrors.username ? '#ef4444' : undefined }}
             />
             {fieldErrors.username && (
-              <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'block' }}>
-                ⚠️ {fieldErrors.username}
+              <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <IconoAlerta size={13} /> {fieldErrors.username}
               </span>
             )}
           </div>
@@ -336,8 +341,8 @@ export const RegisterPage: React.FC = () => {
               style={{ borderColor: fieldErrors.email ? '#ef4444' : undefined }}
             />
             {fieldErrors.email && (
-              <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'block' }}>
-                ⚠️ {fieldErrors.email}
+              <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <IconoAlerta size={13} /> {fieldErrors.email}
               </span>
             )}
           </div>
@@ -375,8 +380,8 @@ export const RegisterPage: React.FC = () => {
                 style={{ borderColor: fieldErrors.nroDoc ? '#ef4444' : undefined }}
               />
               {fieldErrors.nroDoc && (
-                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'block' }}>
-                  ⚠️ {fieldErrors.nroDoc}
+                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <IconoAlerta size={13} /> {fieldErrors.nroDoc}
                 </span>
               )}
             </div>
@@ -399,8 +404,8 @@ export const RegisterPage: React.FC = () => {
               style={{ borderColor: fieldErrors.fechaNacimiento ? '#ef4444' : undefined }}
             />
             {fieldErrors.fechaNacimiento && (
-              <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'block' }}>
-                ⚠️ {fieldErrors.fechaNacimiento}
+              <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <IconoAlerta size={13} /> {fieldErrors.fechaNacimiento}
               </span>
             )}
           </div>
@@ -423,8 +428,8 @@ export const RegisterPage: React.FC = () => {
             />
             <PasswordRequirements password={password} />
             {fieldErrors.password && (
-              <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'block' }}>
-                ⚠️ {fieldErrors.password}
+              <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <IconoAlerta size={13} /> {fieldErrors.password}
               </span>
             )}
           </div>
@@ -445,8 +450,8 @@ export const RegisterPage: React.FC = () => {
               style={{ borderColor: fieldErrors.confirmPassword ? '#ef4444' : undefined }}
             />
             {fieldErrors.confirmPassword && (
-              <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'block' }}>
-                ⚠️ {fieldErrors.confirmPassword}
+              <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <IconoAlerta size={13} /> {fieldErrors.confirmPassword}
               </span>
             )}
           </div>
@@ -466,8 +471,8 @@ export const RegisterPage: React.FC = () => {
               Acepto las Bases y Condiciones
             </label>
             {terminosError && (
-              <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>
-                ⚠️ {terminosError}
+              <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <IconoAlerta size={13} /> {terminosError}
               </span>
             )}
           </div>
@@ -492,7 +497,7 @@ export const RegisterPage: React.FC = () => {
         {/* Footer Legal Notice */}
         <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
           Al continuar, aceptas las Bases y Condiciones<br />
-          <strong style={{ color: 'var(--text-primary)' }}>y la Política de Privacidad de Hydra</strong>
+          <strong style={{ color: 'var(--text-primary)' }}>y la Política de Privacidad de PICA</strong>
         </div>
       </div>
     </div>

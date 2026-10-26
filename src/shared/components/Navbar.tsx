@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../auth/hooks/useAuth';
+import { IconoPerfil } from '../ui/Iconos';
 import './Navbar.css';
 
 export const Navbar: React.FC = () => {
@@ -29,11 +30,11 @@ export const Navbar: React.FC = () => {
   return (
     <header className="navbar-header">
       <div className="container navbar-container">
-        <Link to="/" className="navbar-logo" onClick={closeMenu}>
-          <div className="logo-icon-hydra">H</div>
+        <Link to="/" className="navbar-logo" onClick={closeMenu} aria-label="PICA - Inicio">
+          <div className="logo-icon-pica">P</div>
           <div className="logo-info">
-            <span className="logo-text-hydra">HYDRA</span>
-            <span className="logo-subtext-hydra">Plataforma Integral de Torneos</span>
+            <span className="logo-text-pica">PICA</span>
+            <span className="logo-subtext-pica">Plataforma Integral de Competencia Amateur</span>
           </div>
         </Link>
 
@@ -92,9 +93,10 @@ export const Navbar: React.FC = () => {
           <div className="nav-actions">
             {isAuthenticated && user ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                <Link to="/mi-perfil" onClick={closeMenu} style={{ textDecoration: 'none', color: 'inherit' }}>
+                <Link to="/mi-perfil" onClick={closeMenu} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <IconoPerfil size={16} />
                   <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                    👤 {user.name}{' '}
+                    {user.name}{' '}
                     <strong
                       style={{
                         color: 'var(--brand-black)',
@@ -112,7 +114,7 @@ export const Navbar: React.FC = () => {
                 <button
                   onClick={handleLogout}
                   className="btn btn-secondary"
-                  style={{ padding: '0.4rem 0.85rem', fontSize: '0.85rem' }}
+                  style={{ padding: '0.45rem 0.85rem', fontSize: '0.82rem' }}
                 >
                   Cerrar Sesión
                 </button>
@@ -123,6 +125,7 @@ export const Navbar: React.FC = () => {
                   to="/auth/login"
                   className={`btn btn-secondary ${isActive('/auth/login') ? 'active' : ''}`}
                   onClick={closeMenu}
+                  style={{ minHeight: '40px' }}
                 >
                   Iniciar Sesión
                 </Link>
@@ -130,6 +133,7 @@ export const Navbar: React.FC = () => {
                   to="/auth/register"
                   className="btn btn-primary"
                   onClick={closeMenu}
+                  style={{ minHeight: '40px' }}
                 >
                   Registrarse
                 </Link>

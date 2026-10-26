@@ -24,7 +24,7 @@
   user-select: none;
 }
 
-.logo-icon-hydra {
+.logo-icon-pica {
   width: 38px;
   height: 38px;
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
@@ -40,7 +40,7 @@
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.navbar-logo:hover .logo-icon-hydra {
+.navbar-logo:hover .logo-icon-pica {
   transform: scale(1.05);
   box-shadow: 0 0 15px rgba(16, 185, 129, 0.35);
 }
@@ -50,7 +50,7 @@
   flex-direction: column;
 }
 
-.logo-text-hydra {
+.logo-text-pica {
   font-family: var(--font-heading);
   font-weight: 900;
   font-size: 1.2rem;
@@ -59,7 +59,7 @@
   line-height: 1.1;
 }
 
-.logo-subtext-hydra {
+.logo-subtext-pica {
   font-size: 0.7rem;
   color: var(--text-secondary);
   font-weight: 600;
@@ -68,7 +68,7 @@
 }
 
 @media (min-width: 640px) {
-  .logo-subtext-hydra {
+  .logo-subtext-pica {
     display: block;
   }
 }

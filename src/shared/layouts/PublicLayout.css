@@ -1,3 +1,4 @@
+.pica-public-layout,
 .hydra-public-layout {
   display: flex;
   flex-direction: column;
@@ -5,13 +6,15 @@
   background-color: var(--bg-app);
 }
 
+.pica-public-main,
 .hydra-public-main {
   flex: 1;
-  padding: 1.5rem 1rem 5rem;
+  padding: 1.5rem 1rem 5.5rem;
   width: 100%;
 }
 
 @media (min-width: 768px) {
+  .pica-public-main,
   .hydra-public-main {
     padding: 2rem 1.5rem 3rem;
   }

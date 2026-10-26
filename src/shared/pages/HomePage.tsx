@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { TorneosCatalogo } from '../../torneos/components/TorneosCatalogo';
+import { IconoRoles } from '../ui/Iconos';
 
 export const HomePage: React.FC = () => {
   const { user, hasPermission } = useAuth();
@@ -34,8 +35,9 @@ export const HomePage: React.FC = () => {
             flexWrap: 'wrap',
           }}
         >
-          <div style={{ fontSize: '0.85rem' }}>
-            👑 <strong>Modo Administrador:</strong> Acceso a Backoffice y Gestión de Torneos.
+          <div style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <IconoRoles size={16} />
+            <span><strong>Modo Administrador:</strong> Acceso a Backoffice y Gestión de Torneos.</span>
           </div>
           <Link
             to="/admin"

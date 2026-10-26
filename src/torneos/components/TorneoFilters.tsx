@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { EstadoTorneo } from '../types/torneo';
+import { IconoBuscar, IconoCampana, IconoCruz } from '../../shared/ui/Iconos';
 import './TorneoFilters.css';
 
 interface TorneoFiltersProps {
@@ -13,26 +14,25 @@ interface TorneoFiltersProps {
 interface CategoriaFiltro {
   label: string;
   query: string;
-  icon: string;
 }
 
 const CATEGORIAS_FILTRO: CategoriaFiltro[] = [
-  { label: 'Todos', query: '', icon: '🔥' },
-  { label: 'Fútbol 5', query: 'Fútbol 5', icon: '⚽' },
-  { label: 'Pádel', query: 'Pádel', icon: '🎾' },
-  { label: 'Básquet', query: 'Básquet', icon: '🏀' },
-  { label: 'Esports', query: 'Esports', icon: '🎮' },
-  { label: 'Presencial', query: 'Presencial', icon: '📍' },
-  { label: 'Online', query: 'Online', icon: '🌐' },
+  { label: 'Todos', query: '' },
+  { label: 'Fútbol 5', query: 'Fútbol 5' },
+  { label: 'Pádel', query: 'Pádel' },
+  { label: 'Básquet', query: 'Básquet' },
+  { label: 'Esports', query: 'Esports' },
+  { label: 'Presencial', query: 'Presencial' },
+  { label: 'Online', query: 'Online' },
 ];
 
 const OPCIONES_ESTADO: { label: string; value: EstadoTorneo | '' }[] = [
-  { label: '⚡ Todos los estados', value: '' },
-  { label: '🟢 Inscripción abierta', value: 'INSCRIPCION_ABIERTA' },
-  { label: '🟡 Inscripción cerrada', value: 'INSCRIPCION_CERRADA' },
-  { label: '🔵 En curso (En vivo)', value: 'EN_CURSO' },
-  { label: '🏁 Finalizado', value: 'FINALIZADO' },
-  { label: '🔴 Cancelado', value: 'CANCELADO' },
+  { label: 'Todos los estados', value: '' },
+  { label: 'Inscripción abierta', value: 'INSCRIPCION_ABIERTA' },
+  { label: 'Inscripción cerrada', value: 'INSCRIPCION_CERRADA' },
+  { label: 'En curso (En vivo)', value: 'EN_CURSO' },
+  { label: 'Finalizado', value: 'FINALIZADO' },
+  { label: 'Cancelado', value: 'CANCELADO' },
 ];
 
 export const TorneoFilters: React.FC<TorneoFiltersProps> = ({
@@ -67,11 +67,11 @@ export const TorneoFilters: React.FC<TorneoFiltersProps> = ({
 
   return (
     <div className="torneo-figma-filters">
-      {/* Search Bar + Notification Bell (Figma Wireframe #37:2) */}
+      {/* Search Bar + Notification Bell (Zero Emojis, Clean Inline SVGs) */}
       <div className="torneo-search-row">
         <div className="torneo-search-input-wrap">
           <span className="torneo-search-icon" aria-hidden="true">
-            🔍
+            <IconoBuscar size={18} />
           </span>
           <input
             id="filtro-disciplina"
@@ -90,8 +90,9 @@ export const TorneoFilters: React.FC<TorneoFiltersProps> = ({
                 onDisciplinaChange('');
               }}
               title="Borrar búsqueda"
+              aria-label="Borrar búsqueda"
             >
-              ✕
+              <IconoCruz size={14} />
             </button>
           )}
         </div>
@@ -102,7 +103,9 @@ export const TorneoFilters: React.FC<TorneoFiltersProps> = ({
           aria-label="Notificaciones de torneos"
           title="Alertas de nuevos pozos y torneos"
         >
-          <span className="bell-icon">🔔</span>
+          <span className="bell-icon">
+            <IconoCampana size={18} />
+          </span>
           <span className="bell-dot" aria-hidden="true" />
         </button>
       </div>
@@ -121,7 +124,6 @@ export const TorneoFilters: React.FC<TorneoFiltersProps> = ({
                 className={`torneo-chip ${isSelected ? 'active' : ''}`}
                 onClick={() => handleChipClick(cat.query)}
               >
-                <span className="torneo-chip-icon">{cat.icon}</span>
                 <span>{cat.label}</span>
               </button>
             );
@@ -152,7 +154,8 @@ export const TorneoFilters: React.FC<TorneoFiltersProps> = ({
               }}
               title="Restablecer filtros"
             >
-              Limpiar ✕
+              <IconoCruz size={13} />
+              <span>Limpiar</span>
             </button>
           )}
         </div>

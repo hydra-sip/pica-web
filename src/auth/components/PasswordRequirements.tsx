@@ -1,5 +1,6 @@
 import React from 'react';
 import { validatePasswordRequirements } from '../../shared/validators';
+import { IconoCheck } from '../../shared/ui/Iconos';
 
 interface PasswordRequirementsProps {
   password: string;
@@ -67,7 +68,7 @@ export const PasswordRequirements: React.FC<PasswordRequirementsProps> = ({ pass
                 transition: 'all var(--transition-fast)',
               }}
             >
-              {req.met ? '✓' : '•'}
+              {req.met ? <IconoCheck size={10} /> : '•'}
             </span>
             <span>{req.label}</span>
           </div>

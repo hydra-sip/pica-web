@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../auth/hooks/useAuth';
+import { IconoAlerta } from '../ui/Iconos';
 
 export const IncompleteProfileBanner: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
@@ -32,8 +33,9 @@ export const IncompleteProfileBanner: React.FC = () => {
         zIndex: 1000,
       }}
     >
-      <span>
-        ⚠️ <strong>Atención:</strong> Tu perfil requiere información adicional (documento y teléfono) para operar normalmente.
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
+        <IconoAlerta size={16} />
+        <span><strong>Atención:</strong> Tu perfil requiere información adicional (documento y teléfono) para operar normalmente.</span>
       </span>
       <Link
         to="/mi-perfil"

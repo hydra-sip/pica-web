@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { rifaApi, RifaDetalle } from '../../api/rifaApi';
 import { erroresPorCampo, mensajeDeError } from '../../shared/mensajesError';
 import { Button, Input } from '../../shared/ui';
+import { IconoCruz } from '../../shared/ui/Iconos';
 import {
   ErroresPremios,
   PremioForm,
@@ -182,7 +183,7 @@ export const PremiosForm: React.FC<PremiosFormProps> = ({
                       disabled={guardando}
                       onClick={() => quitar(i)}
                     >
-                      ✕
+                      <IconoCruz size={14} />
                     </Button>
                   </div>
                 )}

@@ -12,6 +12,13 @@ import {
   getTodayDateString,
   MIN_FECHA_NACIMIENTO,
 } from '../../shared/validators';
+import {
+  IconoConfiguracion,
+  IconoTrofeo,
+  IconoMedalla,
+  IconoCheck,
+  IconoAlerta,
+} from '../../shared/ui/Iconos';
 
 export const ProfilePage: React.FC = () => {
   const { user, updateUser } = useAuth();
@@ -153,14 +160,18 @@ export const ProfilePage: React.FC = () => {
         passwordActual,
         passwordNueva,
       });
-      setPasswordSuccessMsg('¡Contraseña actualizada con éxito!');
+      setPasswordSuccessMsg('¡Contraseña actualizada exitosamente!');
       setPasswordActual('');
       setPasswordNueva('');
       setConfirmPassword('');
     } catch (err: any) {
       if (err instanceof ApiError && err.problemDetail) {
         const pd = err.problemDetail;
-        if (pd.errores && Array.isArray(pd.errores)) {
+        if (pd.codigo === 'PASSWORD_INCORRECTA') {
+          setPasswordFieldErrors({ passwordActual: 'La contraseña actual no es correcta.' });
+        } else if (pd.codigo === 'PASSWORD_INVALIDA') {
+          setPasswordFieldErrors({ passwordNueva: pd.detail || 'La nueva contraseña no cumple con los requisitos mínimos.' });
+        } else if (pd.errores && Array.isArray(pd.errores)) {
           const errs: Record<string, string> = {};
           pd.errores.forEach((item) => {
             if (item.campo) errs[item.campo] = item.mensaje;
@@ -170,37 +181,37 @@ export const ProfilePage: React.FC = () => {
           setPasswordErrorMsg(pd.detail || pd.codigo || 'Error al cambiar la contraseña.');
         }
       } else {
-        setPasswordErrorMsg(
-          err.message || 'Error al cambiar la contraseña. Verificá tu contraseña actual.'
-        );
+        setPasswordErrorMsg(err.message || 'Error al cambiar la contraseña.');
       }
     } finally {
       setChangingPassword(false);
     }
   };
 
-  const userInitials = (nombres || user?.name || 'SB')
-    .split(' ')
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
-
   const inputStyle = (hasError?: boolean): React.CSSProperties => ({
-    width: '100%',
-    padding: '0.75rem 0.9rem',
     borderRadius: 'var(--radius-md)',
-    border: hasError ? '1px solid #ef4444' : '1px solid var(--border-color)',
+    padding: '0.75rem 0.9rem',
+    border: `1px solid ${hasError ? '#ef4444' : 'var(--border-color)'}`,
+    width: '100%',
     backgroundColor: 'var(--bg-surface)',
     color: 'var(--text-primary)',
     fontSize: '0.9rem',
-    outline: 'none',
   });
+
+  const userInitials =
+    user?.name
+      ?.split(' ')
+      .map((n) => n[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase() || 'U';
+
+  const userRole = user?.roles?.[0]?.nombre || user?.role || 'JUGADOR';
 
   return (
     <div style={{ maxWidth: '640px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      {/* Figma Frame #35:4 - Mi Perfil Card */}
-      <div className="hydra-card" style={{ padding: '1.75rem' }}>
+      {/* Mi Perfil Card */}
+      <div className="pica-card hydra-card" style={{ padding: '1.75rem' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1rem' }}>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
             Mi Perfil
@@ -211,12 +222,14 @@ export const ProfilePage: React.FC = () => {
             style={{
               background: 'none',
               border: 'none',
-              fontSize: '1.2rem',
               cursor: 'pointer',
-              color: 'var(--text-primary)',
+              color: 'var(--text-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              padding: '4px',
             }}
           >
-            ⚙️
+            <IconoConfiguracion size={20} />
           </button>
         </div>
 
@@ -241,72 +254,68 @@ export const ProfilePage: React.FC = () => {
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
-                {nombres && apellidos ? `${nombres} ${apellidos}` : user?.name || 'Salvador Baez'}
-              </h2>
+              <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                {user?.name || 'Usuario'}
+              </span>
+              <span
+                style={{
+                  fontSize: '0.68rem',
+                  fontWeight: 800,
+                  textTransform: 'uppercase',
+                  padding: '0.2rem 0.6rem',
+                  borderRadius: 'var(--radius-full)',
+                  backgroundColor: 'var(--color-emerald-light)',
+                  color: 'var(--color-emerald-dark)',
+                  border: '1px solid var(--color-emerald-border)',
+                }}
+              >
+                {userRole}
+              </span>
             </div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.2rem', marginBottom: '0.4rem' }}>
-              @{user?.username || 'salva_b'} • Capitán
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
+              @{user?.username || 'usuario'} • {user?.email}
             </div>
-            <span
-              style={{
-                display: 'inline-block',
-                padding: '0.2rem 0.65rem',
-                borderRadius: 'var(--radius-full)',
-                backgroundColor: 'var(--brand-black)',
-                color: '#ffffff',
-                fontSize: '0.68rem',
-                fontWeight: 800,
-                letterSpacing: '0.04em',
-              }}
-            >
-              ID VERIFICADA
-            </span>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+              Miembro de PICA desde 2026
+            </div>
           </div>
         </div>
 
-        <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: '0 0 1.25rem' }}>
-          Capitán de 'Los Galácticos'. Jugador de Fútbol 5 y Pádel.
-        </p>
-
-        {/* Disciplinas favoritas */}
-        <div style={{ marginBottom: '1.5rem' }}>
-          <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-            Disciplinas favoritas
-          </h3>
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <span style={{ padding: '0.35rem 0.85rem', borderRadius: 'var(--radius-full)', backgroundColor: 'var(--bg-subtle)', border: '1px solid var(--border-color)', fontSize: '0.82rem', fontWeight: 600 }}>
-              Fútbol 5
+        {/* Competitive Performance Dashboard */}
+        <div
+          style={{
+            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '1.25rem',
+            color: '#ffffff',
+            marginBottom: '1.5rem',
+            boxShadow: '0 4px 14px rgba(15, 23, 42, 0.15)',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+            <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#94a3b8', fontWeight: 700 }}>
+              Rendimiento en Competencia
             </span>
-            <span style={{ padding: '0.35rem 0.85rem', borderRadius: 'var(--radius-full)', backgroundColor: 'var(--bg-subtle)', border: '1px solid var(--border-color)', fontSize: '0.82rem', fontWeight: 600 }}>
-              Pádel
-            </span>
-            <span style={{ padding: '0.35rem 0.85rem', borderRadius: 'var(--radius-full)', backgroundColor: 'var(--bg-subtle)', border: '1px solid var(--border-color)', fontSize: '0.82rem', fontWeight: 600 }}>
-              Básquet 3×3
+            <span style={{ fontSize: '0.72rem', backgroundColor: 'rgba(255,255,255,0.1)', padding: '0.15rem 0.5rem', borderRadius: '4px' }}>
+              Rango Platino
             </span>
           </div>
-        </div>
 
-        {/* Historial Competitivo */}
-        <div style={{ marginBottom: '1.5rem' }}>
-          <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.65rem' }}>
-            Historial Competitivo
-          </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.65rem' }}>
-            <div style={{ backgroundColor: 'var(--bg-subtle)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '0.75rem 0.5rem', textAlign: 'center' }}>
-              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)' }}>42</div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Partidos</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', textAlign: 'center' }}>
+            <div style={{ padding: '0.5rem', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-md)' }}>
+              <div style={{ fontSize: '1.35rem', fontWeight: 900 }}>12</div>
+              <div style={{ fontSize: '0.72rem', opacity: 0.85, fontWeight: 500 }}>Torneos</div>
             </div>
-            <div style={{ backgroundColor: 'var(--bg-subtle)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '0.75rem 0.5rem', textAlign: 'center' }}>
-              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)' }}>31</div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Victorias</div>
+            <div style={{ padding: '0.5rem', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-md)' }}>
+              <div style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--color-emerald)' }}>8</div>
+              <div style={{ fontSize: '0.72rem', opacity: 0.85, fontWeight: 500 }}>Victorias</div>
             </div>
-            <div style={{ backgroundColor: 'var(--bg-subtle)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '0.75rem 0.5rem', textAlign: 'center' }}>
-              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)' }}>4</div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Podios</div>
+            <div style={{ padding: '0.5rem', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-md)' }}>
+              <div style={{ fontSize: '1.35rem', fontWeight: 900 }}>4</div>
+              <div style={{ fontSize: '0.72rem', opacity: 0.85, fontWeight: 500 }}>Derrotas</div>
             </div>
-            <div style={{ backgroundColor: 'var(--brand-black)', color: '#ffffff', borderRadius: 'var(--radius-md)', padding: '0.75rem 0.5rem', textAlign: 'center' }}>
-              <div style={{ fontSize: '1.35rem', fontWeight: 800 }}>73.8%</div>
+            <div style={{ padding: '0.5rem', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-md)' }}>
+              <div style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--color-gold)' }}>67%</div>
               <div style={{ fontSize: '0.72rem', opacity: 0.85, fontWeight: 500 }}>Win Rate</div>
             </div>
           </div>
@@ -319,14 +328,18 @@ export const ProfilePage: React.FC = () => {
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-surface)' }}>
-              <span style={{ fontSize: '1.25rem' }}>🏆</span>
+              <div style={{ color: 'var(--color-gold-dark)', display: 'flex', alignItems: 'center' }}>
+                <IconoTrofeo size={20} />
+              </div>
               <div>
                 <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>Campeón Torneo Clausura</div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Fútbol 5 • Diciembre 2025</div>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-surface)' }}>
-              <span style={{ fontSize: '1.25rem' }}>⭐</span>
+              <div style={{ color: 'var(--color-emerald-dark)', display: 'flex', alignItems: 'center' }}>
+                <IconoMedalla size={20} />
+              </div>
               <div>
                 <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>Fair Play Destacado</div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>0 sanciones en más de 20 partidos</div>
@@ -361,7 +374,7 @@ export const ProfilePage: React.FC = () => {
       </div>
 
       {/* Profile Form: Datos Personales */}
-      <div className="hydra-card" style={{ padding: '1.75rem' }}>
+      <div className="pica-card hydra-card" style={{ padding: '1.75rem' }}>
         <h2 style={{ fontSize: '1.15rem', fontWeight: 800, marginBottom: '0.35rem', color: 'var(--text-primary)' }}>
           Editar Información Personal
         </h2>
@@ -370,14 +383,16 @@ export const ProfilePage: React.FC = () => {
         </p>
 
         {profileSuccessMsg && (
-          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem', fontSize: '0.85rem' }}>
-            ✓ {profileSuccessMsg}
+          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <IconoCheck size={16} />
+            <span>{profileSuccessMsg}</span>
           </div>
         )}
 
         {profileErrorMsg && (
-          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem', fontSize: '0.85rem' }}>
-            ❌ {profileErrorMsg}
+          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <IconoAlerta size={16} />
+            <span>{profileErrorMsg}</span>
           </div>
         )}
 
@@ -395,8 +410,8 @@ export const ProfilePage: React.FC = () => {
                 style={inputStyle(!!profileFieldErrors.nombres)}
               />
               {profileFieldErrors.nombres && (
-                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'block' }}>
-                  ⚠️ {profileFieldErrors.nombres}
+                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <IconoAlerta size={13} /> {profileFieldErrors.nombres}
                 </span>
               )}
             </div>
@@ -413,8 +428,8 @@ export const ProfilePage: React.FC = () => {
                 style={inputStyle(!!profileFieldErrors.apellidos)}
               />
               {profileFieldErrors.apellidos && (
-                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'block' }}>
-                  ⚠️ {profileFieldErrors.apellidos}
+                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <IconoAlerta size={13} /> {profileFieldErrors.apellidos}
                 </span>
               )}
             </div>
@@ -459,8 +474,8 @@ export const ProfilePage: React.FC = () => {
                 style={inputStyle(!!profileFieldErrors.nroDoc)}
               />
               {profileFieldErrors.nroDoc && (
-                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'block' }}>
-                  ⚠️ {profileFieldErrors.nroDoc}
+                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <IconoAlerta size={13} /> {profileFieldErrors.nroDoc}
                 </span>
               )}
             </div>
@@ -480,8 +495,8 @@ export const ProfilePage: React.FC = () => {
                 style={inputStyle(!!profileFieldErrors.fechaNacimiento)}
               />
               {profileFieldErrors.fechaNacimiento && (
-                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'block' }}>
-                  ⚠️ {profileFieldErrors.fechaNacimiento}
+                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <IconoAlerta size={13} /> {profileFieldErrors.fechaNacimiento}
                 </span>
               )}
             </div>
@@ -509,7 +524,7 @@ export const ProfilePage: React.FC = () => {
       </div>
 
       {/* Profile Form: Seguridad / Contraseña */}
-      <div className="hydra-card" style={{ padding: '1.75rem' }}>
+      <div className="pica-card hydra-card" style={{ padding: '1.75rem' }}>
         <h2 style={{ fontSize: '1.15rem', fontWeight: 800, marginBottom: '0.35rem', color: 'var(--text-primary)' }}>
           Seguridad y Contraseña
         </h2>
@@ -518,14 +533,16 @@ export const ProfilePage: React.FC = () => {
         </p>
 
         {passwordSuccessMsg && (
-          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem', fontSize: '0.85rem' }}>
-            ✓ {passwordSuccessMsg}
+          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <IconoCheck size={16} />
+            <span>{passwordSuccessMsg}</span>
           </div>
         )}
 
         {passwordErrorMsg && (
-          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem', fontSize: '0.85rem' }}>
-            ❌ {passwordErrorMsg}
+          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <IconoAlerta size={16} />
+            <span>{passwordErrorMsg}</span>
           </div>
         )}
 
@@ -543,8 +560,8 @@ export const ProfilePage: React.FC = () => {
               style={inputStyle(!!passwordFieldErrors.passwordActual)}
             />
             {passwordFieldErrors.passwordActual && (
-              <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'block' }}>
-                ⚠️ {passwordFieldErrors.passwordActual}
+              <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <IconoAlerta size={13} /> {passwordFieldErrors.passwordActual}
               </span>
             )}
           </div>
@@ -564,8 +581,8 @@ export const ProfilePage: React.FC = () => {
               />
               <PasswordRequirements password={passwordNueva} />
               {passwordFieldErrors.passwordNueva && (
-                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'block' }}>
-                  ⚠️ {passwordFieldErrors.passwordNueva}
+                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <IconoAlerta size={13} /> {passwordFieldErrors.passwordNueva}
                 </span>
               )}
             </div>
@@ -583,8 +600,8 @@ export const ProfilePage: React.FC = () => {
                 style={inputStyle(!!passwordFieldErrors.confirmPassword)}
               />
               {passwordFieldErrors.confirmPassword && (
-                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'block' }}>
-                  ⚠️ {passwordFieldErrors.confirmPassword}
+                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <IconoAlerta size={13} /> {passwordFieldErrors.confirmPassword}
                 </span>
               )}
             </div>

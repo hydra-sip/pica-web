@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { IconoCheck, IconoFlechaIzquierda } from '../../shared/ui/Iconos';
 
 export const CheckEmailPage: React.FC = () => {
   const location = useLocation();
@@ -34,15 +35,16 @@ export const CheckEmailPage: React.FC = () => {
 
   return (
     <div style={{ maxWidth: '420px', margin: '2rem auto', padding: '0 0.5rem' }}>
-      <div className="hydra-card" style={{ padding: '2rem 1.75rem', textAlign: 'center' }}>
+      <div className="pica-card hydra-card" style={{ padding: '2rem 1.75rem', textAlign: 'center' }}>
         {/* Header bar */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
           <Link
             to="/auth/login"
-            style={{ color: 'var(--text-primary)', textDecoration: 'none', display: 'flex', alignItems: 'center', fontSize: '1.25rem' }}
+            style={{ color: 'var(--text-primary)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
             title="Volver"
+            aria-label="Volver al inicio de sesión"
           >
-            ←
+            <IconoFlechaIzquierda size={18} />
           </Link>
           <h2 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
             Verificación de Cuenta
@@ -123,8 +125,9 @@ export const CheckEmailPage: React.FC = () => {
         </div>
 
         {resendSuccess && (
-          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', padding: '0.7rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem', fontSize: '0.82rem' }}>
-            ✓ Enlace de activación reenviado exitosamente
+          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', padding: '0.7rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem', fontSize: '0.82rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
+            <IconoCheck size={16} />
+            <span>Enlace de activación reenviado exitosamente</span>
           </div>
         )}
 

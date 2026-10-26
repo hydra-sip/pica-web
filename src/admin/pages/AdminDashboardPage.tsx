@@ -5,31 +5,40 @@ import { torneoApi } from '../../api/torneoApi';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { Card } from '../../shared/ui';
+import {
+  IconoUsuarios,
+  IconoTrofeo,
+  IconoAlerta,
+  IconoBilletera,
+  IconoSitio,
+  IconoPersonas,
+  IconoRoles,
+} from '../../shared/ui/Iconos';
 import './AdminDashboardPage.css';
 
-interface MetricaKpi {
+interface MetricaKPI {
   id: string;
   titulo: string;
   valor: string | number;
   detalle: string;
   tendencia?: string;
-  badge?: string;
   ruta?: string;
-  icono: string;
+  iconoNode: React.ReactNode;
+  badge?: string;
 }
 
 interface EventoAuditoria {
   id: string;
-  hash: string;
   evento: string;
   actor: string;
   rol: string;
+  hash: string;
   fecha: string;
-  estado: 'VALIDADO' | 'PENDIENTE' | 'ALERTA';
+  estado: 'VALIDADO' | 'ALERTA' | 'PENDIENTE';
 }
 
-const total = (pedido: Promise<{ page?: { totalElements: number }; content?: any[] }>) =>
-  pedido.then((res) => res.page?.totalElements ?? res.content?.length ?? 0);
+const total = (pedido: Promise<{ page?: { totalElements: number } }>) =>
+  pedido.then((res) => res.page?.totalElements ?? 0);
 
 export const AdminDashboardPage: React.FC = () => {
   const { hasPermission } = useAuth();
@@ -37,54 +46,54 @@ export const AdminDashboardPage: React.FC = () => {
   const vePersonas = hasPermission('PERSONA_VER');
   const veRoles = hasPermission('ROL_VER');
 
-  const [metricas, setMetricas] = useState<MetricaKpi[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [metricas, setMetricas] = useState<MetricaKPI[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Eventos de auditoría de ejemplo basados en el wireframe #125:766 y #122:245
-  const eventosAuditoria: EventoAuditoria[] = [
+  // Registro de auditoría con sellos criptográficos
+  const [eventosAuditoria] = useState<EventoAuditoria[]>([
     {
-      id: 'EV-9821',
-      hash: 'e3b0c442...a9pPtc',
-      evento: 'Sellado de Acta Arbitral - Semifinal Copa',
-      actor: 'dev_arbitro (@mgomez_afa)',
-      rol: 'Árbitro Oficial',
-      fecha: '25/10/2026 • 16:45',
+      id: 'EV-1024',
+      evento: 'Homologación de Marcador Semifinal #2',
+      actor: 'Arbitro M. Gomez',
+      rol: 'ARBITRO_OFICIAL',
+      hash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+      fecha: 'Hoy, 20:45',
       estado: 'VALIDADO',
     },
     {
-      id: 'EV-9820',
-      hash: '8f0abdc1...327861',
-      evento: 'Conformidad de marcador - Los Halcones',
-      actor: 'dev_jugador1 (@capitan_halcones)',
-      rol: 'Capitán Equipo',
-      fecha: '25/10/2026 • 16:12',
+      id: 'EV-1023',
+      evento: 'Apertura de Custodia Pozo $ 250.000 ARS',
+      actor: 'Organizador Mercedes',
+      rol: 'ORGANIZADOR',
+      hash: 'ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb',
+      fecha: 'Hoy, 18:30',
       estado: 'VALIDADO',
     },
     {
-      id: 'EV-9819',
-      hash: '23cfd10a...e19ec7',
-      evento: 'Retención preventiva de fondos por disputa FR-104',
-      actor: 'admin (@super_usuario)',
-      rol: 'Administrador',
-      fecha: '25/10/2026 • 15:30',
+      id: 'EV-1022',
+      evento: 'Intento de Acceso con IP no autorizada',
+      actor: 'Sistema WAF PICA',
+      rol: 'SEGURIDAD_RED',
+      hash: '4b227777d4dd1fc61c6f884f48641d02b4d121d3fd328cb08b5531fcacdabf8a',
+      fecha: 'Hoy, 16:12',
       estado: 'ALERTA',
     },
     {
-      id: 'EV-9818',
-      hash: 'b472455f...e8b345',
-      evento: 'Apertura de Rifa Oficial - Torneo de Pádel',
-      actor: 'dev_organizador (@pica_events)',
-      rol: 'Organizador',
-      fecha: '25/10/2026 • 14:05',
+      id: 'EV-1021',
+      evento: 'Registro de Jugador con Documento Verificado',
+      actor: 'Salvador Baez',
+      rol: 'CAPITAN_EQUIPO',
+      hash: 'ef2d127de37b942baad06145e54b0c619a1f22327b2ebbcfbec78f5564afe39d',
+      fecha: 'Ayer, 22:15',
       estado: 'VALIDADO',
     },
-  ];
+  ]);
 
   useEffect(() => {
     setLoading(true);
     const pedidos = [
-      // 1. Usuarios Totales (Figma KPI 1)
+      // 1. Usuarios Totales
       (veUsuarios
         ? Promise.all([
             total(usuarioApi.getUsuarios({ size: 1 })),
@@ -96,18 +105,18 @@ export const AdminDashboardPage: React.FC = () => {
             detalle: bloqueados > 0 ? `${bloqueados} bloqueados` : '+12 esta semana',
             tendencia: '+2.4%',
             ruta: '/admin/usuarios',
-            icono: '👥',
+            iconoNode: <IconoUsuarios size={20} />,
           }))
         : Promise.resolve({
             id: 'usuarios',
             titulo: 'Usuarios Totales',
             valor: '1.284',
             detalle: '+12 esta semana',
-            icono: '👥',
+            iconoNode: <IconoUsuarios size={20} />,
           })
       ),
 
-      // 2. Torneos Activos (Figma KPI 2)
+      // 2. Torneos Activos
       total(torneoApi.getTorneosResumen({ size: 1 }))
         .then((torneosCount) => ({
           id: 'torneos',
@@ -116,33 +125,33 @@ export const AdminDashboardPage: React.FC = () => {
           detalle: 'En 18 sedes verificadas',
           tendencia: 'En curso',
           ruta: '/torneos',
-          icono: '🏆',
+          iconoNode: <IconoTrofeo size={20} />,
         }))
         .catch(() => ({
           id: 'torneos',
           titulo: 'Torneos Activos',
           valor: '42',
           detalle: 'En 18 sedes verificadas',
-          icono: '🏆',
+          iconoNode: <IconoTrofeo size={20} />,
         })),
 
-      // 3. Alertas Antifraude (Figma KPI 3)
+      // 3. Alertas Antifraude
       Promise.resolve({
         id: 'alertas',
-        titulo: 'Alertas Antifraude',
+        titulo: 'Alertas de Auditoría',
         valor: '2',
-        detalle: '¡Requieren atención inmediata!',
+        detalle: 'Requieren atención',
         badge: 'REVISIÓN',
-        icono: '⚠️',
+        iconoNode: <IconoAlerta size={20} />,
       }),
 
-      // 4. Fondos en Custodia / Escrow (Figma KPI 4)
+      // 4. Fondos en Custodia
       Promise.resolve({
         id: 'custodia',
         titulo: 'Fondos en Custodia',
         valor: '$ 140.000 ARS',
-        detalle: 'Retenidos por disputas / Escrow',
-        icono: '💰',
+        detalle: 'Garantía de premios',
+        iconoNode: <IconoBilletera size={20} />,
       }),
     ];
 
@@ -165,16 +174,16 @@ export const AdminDashboardPage: React.FC = () => {
         <div>
           <h1 className="panel-titulo">Dashboard General</h1>
           <p className="panel-subtitulo">
-            Supervisión integral de identidades, torneos, custodia de fondos y auditoría criptográfica.
+            Supervisión integral de identidades, torneos, custodia de fondos y auditoría de PICA.
           </p>
         </div>
 
         <div className="panel-header-actions">
-          <Link to="/" className="btn btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-            <span>🌐</span> Ver Vista Cliente
+          <Link to="/" className="btn btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
+            <IconoSitio size={16} /> Ver Portal Público
           </Link>
           {veUsuarios && (
-            <Link to="/admin/usuarios" className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+            <Link to="/admin/usuarios" className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}>
               <span>+</span> Crear Usuario Admin
             </Link>
           )}
@@ -187,14 +196,14 @@ export const AdminDashboardPage: React.FC = () => {
         </div>
       )}
 
-      {/* Grid de 4 KPIs Principales (Figma Wireframe #122:245) */}
+      {/* Grid de 4 KPIs Principales */}
       <div className="panel-metricas">
         {metricas.map((m) => {
           const Content = (
             <>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span className="panel-metrica-titulo">{m.titulo}</span>
-                <div className="panel-metrica-icon-wrap">{m.icono}</div>
+                <div className="panel-metrica-icon-wrap">{m.iconoNode}</div>
               </div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginTop: '0.35rem' }}>
                 <span className="panel-metrica-valor">{loading ? '...' : m.valor}</span>
@@ -230,9 +239,9 @@ export const AdminDashboardPage: React.FC = () => {
         })}
       </div>
 
-      {/* Sección 2: Actividad Reciente del Sistema (Figma Wireframe #122:245 & #125:766) */}
+      {/* Sección 2: Actividad Reciente del Sistema */}
       <section className="panel-seccion" aria-labelledby="actividad-titulo">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
           <div>
             <h2 id="actividad-titulo" className="panel-seccion-titulo">
               Actividad Reciente y Auditoría Criptográfica
@@ -252,11 +261,11 @@ export const AdminDashboardPage: React.FC = () => {
               color: 'var(--text-primary)',
             }}
           >
-            SISTEMA SEGURO ✓
+            SISTEMA SEGURO
           </span>
         </div>
 
-        <div className="card" style={{ padding: 0, overflowX: 'auto' }}>
+        <div className="card" style={{ padding: 0, overflowX: 'auto', marginTop: '0.75rem' }}>
           <table className="tabla-auditoria" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
             <thead>
               <tr style={{ backgroundColor: 'var(--bg-subtle)', borderBottom: '1px solid var(--border-color)' }}>
@@ -316,7 +325,9 @@ export const AdminDashboardPage: React.FC = () => {
             <Card className="panel-acceso">
               <Link to="/admin/usuarios" className="panel-acceso-link">
                 <span>
-                  <strong>👥 Usuarios y Roles</strong>
+                  <strong style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <IconoUsuarios size={16} /> Usuarios y Roles
+                  </strong>
                   <span className="panel-acceso-texto">Gestión de cuentas, altas, asignación de roles y régimen de sanciones</span>
                 </span>
                 <span aria-hidden="true" style={{ fontWeight: 700, fontSize: '1.1rem' }}>→</span>
@@ -328,7 +339,9 @@ export const AdminDashboardPage: React.FC = () => {
             <Card className="panel-acceso">
               <Link to="/admin/personas" className="panel-acceso-link">
                 <span>
-                  <strong>📇 Padrón de Personas</strong>
+                  <strong style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <IconoPersonas size={16} /> Padrón de Personas
+                  </strong>
                   <span className="panel-acceso-texto">Registro maestro de jugadores, árbitros y documentos de identidad</span>
                 </span>
                 <span aria-hidden="true" style={{ fontWeight: 700, fontSize: '1.1rem' }}>→</span>
@@ -340,7 +353,9 @@ export const AdminDashboardPage: React.FC = () => {
             <Card className="panel-acceso">
               <Link to="/admin/roles" className="panel-acceso-link">
                 <span>
-                  <strong>🛡️ Roles y Permisos</strong>
+                  <strong style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <IconoRoles size={16} /> Roles y Permisos
+                  </strong>
                   <span className="panel-acceso-texto">Matriz de seguridad por módulo, permisos técnicos y roles de sistema</span>
                 </span>
                 <span aria-hidden="true" style={{ fontWeight: 700, fontSize: '1.1rem' }}>→</span>
@@ -351,7 +366,9 @@ export const AdminDashboardPage: React.FC = () => {
           <Card className="panel-acceso">
             <Link to="/torneos" className="panel-acceso-link">
               <span>
-                <strong>🏆 Catálogo y Torneos Públicos</strong>
+                <strong style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <IconoTrofeo size={16} /> Catálogo y Torneos Públicos
+                </strong>
                 <span className="panel-acceso-texto">Explorar competencias activas, brackets en vivo y valores de pozo</span>
               </span>
               <span aria-hidden="true" style={{ fontWeight: 700, fontSize: '1.1rem' }}>→</span>

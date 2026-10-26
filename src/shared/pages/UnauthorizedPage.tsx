@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { IconoAlerta } from '../ui/Iconos';
 
 export const UnauthorizedPage: React.FC = () => {
   return (
@@ -48,8 +49,9 @@ export const UnauthorizedPage: React.FC = () => {
           width: '100%',
         }}
       >
-        <p style={{ margin: 0, fontWeight: 600, marginBottom: '0.2rem' }}>
-          💡 Ejemplo de Control de Acceso:
+        <p style={{ margin: 0, fontWeight: 600, marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+          <IconoAlerta size={15} />
+          <span>Ejemplo de Control de Acceso:</span>
         </p>
         <p style={{ margin: 0, lineHeight: 1.4 }}>
           Los usuarios con rol <strong>Participante</strong> no tienen habilitados los módulos administrativos. Para ingresar con rol de <strong>Administrador</strong>, probá iniciar sesión con <code>admin@pica.edu.ar</code> / <code>admin123</code>.
