@@ -10,7 +10,10 @@ export type TipoParticipante = 'EQUIPO' | 'INDIVIDUAL' | string;
 
 export interface PremioDetalle {
   puesto: number;
+  /** % del pozo neto. */
   pct: number;
+  /** Lo que le toca del pozo neto estimado; null si no se puede calcular. */
+  monto: number | null;
 }
 
 export interface OrganizadorTorneo {
@@ -59,11 +62,16 @@ export interface TorneoDetalle {
   moneda: string;
   pctPozoCompetidores: number;
   pctPremioRifa: number;
+  /** Pozo neto a repartir en premios, con el cupo completo y menos los gastos (como el paso 3). */
   pozoEstimado: number;
+  /** La parte de la bolsa que va al premio de la rifa del torneo. */
+  premioRifaEstimado: number | null;
   premios: PremioDetalle[];
   cierreInscripcionEn: string | null;
   fechaInicio: string | null;
   fechaFin: string | null;
+  /** El reglamento escrito en el asistente; puede venir este, el PDF o los dos. */
+  reglamentoTexto: string | null;
   reglamentoUrl: string | null;
   reglamentoHash: string | null;
   organizador: OrganizadorTorneo;

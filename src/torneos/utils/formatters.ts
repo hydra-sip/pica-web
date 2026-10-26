@@ -60,8 +60,9 @@ export const formatModalidad = (modalidad: string): string => {
   switch (modalidad) {
     case 'PRESENCIAL':
       return 'Presencial';
+    case 'ONLINE':
     case 'VIRTUAL':
-      return 'Virtual / Online';
+      return 'Online';
     case 'HIBRIDA':
       return 'Híbrida';
     default:
@@ -74,13 +75,4 @@ export const formatTipoParticipante = (tipo: string, tamanioEquipo?: number | nu
     return tamanioEquipo ? `Equipos (${tamanioEquipo} jugadores)` : 'Equipos';
   }
   return 'Individual';
-};
-
-export const calcularPremioPuesto = (
-  pozoTotal: number,
-  pctPozoCompetidores: number,
-  pctPuesto: number
-): number => {
-  const pozoCompetidores = (pozoTotal * pctPozoCompetidores) / 100;
-  return (pozoCompetidores * pctPuesto) / 100;
 };
