@@ -1,4 +1,5 @@
 import React from 'react';
+import './PasosAsistente.css';
 
 export interface Paso {
   titulo: string;

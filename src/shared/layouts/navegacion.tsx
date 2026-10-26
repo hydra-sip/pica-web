@@ -8,6 +8,7 @@ import {
   IconoPersonas,
   IconoRifas,
   IconoRoles,
+  IconoTorneos,
   IconoUsuarios,
 } from '../ui/Iconos';
 
@@ -34,6 +35,8 @@ export const PERMISOS_BACKOFFICE = ['USUARIO_VER', 'ROL_VER', 'PERSONA_VER'];
 export const NAVEGACION: Record<Seccion, ItemNavegacion[]> = {
   sitio: [
     { ruta: '/', texto: 'Explorar', icono: <IconoExplorar />, exacta: true },
+    // PICA-202: TORNEO_GESTIONAR lo tienen ORGANIZADOR y ADMINISTRADOR
+    { ruta: '/mis-torneos', texto: 'Mis torneos', icono: <IconoTorneos />, permisos: ['TORNEO_GESTIONAR'] },
     // PICA-227: RIFA_GESTIONAR lo tienen ORGANIZADOR y ADMINISTRADOR
     { ruta: '/mis-rifas', texto: 'Mis rifas', icono: <IconoRifas />, permisos: ['RIFA_GESTIONAR'] },
     { ruta: '/mi-perfil', texto: 'Perfil', icono: <IconoPerfil />, soloConSesion: true },

@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { rifaApi, RifaDetalle } from '../../api/rifaApi';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { Badge, Card } from '../../shared/ui';
-import { PasosAsistente } from '../components/PasosAsistente';
+import { PasosAsistente } from '../../shared/components/PasosAsistente';
 import { DatosGeneralesForm } from '../components/DatosGeneralesForm';
 import { PremiosForm } from '../components/PremiosForm';
 import { PublicarForm } from '../components/PublicarForm';
