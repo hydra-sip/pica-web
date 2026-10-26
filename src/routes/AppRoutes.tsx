@@ -21,6 +21,7 @@ import { RifaFormPage } from '../rifas/pages/RifaFormPage';
 import { MisTorneosPage } from '../torneos/pages/MisTorneosPage';
 import { TorneoFormPage } from '../torneos/pages/TorneoFormPage';
 import { TorneoPublicadoPage } from '../torneos/pages/TorneoPublicadoPage';
+import { TorneoConsolaPage } from '../torneos/pages/TorneoConsolaPage';
 import { TorneosCatalogoPage } from '../torneos/pages/TorneosCatalogoPage';
 import { TorneoDetallePage } from '../torneos/pages/TorneoDetallePage';
 
@@ -49,6 +50,7 @@ export const AppRoutes: React.FC = () => {
             <Route path="torneos/nuevo" element={<TorneoFormPage />} />
             <Route path="torneos/:id/editar" element={<TorneoFormPage />} />
             <Route path="torneos/:id/publicado" element={<TorneoPublicadoPage />} />
+            <Route path="torneos/:id/consola" element={<TorneoConsolaPage />} />
           </Route>
 
           {/* Rifas del organizador (PICA-227): RIFA_GESTIONAR lo tienen ORGANIZADOR y ADMINISTRADOR */}

@@ -1,0 +1,100 @@
+/* Bracket de eliminación directa (PICA-217): una columna por ronda; las rondas siguientes se centran entre sus
+   cruces porque cada columna reparte el alto entre sus partidos. */
+.bracket {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.bracket-rondas {
+  display: flex;
+  gap: var(--space-5);
+  overflow-x: auto;
+  padding: var(--space-2) 0;
+}
+
+.bracket-ronda {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 220px;
+}
+
+.bracket-ronda h3 {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.bracket-partidos {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: var(--space-3);
+  flex: 1;
+}
+
+.bracket-partido {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-card);
+  overflow: hidden;
+}
+
+.bracket-lado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.bracket-lado + .bracket-lado {
+  border-top: 1px solid var(--color-border);
+}
+
+.bracket-lado-ganador {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.bracket-lado-vacio {
+  font-style: italic;
+  color: var(--color-disabled-text);
+}
+
+.bracket-nombre {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bracket-puntaje {
+  font-variant-numeric: tabular-nums;
+}
+
+.bracket-bye {
+  flex-shrink: 0;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--color-text);
+  color: var(--color-surface);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.bracket-semilla {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.bracket-semilla code {
+  font-family: var(--font-mono);
+}

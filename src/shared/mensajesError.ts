@@ -57,6 +57,12 @@ const POR_CODIGO: Record<string, string> = {
   ARBITRO_DUPLICADO: 'Ese árbitro ya está designado en el torneo.',
   ARBITRO_NO_PERMITIDO: 'No puede arbitrar este torneo: es el organizador o está inscripto.',
   ARBITRO_CON_PARTIDOS: 'Tiene partidos asignados: reasignalos antes de quitarlo.',
+  INSCRIPCION_NO_CERRADA: 'El bracket se genera cuando se cierra la inscripción.',
+  PARTICIPANTES_INSUFICIENTES:
+    'Hacen falta al menos 2 inscripciones confirmadas para armar el bracket.',
+  BRACKET_YA_GENERADO: 'El torneo ya tiene bracket: recargá la página.',
+  SIN_ARBITROS: 'Designá al menos un árbitro en el paso 2: cada partido necesita uno.',
+  BRACKET_CON_RESULTADOS: 'Ya hay resultados cargados: el bracket no se puede volver a sortear.',
 };
 
 const POR_CODIGO_DE_CAMPO: Record<string, string> = {
