@@ -178,6 +178,8 @@ export const TorneoDetallePage: React.FC = () => {
       <nav className="torneo-breadcrumb" aria-label="Ruta de navegación">
         <Link to="/">Inicio</Link>
         <span>/</span>
+        <Link to="/torneos">Torneos</Link>
+        <span>/</span>
         <span style={{ color: 'var(--color-text)', fontWeight: 600 }}>{torneo.nombre}</span>
       </nav>
 
