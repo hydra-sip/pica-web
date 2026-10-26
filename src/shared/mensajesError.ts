@@ -48,6 +48,7 @@ const POR_CODIGO: Record<string, string> = {
   TORNEO_NO_EDITABLE: 'El torneo ya no está en borrador: no se puede modificar desde acá.',
   TORNEO_INCOMPLETO: 'Al torneo le falta completar datos para publicarse.',
   GASTO_NO_ENCONTRADO: 'Ese gasto ya no existe: recargá la página.',
+  REGLAMENTO_NO_ENCONTRADO: 'El torneo no tiene el reglamento en PDF.',
 };
 
 const POR_CODIGO_DE_CAMPO: Record<string, string> = {

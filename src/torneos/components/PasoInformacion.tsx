@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { DisciplinaOpcion, OpcionesTorneo } from '../../api/torneoApi';
+import { DisciplinaOpcion, OpcionesTorneo, TorneoInformacion } from '../../api/torneoApi';
 import { Button, Field, Input, Textarea } from '../../shared/ui';
 import { ErroresTorneo, FormTorneo, MAX_REGLAMENTO } from '../validacion';
+import { ReglamentoPdf } from './ReglamentoPdf';
 
 interface PasoInformacionProps {
   form: FormTorneo;
@@ -12,6 +13,9 @@ interface PasoInformacionProps {
   opciones: OpcionesTorneo;
   /** Canchas que ya existen en la sede escrita. */
   sugerenciasCanchas: string[];
+  /** Null hasta guardar el primer borrador; hace falta para subir el PDF. */
+  torneo: TorneoInformacion | null;
+  onTorneo: (torneo: TorneoInformacion) => void;
 }
 
 const igual = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
@@ -65,6 +69,8 @@ export const PasoInformacion: React.FC<PasoInformacionProps> = ({
   habilitado,
   opciones,
   sugerenciasCanchas,
+  torneo,
+  onTorneo,
 }) => {
   const sugerida = opciones.disciplinas.find((d) => igual(d.nombre, form.disciplina));
   const [otroElegido, setOtroElegido] = useState(false);
@@ -296,7 +302,7 @@ export const PasoInformacion: React.FC<PasoInformacionProps> = ({
       <div className="torneos-grilla">
         <Field
           label="Reglamento y pautas operativas (lo ven los inscriptos)"
-          required
+          required={!torneo?.reglamentoUrl}
           error={errores.reglamentoTexto}
         >
           <div>
@@ -315,11 +321,7 @@ export const PasoInformacion: React.FC<PasoInformacionProps> = ({
             </span>
           </div>
         </Field>
-        <div className="torneos-anexo">
-          <strong>Anexo en PDF</strong>
-          Próximamente vas a poder adjuntar el reglamento en PDF. Mientras tanto, alcanza con el
-          texto.
-        </div>
+        <ReglamentoPdf torneo={torneo} habilitado={habilitado} onTorneo={onTorneo} />
       </div>
     </>
   );

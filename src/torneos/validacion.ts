@@ -129,8 +129,16 @@ export const validarBorrador = (f: FormTorneo, cupoTope: number): ErroresTorneo 
   return errores;
 };
 
-/** Para pasar de paso: además de lo del borrador, que el paso esté completo. */
-export const validarPaso = (paso: 1 | 2, f: FormTorneo, cupoTope: number): ErroresTorneo => {
+/**
+ * Para pasar de paso: además de lo del borrador, que el paso esté completo. Con el PDF subido (`conPdf`) el
+ * reglamento escrito es opcional.
+ */
+export const validarPaso = (
+  paso: 1 | 2,
+  f: FormTorneo,
+  cupoTope: number,
+  conPdf = false
+): ErroresTorneo => {
   const errores = validarBorrador(f, cupoTope);
   const falta = (campo: keyof FormTorneo, mensaje: string) => {
     if (!errores[campo]) errores[campo] = mensaje;
@@ -141,7 +149,8 @@ export const validarPaso = (paso: 1 | 2, f: FormTorneo, cupoTope: number): Error
       falta('tipoParticipante', 'Elegí si se inscriben jugadores o equipos.');
     if (!f.fechaInicio) falta('fechaInicio', 'Poné la fecha de inicio.');
     if (!f.cierreInscripcionEn) falta('cierreInscripcionEn', 'Poné hasta cuándo se inscriben.');
-    if (!f.reglamentoTexto.trim()) falta('reglamentoTexto', 'Escribí el reglamento.');
+    if (!f.reglamentoTexto.trim() && !conPdf)
+      falta('reglamentoTexto', 'Escribí el reglamento o adjuntá el PDF.');
   } else {
     if (!f.cupoMaximo.trim()) falta('cupoMaximo', 'Elegí el cupo.');
     if (!f.cupoMinimo.trim()) falta('cupoMinimo', 'Poné el mínimo para iniciar.');
