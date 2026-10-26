@@ -751,3 +751,16 @@
 .torneos-accion-editar {
   margin-right: 8px;
 }
+
+/* Consola del torneo (PICA-217): el estado de la inscripción y el botón del sorteo */
+.torneos-consola-aviso {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.torneos-consola-aviso p {
+  margin: var(--space-1) 0 0;
+}

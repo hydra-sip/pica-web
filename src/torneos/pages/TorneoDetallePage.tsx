@@ -5,6 +5,7 @@ import { ApiError } from '../../api/httpClient';
 import { TorneoDetalle } from '../types/torneo';
 import { StatusChip } from '../../admin/components/StatusChip';
 import { TorneoPremiosList } from '../components/TorneoPremiosList';
+import { BracketDelTorneo } from '../components/BracketDelTorneo';
 import { TorneoDetalleSkeleton } from '../components/TorneoSkeleton';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { fecha, fechaHora, pesos, valorInscripcion } from '../../shared/formato';
@@ -549,6 +550,8 @@ export const TorneoDetallePage: React.FC = () => {
           moneda={torneo.moneda}
         />
       </div>
+
+      {torneo.estado !== 'INSCRIPCION_ABIERTA' && <BracketDelTorneo torneoId={torneo.id} />}
 
       {/* Modal Informativo para Participante Autenticado */}
       {showInscripcionModal && (

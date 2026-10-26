@@ -214,6 +214,56 @@ export interface MisTorneos extends PageResponse<MiTorneoResumen> {
   disciplinas: string[];
 }
 
+export type EstadoPartido =
+  | 'PROGRAMADO'
+  | 'CHECK_IN'
+  | 'EN_JUEGO'
+  | 'RESULTADO_CARGADO'
+  | 'CONFIRMADO'
+  | 'OBJETADO'
+  | 'CORREGIDO'
+  | 'WALKOVER';
+
+/** Un lado de un partido del bracket: el equipo o el jugador inscripto. */
+export interface LadoBracket {
+  inscripcionId: number;
+  nombre: string;
+  puntaje: number | null;
+  penales: number | null;
+  ganador: boolean | null;
+}
+
+export interface PartidoBracket {
+  id: number;
+  ronda: number;
+  posicion: number;
+  estado: EstadoPartido;
+  /** El local pasa a la ronda siguiente sin jugar. */
+  bye: boolean;
+  /** Null hasta que se sabe quién juega. */
+  local: LadoBracket | null;
+  visitante: LadoBracket | null;
+  cancha: string | null;
+  fechaProgramada: string | null;
+  arbitro: string | null;
+}
+
+export interface RondaBracket {
+  numero: number;
+  /** "Final", "Semifinal", "Cuartos de final"... */
+  nombre: string;
+  partidos: PartidoBracket[];
+}
+
+/** GET /torneos/{id}/bracket (HU-207): sin generar, `rondas` vacío. */
+export interface BracketTorneo {
+  torneoId: number;
+  /** Con la que se sorteó: cualquiera puede recalcular el cuadro con ella y la lista. */
+  semilla: string | null;
+  listaHash: string | null;
+  rondas: RondaBracket[];
+}
+
 // Las del asistente exigen TORNEO_GESTIONAR y cada organizador ve solo los suyos; las del catálogo son públicas.
 export const torneoApi = {
   opciones: async (sede?: string): Promise<OpcionesTorneo> => {
@@ -316,6 +366,21 @@ export const torneoApi = {
 
   quitarArbitro: async (id: number, usuarioId: number): Promise<void> => {
     await httpClient.delete(`/torneos/${id}/arbitros/${usuarioId}`);
+  },
+
+  /** Público: el de un torneo publicado (PICA-216). */
+  bracket: async (id: number): Promise<BracketTorneo> => {
+    return httpClient.get<BracketTorneo>(`/torneos/${id}/bracket`);
+  },
+
+  /** Con la inscripción cerrada; el torneo pasa a EN_CURSO (PICA-215). */
+  generarBracket: async (id: number): Promise<BracketTorneo> => {
+    return httpClient.post<BracketTorneo>(`/torneos/${id}/bracket`);
+  },
+
+  /** Otro sorteo, mientras no haya resultados; queda en la auditoría. */
+  regenerarBracket: async (id: number): Promise<BracketTorneo> => {
+    return httpClient.post<BracketTorneo>(`/torneos/${id}/bracket/regenerar`);
   },
 
   /**
