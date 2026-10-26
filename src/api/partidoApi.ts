@@ -3,7 +3,7 @@ import { EstadoPartido, LadoBracket } from './torneoApi';
 
 export type Lado = 'LOCAL' | 'VISITANTE';
 
-/** GET /partidos/{id} (HU-301): el partido con lo que hace falta para cargar y aceptar el resultado. */
+/** GET /partidos/{id} (HU-301): el partido con lo que hace falta para cargar, aceptar u objetar el resultado. */
 export interface PartidoDetalle {
   id: number;
   torneoId: number;
@@ -20,13 +20,26 @@ export interface PartidoDetalle {
   cancha: string | null;
   fechaProgramada: string | null;
   arbitro: string | null;
-  /** El lado que cargó el resultado; el otro lo acepta. */
+  /** El lado que cargó el resultado; el otro lo acepta u objeta. */
   cargadoPor: Lado | null;
   resultadoCargadoEn: string | null;
   /** Hasta cuándo el rival puede objetar; después se confirma solo. */
   objecionVenceEn: string | null;
   /** El lado del que es capitán quien consulta, si juega el partido. */
   miLado: Lado | null;
+  /** Con el partido objetado o corregido (HU-302). */
+  objecion: ObjecionDetalle | null;
+}
+
+/** La objeción, como la ven las partes: quién objetó, por qué y el resultado que propone. */
+export interface ObjecionDetalle {
+  lado: Lado;
+  motivo: string;
+  puntajeLocal: number;
+  puntajeVisitante: number;
+  penalesLocal: number | null;
+  penalesVisitante: number | null;
+  creadaEn: string;
 }
 
 /** Los penales solo con empate, y tienen que definir un ganador. */
@@ -35,6 +48,11 @@ export interface ResultadoPayload {
   puntajeVisitante: number;
   penalesLocal: number | null;
   penalesVisitante: number | null;
+}
+
+/** El resultado que propone quien objeta, con las reglas de la carga, y por qué. */
+export interface ObjecionPayload extends ResultadoPayload {
+  motivo: string;
 }
 
 export interface EvidenciaDetalle {
@@ -70,6 +88,11 @@ export const partidoApi = {
   /** El rival da por bueno el resultado: el partido queda confirmado y el ganador avanza. */
   aceptarResultado: async (id: number): Promise<PartidoDetalle> => {
     return httpClient.post<PartidoDetalle>(`/partidos/${id}/resultado/aceptar`);
+  },
+
+  /** La evidencia propia se sube antes: sin al menos una, el back responde 400 en `evidencia`. */
+  objetarResultado: async (id: number, payload: ObjecionPayload): Promise<PartidoDetalle> => {
+    return httpClient.post<PartidoDetalle>(`/partidos/${id}/objecion`, payload);
   },
 
   evidencias: async (id: number): Promise<EvidenciaDetalle[]> => {
