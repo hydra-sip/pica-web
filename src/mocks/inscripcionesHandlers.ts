@@ -680,7 +680,8 @@ export const crearInscripcionesHandlers = (sesion: () => SesionMock) => {
             x.nomina?.includes(s.usuario.id) ||
             buscarTorneo(x.torneoId)!.organizador.id === s.usuario.id)
       );
-      if (!i) return noEncontrado('INSCRIPCION_NO_ENCONTRADA', 'La inscripción no existe o no es tuya');
+      if (!i)
+        return noEncontrado('INSCRIPCION_NO_ENCONTRADA', 'La inscripción no existe o no es tuya');
       return HttpResponse.json(
         estado.reemplazos
           .filter((r) => r.inscripcionId === i.id)
@@ -692,6 +693,62 @@ export const crearInscripcionesHandlers = (sesion: () => SesionMock) => {
             realizadoPor: usuarioPublico(s, r.realizadoPorId),
           }))
       );
+    }),
+
+    // Reemplazo: solo el capitán y solo en una CONFIRMADA de equipo. Sale uno de la nómina (nunca el
+    // capitán) y entra otro que no esté en ella ni en otra inscripción activa del torneo.
+    http.post(`${API_URL}/inscripciones/:id/reemplazos`, async ({ request, params }) => {
+      const s = conSesion(request);
+      if (!s) return sinSesion();
+      if (!puedeGestionar(s)) return sinPermiso();
+      const cuerpo = await leerCuerpo(request);
+      const sale = cuerpo?.saleUsuarioId;
+      const entra = cuerpo?.entraUsuarioId;
+      if (!Number.isInteger(sale) || !Number.isInteger(entra) || sale === entra) {
+        return validacion([
+          invalido(
+            'entraUsuarioId',
+            'INVALIDO',
+            'Hay que indicar quién sale y quién entra, y ser distintos'
+          ),
+        ]);
+      }
+      const i = propia(s, idDe(params));
+      if (i instanceof Response) return i;
+      if (!i.nomina) {
+        return conflicto('REEMPLAZO_INVALIDO', 'Una inscripción individual no tiene nómina');
+      }
+      if (i.estado !== 'CONFIRMADA') {
+        return conflicto(
+          'INSCRIPCION_NO_EDITABLE',
+          'Solo se reemplaza en una inscripción confirmada'
+        );
+      }
+      if (!usuarioPublico(s, entra as number)) {
+        return noEncontrado('USUARIO_NO_ENCONTRADO', 'El jugador que entra no existe');
+      }
+      if (
+        sale === i.duenioId ||
+        !i.nomina.includes(sale as number) ||
+        i.nomina.includes(entra as number)
+      ) {
+        return conflicto('REEMPLAZO_INVALIDO', 'El jugador no se puede reemplazar en esta nómina');
+      }
+      if (inscripcionActivaDe(i.torneoId, entra as number, i.id)) {
+        return conflicto(
+          'JUGADOR_YA_INSCRIPTO',
+          'El jugador ya figura en otra inscripción del torneo'
+        );
+      }
+      cambiar(i, { nomina: i.nomina.map((id) => (id === sale ? (entra as number) : id)) });
+      estado.reemplazos.push({
+        inscripcionId: i.id,
+        saleId: sale as number,
+        entraId: entra as number,
+        reemplazadoEn: ahora(),
+        realizadoPorId: s.usuario.id,
+      });
+      return HttpResponse.json(detalle(s, i));
     }),
 
     http.put(`${API_URL}/inscripciones/:id`, async ({ request, params }) => {

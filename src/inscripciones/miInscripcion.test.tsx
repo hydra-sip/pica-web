@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { http } from 'msw';
+import { delay, http } from 'msw';
 import { screen, waitFor, within } from '@testing-library/react';
+import type { UserEvent } from '@testing-library/user-event';
 import { equipoApi } from '../api/equipoApi';
 import { inscripcionApi } from '../api/inscripcionApi';
 import { torneoApi } from '../api/torneoApi';
@@ -148,5 +149,106 @@ describe('historial de reemplazos', () => {
     expect(
       screen.queryByRole('heading', { name: 'Historial de reemplazos' })
     ).not.toBeInTheDocument();
+  });
+});
+
+describe('reemplazar un jugador', () => {
+  const nomina = () => within(screen.getByRole('list', { name: 'Nómina' }));
+
+  /** Abre el reemplazo de `sale`, busca `texto` y elige a `entra`. */
+  const elegir = async (user: UserEvent, sale: string, texto: string, entra: string) => {
+    await user.click(await screen.findByRole('button', { name: `Reemplazar a ${sale}` }));
+    await user.type(screen.getByRole('searchbox', { name: 'Buscar jugador' }), texto);
+    await user.click(await screen.findByRole('button', { name: `Elegir a ${entra}` }));
+  };
+
+  it('el capitán no se puede reemplazar', async () => {
+    await renderRuta(CON_REEMPLAZOS);
+
+    expect(
+      await screen.findByRole('button', { name: 'Reemplazar a Joaquín Gómez' })
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reemplazar a Salvador Báez' })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Reemplazar a Usuario PICA' })
+    ).not.toBeInTheDocument();
+  });
+
+  it('confirma quién sale y quién entra, y deja la nómina, el historial y un aviso actualizados', async () => {
+    const { user } = await renderRuta(CON_REEMPLAZOS);
+
+    await elegir(user, 'Joaquín Gómez', 'lucas', 'Lucas Fernández');
+    expect(screen.getByText('Sale @joaco_g · Entra @lucas_f99')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Confirmar reemplazo' }));
+
+    expect(
+      await screen.findByText('Listo: entró Lucas Fernández en lugar de Joaquín Gómez.')
+    ).toBeInTheDocument();
+    expect(nomina().getByText(/Lucas Fernández/)).toBeInTheDocument();
+    expect(nomina().queryByText(/Joaquín Gómez/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('searchbox', { name: 'Buscar jugador' })).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        within(screen.getByRole('list', { name: 'Historial de reemplazos' })).getAllByRole(
+          'listitem'
+        )
+      ).toHaveLength(3)
+    );
+    const ultimo = within(screen.getByRole('list', { name: 'Historial de reemplazos' }))
+      .getAllByRole('listitem')
+      .at(-1);
+    expect(ultimo).toHaveTextContent(
+      'Salió Joaquín Gómez (@joaco_g), entró Lucas Fernández (@lucas_f99)'
+    );
+  });
+
+  it('en la búsqueda, los que ya están en la nómina no se pueden elegir', async () => {
+    const { user } = await renderRuta(CON_REEMPLAZOS);
+
+    await user.click(await screen.findByRole('button', { name: 'Reemplazar a Joaquín Gómez' }));
+    await user.type(screen.getByRole('searchbox', { name: 'Buscar jugador' }), 'salva');
+
+    expect(await screen.findByRole('button', { name: 'Elegir a Salvador Báez' })).toBeDisabled();
+  });
+
+  it('cancelar cierra el reemplazo sin cambiar nada', async () => {
+    const { user } = await renderRuta(CON_REEMPLAZOS);
+
+    await elegir(user, 'Joaquín Gómez', 'lucas', 'Lucas Fernández');
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }));
+
+    expect(screen.queryByText('Sale @joaco_g · Entra @lucas_f99')).not.toBeInTheDocument();
+    expect(nomina().getByText(/Joaquín Gómez/)).toBeInTheDocument();
+    expect(nomina().queryByText(/Lucas Fernández/)).not.toBeInTheDocument();
+    expect((await inscripcionApi.obtener(902)).nomina!.map((j) => j.id)).toContain(103);
+  });
+
+  it('hay un solo reemplazo abierto a la vez', async () => {
+    const { user } = await renderRuta(CON_REEMPLAZOS);
+
+    await user.click(await screen.findByRole('button', { name: 'Reemplazar a Joaquín Gómez' }));
+    await user.click(screen.getByRole('button', { name: 'Reemplazar a Salvador Báez' }));
+
+    expect(screen.getAllByRole('searchbox', { name: 'Buscar jugador' })).toHaveLength(1);
+    const filaSalvador = nomina()
+      .getAllByRole('listitem')
+      .find((f) => f.textContent?.includes('Salvador Báez'))!;
+    expect(
+      within(filaSalvador).getByRole('searchbox', { name: 'Buscar jugador' })
+    ).toBeInTheDocument();
+  });
+
+  it('mientras se envía, confirmar no se puede tocar de nuevo', async () => {
+    server.use(
+      http.post('*/inscripciones/:id/reemplazos', async () => {
+        await delay('infinite');
+      })
+    );
+    const { user } = await renderRuta(CON_REEMPLAZOS);
+
+    await elegir(user, 'Joaquín Gómez', 'lucas', 'Lucas Fernández');
+    await user.click(screen.getByRole('button', { name: 'Confirmar reemplazo' }));
+
+    expect(screen.getByRole('button', { name: 'Confirmar reemplazo' })).toBeDisabled();
   });
 });

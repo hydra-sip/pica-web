@@ -65,6 +65,12 @@ export interface ResumenPago {
   cierreInscripcionEn: string;
 }
 
+/** Cuerpo del reemplazo: sale un jugador de la nómina y entra otro. */
+export interface ReemplazoPayload {
+  saleUsuarioId: number;
+  entraUsuarioId: number;
+}
+
 /** Un reemplazo del historial (GET /inscripciones/{id}/reemplazos): quién salió, quién entró, cuándo y quién lo hizo. */
 export interface Reemplazo {
   sale: UsuarioPublico;
@@ -73,7 +79,7 @@ export interface Reemplazo {
   realizadoPor: UsuarioPublico;
 }
 
-// Inscripciones del participante. Crear, editar, cancelar, confirmar, reabrir, ver el
+// Inscripciones del participante. Crear, editar, reemplazar, cancelar, confirmar, reabrir, ver el
 // resumen de pago y pagar exigen INSCRIPCION_GESTIONAR; ver y listar alcanza con estar logueado.
 export const inscripcionApi = {
   /** Borrador en un torneo. En uno individual va sin cuerpo; en uno por equipos, con el equipo y la nómina. */
@@ -89,10 +95,7 @@ export const inscripcionApi = {
   },
 
   /** Cambia el equipo y la nómina de un borrador de equipo. */
-  editar: async (
-    id: number,
-    payload: InscripcionEquipoPayload
-  ): Promise<InscripcionDetalle> => {
+  editar: async (id: number, payload: InscripcionEquipoPayload): Promise<InscripcionDetalle> => {
     return httpClient.put<InscripcionDetalle>(`/inscripciones/${id}`, payload);
   },
 
@@ -123,6 +126,11 @@ export const inscripcionApi = {
   },
 
   /** Las que armó el usuario (todos los estados, la más nueva primero); con `torneoId`, solo las de ese torneo. */
+  /** Reemplazo en una CONFIRMADA de equipo, solo del capitán: devuelve la inscripción con la nómina actualizada. */
+  reemplazar: async (id: number, payload: ReemplazoPayload): Promise<InscripcionDetalle> => {
+    return httpClient.post<InscripcionDetalle>(`/inscripciones/${id}/reemplazos`, payload);
+  },
+
   /** Historial de reemplazos, del más viejo al más nuevo. Lo ven el capitán, la nómina y el organizador. */
   reemplazos: async (id: number): Promise<Reemplazo[]> => {
     return httpClient.get<Reemplazo[]>(`/inscripciones/${id}/reemplazos`);

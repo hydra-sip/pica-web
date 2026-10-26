@@ -4,6 +4,8 @@ import { fechaHora } from '../../shared/formato';
 
 interface HistorialReemplazosProps {
   inscripcionId: number;
+  /** Cambia después de cada reemplazo, para volver a pedir el historial. */
+  recarga?: number;
 }
 
 const nombre = (u: Reemplazo['sale']) => `${u.nombres} ${u.apellidos} (@${u.username})`;
@@ -12,7 +14,10 @@ const nombre = (u: Reemplazo['sale']) => `${u.nombres} ${u.apellidos} (@${u.user
  * Los reemplazos de la nómina, del más viejo al más nuevo como los devuelve el back. Se carga aparte de
  * la inscripción: si falla, el aviso queda en esta sección y la nómina se sigue viendo.
  */
-export const HistorialReemplazos: React.FC<HistorialReemplazosProps> = ({ inscripcionId }) => {
+export const HistorialReemplazos: React.FC<HistorialReemplazosProps> = ({
+  inscripcionId,
+  recarga,
+}) => {
   const [reemplazos, setReemplazos] = useState<Reemplazo[] | null>(null);
   const [error, setError] = useState(false);
 
@@ -27,7 +32,7 @@ export const HistorialReemplazos: React.FC<HistorialReemplazosProps> = ({ inscri
     return () => {
       vigente = false;
     };
-  }, [inscripcionId]);
+  }, [inscripcionId, recarga]);
 
   return (
     <section className="historial-reemplazos">

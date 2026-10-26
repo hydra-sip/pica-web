@@ -13,13 +13,19 @@ interface BuscadorJugadoresProps {
   /** Ids de los jugadores que ya están en la nómina. */
   enNomina: ReadonlySet<number>;
   onSumar: (jugador: UsuarioPublico) => void;
+  /** Lo que dice el botón de cada resultado: sumar a la nómina, o elegir al que entra en un reemplazo. */
+  accion?: 'Sumar' | 'Elegir';
 }
 
 /** La consulta como la entiende el back: sin espacios de los costados ni la @ del usuario. */
 const consulta = (texto: string) => texto.trim().replace(/^@+/, '').trim();
 
 /** Búsqueda de jugadores por @usuario o nombre (GET /usuarios?q=), con espera y mínimo de letras. */
-export const BuscadorJugadores: React.FC<BuscadorJugadoresProps> = ({ enNomina, onSumar }) => {
+export const BuscadorJugadores: React.FC<BuscadorJugadoresProps> = ({
+  enNomina,
+  onSumar,
+  accion = 'Sumar',
+}) => {
   const [texto, setTexto] = useState('');
   const [encontrados, setEncontrados] = useState<UsuarioPublico[] | null>(null);
   const [buscando, setBuscando] = useState(false);
@@ -100,9 +106,9 @@ export const BuscadorJugadores: React.FC<BuscadorJugadoresProps> = ({ enNomina, 
                   variant="secondary"
                   onClick={() => onSumar(j)}
                   disabled={yaEsta}
-                  aria-label={`Sumar a ${nombre}`}
+                  aria-label={`${accion} a ${nombre}`}
                 >
-                  {yaEsta ? 'En la nómina' : 'Sumar'}
+                  {yaEsta ? 'En la nómina' : accion}
                 </Button>
               </li>
             );

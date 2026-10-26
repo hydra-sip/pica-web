@@ -6,6 +6,7 @@ import { mensajeDeError } from '../../shared/mensajesError';
 import { Card } from '../../shared/ui';
 import { AvisoInscripcionTerminada } from '../components/AvisoInscripcionTerminada';
 import { HistorialReemplazos } from '../components/HistorialReemplazos';
+import { NominaConfirmada } from '../components/NominaConfirmada';
 import { MENSAJES_MI_INSCRIPCION } from '../mensajesInscripcion';
 import '../inscripciones.css';
 
@@ -19,6 +20,8 @@ export const MiInscripcionPage: React.FC = () => {
   const { user } = useAuth();
   const [inscripcion, setInscripcion] = useState<InscripcionDetalle | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /** Reemplazos hechos desde que se abrió la pantalla: cada uno vuelve a pedir el historial. */
+  const [reemplazos, setReemplazos] = useState(0);
 
   useEffect(() => {
     let vigente = true;
@@ -68,12 +71,6 @@ export const MiInscripcionPage: React.FC = () => {
     return <AvisoInscripcionTerminada estado={inscripcion.estado} />;
   }
 
-  // El capitán es quien ve la pantalla: va primero y marcado, como en el paso 1.
-  const capitanId = Number(user?.id);
-  const nomina = [...(inscripcion.nomina ?? [])].sort(
-    (a, b) => Number(b.id === capitanId) - Number(a.id === capitanId)
-  );
-
   return (
     <div className="inscripcion-page">
       <h1>Mi inscripción</h1>
@@ -86,32 +83,18 @@ export const MiInscripcionPage: React.FC = () => {
         <p className="inscripcion-confirmada-detalle">Torneo: {inscripcion.torneo.nombre}</p>
       </Card>
       {inscripcion.equipo && (
-        <section>
-          <ul className="nomina-lista" aria-label="Nómina">
-            {nomina.map((j, i) => {
-              const esCapitan = j.id === capitanId;
-              return (
-                <li key={j.id} className="nomina-fila">
-                  <span
-                    className={esCapitan ? 'nomina-avatar nomina-avatar-capitan' : 'nomina-avatar'}
-                    aria-hidden="true"
-                  >
-                    {esCapitan ? 'C' : i + 1}
-                  </span>
-                  <span className="nomina-datos">
-                    <strong>
-                      {j.nombres} {j.apellidos}
-                      {esCapitan && ' (Capitán)'}
-                    </strong>
-                    <small>@{j.username}</small>
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
+        <>
+          <NominaConfirmada
+            inscripcion={inscripcion}
+            capitanId={Number(user?.id)}
+            onReemplazada={(actualizada) => {
+              setInscripcion(actualizada);
+              setReemplazos((n) => n + 1);
+            }}
+          />
+          <HistorialReemplazos inscripcionId={inscripcion.id} recarga={reemplazos} />
+        </>
       )}
-      {inscripcion.equipo && <HistorialReemplazos inscripcionId={inscripcion.id} />}
     </div>
   );
 };
