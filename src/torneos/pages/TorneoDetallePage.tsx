@@ -20,7 +20,6 @@ export const TorneoDetallePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isNotFound, setIsNotFound] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [showInscripcionModal, setShowInscripcionModal] = useState<boolean>(false);
 
   const fetchTorneoDetalle = useCallback(async () => {
     if (!slug) return;
@@ -168,7 +167,7 @@ export const TorneoDetallePage: React.FC = () => {
     if (!isAuthenticated) {
       navigate(`/auth/login?redirect=/torneos/${torneo.slug}`);
     } else {
-      setShowInscripcionModal(true);
+      navigate(`/torneos/${torneo.slug}/inscripcion`);
     }
   };
 
@@ -526,74 +525,6 @@ export const TorneoDetallePage: React.FC = () => {
           moneda={torneo.moneda}
         />
       </div>
-
-      {/* Modal Informativo para Participante Autenticado */}
-      {showInscripcionModal && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'var(--color-overlay)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '1rem',
-          }}
-          onClick={() => setShowInscripcionModal(false)}
-        >
-          <div
-            className="card"
-            style={{
-              maxWidth: '500px',
-              width: '100%',
-              padding: 'var(--space-5)',
-              boxShadow: 'var(--shadow-lg)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              style={{ fontSize: '2.5rem', marginBottom: 'var(--space-2)', textAlign: 'center' }}
-            >
-              🎉
-            </div>
-            <h3
-              style={{
-                fontSize: 'var(--text-lg)',
-                textAlign: 'center',
-                marginBottom: 'var(--space-2)',
-              }}
-            >
-              Inscripción a {torneo.nombre}
-            </h3>
-            <p
-              style={{
-                color: 'var(--color-text-secondary)',
-                fontSize: 'var(--text-sm)',
-                lineHeight: 1.6,
-                textAlign: 'center',
-                marginBottom: 'var(--space-4)',
-              }}
-            >
-              {torneo.tipoParticipante === 'EQUIPO'
-                ? `Este torneo es en equipos de ${torneo.tamanioEquipo || ''} personas. El proceso de inscripción de equipos se habilitará en la siguiente fase de desarrollo de la plataforma (HU-209).`
-                : 'El proceso de registro individual se habilitará en la siguiente fase de desarrollo de la plataforma (HU-209).'}
-            </p>
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => setShowInscripcionModal(false)}
-              >
-                Entendido
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
