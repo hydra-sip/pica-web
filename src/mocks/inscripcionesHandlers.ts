@@ -26,6 +26,8 @@ import { type ErrorCampo, problema, validacion } from './adminHandlers';
 //                          409 COBRO_RECHAZADO y la inscripción sigue PENDIENTE_PAGO.
 //   torneo-cerrado         Con la inscripción cerrada: crear, editar, confirmar y pagar responden
 //                          409 INSCRIPCION_NO_ABIERTA.
+//   copa-de-invierno       Por equipos con costo (3 a 4, $ 15.000), abierto: Deportivo Luján ya está
+//                          inscripto y confirmado (inscripción 902), con dos reemplazos.
 //   Cualquier otro slug: este handler lo deja pasar y lo atiende el de los torneos públicos
 //   (torneoHandlers.ts), que responde su propio 404 TORNEO_NO_ENCONTRADO.
 // Cada inscripción (detalle y resumen) trae `torneo {id, nombre, slug}` del torneo de esta lista.
@@ -38,6 +40,9 @@ import { type ErrorCampo, problema, validacion } from './adminHandlers';
 //   - En torneo-apertura-f5 hay una inscripción CONFIRMADA de otro equipo ("Los Rivales", capitán Carlos
 //     Rivas) con Sofía Martínez, Pablo López, Ana Rodríguez y Juan Pérez: sumar a cualquiera de los cinco
 //     responde 409 JUGADOR_YA_INSCRIPTO.
+//   - En copa-de-invierno, Deportivo Luján está CONFIRMADA (902) con el capitán, Joaquín Gómez y Salvador
+//     Báez. Su historial (GET /inscripciones/902/reemplazos) tiene dos reemplazos del capitán: salió Lucas
+//     Fernández y entró Joaquín Gómez, y después salió Matías Rossi y entró Salvador Báez.
 //   - Jugadores (GET /usuarios?q=, mínimo 3 caracteres, solo activos): Lucas Fernández (lucas_f99),
 //     Matías Rossi (mrossi), Joaquín Gómez (joaco_g), Salvador Báez (salva_b), Sofía Martínez (sofi_m),
 //     Pablo López (pablo_l), Ana Rodríguez (ana_r), Juan Pérez (juanp), Carlos Rivas (rival_c),
@@ -92,6 +97,15 @@ interface InscripcionMock {
   reglamentoAceptadoEn: string | null;
   creadoEn: string;
   modificadoEn: string;
+}
+
+/** Un reemplazo del historial: los usuarios van por id. */
+interface ReemplazoMock {
+  inscripcionId: number;
+  saleId: number;
+  entraId: number;
+  reemplazadoEn: string;
+  realizadoPorId: number;
 }
 
 interface JugadorMock extends UsuarioPublico {
@@ -191,6 +205,7 @@ const TORNEOS: TorneoMock[] = [
     estado: 'INSCRIPCION_CERRADA',
     cierreInscripcionEn: CIERRE_PASADO,
   }),
+  torneo(8, 'copa-de-invierno', 'Copa de Invierno', {}),
 ];
 
 const jugador = (
@@ -250,7 +265,35 @@ const estadoInicial = () => ({
       creadoEn: HACE_UN_RATO,
       modificadoEn: HACE_UN_RATO,
     },
+    {
+      id: 902,
+      torneoId: 8,
+      duenioId: CAPITAN,
+      usuarioId: null,
+      equipoId: 3,
+      nomina: [CAPITAN, 103, 104],
+      estado: 'CONFIRMADA',
+      reglamentoAceptadoEn: HACE_UN_RATO,
+      creadoEn: HACE_UN_RATO,
+      modificadoEn: HACE_UN_RATO,
+    },
   ] as InscripcionMock[],
+  reemplazos: [
+    {
+      inscripcionId: 902,
+      saleId: 101,
+      entraId: 103,
+      reemplazadoEn: '2026-10-21T14:05:00Z',
+      realizadoPorId: CAPITAN,
+    },
+    {
+      inscripcionId: 902,
+      saleId: 102,
+      entraId: 104,
+      reemplazadoEn: '2026-10-22T18:30:00Z',
+      realizadoPorId: CAPITAN,
+    },
+  ] as ReemplazoMock[],
   siguienteEquipo: 100,
   siguienteInscripcion: 1000,
 });
@@ -623,6 +666,32 @@ export const crearInscripcionesHandlers = (sesion: () => SesionMock) => {
       return i
         ? HttpResponse.json(detalle(s, i))
         : noEncontrado('INSCRIPCION_NO_ENCONTRADA', 'La inscripción no existe o no es tuya');
+    }),
+
+    // El historial lo ven el capitán, los jugadores de la nómina y el organizador del torneo, del más
+    // viejo al más nuevo.
+    http.get(`${API_URL}/inscripciones/:id/reemplazos`, ({ request, params }) => {
+      const s = conSesion(request);
+      if (!s) return sinSesion();
+      const i = estado.inscripciones.find(
+        (x) =>
+          x.id === idDe(params) &&
+          (x.duenioId === s.usuario.id ||
+            x.nomina?.includes(s.usuario.id) ||
+            buscarTorneo(x.torneoId)!.organizador.id === s.usuario.id)
+      );
+      if (!i) return noEncontrado('INSCRIPCION_NO_ENCONTRADA', 'La inscripción no existe o no es tuya');
+      return HttpResponse.json(
+        estado.reemplazos
+          .filter((r) => r.inscripcionId === i.id)
+          .sort((a, b) => a.reemplazadoEn.localeCompare(b.reemplazadoEn))
+          .map((r) => ({
+            sale: usuarioPublico(s, r.saleId),
+            entra: usuarioPublico(s, r.entraId),
+            reemplazadoEn: r.reemplazadoEn,
+            realizadoPor: usuarioPublico(s, r.realizadoPorId),
+          }))
+      );
     }),
 
     http.put(`${API_URL}/inscripciones/:id`, async ({ request, params }) => {

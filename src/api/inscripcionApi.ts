@@ -65,6 +65,14 @@ export interface ResumenPago {
   cierreInscripcionEn: string;
 }
 
+/** Un reemplazo del historial (GET /inscripciones/{id}/reemplazos): quién salió, quién entró, cuándo y quién lo hizo. */
+export interface Reemplazo {
+  sale: UsuarioPublico;
+  entra: UsuarioPublico;
+  reemplazadoEn: string;
+  realizadoPor: UsuarioPublico;
+}
+
 // Inscripciones del participante. Crear, editar, cancelar, confirmar, reabrir, ver el
 // resumen de pago y pagar exigen INSCRIPCION_GESTIONAR; ver y listar alcanza con estar logueado.
 export const inscripcionApi = {
@@ -115,6 +123,11 @@ export const inscripcionApi = {
   },
 
   /** Las que armó el usuario (todos los estados, la más nueva primero); con `torneoId`, solo las de ese torneo. */
+  /** Historial de reemplazos, del más viejo al más nuevo. Lo ven el capitán, la nómina y el organizador. */
+  reemplazos: async (id: number): Promise<Reemplazo[]> => {
+    return httpClient.get<Reemplazo[]>(`/inscripciones/${id}/reemplazos`);
+  },
+
   listarMias: async (params?: {
     torneoId?: number;
     page?: number;

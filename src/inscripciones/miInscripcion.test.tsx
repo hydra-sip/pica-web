@@ -1,14 +1,20 @@
 import { describe, expect, it } from 'vitest';
+import { http } from 'msw';
 import { screen, waitFor, within } from '@testing-library/react';
 import { equipoApi } from '../api/equipoApi';
 import { inscripcionApi } from '../api/inscripcionApi';
 import { torneoApi } from '../api/torneoApi';
+import { problema } from '../mocks/adminHandlers';
+import { server } from '../mocks/server';
 import { renderRuta } from '../test/renderRuta';
 
 // Los mocks numeran las inscripciones nuevas desde 1000 y se reinician entre test y test: la
 // primera que arma `prepara` es siempre esta.
 const ID = 1000;
 const RUTA = `/inscripciones/${ID}`;
+
+// Deportivo Luján, confirmado en la Copa de Invierno de los mocks, ya tiene dos reemplazos.
+const CON_REEMPLAZOS = '/inscripciones/902';
 
 // Jugadores de los mocks (ids de inscripcionesHandlers.ts): Lucas Fernández, Matías Rossi,
 // Joaquín Gómez y Salvador Báez.
@@ -94,5 +100,53 @@ describe('mi inscripción', () => {
     await renderRuta('/inscripciones/999');
 
     expect(await screen.findByRole('alert')).toHaveTextContent('No encontramos esta inscripción.');
+  });
+});
+
+describe('historial de reemplazos', () => {
+  it('muestra los reemplazos del más viejo al más nuevo, con quién salió, quién entró, cuándo y quién lo hizo', async () => {
+    await renderRuta(CON_REEMPLAZOS);
+
+    const historial = await screen.findByRole('list', { name: 'Historial de reemplazos' });
+    const filas = within(historial).getAllByRole('listitem');
+    expect(filas).toHaveLength(2);
+    expect(filas[0]).toHaveTextContent(
+      'Salió Lucas Fernández (@lucas_f99), entró Joaquín Gómez (@joaco_g)'
+    );
+    expect(filas[0]).toHaveTextContent(/21\/10\/2026 \d{2}:\d{2}/);
+    expect(filas[0]).toHaveTextContent('por @usuario');
+    expect(filas[1]).toHaveTextContent(
+      'Salió Matías Rossi (@mrossi), entró Salvador Báez (@salva_b)'
+    );
+    expect(filas[1]).toHaveTextContent(/22\/10\/2026 \d{2}:\d{2}/);
+  });
+
+  it('sin reemplazos lo dice', async () => {
+    await renderRuta(RUTA, { prepara: equipoConfirmado });
+
+    expect(await screen.findByText('Todavía no hay reemplazos.')).toBeInTheDocument();
+  });
+
+  it('si el historial no carga, avisa en su sección y la nómina se sigue viendo', async () => {
+    server.use(
+      http.get('*/inscripciones/:id/reemplazos', () =>
+        problema(500, 'ERROR_INTERNO', 'Falló algo en el servidor')
+      )
+    );
+    await renderRuta(RUTA, { prepara: equipoConfirmado });
+
+    expect(
+      await screen.findByText('No se pudo cargar el historial de reemplazos.')
+    ).toBeInTheDocument();
+    expect(screen.getByRole('list', { name: 'Nómina' })).toBeInTheDocument();
+  });
+
+  it('una individual no tiene historial', async () => {
+    await renderRuta(RUTA, { prepara: individualConfirmada });
+
+    await screen.findByText(/Participante: Usuario PICA/);
+    expect(
+      screen.queryByRole('heading', { name: 'Historial de reemplazos' })
+    ).not.toBeInTheDocument();
   });
 });

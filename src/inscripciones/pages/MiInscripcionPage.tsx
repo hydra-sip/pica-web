@@ -5,6 +5,7 @@ import { InscripcionDetalle, inscripcionApi } from '../../api/inscripcionApi';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { Card } from '../../shared/ui';
 import { AvisoInscripcionTerminada } from '../components/AvisoInscripcionTerminada';
+import { HistorialReemplazos } from '../components/HistorialReemplazos';
 import { MENSAJES_MI_INSCRIPCION } from '../mensajesInscripcion';
 import '../inscripciones.css';
 
@@ -110,6 +111,7 @@ export const MiInscripcionPage: React.FC = () => {
           </ul>
         </section>
       )}
+      {inscripcion.equipo && <HistorialReemplazos inscripcionId={inscripcion.id} />}
     </div>
   );
 };
