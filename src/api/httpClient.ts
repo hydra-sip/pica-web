@@ -234,13 +234,16 @@ export async function customFetch<T = unknown>(
     try {
       const data = await response.json();
       if (data && typeof data === 'object') {
-        problemDetail = {
+        // Se queda con todo el cuerpo: algunos códigos traen campos propios (faltantes, comisionMaxima...).
+        const problema: ProblemDetail = {
+          ...data,
           status: data.status || response.status,
           codigo: data.codigo || data.error || 'ERROR_DESCONOCIDO',
           detail: data.detail || data.message || data.error,
           errores: data.errores,
         };
-        errorMsg = problemDetail.detail || problemDetail.codigo || errorMsg;
+        problemDetail = problema;
+        errorMsg = problema.detail || problema.codigo || errorMsg;
       }
     } catch {
       // Body couldn't be parsed as JSON

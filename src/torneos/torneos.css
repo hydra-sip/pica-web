@@ -359,3 +359,267 @@
   gap: var(--space-3);
   margin-left: auto;
 }
+
+/* --- Paso 3: esquema económico ---------------------------------------------- */
+
+.torneos-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.torneos-seccion > .btn {
+  align-self: flex-start;
+}
+
+.torneos-seccion h3 {
+  margin: 0;
+  font-size: var(--text-md);
+}
+
+.torneos-subtitulo-seccion {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+}
+
+.torneos-dato {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+}
+
+.torneos-dato span,
+.torneos-dato small {
+  color: var(--color-text-secondary);
+}
+
+.torneos-cuentas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+}
+
+.torneos-linea {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.torneos-linea.destacada {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--text-md);
+}
+
+.torneos-linea.destacada strong {
+  color: var(--color-primary);
+}
+
+.torneos-suma {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.torneos-suma.ok {
+  color: var(--color-success);
+}
+
+.torneos-suma.pendiente {
+  color: var(--color-warning);
+}
+
+/* Gastos: descripción, monto y acciones en una fila; en el celular, uno abajo del otro */
+.torneos-gastos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.torneos-gasto {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 160px) auto;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.torneos-gasto > strong {
+  text-align: right;
+}
+
+.torneos-gasto-acciones {
+  display: flex;
+  gap: var(--space-1);
+  justify-content: flex-end;
+}
+
+.torneos-gasto-nuevo {
+  padding-top: var(--space-2);
+  border-top: 1px dashed var(--color-border);
+}
+
+.torneos-premios {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.torneos-premio {
+  display: grid;
+  grid-template-columns: 7rem 7rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.torneos-premio-puesto {
+  font-weight: 600;
+}
+
+.torneos-premio-monto {
+  color: var(--color-text-secondary);
+}
+
+.torneos-terminos {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.torneos-terminos input {
+  margin-top: 3px;
+}
+
+.torneos-faltantes {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-5);
+}
+
+.torneos-ir-paso {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (max-width: 560px) {
+  .torneos-gasto {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .torneos-gasto > strong {
+    text-align: left;
+  }
+
+  .torneos-gasto-acciones {
+    justify-content: flex-start;
+  }
+
+  .torneos-premio {
+    grid-template-columns: 6rem minmax(0, 1fr) auto;
+  }
+
+  .torneos-premio-monto {
+    grid-column: 1 / -1;
+  }
+}
+
+/* --- Torneo publicado --------------------------------------------------------- */
+
+.torneo-publicado {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  text-align: center;
+}
+
+.torneo-publicado-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto;
+  border-radius: var(--radius-full);
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
+  font-size: var(--text-2xl);
+}
+
+.torneo-publicado h2 {
+  margin: 0;
+  font-size: var(--text-xl);
+}
+
+.torneo-publicado-datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+  text-align: left;
+}
+
+.torneo-publicado-sello {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  text-align: left;
+  font-size: var(--text-sm);
+}
+
+.torneo-publicado-sello code {
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.torneo-publicado-enlace {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  text-align: left;
+}
+
+.torneo-publicado-enlace .input {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.torneo-publicado-etiqueta {
+  margin: 0 0 var(--space-2);
+  text-align: left;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.torneo-publicado-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+}
