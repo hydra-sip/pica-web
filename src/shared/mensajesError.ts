@@ -49,6 +49,11 @@ const POR_CODIGO: Record<string, string> = {
   TORNEO_INCOMPLETO: 'Al torneo le falta completar datos para publicarse.',
   GASTO_NO_ENCONTRADO: 'Ese gasto ya no existe: recargá la página.',
   REGLAMENTO_NO_ENCONTRADO: 'El torneo no tiene el reglamento en PDF.',
+  ARBITRO_NO_ENCONTRADO: 'Ese árbitro ya no está en el torneo: recargá la página.',
+  USUARIO_NO_ES_ARBITRO: 'Ese usuario no es un árbitro activo.',
+  ARBITRO_DUPLICADO: 'Ese árbitro ya está designado en el torneo.',
+  ARBITRO_NO_PERMITIDO: 'No puede arbitrar este torneo: es el organizador o está inscripto.',
+  ARBITRO_CON_PARTIDOS: 'Tiene partidos asignados: reasignalos antes de quitarlo.',
 };
 
 const POR_CODIGO_DE_CAMPO: Record<string, string> = {

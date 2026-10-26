@@ -19,7 +19,7 @@ const minimoSugerido = (cupo: number): number => Math.max(2, Math.ceil(cupo * 0.
 
 /**
  * Paso 2, "Cupos" (wireframe "Wizard Creacion de Torneo - Paso 2"): cupo máximo, mínimo para iniciar y,
- * si se inscriben equipos, titulares y nómina máxima. Los árbitros del wireframe esperan su módulo.
+ * si se inscriben equipos, titulares y nómina máxima. Los árbitros van aparte, en ArbitrosTorneo.
  */
 export const PasoCupos: React.FC<PasoCuposProps> = ({
   form,
