@@ -55,7 +55,7 @@ const POR_CODIGO: Record<string, string> = {
   REGLAMENTO_NO_ACEPTADO: 'Tenés que aceptar el reglamento para continuar.',
   CUPO_COMPLETO: 'Se completó el cupo del torneo y no queda lugar. No se te cobró nada.',
   JUGADOR_YA_INSCRIPTO:
-    'Hay un jugador (o vos como capitán) que ya figura en otra inscripción de este torneo. Reemplazalo por otro.',
+    'Hay un jugador (o vos como capitán) que ya figura en otra inscripción de este torneo. Elegí a otro jugador.',
   NOMINA_INVALIDA:
     'La nómina no cumple lo que pide el torneo: revisá la cantidad de jugadores y que estés vos como capitán.',
   COBRO_RECHAZADO:

@@ -24,7 +24,7 @@ import { type ErrorCampo, problema, validacion } from './adminHandlers';
 //                          PENDIENTE_PAGO y el pago responde 409 CUPO_COMPLETO.
 //   torneo-cobro-rechazado Por equipos con costo (3 a 4, $ 15.000) donde el pago siempre responde
 //                          409 COBRO_RECHAZADO y la inscripción sigue PENDIENTE_PAGO.
-//   torneo-cerrado         Con la inscripción cerrada: crear, reemplazar, confirmar y pagar responden
+//   torneo-cerrado         Con la inscripción cerrada: crear, editar, confirmar y pagar responden
 //                          409 INSCRIPCION_NO_ABIERTA.
 //   Cualquier otro slug: este handler lo deja pasar y lo atiende el de los torneos públicos
 //   (torneoHandlers.ts), que responde su propio 404 TORNEO_NO_ENCONTRADO.
@@ -358,7 +358,7 @@ const cambiar = (i: InscripcionMock, cambios: Partial<InscripcionMock>) => {
   Object.assign(i, cambios, { modificadoEn: ahora() });
 };
 
-// --- cuerpo de crear y reemplazar -------------------------------------------------------------
+// --- cuerpo de crear y editar -----------------------------------------------------------------
 
 interface CuerpoEquipo {
   equipoId?: number;
@@ -436,7 +436,7 @@ const inscripcionActivaDe = (torneoId: number, jugadorId: number, exceptoId?: nu
       (i.usuarioId === jugadorId || Boolean(i.nomina?.includes(jugadorId)))
   );
 
-// Reglas comunes de crear y de reemplazar (el borrador no cuenta contra sí mismo).
+// Reglas comunes de crear y de editar (el borrador no cuenta contra sí mismo).
 const validarEquipoYNomina = (
   sesion: SesionMock,
   t: TorneoMock,

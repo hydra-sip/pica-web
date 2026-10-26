@@ -345,7 +345,7 @@ describe('paso 1: equipo y nómina (alta)', () => {
       expect(screen.getByRole('button', { name: 'Confirmar inscripción' })).toBeEnabled()
     );
 
-    // El reintento reemplaza el borrador y vuelve a fallar en la confirmación, no en el guardado.
+    // El reintento edita el borrador y vuelve a fallar en la confirmación, no en el guardado.
     expect(screen.getByRole('alert')).toHaveTextContent('Tu borrador quedó guardado.');
     expect(await borradores()).toHaveLength(1);
     expect(

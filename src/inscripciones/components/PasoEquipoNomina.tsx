@@ -72,7 +72,7 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /** Crea el borrador o reemplaza el que ya hay con el equipo y la nómina de la pantalla (la individual, solo lo crea). */
+  /** Crea el borrador o edita el que ya hay con el equipo y la nómina de la pantalla (la individual, solo lo crea). */
   const guardar = async (): Promise<InscripcionDetalle> => {
     // La individual no lleva cuerpo: si ya hay borrador no hay nada que guardar.
     if (individual) {
@@ -87,7 +87,7 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
       nomina: jugadores.map((j) => j.id),
     };
     const guardada = borrador
-      ? await inscripcionApi.reemplazar(borrador.id, payload)
+      ? await inscripcionApi.editar(borrador.id, payload)
       : await inscripcionApi.crear(torneo.id, payload);
     setBorrador(guardada);
     // Si se creó un equipo por nombre, desde acá se lo elige como a cualquier otro: reintentar no crea otro.

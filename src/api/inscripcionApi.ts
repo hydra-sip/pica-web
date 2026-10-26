@@ -32,7 +32,7 @@ export interface InscripcionResumen {
 }
 
 /**
- * GET /inscripciones/{id}; también lo devuelven el alta, el reemplazo, confirmar, reabrir y pagar.
+ * GET /inscripciones/{id}; también lo devuelven el alta, editar, confirmar, reabrir y pagar.
  * La de equipo lleva `equipo` y `nomina` (con el capitán) y su `usuarioId` es null.
  */
 export interface InscripcionDetalle extends InscripcionResumen {
@@ -41,7 +41,7 @@ export interface InscripcionDetalle extends InscripcionResumen {
   nomina?: UsuarioPublico[] | null;
 }
 
-/** Cuerpo de crear y reemplazar en un torneo por equipos: exactamente uno de equipoId y nombreEquipoNuevo. */
+/** Cuerpo de crear y editar en un torneo por equipos: exactamente uno de equipoId y nombreEquipoNuevo. */
 export interface InscripcionEquipoPayload {
   equipoId?: number;
   /** Hasta 100 caracteres; se crea el equipo con el capitán como capitán e integrante. */
@@ -65,7 +65,7 @@ export interface ResumenPago {
   cierreInscripcionEn: string;
 }
 
-// Inscripciones del participante. Crear, reemplazar, cancelar, confirmar, reabrir, ver el
+// Inscripciones del participante. Crear, editar, cancelar, confirmar, reabrir, ver el
 // resumen de pago y pagar exigen INSCRIPCION_GESTIONAR; ver y listar alcanza con estar logueado.
 export const inscripcionApi = {
   /** Borrador en un torneo. En uno individual va sin cuerpo; en uno por equipos, con el equipo y la nómina. */
@@ -80,8 +80,8 @@ export const inscripcionApi = {
     return httpClient.get<InscripcionDetalle>(`/inscripciones/${id}`);
   },
 
-  /** Reemplaza el equipo y la nómina de un borrador de equipo. */
-  reemplazar: async (
+  /** Cambia el equipo y la nómina de un borrador de equipo. */
+  editar: async (
     id: number,
     payload: InscripcionEquipoPayload
   ): Promise<InscripcionDetalle> => {
