@@ -190,7 +190,7 @@ export const TorneoFormPage: React.FC = () => {
   const guardar = async (seguir: boolean) => {
     setMensaje(null);
     const encontrados = seguir
-      ? validarPaso(paso === 1 ? 1 : 2, form, cupoTope)
+      ? validarPaso(paso === 1 ? 1 : 2, form, cupoTope, Boolean(torneo?.reglamentoUrl))
       : validarBorrador(form, cupoTope);
     setErrores(encontrados);
     if (Object.keys(encontrados).length > 0) {
@@ -415,6 +415,14 @@ export const TorneoFormPage: React.FC = () => {
               habilitado={habilitado}
               opciones={opciones}
               sugerenciasCanchas={sugerenciasCanchas}
+              torneo={torneo}
+              onTorneo={(t) => {
+                setTorneo(t);
+                // con el PDF, el reglamento escrito deja de faltar
+                const resto = { ...errores, reglamentoTexto: undefined };
+                setErrores(resto);
+                if (!Object.values(resto).some(Boolean)) setMensaje(null);
+              }}
             />
           )}
           {paso === 2 && (

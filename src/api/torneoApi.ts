@@ -1,4 +1,4 @@
-import { httpClient } from './httpClient';
+import { customFetch, httpClient } from './httpClient';
 import { PageResponse } from './usuarioApi';
 import {
   FiltrosTorneo,
@@ -49,8 +49,10 @@ export interface TorneoInformacion extends Omit<
   pasoPendiente: number | null;
   descripcion: string | null;
   formato: Formato;
-  /** El PDF, si se subió. */
+  /** El PDF, si se subió: GET /torneos/{id}/reglamento. */
   reglamentoUrl: string | null;
+  /** SHA-256 del PDF desde que se sube; sin PDF, el del texto al publicar. */
+  reglamentoHash: string | null;
   /** El paso 3, con lo que falta en null. */
   economia: EconomiaTorneo;
   /** El enlace público; se genera al publicar. */
@@ -245,6 +247,22 @@ export const torneoApi = {
   /** Sella el esquema, genera el enlace y abre la inscripción; 409 TORNEO_INCOMPLETO si falta algo. */
   publicar: async (id: number): Promise<TorneoInformacion> => {
     return httpClient.post<TorneoInformacion>(`/torneos/${id}/publicar`, { aceptaTerminos: true });
+  },
+
+  /** Paso 1, en BORRADOR: reemplaza al PDF anterior. Hasta 5 MB. */
+  subirReglamento: async (id: number, archivo: File): Promise<TorneoInformacion> => {
+    const body = new FormData();
+    body.append('archivo', archivo);
+    return customFetch<TorneoInformacion>(`/torneos/${id}/reglamento`, { method: 'POST', body });
+  },
+
+  quitarReglamento: async (id: number): Promise<TorneoInformacion> => {
+    return httpClient.delete<TorneoInformacion>(`/torneos/${id}/reglamento`);
+  },
+
+  /** Con la sesión, para que el organizador vea el de su borrador; publicado, el enlace abre sin sesión. */
+  reglamentoPdf: async (id: number): Promise<Blob> => {
+    return httpClient.get<Blob>(`/torneos/${id}/reglamento`, { comoBlob: true });
   },
 
   /**

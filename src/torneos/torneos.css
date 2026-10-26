@@ -321,8 +321,12 @@
   color: var(--color-text-muted);
 }
 
-/* Recuadro del PDF del reglamento, que todavía no se puede subir */
+/* Recuadro del PDF del reglamento */
 .torneos-anexo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-self: start;
   padding: var(--space-4);
   border: 1px dashed var(--color-border-strong);
   border-radius: var(--radius-md);
@@ -332,9 +336,22 @@
 }
 
 .torneos-anexo strong {
-  display: block;
-  margin-bottom: var(--space-1);
   color: var(--color-text);
+}
+
+.torneos-anexo-archivo {
+  overflow-wrap: anywhere;
+  color: var(--color-text);
+}
+
+.torneos-anexo-hash code {
+  font-size: var(--text-xs);
+}
+
+.torneos-anexo-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
 /* Pie del asistente: "Paso 1 de 3" a la izquierda y los botones a la derecha */

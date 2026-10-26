@@ -4,11 +4,14 @@ import { ResumenEconomico, torneoApi, TorneoInformacion } from '../../api/torneo
 import { fechaHora } from '../../shared/formato';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { Badge, Button, Card, Input } from '../../shared/ui';
-import { ESTADO_TORNEO_UI, participantes, pesosArs, TONO_ESTADO_TORNEO } from '../formato';
+import {
+  abreviarHash,
+  ESTADO_TORNEO_UI,
+  participantes,
+  pesosArs,
+  TONO_ESTADO_TORNEO,
+} from '../formato';
 import '../torneos.css';
-
-/** `7f83b1657ff1…9069d40a`: el sello entero va en el title. */
-const abreviar = (hash: string): string => `${hash.slice(0, 12)}…${hash.slice(-8)}`;
 
 /**
  * "Confirmación de publicación" (wireframe "Torneo Publicado", PICA-205): lo que quedó fijo al publicar, el sello
@@ -132,7 +135,7 @@ export const TorneoPublicadoPage: React.FC = () => {
               <div>
                 <strong>Esquema económico sellado (SHA-256)</strong>
                 <br />
-                <code title={torneo.esquemaHash}>{abreviar(torneo.esquemaHash)}</code>
+                <code title={torneo.esquemaHash}>{abreviarHash(torneo.esquemaHash)}</code>
               </div>
               <Badge tone="exito">Sellado</Badge>
             </div>

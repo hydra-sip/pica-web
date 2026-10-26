@@ -111,6 +111,8 @@ export const performRefreshToken = async (): Promise<RefreshResponse> => {
 
 export interface RequestOptions extends RequestInit {
   _retry?: boolean;
+  /** La respuesta es un archivo (el PDF del reglamento): vuelve como Blob en lugar de JSON. */
+  comoBlob?: boolean;
   params?: Record<string, string | number | boolean | undefined | null>;
 }
 
@@ -250,6 +252,10 @@ export async function customFetch<T = unknown>(
     }
 
     throw new ApiError(errorMsg, response.status, problemDetail);
+  }
+
+  if (options.comoBlob) {
+    return (await response.blob()) as T;
   }
 
   // 202 y otros éxitos pueden venir sin cuerpo
