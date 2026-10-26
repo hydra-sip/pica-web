@@ -364,5 +364,6 @@ describe('errores del reemplazo', () => {
     await user.click(screen.getByRole('button', { name: 'Confirmar reemplazo' }));
 
     expect(await screen.findByText(/Esta inscripción fue cancelada/)).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('Esta inscripción ya no está confirmada.');
   });
 });

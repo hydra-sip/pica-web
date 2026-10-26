@@ -16,8 +16,11 @@ interface NominaConfirmadaProps {
   onReemplazada: (inscripcion: InscripcionDetalle) => void;
   /** El back avisó que la inscripción del torneo cerró mientras tanto. */
   onCerrada: () => void;
-  /** El back avisó que la inscripción ya no está confirmada: hay que volver a cargarla. */
-  onNoEditable: () => void;
+  /**
+   * El back avisó que la inscripción ya no está confirmada: hay que volver a cargarla. Recibe el mensaje,
+   * que muestra la página porque la recarga desarma esta nómina.
+   */
+  onNoEditable: (mensaje: string) => void;
 }
 
 const nombre = (j: UsuarioPublico) => `${j.nombres} ${j.apellidos}`;
@@ -78,8 +81,13 @@ export const NominaConfirmada: React.FC<NominaConfirmadaProps> = ({
         onCerrada();
         return;
       }
-      setError(mensajeDeError(err, 'No se pudo hacer el reemplazo.', MENSAJES_REEMPLAZO));
-      if (codigo === 'INSCRIPCION_NO_EDITABLE') onNoEditable();
+      const mensaje = mensajeDeError(err, 'No se pudo hacer el reemplazo.', MENSAJES_REEMPLAZO);
+      if (codigo === 'INSCRIPCION_NO_EDITABLE') {
+        cerrar();
+        onNoEditable(mensaje);
+        return;
+      }
+      setError(mensaje);
     } finally {
       setEnviando(false);
     }

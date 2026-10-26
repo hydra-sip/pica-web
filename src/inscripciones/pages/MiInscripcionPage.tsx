@@ -30,9 +30,14 @@ export const MiInscripcionPage: React.FC = () => {
   const [cerrada, setCerrada] = useState(false);
   /** Cambia para volver a cargar la inscripción. */
   const [carga, setCarga] = useState(0);
+  /** Por qué se volvió a cargar: sigue a la vista después de la recarga, sea cual sea el estado nuevo. */
+  const [motivoRecarga, setMotivoRecarga] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   /** Reemplazos hechos desde que se abrió la pantalla: cada uno vuelve a pedir el historial. */
   const [reemplazos, setReemplazos] = useState(0);
+
+  // El motivo es de esta inscripción: con otra no aplica.
+  useEffect(() => setMotivoRecarga(null), [id]);
 
   useEffect(() => {
     let vigente = true;
@@ -86,7 +91,7 @@ export const MiInscripcionPage: React.FC = () => {
     return <Navigate to={`/inscripciones/${inscripcion.id}/pago`} replace />;
   }
   if (inscripcion.estado === 'CANCELADA' || inscripcion.estado === 'REINTEGRADA') {
-    return <AvisoInscripcionTerminada estado={inscripcion.estado} />;
+    return <AvisoInscripcionTerminada estado={inscripcion.estado} motivo={motivoRecarga} />;
   }
 
   const puedeReemplazar =
@@ -98,6 +103,11 @@ export const MiInscripcionPage: React.FC = () => {
       <header className="inscripcion-encabezado">
         <h1>Mi inscripción</h1>
       </header>
+      {motivoRecarga && (
+        <div className="alerta alerta-peligro" role="alert">
+          {motivoRecarga}
+        </div>
+      )}
       <Card className="inscripcion-torneo">
         <strong>{inscripcion.torneo.nombre}</strong>
         <span>
@@ -122,7 +132,10 @@ export const MiInscripcionPage: React.FC = () => {
               setReemplazos((n) => n + 1);
             }}
             onCerrada={() => setCerrada(true)}
-            onNoEditable={() => setCarga((n) => n + 1)}
+            onNoEditable={(mensaje) => {
+              setMotivoRecarga(mensaje);
+              setCarga((n) => n + 1);
+            }}
           />
           <HistorialReemplazos inscripcionId={inscripcion.id} recarga={reemplazos} />
         </>
