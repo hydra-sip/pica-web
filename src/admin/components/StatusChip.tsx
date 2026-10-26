@@ -13,6 +13,12 @@ const ESTADOS: Record<string, { tone: BadgeTone; label: string }> = {
   PENDIENTE_VERIFICACION: { tone: 'info', label: 'Pendiente' },
   BLOQUEADO: { tone: 'aviso', label: 'Bloqueado' },
   ELIMINADO: { tone: 'peligro', label: 'Eliminado' },
+  // Torneos (HU-208)
+  INSCRIPCION_ABIERTA: { tone: 'exito', label: 'Inscripción abierta' },
+  INSCRIPCION_CERRADA: { tone: 'aviso', label: 'Inscripción cerrada' },
+  EN_CURSO: { tone: 'info', label: 'En curso' },
+  FINALIZADO: { tone: 'neutral', label: 'Finalizado' },
+  CANCELADO: { tone: 'peligro', label: 'Cancelado' },
 };
 
 export const StatusChip: React.FC<StatusChipProps> = ({ status }) => {

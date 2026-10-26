@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { InscripcionResumen, inscripcionApi } from '../../api/inscripcionApi';
-import { Torneo, torneoApi } from '../../api/torneoApi';
+import { torneoApi } from '../../api/torneoApi';
+import { TorneoDetalle } from '../../torneos/types/torneo';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { MENSAJES_PASO_1 } from '../mensajesInscripcion';
 import { TAMANIO } from '../hooks/useEquiposDelTorneo';
@@ -9,12 +10,13 @@ import { PasoEquipoNomina } from '../components/PasoEquipoNomina';
 import '../inscripciones.css';
 
 interface Datos {
-  torneo: Torneo;
+  torneo: TorneoDetalle;
   propias: InscripcionResumen[];
 }
 
-const inscripcionAbierta = (torneo: Torneo) =>
-  torneo.estado === 'INSCRIPCION_ABIERTA' && new Date(torneo.cierreInscripcionEn) > new Date();
+const inscripcionAbierta = (torneo: TorneoDetalle) =>
+  torneo.estado === 'INSCRIPCION_ABIERTA' &&
+  (torneo.cierreInscripcionEn === null || new Date(torneo.cierreInscripcionEn) > new Date());
 
 /**
  * `/torneos/:slug/inscripcion`: punto de entrada. Con el torneo y las inscripciones propias en él
@@ -41,7 +43,7 @@ export const InscripcionEntradaPage: React.FC = () => {
     setError(null);
     (async () => {
       try {
-        const torneo = await torneoApi.obtenerPorSlug(slug ?? '');
+        const torneo = await torneoApi.getTorneoBySlug(slug ?? '');
         const propias = await inscripcionApi.listarMias({ torneoId: torneo.id, size: TAMANIO });
         if (vigente) setDatos({ torneo, propias: propias.content });
       } catch (err) {

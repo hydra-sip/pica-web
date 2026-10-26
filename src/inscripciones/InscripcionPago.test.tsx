@@ -18,7 +18,7 @@ const JUGADORES = [101, 102, 103, 104, 105];
 
 /** Una inscripción de equipo (Los Galácticos) ya confirmada con el reglamento: PENDIENTE_PAGO. */
 const pendienteDePago = (slug: string) => async () => {
-  const torneo = await torneoApi.obtenerPorSlug(slug);
+  const torneo = await torneoApi.getTorneoBySlug(slug);
   const equipos = await equipoApi.listarMios();
   const galacticos = equipos.content.find((e) => e.nombre === 'Los Galácticos')!;
   const borrador = await inscripcionApi.crear(torneo.id, {
@@ -40,7 +40,7 @@ afterEach(() => {
 
 /** Una inscripción individual ya confirmada con el reglamento: PENDIENTE_PAGO. */
 const individualPendienteDePago = (slug: string) => async () => {
-  const torneo = await torneoApi.obtenerPorSlug(slug);
+  const torneo = await torneoApi.getTorneoBySlug(slug);
   const borrador = await inscripcionApi.crear(torneo.id);
   await inscripcionApi.confirmar(borrador.id, true);
 };
@@ -292,7 +292,7 @@ describe('pantalla final y otros estados de la inscripción', () => {
   it('un borrador lleva al paso 1 para completarlo', async () => {
     const { ubicacion } = await renderRuta(RUTA_PAGO, {
       prepara: async () => {
-        const torneo = await torneoApi.obtenerPorSlug('torneo-apertura-f5');
+        const torneo = await torneoApi.getTorneoBySlug('torneo-apertura-f5');
         await inscripcionApi.crear(torneo.id, { nombreEquipoNuevo: 'Los Nuevos', nomina: [101] });
       },
     });

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { InscripcionDetalle, inscripcionApi } from '../../api/inscripcionApi';
-import { Torneo, torneoApi } from '../../api/torneoApi';
+import { torneoApi } from '../../api/torneoApi';
+import { TorneoDetalle } from '../../torneos/types/torneo';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { MENSAJES_PASO_1 } from '../mensajesInscripcion';
 import { PasoEquipoNomina } from '../components/PasoEquipoNomina';
@@ -10,7 +11,7 @@ import '../inscripciones.css';
 interface Datos {
   inscripcion: InscripcionDetalle;
   /** Solo se carga si la inscripción está en borrador. */
-  torneo: Torneo | null;
+  torneo: TorneoDetalle | null;
 }
 
 /**
@@ -35,7 +36,7 @@ export const InscripcionNominaPage: React.FC = () => {
           throw new Error('No se pudo cargar el torneo de la inscripción.');
         }
         const torneo =
-          inscripcion.estado === 'BORRADOR' && slug ? await torneoApi.obtenerPorSlug(slug) : null;
+          inscripcion.estado === 'BORRADOR' && slug ? await torneoApi.getTorneoBySlug(slug) : null;
         if (vigente) setDatos({ inscripcion, torneo });
       })
       .catch(

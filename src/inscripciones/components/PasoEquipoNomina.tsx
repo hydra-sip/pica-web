@@ -6,7 +6,7 @@ import {
 } from '../../api/inscripcionApi';
 import { useNavigate } from 'react-router-dom';
 import { UsuarioPublico } from '../../api/jugadorApi';
-import { Torneo } from '../../api/torneoApi';
+import { TorneoDetalle } from '../../torneos/types/torneo';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { pesos } from '../../shared/formato';
 import { mensajeDeError } from '../../shared/mensajesError';
@@ -18,7 +18,7 @@ import { EQUIPO_NUEVO, SelectorEquipo } from './SelectorEquipo';
 import '../inscripciones.css';
 
 export interface PasoEquipoNominaProps {
-  torneo: Torneo;
+  torneo: TorneoDetalle;
   /**
    * El borrador que se retoma. Sin él es el alta: todavía no se llamó a la API y el borrador se crea
    * al guardar. Tiene que estar en BORRADOR; quien lo renderiza se ocupa de redirigir las demás.
@@ -37,8 +37,8 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
   const navigate = useNavigate();
   // El torneo individual se reduce al reglamento: no hay equipo ni nómina.
   const individual = torneo.tipoParticipante === 'INDIVIDUAL';
+  // El tipo público del torneo no trae el máximo de la nómina: el tope lo valida el back (NOMINA_INVALIDA).
   const minimo = torneo.tamanioEquipo ?? 1;
-  const maximo = torneo.nominaMaxima;
 
   const {
     equipos,
@@ -56,7 +56,6 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
     () => inscripcion?.nomina?.filter((j) => j.id !== capitanId) ?? []
   );
   const total = jugadores.length + 1;
-  const lleno = maximo !== null && total >= maximo;
   const sumar = (j: UsuarioPublico) => setJugadores((prev) => [...prev, j]);
   const sacar = (id: number) => setJugadores((prev) => prev.filter((j) => j.id !== id));
 
@@ -65,7 +64,7 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
   const gratis = torneo.valorInscripcion === 0;
   const creaNuevo = equipos?.length === 0 || equipoElegido === EQUIPO_NUEVO;
   const equipoListo = individual || (creaNuevo ? nombreNuevo.trim() !== '' : equipoElegido !== '');
-  const nominaValida = individual || (total >= minimo && (maximo === null || total <= maximo));
+  const nominaValida = individual || total >= minimo;
   const puedeContinuar = reglamentoAceptado && equipoListo && nominaValida;
 
   // El borrador que ya existe en la API: el que se retoma o el que este paso guardó.
@@ -121,7 +120,7 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
     setError(null);
     try {
       await guardar();
-      // TODO (PICA-198): volver al detalle del torneo cuando tenga ruta; por ahora, al inicio.
+      // TODO: volver al detalle del torneo (/torneos/:slug, que ya existe); por ahora, al inicio.
       navigate('/');
     } catch (err) {
       setError(mensajeDeError(err, 'No se pudo guardar el borrador.', MENSAJES_PASO_1));
@@ -141,9 +140,7 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
         <strong>{torneo.nombre}</strong>
         {!individual && (
           <span>
-            {maximo === null
-              ? `Nómina de al menos ${minimo} jugadores`
-              : `Nómina de ${minimo} a ${maximo} jugadores`}
+            {`Nómina de al menos ${minimo} jugadores`}
           </span>
         )}
       </Card>
@@ -170,7 +167,6 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
             </h2>
             <BuscadorJugadores
               enNomina={new Set([capitanId, ...jugadores.map((j) => j.id)])}
-              lleno={lleno}
               onSumar={sumar}
             />
             <ul className="nomina-lista" aria-label="Nómina">
@@ -206,8 +202,7 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
               ))}
             </ul>
             <p className="inscripcion-contador">
-              {cantidad(total)} (mínimo {minimo}
-              {maximo !== null && `, máximo ${maximo}`})
+              {cantidad(total)} (mínimo {minimo})
             </p>
           </section>
         </>

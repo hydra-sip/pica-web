@@ -16,7 +16,7 @@ const JUGADORES = [101, 102, 103, 104];
 /** Un borrador de Los Galácticos en el torneo `slug`; con `confirmada`, queda PENDIENTE_PAGO. */
 const inscripcionDeLosGalacticos =
   (slug: string, confirmada: boolean) => async () => {
-    const torneo = await torneoApi.obtenerPorSlug(slug);
+    const torneo = await torneoApi.getTorneoBySlug(slug);
     const equipos = await equipoApi.listarMios();
     const galacticos = equipos.content.find((e) => e.nombre === 'Los Galácticos')!;
     const borrador = await inscripcionApi.crear(torneo.id, {

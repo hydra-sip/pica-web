@@ -6,11 +6,11 @@ import type {
   TorneoDeInscripcion,
 } from '../api/inscripcionApi';
 import type { UsuarioPublico } from '../api/jugadorApi';
-import type { Torneo } from '../api/torneoApi';
+import type { TorneoDetalle } from '../torneos/types/torneo';
 import { type ErrorCampo, problema, validacion } from './adminHandlers';
 
 // Inscripción en dos pasos (PICA-211) en memoria: equipos propios, búsqueda de jugadores, torneo por
-// slug (provisional, PICA-196), y las inscripciones con su máquina de estados, según
+// slug (TorneoDetalle del contrato público), y las inscripciones con su máquina de estados, según
 // pica-back/docs/api/openapi.yaml. Se reinicia al recargar la página y, en las pruebas, con
 // `reiniciarInscripciones()`.
 //
@@ -26,7 +26,8 @@ import { type ErrorCampo, problema, validacion } from './adminHandlers';
 //                          409 COBRO_RECHAZADO y la inscripción sigue PENDIENTE_PAGO.
 //   torneo-cerrado         Con la inscripción cerrada: crear, reemplazar, confirmar y pagar responden
 //                          409 INSCRIPCION_NO_ABIERTA.
-//   Cualquier otro slug: 404 TORNEO_NO_ENCONTRADO.
+//   Cualquier otro slug: este handler lo deja pasar y lo atiende el de los torneos públicos
+//   (torneoHandlers.ts), que responde su propio 404 TORNEO_NO_ENCONTRADO.
 // Cada inscripción (detalle y resumen) trae `torneo {id, nombre, slug}` del torneo de esta lista.
 //
 // Datos de ejemplo:
@@ -64,7 +65,9 @@ type Cuerpo = Record<string, unknown>;
 // --- datos ------------------------------------------------------------------------------------
 
 /** El torneo de la API más lo que el mock necesita para simular a los demás participantes. */
-interface TorneoMock extends Torneo {
+interface TorneoMock extends TorneoDetalle {
+  /** Jugadores máximos de la nómina; el back lo valida, pero el contrato público del torneo no lo trae. */
+  nominaMaxima: number | null;
   /** Inscripciones confirmadas de otros equipos que no están en el mock (ocupan cupo). */
   ocupadasAparte: number;
   /** El pago siempre se rechaza. */
@@ -100,6 +103,7 @@ interface JugadorMock extends UsuarioPublico {
 
 const CIERRE_ABIERTO = '2030-12-31T23:59:00Z';
 const CIERRE_PASADO = '2026-01-15T23:59:00Z';
+const FECHA_INICIO = '2031-01-10T15:00:00Z';
 const HACE_UN_RATO = '2026-10-20T15:00:00Z';
 
 const torneo = (
@@ -111,15 +115,30 @@ const torneo = (
   id,
   slug,
   nombre,
+  descripcion: null,
+  disciplina: 'Fútbol 5',
+  formato: 'ELIMINACION_DIRECTA',
+  modalidad: 'PRESENCIAL',
   tipoParticipante: 'EQUIPO',
+  sede: 'Club UNLu',
   cupoMaximo: 16,
   cupoMinimo: 8,
+  cupoDisponible: 16,
   tamanioEquipo: 3,
   nominaMaxima: 4,
   valorInscripcion: 15000,
   moneda: 'ARS',
+  pctPozoCompetidores: 70,
+  pctPremioRifa: 20,
+  pozoEstimado: 0,
+  premios: [],
   cierreInscripcionEn: CIERRE_ABIERTO,
+  fechaInicio: FECHA_INICIO,
+  fechaFin: null,
   reglamentoUrl: `https://example.com/reglamentos/${slug}.pdf`,
+  reglamentoHash: null,
+  organizador: { id: 4, nombreCompleto: 'Organizador Eventos', username: 'organizador' },
+  publicadoEn: HACE_UN_RATO,
   estado: 'INSCRIPCION_ABIERTA',
   ocupadasAparte: 0,
   ...extra,
@@ -131,7 +150,6 @@ const INDIVIDUAL = {
   nominaMaxima: null,
 } as const;
 
-// TODO (PICA-196): forma provisional del torneo, ver torneoApi.ts.
 const TORNEOS: TorneoMock[] = [
   torneo(1, 'torneo-apertura-f5', 'Torneo Apertura F5', {
     tamanioEquipo: 5,
@@ -270,11 +288,18 @@ const noEncontrado = (codigo: string, detail: string) => problema(404, codigo, d
 const sinSesion = () => problema(401, 'NO_AUTENTICADO', 'Falta el token de acceso');
 const sinPermiso = () => prohibido('SIN_PERMISO', 'No tenés permiso para hacer esto');
 
-const torneoPublico = ({
+/** El torneo como lo devuelve el contrato público: sin lo que solo necesita el mock y con el cupo al día. */
+const sinDatosDelMock = ({
   ocupadasAparte: _o,
   cobroRechazado: _c,
+  nominaMaxima: _n,
   ...publico
-}: TorneoMock): Torneo => publico;
+}: TorneoMock): TorneoDetalle => publico;
+
+const torneoPublico = (t: TorneoMock): TorneoDetalle => ({
+  ...sinDatosDelMock(t),
+  cupoDisponible: cupoDisponible(t),
+});
 
 const buscarTorneo = (id: number) => TORNEOS.find((t) => t.id === id);
 const buscarEquipo = (id: number) => estado.equipos.find((e) => e.id === id);
@@ -286,7 +311,8 @@ const cupoDisponible = (t: TorneoMock) =>
   Math.max(0, t.cupoMaximo - t.ocupadasAparte - confirmadas(t.id));
 
 const abierto = (t: TorneoMock) =>
-  t.estado === 'INSCRIPCION_ABIERTA' && new Date(t.cierreInscripcionEn).getTime() > Date.now();
+  t.estado === 'INSCRIPCION_ABIERTA' &&
+  (t.cierreInscripcionEn === null || new Date(t.cierreInscripcionEn).getTime() > Date.now());
 
 const usuarioPublico = (sesion: SesionMock, id: number): UsuarioPublico | undefined => {
   if (id === sesion.usuario.id) {
@@ -478,12 +504,11 @@ export const crearInscripcionesHandlers = (sesion: () => SesionMock) => {
   };
 
   return [
-    // Torneo por slug. TODO (PICA-196): ruta y forma provisionales; es público.
+    // Torneo por slug (público). Atiende solo los slugs de estos escenarios: con los demás devuelve
+    // `undefined` y MSW sigue con el siguiente handler (torneoHandlers.ts).
     http.get(`${API_URL}/torneos/slug/:slug`, ({ params }) => {
       const t = TORNEOS.find((x) => x.slug === params.slug);
-      return t
-        ? HttpResponse.json(torneoPublico(t))
-        : noEncontrado('TORNEO_NO_ENCONTRADO', 'El torneo no existe');
+      return t ? HttpResponse.json(torneoPublico(t)) : undefined;
     }),
 
     // Buscar jugadores: cualquier usuario logueado, solo activos, sin datos personales.

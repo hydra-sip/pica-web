@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { rifaApi, RifaDetalle } from '../../api/rifaApi';
 import { erroresPorCampo, mensajeDeError } from '../../shared/mensajesError';
 import { Button, Input } from '../../shared/ui';
@@ -8,12 +8,15 @@ import {
   sumaPorcentajes,
   validatePremios,
 } from '../../shared/validators';
+import { PasoGuardable } from './pasoGuardable';
 
 interface PremiosFormProps {
   rifa: RifaDetalle;
   editable: boolean;
   onGuardada: (rifa: RifaDetalle) => void;
+  /** Cambian de paso; la página guarda antes con {@link PasoGuardable.guardar}. */
   onAnterior: () => void;
+  onSiguiente: () => void;
 }
 
 const desdeRifa = (rifa: RifaDetalle): PremioForm[] =>
@@ -21,14 +24,13 @@ const desdeRifa = (rifa: RifaDetalle): PremioForm[] =>
 
 /**
  * Paso 2 del asistente, "Premios": PUT /rifas/{id}/premios con la lista completa en orden de puesto.
- * En borrador pueden sumar menos de 100 %; para publicar tienen que sumar exactamente 100.
+ * En borrador pueden sumar menos de 100 %; para publicar tienen que sumar exactamente 100. Guarda con
+ * "Guardar como borrador" y, a pedido de la página, antes de cambiar de paso.
  */
-export const PremiosForm: React.FC<PremiosFormProps> = ({
-  rifa,
-  editable,
-  onGuardada,
-  onAnterior,
-}) => {
+export const PremiosForm = forwardRef<PasoGuardable, PremiosFormProps>(function PremiosForm(
+  { rifa, editable, onGuardada, onAnterior, onSiguiente },
+  ref
+) {
   const [premios, setPremios] = useState<PremioForm[]>(() => desdeRifa(rifa));
   const [errores, setErrores] = useState<ErroresPremios>({ porFila: {} });
   const [mensaje, setMensaje] = useState<{ tipo: 'exito' | 'error'; texto: string } | null>(null);
@@ -67,15 +69,21 @@ export const PremiosForm: React.FC<PremiosFormProps> = ({
     setErrores({ porFila: {} });
   };
 
-  const guardar = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const guardar = async (): Promise<RifaDetalle | null> => {
+    if (!editable) {
+      return rifa;
+    }
     setMensaje(null);
 
     const encontrados = validatePremios(premios, cantidadNumeros);
     setErrores(encontrados);
     if (encontrados.general || Object.values(encontrados.porFila).some(Boolean)) {
       setMensaje({ tipo: 'error', texto: encontrados.general ?? 'Revisá los premios marcados.' });
-      return;
+      return null;
+    }
+    // Sin cambios no hace falta ir al back
+    if (JSON.stringify(premios) === JSON.stringify(desdeRifa(rifa))) {
+      return rifa;
     }
 
     setGuardando(true);
@@ -86,19 +94,28 @@ export const PremiosForm: React.FC<PremiosFormProps> = ({
       );
       setMensaje({ tipo: 'exito', texto: 'Borrador guardado.' });
       onGuardada(guardada);
+      return guardada;
     } catch (err) {
       const porCampo = erroresPorCampo(err);
       setMensaje({
         tipo: 'error',
         texto: porCampo.premios ?? mensajeDeError(err, 'No se pudieron guardar los premios.'),
       });
+      return null;
     } finally {
       setGuardando(false);
     }
   };
 
+  useImperativeHandle(ref, () => ({ guardar }));
+
+  const enviar = (e: React.FormEvent) => {
+    e.preventDefault();
+    void guardar();
+  };
+
   return (
-    <form className="rifas-form" onSubmit={guardar} noValidate>
+    <form className="rifas-form" onSubmit={enviar} noValidate>
       <div className="rifas-tarjeta-titulo">
         <h2>Paso 2: Premios por puesto</h2>
         <span>Puede haber hasta un premio por número ({cantidadNumeros})</span>
@@ -114,7 +131,7 @@ export const PremiosForm: React.FC<PremiosFormProps> = ({
       )}
 
       <div className="alerta alerta-info">
-        Cada premio es un porcentaje del pozo de la rifa y entre todos tienen que sumar 100 % para
+        Cada premio es un porcentaje del pozo de la rifa y entre todos tienen que sumar 100% para
         poder publicarla.
       </div>
 
@@ -125,9 +142,9 @@ export const PremiosForm: React.FC<PremiosFormProps> = ({
           {premios.map((premio, i) => (
             <div key={i}>
               <div className="premio-fila">
-                <span className="premio-puesto">{i + 1}.º</span>
+                <span className="premio-puesto">{i + 1}º</span>
                 <Input
-                  aria-label={`Porcentaje del ${i + 1}.º premio`}
+                  aria-label={`Porcentaje del ${i + 1}º premio`}
                   aria-invalid={errores.porFila[i] ? true : undefined}
                   type="number"
                   inputMode="numeric"
@@ -146,7 +163,7 @@ export const PremiosForm: React.FC<PremiosFormProps> = ({
                   disabled={bloqueado}
                 />
                 <Input
-                  aria-label={`Descripción del ${i + 1}.º premio`}
+                  aria-label={`Descripción del ${i + 1}º premio`}
                   className="premio-descripcion"
                   type="text"
                   maxLength={255}
@@ -160,7 +177,7 @@ export const PremiosForm: React.FC<PremiosFormProps> = ({
                     <Button
                       variant="ghost"
                       title="Subir"
-                      aria-label={`Subir el ${i + 1}.º premio`}
+                      aria-label={`Subir el ${i + 1}º premio`}
                       disabled={guardando || i === 0}
                       onClick={() => mover(i, i - 1)}
                     >
@@ -169,7 +186,7 @@ export const PremiosForm: React.FC<PremiosFormProps> = ({
                     <Button
                       variant="ghost"
                       title="Bajar"
-                      aria-label={`Bajar el ${i + 1}.º premio`}
+                      aria-label={`Bajar el ${i + 1}º premio`}
                       disabled={guardando || i === premios.length - 1}
                       onClick={() => mover(i, i + 1)}
                     >
@@ -178,7 +195,7 @@ export const PremiosForm: React.FC<PremiosFormProps> = ({
                     <Button
                       variant="ghost"
                       title="Quitar"
-                      aria-label={`Quitar el ${i + 1}.º premio`}
+                      aria-label={`Quitar el ${i + 1}º premio`}
                       disabled={guardando}
                       onClick={() => quitar(i)}
                     >
@@ -201,9 +218,9 @@ export const PremiosForm: React.FC<PremiosFormProps> = ({
         <span>
           Total:{' '}
           <strong className={suma > 100 ? 'excedido' : suma === 100 ? 'completo' : ''}>
-            {suma} %
+            {suma}%
           </strong>
-          {suma < 100 && premios.length > 0 && <> · faltan {100 - suma} % para publicar</>}
+          {suma < 100 && premios.length > 0 && <> · faltan {100 - suma}% para publicar</>}
         </span>
         {editable && (
           <Button
@@ -217,18 +234,21 @@ export const PremiosForm: React.FC<PremiosFormProps> = ({
       </div>
 
       <div className="rifas-pie">
-        <span>Paso 2 de 2{editable && ' · Los cambios se guardan como borrador'}</span>
+        <span>Paso 2 de 3{editable && ' · Los cambios se guardan al cambiar de paso'}</span>
         <div className="rifas-acciones">
-          <Button variant="secondary" onClick={onAnterior} disabled={guardando}>
+          <Button variant="ghost" onClick={onAnterior} disabled={guardando}>
             ← Anterior
           </Button>
           {editable && (
-            <Button type="submit" loading={guardando}>
+            <Button type="submit" variant="secondary" loading={guardando}>
               Guardar como borrador
             </Button>
           )}
+          <Button disabled={guardando} onClick={onSiguiente}>
+            {editable ? 'Siguiente: Publicar →' : 'Ver publicación →'}
+          </Button>
         </div>
       </div>
     </form>
   );
-};
+});

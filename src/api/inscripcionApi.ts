@@ -11,7 +11,7 @@ export interface EquipoInscripto {
   nombre: string;
 }
 
-/** El torneo de una inscripción, para mostrarlo y llegar a su ficha con `torneoApi.obtenerPorSlug`. */
+/** El torneo de una inscripción, para mostrarlo y llegar a su ficha con `torneoApi.getTorneoBySlug`. */
 export interface TorneoDeInscripcion {
   id: number;
   nombre: string;
@@ -65,7 +65,7 @@ export interface ResumenPago {
   cierreInscripcionEn: string;
 }
 
-// PICA-208, PICA-209, PICA-210 y PICA-234. Crear, reemplazar, cancelar, confirmar, reabrir, ver el
+// Inscripciones del participante. Crear, reemplazar, cancelar, confirmar, reabrir, ver el
 // resumen de pago y pagar exigen INSCRIPCION_GESTIONAR; ver y listar alcanza con estar logueado.
 export const inscripcionApi = {
   /** Borrador en un torneo. En uno individual va sin cuerpo; en uno por equipos, con el equipo y la nómina. */

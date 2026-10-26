@@ -1,18 +1,26 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { rifaApi, RifaDetalle } from '../../api/rifaApi';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { Badge, Card } from '../../shared/ui';
-import { PasosAsistente } from '../components/PasosAsistente';
+import { PasosAsistente } from '../../shared/components/PasosAsistente';
 import { DatosGeneralesForm } from '../components/DatosGeneralesForm';
 import { PremiosForm } from '../components/PremiosForm';
+import { PublicarForm } from '../components/PublicarForm';
+import { PasoGuardable } from '../components/pasoGuardable';
 import { ESTADO_RIFA_UI, TONO_ESTADO_RIFA } from '../formato';
 import '../rifas.css';
 
+// Cada paso tiene su valor en ?paso= para poder recargar o compartir la URL; el primero va sin parámetro
+const PASOS_URL = ['', 'premios', 'publicar'];
+
+const SIN_BORRADOR = 'Se habilita al guardar el borrador';
+
 /**
- * Alta y edición de una rifa sin torneo (PICA-227), como asistente en dos pasos con el formato de
- * "Crear Nueva Competencia". Cada paso se guarda por separado; el de premios se habilita cuando la
- * rifa ya existe, y fuera de BORRADOR todo queda de solo lectura.
+ * Alta, edición y publicación de una rifa sin torneo (PICA-227, T402-4), como asistente en tres pasos
+ * con el formato de "Crear Nueva Competencia". Los dos primeros se guardan por separado, también al
+ * cambiar de paso (si tienen errores no se cambia); el tercero la publica. Fuera de BORRADOR todo es
+ * de solo lectura.
  */
 export const RifaFormPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -22,8 +30,13 @@ export const RifaFormPage: React.FC = () => {
   const [rifa, setRifa] = useState<RifaDetalle | null>(null);
   const [cargando, setCargando] = useState(Boolean(id));
   const [error, setError] = useState<string | null>(null);
+  const [recienPublicada, setRecienPublicada] = useState(false);
+  const [cambiando, setCambiando] = useState(false);
+  const datosRef = useRef<PasoGuardable>(null);
+  const premiosRef = useRef<PasoGuardable>(null);
 
-  const paso = searchParams.get('paso') === 'premios' && rifa ? 1 : 0;
+  const pedido = Math.max(0, PASOS_URL.indexOf(searchParams.get('paso') ?? ''));
+  const paso = rifa ? pedido : 0;
   const editable = !rifa || rifa.estado === 'BORRADOR';
   const estado = rifa?.estado ?? 'BORRADOR';
 
@@ -45,18 +58,41 @@ export const RifaFormPage: React.FC = () => {
     };
   }, [id]);
 
-  const irAPaso = (indice: number) => {
-    setSearchParams(indice === 1 ? { paso: 'premios' } : {}, { replace: true });
+  const urlDePaso = (rifaId: number, indice: number) =>
+    `/rifas/${rifaId}/editar${indice > 0 ? `?paso=${PASOS_URL[indice]}` : ''}`;
+
+  /**
+   * Todos los cambios de paso (Siguiente, Anterior y la barra de pasos) pasan por acá: el paso actual
+   * valida y guarda primero, y si tiene errores no se cambia de pantalla.
+   */
+  const irAPaso = async (indice: number) => {
+    if (indice === paso || cambiando) {
+      return;
+    }
+    setCambiando(true);
+    try {
+      const actual = paso === 0 ? datosRef.current : paso === 1 ? premiosRef.current : null;
+      const guardada = actual ? await actual.guardar() : rifa;
+      if (guardada) {
+        setSearchParams(indice > 0 ? { paso: PASOS_URL[indice] } : {}, { replace: true });
+      }
+    } finally {
+      setCambiando(false);
+    }
   };
 
-  const alGuardarDatos = (guardada: RifaDetalle, seguir: boolean) => {
+  const alGuardarDatos = (guardada: RifaDetalle) => {
     setRifa(guardada);
+    // Al crear el borrador pasa a la URL de edición, que es la que se puede recargar o compartir
     if (!id) {
-      // Recién creada: pasa a la URL de edición, que es la que se puede recargar o compartir.
-      navigate(`/rifas/${guardada.id}/editar${seguir ? '?paso=premios' : ''}`, { replace: true });
-    } else if (seguir) {
-      irAPaso(1);
+      navigate(urlDePaso(guardada.id, 0), { replace: true });
     }
+  };
+
+  const alPublicar = (publicada: RifaDetalle) => {
+    setRifa(publicada);
+    setRecienPublicada(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const volver = (
@@ -99,44 +135,69 @@ export const RifaFormPage: React.FC = () => {
         </p>
       </header>
 
-      {!editable && (
-        <div className="alerta alerta-info" role="status">
-          La rifa ya no está en borrador: se muestra de solo lectura.
+      {recienPublicada ? (
+        <div className="alerta alerta-exito" role="status">
+          ¡Listo! La rifa quedó publicada y en venta.
         </div>
+      ) : (
+        !editable && (
+          <div className="alerta alerta-info" role="status">
+            La rifa ya está publicada, no se pueden realizar cambios.
+          </div>
+        )
       )}
 
       <PasosAsistente
         actual={paso}
-        onIr={irAPaso}
+        onIr={(indice) => void irAPaso(indice)}
         pasos={[
-          { titulo: 'Datos generales', subtitulo: 'Título, números, precio y fechas de venta' },
+          { titulo: 'Datos generales', subtitulo: 'Números, precio y fechas de venta y sorteo' },
           {
             titulo: 'Premios',
-            subtitulo: rifa ? 'Porcentaje del pozo por puesto' : 'Se habilita al guardar el paso 1',
+            subtitulo: rifa ? 'Porcentaje del pozo por puesto' : SIN_BORRADOR,
+            bloqueado: !rifa,
+          },
+          {
+            titulo: 'Publicar',
+            subtitulo: rifa ? 'Términos y declaración de la lotería' : SIN_BORRADOR,
             bloqueado: !rifa,
           },
         ]}
       />
 
       <Card>
-        {/* Los dos pasos quedan montados para no perder lo que no se guardó al ir y volver. */}
+        {/* Los pasos quedan montados para no perder lo que no se guardó al ir y volver. */}
         <div hidden={paso !== 0}>
           <DatosGeneralesForm
+            ref={datosRef}
             rifa={rifa}
             editable={editable}
             onGuardada={alGuardarDatos}
-            onSiguiente={() => irAPaso(1)}
+            onSiguiente={() => void irAPaso(1)}
           />
         </div>
         {rifa && (
-          <div hidden={paso !== 1}>
-            <PremiosForm
-              rifa={rifa}
-              editable={editable}
-              onGuardada={setRifa}
-              onAnterior={() => irAPaso(0)}
-            />
-          </div>
+          <>
+            <div hidden={paso !== 1}>
+              <PremiosForm
+                ref={premiosRef}
+                rifa={rifa}
+                editable={editable}
+                onGuardada={setRifa}
+                onAnterior={() => void irAPaso(0)}
+                onSiguiente={() => void irAPaso(2)}
+              />
+            </div>
+            <div hidden={paso !== 2}>
+              <PublicarForm
+                rifa={rifa}
+                editable={editable}
+                onPublicada={alPublicar}
+                onAnterior={() => void irAPaso(1)}
+                onIrAPaso={(indice) => void irAPaso(indice)}
+              />
+            </div>
+          </>
         )}
       </Card>
     </div>

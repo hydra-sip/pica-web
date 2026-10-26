@@ -12,8 +12,6 @@ const RESULTADOS = 10;
 interface BuscadorJugadoresProps {
   /** Ids de los jugadores que ya están en la nómina. */
   enNomina: ReadonlySet<number>;
-  /** La nómina ya tiene el máximo de jugadores. */
-  lleno: boolean;
   onSumar: (jugador: UsuarioPublico) => void;
 }
 
@@ -21,11 +19,7 @@ interface BuscadorJugadoresProps {
 const consulta = (texto: string) => texto.trim().replace(/^@+/, '').trim();
 
 /** Búsqueda de jugadores por @usuario o nombre (GET /usuarios?q=), con espera y mínimo de letras. */
-export const BuscadorJugadores: React.FC<BuscadorJugadoresProps> = ({
-  enNomina,
-  lleno,
-  onSumar,
-}) => {
+export const BuscadorJugadores: React.FC<BuscadorJugadoresProps> = ({ enNomina, onSumar }) => {
   const [texto, setTexto] = useState('');
   const [encontrados, setEncontrados] = useState<UsuarioPublico[] | null>(null);
   const [buscando, setBuscando] = useState(false);
@@ -105,7 +99,7 @@ export const BuscadorJugadores: React.FC<BuscadorJugadoresProps> = ({
                   size="sm"
                   variant="secondary"
                   onClick={() => onSumar(j)}
-                  disabled={yaEsta || lleno}
+                  disabled={yaEsta}
                   aria-label={`Sumar a ${nombre}`}
                 >
                   {yaEsta ? 'En la nómina' : 'Sumar'}

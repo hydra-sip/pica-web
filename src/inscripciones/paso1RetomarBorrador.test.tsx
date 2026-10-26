@@ -36,7 +36,7 @@ describe('paso 1: retomar un borrador', () => {
     expect(within(nomina).getByText(/Usuario PICA \(Capitán\)/)).toBeInTheDocument();
     expect(within(nomina).getByText('Lucas Fernández')).toBeInTheDocument();
     expect(within(nomina).getByText('Matías Rossi')).toBeInTheDocument();
-    expect(screen.getByText('3 jugadores (mínimo 5, máximo 7)')).toBeInTheDocument();
+    expect(screen.getByText('3 jugadores (mínimo 5)')).toBeInTheDocument();
     expect(screen.getByLabelText('Acepto el Reglamento y Código de Conducta')).not.toBeChecked();
 
     await user.click(screen.getByRole('button', { name: 'Sacar a Lucas Fernández' }));
@@ -61,7 +61,7 @@ describe('paso 1: retomar un borrador', () => {
     await renderRuta(`/inscripciones/${id}/nomina`);
 
     expect(await screen.findByText('Torneo Amistoso 3x3')).toBeInTheDocument();
-    expect(screen.getByText('Nómina de 3 a 4 jugadores')).toBeInTheDocument();
+    expect(screen.getByText('Nómina de al menos 3 jugadores')).toBeInTheDocument();
     expect(screen.queryByText('Torneo Apertura F5')).not.toBeInTheDocument();
   });
 

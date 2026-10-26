@@ -18,6 +18,10 @@ import { RequireAuth } from '../auth/components/RequireAuth';
 import { RequirePermiso } from '../auth/components/RequirePermiso';
 import { MisRifasPage } from '../rifas/pages/MisRifasPage';
 import { RifaFormPage } from '../rifas/pages/RifaFormPage';
+import { MisTorneosPage } from '../torneos/pages/MisTorneosPage';
+import { TorneoFormPage } from '../torneos/pages/TorneoFormPage';
+import { TorneosCatalogoPage } from '../torneos/pages/TorneosCatalogoPage';
+import { TorneoDetallePage } from '../torneos/pages/TorneoDetallePage';
 import { InscripcionEntradaPage } from '../inscripciones/pages/InscripcionEntradaPage';
 import { InscripcionNominaPage } from '../inscripciones/pages/InscripcionNominaPage';
 import { InscripcionPagoPage } from '../inscripciones/pages/InscripcionPagoPage';
@@ -28,6 +32,8 @@ export const AppRoutes: React.FC = () => {
       {/* Sitio: sidebar en escritorio, barra inferior en el celular */}
       <Route path="/" element={<AppLayout seccion="sitio" />}>
         <Route index element={<HomePage />} />
+        <Route path="torneos" element={<TorneosCatalogoPage />} />
+        <Route path="torneos/:slug" element={<TorneoDetallePage />} />
         <Route path="auth/login" element={<LoginPage />} />
         <Route path="auth/register" element={<RegisterPage />} />
         <Route path="auth/check-email" element={<CheckEmailPage />} />
@@ -38,6 +44,13 @@ export const AppRoutes: React.FC = () => {
         {/* Rutas Autenticadas Públicas / Perfil */}
         <Route element={<RequireAuth />}>
           <Route path="mi-perfil" element={<ProfilePage />} />
+
+          {/* Torneos del organizador (PICA-202): TORNEO_GESTIONAR lo tienen ORGANIZADOR y ADMINISTRADOR */}
+          <Route element={<RequirePermiso permisos="TORNEO_GESTIONAR" />}>
+            <Route path="mis-torneos" element={<MisTorneosPage />} />
+            <Route path="torneos/nuevo" element={<TorneoFormPage />} />
+            <Route path="torneos/:id/editar" element={<TorneoFormPage />} />
+          </Route>
 
           {/* Rifas del organizador (PICA-227): RIFA_GESTIONAR lo tienen ORGANIZADOR y ADMINISTRADOR */}
           <Route element={<RequirePermiso permisos="RIFA_GESTIONAR" />}>
@@ -61,9 +74,7 @@ export const AppRoutes: React.FC = () => {
       <Route element={<RequireAuth />}>
         <Route
           element={
-            <RequirePermiso
-              permisos={['USUARIO_VER', 'ROL_VER', 'PERSONA_VER']}
-            >
+            <RequirePermiso permisos={['USUARIO_VER', 'ROL_VER', 'PERSONA_VER']}>
               <AppLayout seccion="admin" />
             </RequirePermiso>
           }

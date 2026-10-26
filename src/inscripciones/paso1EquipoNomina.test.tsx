@@ -42,13 +42,12 @@ describe('paso 1: equipo y nómina (alta)', () => {
     vi.useRealTimers();
   });
 
-
   it('muestra el torneo con lo que pide la nómina y al capitán fijo, sin poder sacarlo', async () => {
     await renderRuta(ALTA_F5);
 
     expect(await screen.findByText('Torneo Apertura F5')).toBeInTheDocument();
-    expect(screen.getByText(/nómina de 5 a 7 jugadores/i)).toBeInTheDocument();
-    expect(screen.getByText('1 jugador (mínimo 5, máximo 7)')).toBeInTheDocument();
+    expect(screen.getByText(/nómina de al menos 5 jugadores/i)).toBeInTheDocument();
+    expect(screen.getByText('1 jugador (mínimo 5)')).toBeInTheDocument();
     expect(screen.getByText(/Usuario PICA \(Capitán\)/)).toBeInTheDocument();
     expect(screen.getByText('@usuario')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /sacar/i })).not.toBeInTheDocument();
@@ -143,7 +142,7 @@ describe('paso 1: equipo y nómina (alta)', () => {
     const nomina = screen.getByRole('list', { name: 'Nómina' });
     expect(within(nomina).getByText('Lucas Fernández')).toBeInTheDocument();
     expect(within(nomina).getByText('@lucas_f99')).toBeInTheDocument();
-    expect(screen.getByText('2 jugadores (mínimo 5, máximo 7)')).toBeInTheDocument();
+    expect(screen.getByText('2 jugadores (mínimo 5)')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Sumar a Lucas Fernández' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Sumar a Lucas Fernández' })).toHaveTextContent(
       'En la nómina'
@@ -158,20 +157,25 @@ describe('paso 1: equipo y nómina (alta)', () => {
 
     const nomina = screen.getByRole('list', { name: 'Nómina' });
     expect(within(nomina).queryByText('Lucas Fernández')).not.toBeInTheDocument();
-    expect(screen.getByText('1 jugador (mínimo 5, máximo 7)')).toBeInTheDocument();
+    expect(screen.getByText('1 jugador (mínimo 5)')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Sumar a Lucas Fernández' })).toBeEnabled();
   });
 
-  it('con la nómina en el máximo no deja sumar a nadie más', async () => {
+  it('con la nómina por encima del máximo del torneo, el aviso es el del back y el borrador queda guardado', async () => {
+    // El tipo público del torneo no trae el máximo de la nómina: lo valida el back al confirmar.
     const { user } = await renderRuta('/torneos/torneo-gratis/inscripcion'); // nómina de 3 a 4
-    await sumarJugador(user, 'lucas');
-    await sumarJugador(user, 'mrossi');
-    await sumarJugador(user, 'joaco');
+    await user.selectOptions(await screen.findByLabelText('Equipo'), 'Los Galácticos');
+    for (const texto of ['lucas', 'mrossi', 'joaco', 'salva']) await sumarJugador(user, texto);
+    await user.click(screen.getByLabelText('Acepto el Reglamento y Código de Conducta'));
 
-    await user.clear(screen.getByRole('searchbox', { name: /buscar jugador/i }));
-    await user.type(screen.getByRole('searchbox', { name: /buscar jugador/i }), 'salva');
+    await user.click(screen.getByRole('button', { name: 'Confirmar inscripción' }));
 
-    expect(await screen.findByRole('button', { name: 'Sumar a Salvador Báez' })).toBeDisabled();
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'La nómina no cumple lo que pide el torneo'
+    );
+    expect(screen.getByRole('alert')).toHaveTextContent('Tu borrador quedó guardado.');
+    const [borrador] = (await inscripcionApi.listarMias({ torneoId: 3 })).content;
+    expect(borrador.estado).toBe('BORRADOR');
   });
 
   it('muestra el reglamento con el enlace al PDF en otra pestaña', async () => {
