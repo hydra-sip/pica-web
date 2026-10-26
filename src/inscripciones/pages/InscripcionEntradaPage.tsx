@@ -4,6 +4,7 @@ import { InscripcionResumen, inscripcionApi } from '../../api/inscripcionApi';
 import { torneoApi } from '../../api/torneoApi';
 import { TorneoDetalle } from '../../torneos/types/torneo';
 import { mensajeDeError } from '../../shared/mensajesError';
+import { inscripcionAbierta } from '../inscripcionAbierta';
 import { MENSAJES_PASO_1 } from '../mensajesInscripcion';
 import { TAMANIO } from '../hooks/useEquiposDelTorneo';
 import { PasoEquipoNomina } from '../components/PasoEquipoNomina';
@@ -13,10 +14,6 @@ interface Datos {
   torneo: TorneoDetalle;
   propias: InscripcionResumen[];
 }
-
-const inscripcionAbierta = (torneo: TorneoDetalle) =>
-  torneo.estado === 'INSCRIPCION_ABIERTA' &&
-  (torneo.cierreInscripcionEn === null || new Date(torneo.cierreInscripcionEn) > new Date());
 
 /**
  * `/torneos/:slug/inscripcion`: punto de entrada. Con el torneo y las inscripciones propias en él

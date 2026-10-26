@@ -1,16 +1,23 @@
 import React, { useState } from 'react';
 import { InscripcionDetalle, inscripcionApi } from '../../api/inscripcionApi';
 import { UsuarioPublico } from '../../api/jugadorApi';
-import { mensajeDeError } from '../../shared/mensajesError';
+import { codigoDeError, mensajeDeError } from '../../shared/mensajesError';
 import { Button } from '../../shared/ui';
+import { MENSAJES_REEMPLAZO } from '../mensajesInscripcion';
 import { BuscadorJugadores } from './BuscadorJugadores';
 
 interface NominaConfirmadaProps {
   inscripcion: InscripcionDetalle;
   /** Quien ve la pantalla: va primero, marcado, y no se puede reemplazar. */
   capitanId: number;
+  /** Con la inscripción del torneo cerrada (por estado, fecha o cupo) la nómina se ve sin reemplazos. */
+  puedeReemplazar: boolean;
   /** La inscripción con la nómina que devolvió el reemplazo. */
   onReemplazada: (inscripcion: InscripcionDetalle) => void;
+  /** El back avisó que la inscripción del torneo cerró mientras tanto. */
+  onCerrada: () => void;
+  /** El back avisó que la inscripción ya no está confirmada: hay que volver a cargarla. */
+  onNoEditable: () => void;
 }
 
 const nombre = (j: UsuarioPublico) => `${j.nombres} ${j.apellidos}`;
@@ -23,7 +30,10 @@ const nombre = (j: UsuarioPublico) => `${j.nombres} ${j.apellidos}`;
 export const NominaConfirmada: React.FC<NominaConfirmadaProps> = ({
   inscripcion,
   capitanId,
+  puedeReemplazar,
   onReemplazada,
+  onCerrada,
+  onNoEditable,
 }) => {
   const [sale, setSale] = useState<UsuarioPublico | null>(null);
   const [entra, setEntra] = useState<UsuarioPublico | null>(null);
@@ -62,7 +72,14 @@ export const NominaConfirmada: React.FC<NominaConfirmadaProps> = ({
       setAviso(`Listo: entró ${nombre(entra)} en lugar de ${nombre(sale)}.`);
       cerrar();
     } catch (err) {
-      setError(mensajeDeError(err, 'No se pudo hacer el reemplazo.'));
+      const codigo = codigoDeError(err);
+      if (codigo === 'INSCRIPCION_NO_ABIERTA') {
+        cerrar();
+        onCerrada();
+        return;
+      }
+      setError(mensajeDeError(err, 'No se pudo hacer el reemplazo.', MENSAJES_REEMPLAZO));
+      if (codigo === 'INSCRIPCION_NO_EDITABLE') onNoEditable();
     } finally {
       setEnviando(false);
     }
@@ -78,7 +95,7 @@ export const NominaConfirmada: React.FC<NominaConfirmadaProps> = ({
       <ul className="nomina-lista" aria-label="Nómina">
         {nomina.map((j, i) => {
           const esCapitan = j.id === capitanId;
-          const abierto = sale?.id === j.id;
+          const abierto = puedeReemplazar && sale?.id === j.id;
           return (
             <li key={j.id} className="nomina-fila nomina-fila-reemplazo">
               <div className="nomina-fila-principal">
@@ -95,7 +112,7 @@ export const NominaConfirmada: React.FC<NominaConfirmadaProps> = ({
                   </strong>
                   <small>@{j.username}</small>
                 </span>
-                {!esCapitan && !abierto && (
+                {puedeReemplazar && !esCapitan && !abierto && (
                   <Button
                     size="sm"
                     variant="secondary"

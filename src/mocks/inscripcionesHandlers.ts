@@ -28,6 +28,12 @@ import { type ErrorCampo, problema, validacion } from './adminHandlers';
 //                          409 INSCRIPCION_NO_ABIERTA.
 //   copa-de-invierno       Por equipos con costo (3 a 4, $ 15.000), abierto: Deportivo Luján ya está
 //                          inscripto y confirmado (inscripción 902), con dos reemplazos.
+//   copa-sin-lugar         Por equipos, abierto pero con el cupo completo: Los Galácticos confirmados
+//                          (inscripción 903) ocupan el último lugar. Reemplazar responde 409
+//                          INSCRIPCION_NO_ABIERTA.
+//   copa-cerrada           Por equipos con la inscripción cerrada (antes de la fecha de cierre): Los
+//                          Galácticos confirmados (inscripción 904). Reemplazar responde 409
+//                          INSCRIPCION_NO_ABIERTA.
 //   Cualquier otro slug: este handler lo deja pasar y lo atiende el de los torneos públicos
 //   (torneoHandlers.ts), que responde su propio 404 TORNEO_NO_ENCONTRADO.
 // Cada inscripción (detalle y resumen) trae `torneo {id, nombre, slug}` del torneo de esta lista.
@@ -206,6 +212,12 @@ const TORNEOS: TorneoMock[] = [
     cierreInscripcionEn: CIERRE_PASADO,
   }),
   torneo(8, 'copa-de-invierno', 'Copa de Invierno', {}),
+  torneo(9, 'copa-sin-lugar', 'Copa Sin Lugar', {
+    cupoMaximo: 8,
+    cupoMinimo: 4,
+    ocupadasAparte: 7,
+  }),
+  torneo(10, 'copa-cerrada', 'Copa Cerrada', { estado: 'INSCRIPCION_CERRADA' }),
 ];
 
 const jugador = (
@@ -272,6 +284,30 @@ const estadoInicial = () => ({
       usuarioId: null,
       equipoId: 3,
       nomina: [CAPITAN, 103, 104],
+      estado: 'CONFIRMADA',
+      reglamentoAceptadoEn: HACE_UN_RATO,
+      creadoEn: HACE_UN_RATO,
+      modificadoEn: HACE_UN_RATO,
+    },
+    {
+      id: 903,
+      torneoId: 9,
+      duenioId: CAPITAN,
+      usuarioId: null,
+      equipoId: 1,
+      nomina: [CAPITAN, 101, 102],
+      estado: 'CONFIRMADA',
+      reglamentoAceptadoEn: HACE_UN_RATO,
+      creadoEn: HACE_UN_RATO,
+      modificadoEn: HACE_UN_RATO,
+    },
+    {
+      id: 904,
+      torneoId: 10,
+      duenioId: CAPITAN,
+      usuarioId: null,
+      equipoId: 1,
+      nomina: [CAPITAN, 101, 102],
       estado: 'CONFIRMADA',
       reglamentoAceptadoEn: HACE_UN_RATO,
       creadoEn: HACE_UN_RATO,
@@ -724,6 +760,11 @@ export const crearInscripcionesHandlers = (sesion: () => SesionMock) => {
           'Solo se reemplaza en una inscripción confirmada'
         );
       }
+      // Con el cupo completo la lista queda fija, aunque el torneo siga en INSCRIPCION_ABIERTA.
+      const t = buscarTorneo(i.torneoId)!;
+      if (!abierto(t) || cupoDisponible(t) === 0) {
+        return conflicto('INSCRIPCION_NO_ABIERTA', 'La inscripción del torneo ya cerró');
+      }
       if (!usuarioPublico(s, entra as number)) {
         return noEncontrado('USUARIO_NO_ENCONTRADO', 'El jugador que entra no existe');
       }
@@ -739,6 +780,12 @@ export const crearInscripcionesHandlers = (sesion: () => SesionMock) => {
           'JUGADOR_YA_INSCRIPTO',
           'El jugador ya figura en otra inscripción del torneo'
         );
+      }
+      if (buscarJugador(entra as number)?.bloqueado) {
+        return prohibido('USUARIO_BLOQUEADO', 'El jugador que entra tiene un bloqueo vigente');
+      }
+      if (buscarJugador(entra as number)?.inactivoAlGuardar) {
+        return conflicto('USUARIO_NO_ACTIVO', 'El jugador que entra no está activo');
       }
       cambiar(i, { nomina: i.nomina.map((id) => (id === sale ? (entra as number) : id)) });
       estado.reemplazos.push({

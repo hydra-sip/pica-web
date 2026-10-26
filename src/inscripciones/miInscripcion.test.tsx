@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { delay, http } from 'msw';
+import { delay, http, HttpResponse } from 'msw';
 import { screen, waitFor, within } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
 import { equipoApi } from '../api/equipoApi';
@@ -16,6 +16,11 @@ const RUTA = `/inscripciones/${ID}`;
 
 // Deportivo Luján, confirmado en la Copa de Invierno de los mocks, ya tiene dos reemplazos.
 const CON_REEMPLAZOS = '/inscripciones/902';
+// Los Galácticos, confirmados en la Copa Sin Lugar (cupo completo) y en la Copa Cerrada (inscripción cerrada).
+const CON_CUPO_COMPLETO = '/inscripciones/903';
+const CON_TORNEO_CERRADO = '/inscripciones/904';
+
+const LISTA_FIJA = 'La inscripción del torneo ya cerró: la nómina quedó fija.';
 
 // Jugadores de los mocks (ids de inscripcionesHandlers.ts): Lucas Fernández, Matías Rossi,
 // Joaquín Gómez y Salvador Báez.
@@ -250,5 +255,114 @@ describe('reemplazar un jugador', () => {
     await user.click(screen.getByRole('button', { name: 'Confirmar reemplazo' }));
 
     expect(screen.getByRole('button', { name: 'Confirmar reemplazo' })).toBeDisabled();
+  });
+});
+
+describe('cuándo se ofrece reemplazar', () => {
+  const sinReemplazar = async () => {
+    expect(await screen.findByText(LISTA_FIJA)).toBeInTheDocument();
+    expect(screen.getByRole('list', { name: 'Nómina' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Reemplazar a / })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Historial de reemplazos' })).toBeInTheDocument();
+  };
+
+  it('con el torneo abierto se ofrece y no hay aviso', async () => {
+    await renderRuta(CON_REEMPLAZOS);
+
+    expect(
+      await screen.findByRole('button', { name: 'Reemplazar a Joaquín Gómez' })
+    ).toBeInTheDocument();
+    expect(screen.queryByText(LISTA_FIJA)).not.toBeInTheDocument();
+  });
+
+  it('con la inscripción del torneo cerrada no se ofrece y se avisa que la lista quedó fija', async () => {
+    await renderRuta(CON_TORNEO_CERRADO);
+
+    await sinReemplazar();
+  });
+
+  it('con el cupo completo no se ofrece', async () => {
+    await renderRuta(CON_CUPO_COMPLETO);
+
+    await sinReemplazar();
+  });
+
+  it('con la fecha de cierre pasada no se ofrece, aunque el torneo siga abierto', async () => {
+    await renderRuta(CON_REEMPLAZOS, {
+      prepara: async () => {
+        const torneo = await torneoApi.getTorneoBySlug('copa-de-invierno');
+        server.use(
+          http.get('*/torneos/slug/copa-de-invierno', () =>
+            HttpResponse.json({ ...torneo, cierreInscripcionEn: '2026-01-15T23:59:00Z' })
+          )
+        );
+      },
+    });
+
+    await sinReemplazar();
+  });
+});
+
+describe('errores del reemplazo', () => {
+  /** Abre el reemplazo de Joaquín Gómez por Lucas Fernández y lo confirma, con el POST respondiendo `codigo`. */
+  const reemplazarCon = async (status: number, codigo: string) => {
+    const { user } = await renderRuta(CON_REEMPLAZOS);
+    await user.click(await screen.findByRole('button', { name: 'Reemplazar a Joaquín Gómez' }));
+    server.use(
+      http.post('*/inscripciones/:id/reemplazos', () => problema(status, codigo, 'Rechazado'))
+    );
+    await user.type(screen.getByRole('searchbox', { name: 'Buscar jugador' }), 'lucas');
+    await user.click(await screen.findByRole('button', { name: 'Elegir a Lucas Fernández' }));
+    await user.click(screen.getByRole('button', { name: 'Confirmar reemplazo' }));
+    return user;
+  };
+
+  it.each([
+    [
+      409,
+      'REEMPLAZO_INVALIDO',
+      'Ese cambio no se puede hacer: el que sale tiene que estar en la nómina y el que entra no.',
+    ],
+    [409, 'JUGADOR_YA_INSCRIPTO', 'Ese jugador ya está en otra inscripción de este torneo.'],
+    [
+      403,
+      'INSCRIPCION_NO_PERMITIDA_EN_TORNEO',
+      'El organizador y los árbitros del torneo no pueden jugar en él.',
+    ],
+    [403, 'USUARIO_BLOQUEADO', 'tiene un bloqueo vigente'],
+    [409, 'USUARIO_NO_ACTIVO', 'El usuario no está activo'],
+  ])('con %i %s lo explica y deja el reemplazo abierto', async (status, codigo, texto) => {
+    await reemplazarCon(status, codigo);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(texto);
+    expect(screen.getByRole('button', { name: 'Confirmar reemplazo' })).toBeEnabled();
+  });
+
+  it('si la inscripción del torneo cerró mientras tanto, deja de ofrecer reemplazar sin recargar', async () => {
+    await reemplazarCon(409, 'INSCRIPCION_NO_ABIERTA');
+
+    expect(await screen.findByText(LISTA_FIJA)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Confirmar reemplazo' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Reemplazar a / })).not.toBeInTheDocument();
+    expect(screen.getByRole('list', { name: 'Nómina' })).toBeInTheDocument();
+  });
+
+  it('si la inscripción ya no está confirmada, lo dice y la vuelve a cargar', async () => {
+    const { user } = await renderRuta(CON_REEMPLAZOS);
+    await user.click(await screen.findByRole('button', { name: 'Reemplazar a Joaquín Gómez' }));
+    const confirmada = await inscripcionApi.obtener(902);
+    server.use(
+      http.post('*/inscripciones/:id/reemplazos', () =>
+        problema(409, 'INSCRIPCION_NO_EDITABLE', 'Rechazado')
+      ),
+      http.get('*/inscripciones/902', () =>
+        HttpResponse.json({ ...confirmada, estado: 'CANCELADA' })
+      )
+    );
+    await user.type(screen.getByRole('searchbox', { name: 'Buscar jugador' }), 'lucas');
+    await user.click(await screen.findByRole('button', { name: 'Elegir a Lucas Fernández' }));
+    await user.click(screen.getByRole('button', { name: 'Confirmar reemplazo' }));
+
+    expect(await screen.findByText(/Esta inscripción fue cancelada/)).toBeInTheDocument();
   });
 });
