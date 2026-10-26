@@ -1,13 +1,14 @@
 import React from 'react';
 import { PremioDetalle } from '../types/torneo';
 import { pesos } from '../../shared/formato';
-import { calcularPremioPuesto } from '../utils/formatters';
 
 interface TorneoPremiosListProps {
   premios: PremioDetalle[];
+  /** Pozo neto a repartir en premios (competidores menos gastos), como lo calcula el back. */
   pozoEstimado: number;
   pctPozoCompetidores: number;
   pctPremioRifa: number;
+  premioRifaEstimado: number | null;
   moneda: string;
 }
 
@@ -29,10 +30,8 @@ export const TorneoPremiosList: React.FC<TorneoPremiosListProps> = ({
   pozoEstimado,
   pctPozoCompetidores,
   pctPremioRifa,
+  premioRifaEstimado,
 }) => {
-  const montoCompetidores = (pozoEstimado * pctPozoCompetidores) / 100;
-  const montoRifa = (pozoEstimado * pctPremioRifa) / 100;
-
   // Ordenar puestos ascendente (1, 2, 3...)
   const premiosOrdenados = [...premios].sort((a, b) => a.puesto - b.puesto);
 
@@ -62,7 +61,7 @@ export const TorneoPremiosList: React.FC<TorneoPremiosListProps> = ({
               fontWeight: 700,
             }}
           >
-            Pozo para Competidores ({pctPozoCompetidores}%)
+            Pozo neto para competidores ({pctPozoCompetidores}% menos gastos)
           </div>
           <div
             style={{
@@ -72,7 +71,7 @@ export const TorneoPremiosList: React.FC<TorneoPremiosListProps> = ({
               marginTop: '0.2rem',
             }}
           >
-            {pesos(montoCompetidores)}
+            {pesos(pozoEstimado)}
           </div>
         </div>
 
@@ -103,7 +102,7 @@ export const TorneoPremiosList: React.FC<TorneoPremiosListProps> = ({
                 marginTop: '0.2rem',
               }}
             >
-              {pesos(montoRifa)}
+              {pesos(premioRifaEstimado)}
             </div>
           </div>
         )}
@@ -123,12 +122,6 @@ export const TorneoPremiosList: React.FC<TorneoPremiosListProps> = ({
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
           {premiosOrdenados.map((premio) => {
-            const montoEstimado = calcularPremioPuesto(
-              pozoEstimado,
-              pctPozoCompetidores,
-              premio.pct
-            );
-
             return (
               <div
                 key={premio.puesto}
@@ -157,7 +150,7 @@ export const TorneoPremiosList: React.FC<TorneoPremiosListProps> = ({
                     <div
                       style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}
                     >
-                      {premio.pct}% del pozo de competidores
+                      {premio.pct}% del pozo neto
                     </div>
                   </div>
                 </div>
@@ -170,7 +163,7 @@ export const TorneoPremiosList: React.FC<TorneoPremiosListProps> = ({
                       fontSize: 'var(--text-md)',
                     }}
                   >
-                    {pesos(montoEstimado)}
+                    {pesos(premio.monto)}
                   </div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>
                     estimado
