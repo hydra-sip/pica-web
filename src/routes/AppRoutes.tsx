@@ -24,6 +24,7 @@ import { TorneoPublicadoPage } from '../torneos/pages/TorneoPublicadoPage';
 import { TorneoConsolaPage } from '../torneos/pages/TorneoConsolaPage';
 import { TorneosCatalogoPage } from '../torneos/pages/TorneosCatalogoPage';
 import { TorneoDetallePage } from '../torneos/pages/TorneoDetallePage';
+import { PartidoPage } from '../partidos/pages/PartidoPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -43,6 +44,9 @@ export const AppRoutes: React.FC = () => {
         {/* Rutas Autenticadas Públicas / Perfil */}
         <Route element={<RequireAuth />}>
           <Route path="mi-perfil" element={<ProfilePage />} />
+
+          {/* Cargar y aceptar el resultado (PICA-243): lo decide el back según el lado del que es capitán */}
+          <Route path="partidos/:id" element={<PartidoPage />} />
 
           {/* Torneos del organizador (PICA-202, PICA-205): TORNEO_GESTIONAR lo tienen ORGANIZADOR y ADMINISTRADOR */}
           <Route element={<RequirePermiso permisos="TORNEO_GESTIONAR" />}>

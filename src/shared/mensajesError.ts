@@ -63,6 +63,13 @@ const POR_CODIGO: Record<string, string> = {
   BRACKET_YA_GENERADO: 'El torneo ya tiene bracket: recargá la página.',
   SIN_ARBITROS: 'Designá al menos un árbitro en el paso 2: cada partido necesita uno.',
   BRACKET_CON_RESULTADOS: 'Ya hay resultados cargados: el bracket no se puede volver a sortear.',
+  PARTIDO_NO_ENCONTRADO: 'El partido no existe.',
+  EVIDENCIA_NO_ENCONTRADA: 'Ese archivo ya no está: recargá la página.',
+  PARTIDO_NO_EN_JUEGO: 'Este partido no está en juego: ya tiene resultado o falta el rival.',
+  PARTIDO_CERRADO: 'El partido ya está cerrado: no se le puede sumar evidencia.',
+  NO_ES_CAPITAN: 'Solo el capitán de uno de los dos lados puede hacerlo.',
+  RESULTADO_NO_PENDIENTE: 'No hay un resultado para aceptar: recargá la página.',
+  RESULTADO_PROPIO: 'El resultado que cargaste lo tiene que aceptar el rival.',
 };
 
 const POR_CODIGO_DE_CAMPO: Record<string, string> = {

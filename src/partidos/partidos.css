@@ -1,0 +1,187 @@
+/*
+ * El partido (PICA-243): cargar el resultado, aceptarlo y la evidencia. Botones, campos, tarjetas, badges y alertas
+ * son los de src/shared/ui; acá queda el marcador y la vista del rival.
+ */
+
+.partido-page {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.partido-volver {
+  display: inline-block;
+  margin-bottom: var(--space-3);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.partido-volver:hover {
+  color: var(--color-text);
+}
+
+.partido-titulo {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.partido-titulo h1 {
+  margin: 0;
+  font-size: var(--text-2xl);
+}
+
+.partido-ayuda {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
+.partido-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Los dos lados enfrentados, con el guion al medio, también en un celular */
+.partido-marcador {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: end;
+  gap: var(--space-3);
+}
+
+.partido-marcador .field-label {
+  overflow-wrap: anywhere;
+}
+
+.partido-marcador input {
+  text-align: center;
+  font-size: var(--text-xl);
+  font-variant-numeric: tabular-nums;
+}
+
+.partido-guion {
+  padding-bottom: var(--space-2);
+  font-size: var(--text-xl);
+  color: var(--color-text-secondary);
+}
+
+.partido-resultado {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--color-text-secondary);
+}
+
+.partido-resultado span {
+  overflow-wrap: anywhere;
+}
+
+.partido-resultado span:last-child {
+  text-align: right;
+}
+
+.partido-resultado strong {
+  font-size: var(--text-2xl);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+
+.partido-ganador {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.partido-rival {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.partido-rival p {
+  margin: 0;
+}
+
+.partido-rotulo {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.partido-plazo {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.partido-evidencias {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.partido-evidencias-lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.partido-evidencias-lista li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.partido-evidencias-lista li > span {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.partido-hash {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.partido-hash code {
+  font-family: var(--font-mono);
+}
+
+.partido-error {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: var(--text-sm);
+}
+
+/* Tu próximo cruce, en la ficha del torneo */
+.partido-proximo {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.partido-proximo p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
