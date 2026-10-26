@@ -28,7 +28,7 @@ export const InscripcionConfirmada: React.FC<InscripcionConfirmadaProps> = ({
       <p className="inscripcion-confirmada-detalle">
         Torneo: {inscripcion.torneo.nombre}
       </p>
-      {/* TODO (PICA-198): llevar al detalle del torneo cuando tenga ruta; hasta entonces, al inicio. */}
+      {/* TODO: llevar al detalle del torneo (/torneos/:slug, que ya existe); hasta entonces, al inicio. */}
       <Link to="/" className="btn btn-primary btn-block">
         Volver al inicio
       </Link>

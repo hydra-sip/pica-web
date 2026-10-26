@@ -9,7 +9,7 @@ export interface UsuarioPublico {
   apellidos: string;
 }
 
-// PICA-208: para cargar la nómina. Sin permiso especial, solo usuarios activos, sin email ni documento.
+// Para cargar la nómina. Sin permiso especial, solo usuarios activos, sin email ni documento.
 export const jugadorApi = {
   /**
    * GET /usuarios?q=. Cada palabra de `q` tiene que estar en el username, los nombres o los apellidos.

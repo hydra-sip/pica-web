@@ -7,7 +7,7 @@ export interface EquipoResumen {
   nombre: string;
 }
 
-// PICA-234: exige INSCRIPCION_GESTIONAR. Solo los equipos de los que el usuario es capitán.
+// Exige INSCRIPCION_GESTIONAR. Solo los equipos de los que el usuario es capitán.
 export const equipoApi = {
   listarMios: async (params?: {
     page?: number;
