@@ -14,6 +14,14 @@ export const pesos = (monto: number | string | null | undefined): string => {
   return Number.isFinite(n) ? PESOS.format(n) : '-';
 };
 
+/** Valor de inscripción para torneos: `0` → 'Gratuito', si no `$ 5.000,00`. */
+export const valorInscripcion = (monto: number | string | null | undefined): string => {
+  if (monto === null || monto === undefined || monto === '') return '-';
+  const n = typeof monto === 'number' ? monto : Number(monto);
+  if (n === 0) return 'Gratuito';
+  return pesos(monto);
+};
+
 const aDate = (valor: Fecha): Date | null => {
   if (!valor) return null;
   if (valor instanceof Date) return Number.isNaN(valor.getTime()) ? null : valor;

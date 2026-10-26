@@ -170,9 +170,11 @@ export interface DatosRifaForm {
   precioNumero: string;
   ventaDesde: string;
   ventaHasta: string;
+  /** Fecha programada del sorteo (PICA-219); opcional en borrador, posterior al fin de la venta. */
+  fechaSorteo: string;
 }
 
-/** Errores por campo de la pestaña "Datos generales". `premiosCargados` evita achicar el rango por debajo. */
+/** Errores por campo del paso "Datos generales". `premiosCargados` evita achicar el rango por debajo. */
 export const validateDatosRifa = (
   datos: DatosRifaForm,
   premiosCargados: number = 0
@@ -217,6 +219,15 @@ export const validateDatosRifa = (
       errores.ventaHasta = 'La venta no puede terminar en el pasado.';
     }
   }
+
+  if (datos.fechaSorteo) {
+    const sorteo = new Date(datos.fechaSorteo).getTime();
+    if (sorteo <= Date.now()) {
+      errores.fechaSorteo = 'El sorteo no puede ser en el pasado.';
+    } else if (datos.ventaHasta && sorteo <= new Date(datos.ventaHasta).getTime()) {
+      errores.fechaSorteo = 'El sorteo tiene que ser después de que termina la venta.';
+    }
+  }
   return errores;
 };
 
@@ -248,7 +259,7 @@ export const validatePremios = (premios: PremioForm[], cantidadNumeros: number):
   let general: string | undefined;
   const suma = sumaPorcentajes(premios);
   if (suma > 100) {
-    general = `Los premios suman ${suma} %: no pueden pasar de 100.`;
+    general = `Los premios suman ${suma}%: no pueden pasar de 100.`;
   } else if (premios.length > cantidadNumeros) {
     general = `Hay ${premios.length} premios y la rifa tiene solo ${cantidadNumeros} números.`;
   }
