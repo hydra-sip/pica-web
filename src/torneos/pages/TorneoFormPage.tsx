@@ -10,6 +10,7 @@ import {
 import { PasosAsistente } from '../../shared/components/PasosAsistente';
 import { erroresPorCampo, mensajeDeError } from '../../shared/mensajesError';
 import { Badge, Button, Card } from '../../shared/ui';
+import { ArbitrosTorneo } from '../components/ArbitrosTorneo';
 import { PasoCupos } from '../components/PasoCupos';
 import { PasoEconomia } from '../components/PasoEconomia';
 import { PasoInformacion } from '../components/PasoInformacion';
@@ -426,13 +427,16 @@ export const TorneoFormPage: React.FC = () => {
             />
           )}
           {paso === 2 && (
-            <PasoCupos
-              form={form}
-              onCambio={cambiar}
-              errores={errores}
-              habilitado={habilitado}
-              cupoTope={cupoTope}
-            />
+            <>
+              <PasoCupos
+                form={form}
+                onCambio={cambiar}
+                errores={errores}
+                habilitado={habilitado}
+                cupoTope={cupoTope}
+              />
+              <ArbitrosTorneo torneoId={torneo?.id ?? null} habilitado={habilitado} />
+            </>
           )}
           {paso === 3 && torneo && formEco && (
             <PasoEconomia

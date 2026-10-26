@@ -176,6 +176,30 @@ export interface MiTorneoResumen {
   modificadoEn: string;
 }
 
+/** Lo que el organizador delega en cada árbitro (HU-203). */
+export type PermisoArbitro = 'CARGAR_RESULTADOS' | 'RESOLVER_OBJECIONES';
+/** Nace PENDIENTE; el árbitro la acepta o la rechaza (HU-807). Solo uno aceptado arbitra. */
+export type EstadoDesignacion = 'PENDIENTE' | 'ACEPTADO' | 'RECHAZADO';
+
+/** GET /torneos/{id}/arbitros. */
+export interface ArbitroDetalle {
+  usuarioId: number;
+  username: string;
+  nombres: string;
+  apellidos: string;
+  estado: EstadoDesignacion;
+  permisos: PermisoArbitro[];
+  designadoEn: string;
+}
+
+/** Un resultado del buscador de árbitros (GET /arbitros). */
+export interface ArbitroOpcion {
+  id: number;
+  username: string;
+  nombres: string;
+  apellidos: string;
+}
+
 export interface MisTorneos extends PageResponse<MiTorneoResumen> {
   /** Cantidad en cada estado con la búsqueda y la disciplina, sin el filtro de estado. */
   porEstado: Record<EstadoTorneo, number>;
@@ -263,6 +287,27 @@ export const torneoApi = {
   /** Con la sesión, para que el organizador vea el de su borrador; publicado, el enlace abre sin sesión. */
   reglamentoPdf: async (id: number): Promise<Blob> => {
     return httpClient.get<Blob>(`/torneos/${id}/reglamento`, { comoBlob: true });
+  },
+
+  /** Usuarios activos con rol árbitro; sin texto, los primeros por apellido. */
+  buscarArbitros: async (q: string, size = 8): Promise<PageResponse<ArbitroOpcion>> => {
+    return httpClient.get<PageResponse<ArbitroOpcion>>('/arbitros', { params: { q, size } });
+  },
+
+  arbitros: async (id: number): Promise<ArbitroDetalle[]> => {
+    return httpClient.get<ArbitroDetalle[]>(`/torneos/${id}/arbitros`);
+  },
+
+  designarArbitro: async (
+    id: number,
+    usuarioId: number,
+    permisos: PermisoArbitro[]
+  ): Promise<ArbitroDetalle> => {
+    return httpClient.post<ArbitroDetalle>(`/torneos/${id}/arbitros`, { usuarioId, permisos });
+  },
+
+  quitarArbitro: async (id: number, usuarioId: number): Promise<void> => {
+    await httpClient.delete(`/torneos/${id}/arbitros/${usuarioId}`);
   },
 
   /**

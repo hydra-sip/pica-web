@@ -484,6 +484,112 @@
   border-top: 1px dashed var(--color-border);
 }
 
+/* Designación de árbitros, en el paso 2 */
+.torneos-arbitros {
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border);
+  border-bottom: none;
+}
+
+.torneos-arbitros-titulo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.torneos-arbitros-ayuda {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.torneos-arbitros-lista {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.torneos-arbitro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.torneos-arbitro + .torneos-arbitro {
+  border-top: 1px solid var(--color-border);
+}
+
+.torneos-arbitro-opcion {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.torneos-arbitro-nombre {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.torneos-arbitro-nombre span,
+.torneos-arbitro-permisos {
+  color: var(--color-text-secondary);
+}
+
+.torneos-arbitros-buscar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.torneos-arbitros-permisos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-size: var(--text-sm);
+}
+
+.torneos-arbitros-permisos legend {
+  margin-bottom: var(--space-2);
+  font-weight: 600;
+}
+
+.torneos-arbitros-permisos label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .torneos-arbitro {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  /* el nombre y Quitar arriba; los permisos y el estado debajo, a todo el ancho */
+  .torneos-arbitro-permisos {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .torneos-arbitro > .badge {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    justify-self: start;
+  }
+}
+
 .torneos-premios {
   display: flex;
   flex-direction: column;
