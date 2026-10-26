@@ -51,9 +51,79 @@ export interface TorneoInformacion extends Omit<
   formato: Formato;
   /** El PDF, si se subió. */
   reglamentoUrl: string | null;
+  /** El paso 3, con lo que falta en null. */
+  economia: EconomiaTorneo;
+  /** El enlace público; se genera al publicar. */
+  slug: string | null;
+  /** SHA-256 del esquema económico, sellado al publicar. */
+  esquemaHash: string | null;
+  publicadoEn: string | null;
   creadoEn: string;
   modificadoEn: string;
 }
+
+export interface PremioPuesto {
+  puesto: number;
+  pct: number;
+}
+
+/**
+ * Paso 3. La bolsa se reparte en pozo de competidores, premio de la rifa y comisión, que suman 100; los premios
+ * reparten el pozo de competidores menos los gastos.
+ */
+export interface EconomiaTorneo {
+  valorInscripcion: number | null;
+  moneda: string;
+  pctPozoCompetidores: number | null;
+  pctPremioRifa: number | null;
+  /** El resto hasta 100; null sin los otros dos. */
+  pctComision: number | null;
+  premios: PremioPuesto[];
+}
+
+/** PUT /torneos/{id}/economia: los premios, en orden de puesto. */
+export interface EconomiaTorneoPayload {
+  valorInscripcion: number;
+  pctPozoCompetidores: number;
+  pctPremioRifa: number;
+  pctComision: number;
+  premios: number[];
+}
+
+export interface GastoDetalle {
+  gastoId: number;
+  descripcion: string;
+  monto: number;
+}
+
+export interface GastoPayload {
+  descripcion: string;
+  monto: number;
+}
+
+/** GET /torneos/{id}/resumen-economico: las cuentas del paso 3 con el cupo completo. */
+export interface ResumenEconomico {
+  participantes: number | null;
+  valorInscripcion: number | null;
+  moneda: string;
+  recaudacion: number | null;
+  comision: number | null;
+  premioRifa: number | null;
+  pozoCompetidores: number | null;
+  gastos: number;
+  pozoNeto: number | null;
+  premios: { puesto: number; pct: number; monto: number | null }[];
+}
+
+/** Lo que le falta a un torneo para publicarse (`faltantes` del 409 TORNEO_INCOMPLETO). */
+export type FaltanteTorneo =
+  | 'INFORMACION'
+  | 'CUPOS'
+  | 'ECONOMIA'
+  | 'SIN_PREMIOS'
+  | 'PREMIOS_NO_SUMAN_100'
+  | 'POZO_NETO_NO_POSITIVO'
+  | 'CIERRE_VENCIDO';
 
 export interface DisciplinaOpcion {
   nombre: string;
@@ -78,6 +148,8 @@ export interface OpcionesTorneo {
   modalidades: Modalidad[];
   /** Máximo de participantes que admite la plataforma. */
   cupoMaximo: number;
+  /** Tope del % de comisión de la plataforma en el paso 3. */
+  comisionMaxima: number;
   /** Las que ya existen en la sede pedida. */
   canchas: string[];
 }
@@ -137,6 +209,42 @@ export const torneoApi = {
     payload: InformacionTorneoPayload
   ): Promise<TorneoInformacion> => {
     return httpClient.put<TorneoInformacion>(`/torneos/${id}/informacion`, payload);
+  },
+
+  actualizarEconomia: async (
+    id: number,
+    payload: EconomiaTorneoPayload
+  ): Promise<TorneoInformacion> => {
+    return httpClient.put<TorneoInformacion>(`/torneos/${id}/economia`, payload);
+  },
+
+  resumenEconomico: async (id: number): Promise<ResumenEconomico> => {
+    return httpClient.get<ResumenEconomico>(`/torneos/${id}/resumen-economico`);
+  },
+
+  gastos: async (id: number): Promise<GastoDetalle[]> => {
+    return httpClient.get<GastoDetalle[]>(`/torneos/${id}/gastos`);
+  },
+
+  agregarGasto: async (id: number, payload: GastoPayload): Promise<GastoDetalle> => {
+    return httpClient.post<GastoDetalle>(`/torneos/${id}/gastos`, payload);
+  },
+
+  modificarGasto: async (
+    id: number,
+    gastoId: number,
+    payload: GastoPayload
+  ): Promise<GastoDetalle> => {
+    return httpClient.put<GastoDetalle>(`/torneos/${id}/gastos/${gastoId}`, payload);
+  },
+
+  eliminarGasto: async (id: number, gastoId: number): Promise<void> => {
+    return httpClient.delete<void>(`/torneos/${id}/gastos/${gastoId}`);
+  },
+
+  /** Sella el esquema, genera el enlace y abre la inscripción; 409 TORNEO_INCOMPLETO si falta algo. */
+  publicar: async (id: number): Promise<TorneoInformacion> => {
+    return httpClient.post<TorneoInformacion>(`/torneos/${id}/publicar`, { aceptaTerminos: true });
   },
 
   /**

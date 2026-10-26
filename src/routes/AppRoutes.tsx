@@ -20,6 +20,7 @@ import { MisRifasPage } from '../rifas/pages/MisRifasPage';
 import { RifaFormPage } from '../rifas/pages/RifaFormPage';
 import { MisTorneosPage } from '../torneos/pages/MisTorneosPage';
 import { TorneoFormPage } from '../torneos/pages/TorneoFormPage';
+import { TorneoPublicadoPage } from '../torneos/pages/TorneoPublicadoPage';
 import { TorneosCatalogoPage } from '../torneos/pages/TorneosCatalogoPage';
 import { TorneoDetallePage } from '../torneos/pages/TorneoDetallePage';
 
@@ -42,11 +43,12 @@ export const AppRoutes: React.FC = () => {
         <Route element={<RequireAuth />}>
           <Route path="mi-perfil" element={<ProfilePage />} />
 
-          {/* Torneos del organizador (PICA-202): TORNEO_GESTIONAR lo tienen ORGANIZADOR y ADMINISTRADOR */}
+          {/* Torneos del organizador (PICA-202, PICA-205): TORNEO_GESTIONAR lo tienen ORGANIZADOR y ADMINISTRADOR */}
           <Route element={<RequirePermiso permisos="TORNEO_GESTIONAR" />}>
             <Route path="mis-torneos" element={<MisTorneosPage />} />
             <Route path="torneos/nuevo" element={<TorneoFormPage />} />
             <Route path="torneos/:id/editar" element={<TorneoFormPage />} />
+            <Route path="torneos/:id/publicado" element={<TorneoPublicadoPage />} />
           </Route>
 
           {/* Rifas del organizador (PICA-227): RIFA_GESTIONAR lo tienen ORGANIZADOR y ADMINISTRADOR */}

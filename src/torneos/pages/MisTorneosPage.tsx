@@ -25,11 +25,12 @@ const detalle = (t: MiTorneoResumen): string =>
     ? `Paso ${t.pasoPendiente} de 3 pendiente: ${PASOS[t.pasoPendiente]}`
     : (t.sede ?? 'Online');
 
-/** El paso 3 todavía no existe: "Continuar edición" lleva al 2. */
-const rutaDeEdicion = (t: MiTorneoResumen): string =>
-  t.estado === 'BORRADOR' && (t.pasoPendiente ?? 1) >= 2
-    ? `/torneos/${t.id}/editar?paso=2`
-    : `/torneos/${t.id}/editar`;
+/** Un borrador abre el asistente en el paso pendiente; uno publicado, su confirmación con el enlace y el sello. */
+const rutaDeEdicion = (t: MiTorneoResumen): string => {
+  if (t.estado !== 'BORRADOR') return `/torneos/${t.id}/publicado`;
+  const pendiente = t.pasoPendiente ?? 1;
+  return pendiente >= 2 ? `/torneos/${t.id}/editar?paso=${pendiente}` : `/torneos/${t.id}/editar`;
+};
 
 /**
  * GET /torneos/mis-torneos (PICA-202), como el wireframe "Mis Torneos": búsqueda, deporte, pestañas por

@@ -46,6 +46,8 @@ const POR_CODIGO: Record<string, string> = {
   RIFA_INCOMPLETA: 'A la rifa le falta completar datos para publicarse.',
   TORNEO_NO_ENCONTRADO: 'El torneo no existe o no es tuyo.',
   TORNEO_NO_EDITABLE: 'El torneo ya no está en borrador: no se puede modificar desde acá.',
+  TORNEO_INCOMPLETO: 'Al torneo le falta completar datos para publicarse.',
+  GASTO_NO_ENCONTRADO: 'Ese gasto ya no existe: recargá la página.',
 };
 
 const POR_CODIGO_DE_CAMPO: Record<string, string> = {
@@ -60,6 +62,8 @@ const POR_CODIGO_DE_CAMPO: Record<string, string> = {
   VENTANA_INVALIDA: 'Las fechas de venta no son válidas.',
   PREMIOS_INVALIDOS: 'Los premios no son válidos.',
   FECHAS_INVALIDAS: 'Las fechas no son válidas.',
+  REPARTO_INVALIDO: 'Competidores, rifa y comisión tienen que sumar 100 %.',
+  COMISION_EXCEDIDA: 'La comisión pasa el máximo que permite la plataforma.',
   VALOR_INVALIDO: 'El valor no es válido.',
 };
 
