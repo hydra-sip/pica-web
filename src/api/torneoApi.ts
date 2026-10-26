@@ -62,7 +62,15 @@ export interface TorneoInformacion extends Omit<
   publicadoEn: string | null;
   creadoEn: string;
   modificadoEn: string;
+  /**
+   * Los campos de los pasos 1 y 2 que ya no se pueden cambiar (HU-202): vacío en BORRADOR; publicado, según las
+   * inscripciones pagas; en curso o después, todos.
+   */
+  camposBloqueados: CampoTorneo[];
 }
+
+/** Un campo de PUT /torneos/{id}/informacion. */
+export type CampoTorneo = keyof InformacionTorneoPayload;
 
 export interface PremioPuesto {
   puesto: number;

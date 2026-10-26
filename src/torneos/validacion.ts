@@ -51,21 +51,35 @@ export const desdeTorneo = (t: TorneoInformacion | null): FormTorneo => ({
 /** Vacío es null; lo que no es número queda NaN y no pasa Number.isInteger. */
 const numero = (valor: string): number | null => (valor.trim() === '' ? null : Number(valor));
 
-/** Online no lleva sede ni canchas; individual no lleva tamaño ni nómina. */
-export const aPayload = (f: FormTorneo): InformacionTorneoPayload => {
+/**
+ * El input datetime-local llega hasta los minutos: si no se tocó, va la fecha guardada tal cual, para que el back
+ * no la vea cambiada (en un torneo publicado eso puede estar bloqueado).
+ */
+const fecha = (valor: string, guardada: string | null | undefined): string | null =>
+  guardada && valor === isoAInputLocal(guardada) ? guardada : inputLocalAIso(valor);
+
+/**
+ * Online no lleva sede ni canchas; individual no lleva tamaño ni nómina. `guardado`: el torneo como está, para no
+ * perder lo que el formulario no muestra (la descripción) ni la precisión de las fechas.
+ */
+export const aPayload = (
+  f: FormTorneo,
+  guardado?: TorneoInformacion | null
+): InformacionTorneoPayload => {
   const presencial = f.modalidad !== 'ONLINE';
   const porEquipos = f.tipoParticipante === 'EQUIPO';
   return {
     nombre: f.nombre.trim(),
     disciplina: f.disciplina.trim(),
+    descripcion: guardado?.descripcion ?? null,
     formato: 'ELIMINACION_DIRECTA',
     modalidad: f.modalidad || null,
     tipoParticipante: f.tipoParticipante || null,
     sede: presencial ? f.sede.trim() || null : null,
     canchas: presencial ? f.canchas : [],
-    fechaInicio: inputLocalAIso(f.fechaInicio),
-    fechaFin: inputLocalAIso(f.fechaFin),
-    cierreInscripcionEn: inputLocalAIso(f.cierreInscripcionEn),
+    fechaInicio: fecha(f.fechaInicio, guardado?.fechaInicio),
+    fechaFin: fecha(f.fechaFin, guardado?.fechaFin),
+    cierreInscripcionEn: fecha(f.cierreInscripcionEn, guardado?.cierreInscripcionEn),
     reglamentoTexto: f.reglamentoTexto.trim() || null,
     cupoMaximo: numero(f.cupoMaximo),
     cupoMinimo: numero(f.cupoMinimo),
@@ -78,8 +92,14 @@ export const aPayload = (f: FormTorneo): InformacionTorneoPayload => {
  * Lo que el back exige para guardar el borrador: nombre y disciplina, y que lo cargado sea coherente
  * (las mismas reglas que InformacionTorneoRequest en el contrato).
  */
-export const validarBorrador = (f: FormTorneo, cupoTope: number): ErroresTorneo => {
+export const validarBorrador = (
+  f: FormTorneo,
+  cupoTope: number,
+  original?: FormTorneo
+): ErroresTorneo => {
   const errores: ErroresTorneo = {};
+  // De un torneo publicado se mira que sea futura solo la fecha que cambia: el cierre puede haber pasado ya.
+  const cambia = (campo: keyof FormTorneo) => !original || f[campo] !== original[campo];
   if (!f.nombre.trim()) errores.nombre = 'Poné el nombre del torneo.';
   if (!f.disciplina.trim()) errores.disciplina = 'Elegí el deporte o escribí cuál es.';
   if (f.reglamentoTexto.trim().length > MAX_REGLAMENTO) {
@@ -93,11 +113,13 @@ export const validarBorrador = (f: FormTorneo, cupoTope: number): ErroresTorneo 
   const inicio = f.fechaInicio ? new Date(f.fechaInicio).getTime() : null;
   const fin = f.fechaFin ? new Date(f.fechaFin).getTime() : null;
   const cierre = f.cierreInscripcionEn ? new Date(f.cierreInscripcionEn).getTime() : null;
-  if (inicio !== null && inicio <= ahora) errores.fechaInicio = 'Tiene que ser una fecha futura.';
+  if (inicio !== null && cambia('fechaInicio') && inicio <= ahora) {
+    errores.fechaInicio = 'Tiene que ser una fecha futura.';
+  }
   if (inicio !== null && fin !== null && fin < inicio) {
     errores.fechaFin = 'No puede ser anterior al inicio.';
   }
-  if (cierre !== null && cierre <= ahora) {
+  if (cierre !== null && cambia('cierreInscripcionEn') && cierre <= ahora) {
     errores.cierreInscripcionEn = 'Tiene que ser una fecha futura.';
   } else if (cierre !== null && inicio !== null && cierre > inicio) {
     errores.cierreInscripcionEn = 'La inscripción tiene que cerrar antes del inicio.';

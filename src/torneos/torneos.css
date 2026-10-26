@@ -746,3 +746,8 @@
   justify-content: center;
   gap: var(--space-3);
 }
+
+/* "Editar" al lado de "Ver torneo" en Mis torneos (PICA-207) */
+.torneos-accion-editar {
+  margin-right: 8px;
+}

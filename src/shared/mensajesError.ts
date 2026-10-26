@@ -35,7 +35,8 @@ const POR_CODIGO: Record<string, string> = {
   DOCUMENTO_NO_EDITABLE: 'El documento no se puede cambiar una vez cargado.',
   ROL_INACTIVO: 'El rol está inactivo.',
   USUARIO_NO_ACTIVO: 'Solo se le pueden cambiar los roles a un usuario activo.',
-  USUARIO_YA_BLOQUEADO: 'El usuario ya está bloqueado. Para cambiar el motivo o la duración, levantá el bloqueo y volvé a bloquearlo.',
+  USUARIO_YA_BLOQUEADO:
+    'El usuario ya está bloqueado. Para cambiar el motivo o la duración, levantá el bloqueo y volvé a bloquearlo.',
   USUARIO_PROTEGIDO: 'El usuario Admin del sistema no se puede modificar.',
   ROL_PROTEGIDO: 'Ese cambio no está permitido en este rol del sistema.',
   ULTIMO_ASIGNADOR: 'No podés quitarte tu último rol que permite asignar roles.',
@@ -45,7 +46,9 @@ const POR_CODIGO: Record<string, string> = {
   RIFA_NO_EDITABLE: 'La rifa ya no está en borrador: no se puede modificar.',
   RIFA_INCOMPLETA: 'A la rifa le falta completar datos para publicarse.',
   TORNEO_NO_ENCONTRADO: 'El torneo no existe o no es tuyo.',
-  TORNEO_NO_EDITABLE: 'El torneo ya no está en borrador: no se puede modificar desde acá.',
+  TORNEO_NO_EDITABLE: 'El torneo ya no se puede modificar desde acá.',
+  CAMPOS_BLOQUEADOS:
+    'Algunos datos ya no se pueden cambiar porque hay inscripciones pagas: recargá la página.',
   TORNEO_INCOMPLETO: 'Al torneo le falta completar datos para publicarse.',
   GASTO_NO_ENCONTRADO: 'Ese gasto ya no existe: recargá la página.',
   REGLAMENTO_NO_ENCONTRADO: 'El torneo no tiene el reglamento en PDF.',
