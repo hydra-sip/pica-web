@@ -29,7 +29,10 @@ export const InscripcionConfirmada: React.FC<InscripcionConfirmadaProps> = ({
         Torneo: {inscripcion.torneo.nombre}
       </p>
       {/* TODO: llevar al detalle del torneo (/torneos/:slug, que ya existe); hasta entonces, al inicio. */}
-      <Link to="/" className="btn btn-primary btn-block">
+      <Link to={`/inscripciones/${inscripcion.id}`} className="btn btn-primary btn-block">
+        Ver mi inscripción
+      </Link>
+      <Link to="/" className="btn btn-secondary btn-block">
         Volver al inicio
       </Link>
     </Card>

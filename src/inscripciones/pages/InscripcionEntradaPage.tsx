@@ -82,7 +82,7 @@ export const InscripcionEntradaPage: React.FC = () => {
           Ya estás inscripto en este torneo.
         </div>
         <div className="inscripcion-acciones">
-          <Link to={`/inscripciones/${confirmada.id}/pago`} className="btn btn-primary btn-block">
+          <Link to={`/inscripciones/${confirmada.id}`} className="btn btn-primary btn-block">
             Ver mi inscripción
           </Link>
           <Link to="/" className="btn btn-secondary btn-block">

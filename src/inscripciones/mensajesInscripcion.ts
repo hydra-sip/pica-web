@@ -16,3 +16,9 @@ export const MENSAJES_PASO_1: Record<string, string> = {
   USUARIO_BLOQUEADO:
     'Tu cuenta, o la de un jugador de la nómina, tiene un bloqueo vigente. Si creés que es un error, escribile a un administrador.',
 };
+
+/** Los de "Mi inscripción", además de los de toda la inscripción. */
+export const MENSAJES_MI_INSCRIPCION: Record<string, string> = {
+  ...MENSAJES_INSCRIPCION,
+  INSCRIPCION_NO_ENCONTRADA: 'No encontramos esta inscripción.',
+};

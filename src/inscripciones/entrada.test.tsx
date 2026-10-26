@@ -68,7 +68,7 @@ describe('entrada a la inscripción', () => {
     expect(screen.getByRole('link', { name: 'Volver al inicio' })).toHaveAttribute('href', '/');
     expect(screen.getByRole('link', { name: 'Ver mi inscripción' })).toHaveAttribute(
       'href',
-      `/inscripciones/${ID}/pago`
+      `/inscripciones/${ID}`
     );
     expect(screen.queryByLabelText('Equipo')).not.toBeInTheDocument();
     expect(ubicacion()).toBe('/torneos/torneo-gratis/inscripcion');

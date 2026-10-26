@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Link, Navigate, useParams } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { InscripcionDetalle, inscripcionApi, ResumenPago } from '../../api/inscripcionApi';
 import { mensajeDeError } from '../../shared/mensajesError';
+import { AvisoInscripcionTerminada } from '../components/AvisoInscripcionTerminada';
 import { InscripcionConfirmada } from '../components/InscripcionConfirmada';
 import { ResumenDePago } from '../components/ResumenDePago';
 import '../inscripciones.css';
@@ -76,17 +77,6 @@ export const InscripcionPagoPage: React.FC = () => {
       );
 
     default:
-      return (
-        <div className="inscripcion-page">
-          <div className="alerta alerta-aviso" role="status">
-            {inscripcion.estado === 'CANCELADA'
-              ? 'Esta inscripción fue cancelada, así que ya no se puede pagar.'
-              : 'A esta inscripción ya se le reintegró el pago.'}
-          </div>
-          <Link to="/" className="btn btn-secondary btn-block">
-            Volver al inicio
-          </Link>
-        </div>
-      );
+      return <AvisoInscripcionTerminada estado={inscripcion.estado} />;
   }
 };
