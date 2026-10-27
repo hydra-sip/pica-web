@@ -3,6 +3,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './auth/context/AuthContext';
 import { AppRoutes } from './routes/AppRoutes';
 import './shared/styles/global.css';
+import './shared/ui/ui.css';
 
 export const App: React.FC = () => {
   return (

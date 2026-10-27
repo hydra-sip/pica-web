@@ -1,13 +1,24 @@
 import { http, HttpResponse } from 'msw';
 import { adminHandlers } from './adminHandlers';
+import { torneoHandlers } from './torneoHandlers';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
 // El admin es Super Usuario: tiene los 13 permisos del seed V4, como en el back
 const PERMISOS_SUPER_USUARIO = [
-  'USUARIO_VER', 'USUARIO_CREAR', 'USUARIO_EDITAR', 'USUARIO_ELIMINAR',
-  'PERSONA_VER', 'PERSONA_CREAR', 'PERSONA_EDITAR', 'PERSONA_ELIMINAR',
-  'ROL_VER', 'ROL_CREAR', 'ROL_EDITAR', 'ROL_ELIMINAR', 'ROL_ASIGNAR',
+  'USUARIO_VER',
+  'USUARIO_CREAR',
+  'USUARIO_EDITAR',
+  'USUARIO_ELIMINAR',
+  'PERSONA_VER',
+  'PERSONA_CREAR',
+  'PERSONA_EDITAR',
+  'PERSONA_ELIMINAR',
+  'ROL_VER',
+  'ROL_CREAR',
+  'ROL_EDITAR',
+  'ROL_ELIMINAR',
+  'ROL_ASIGNAR',
 ];
 
 // In-memory mock store for current user profile state according to openapi.yaml
@@ -36,6 +47,8 @@ let mockCurrentUserState = {
 export const handlers = [
   // Backoffice (usuarios, personas, roles y permisos) según el contrato
   ...adminHandlers,
+  // Torneos públicos (HU-208 / T208-2)
+  ...torneoHandlers,
 
   // Auth: Registro Endpoint (POST /auth/registro) -> 201 { id }
   http.post(`${API_URL}/auth/registro`, async ({ request }) => {
@@ -75,16 +88,22 @@ export const handlers = [
           status: 400,
           codigo: 'VALIDACION',
           detail: 'Error de validación en los datos ingresados.',
-          errores: [{ campo: 'username', codigo: 'LONGITUD', mensaje: 'El nombre de usuario debe tener al menos 3 caracteres.' }],
+          errores: [
+            {
+              campo: 'username',
+              codigo: 'LONGITUD',
+              mensaje: 'El nombre de usuario debe tener al menos 3 caracteres.',
+            },
+          ],
         }),
         { status: 400, headers: { 'Content-Type': 'application/problem+json' } }
       );
     }
 
-    return new HttpResponse(
-      JSON.stringify({ id: Date.now() }),
-      { status: 201, headers: { 'Content-Type': 'application/json' } }
-    );
+    return new HttpResponse(JSON.stringify({ id: Date.now() }), {
+      status: 201,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }),
 
   // Auth: Verificar Correo Endpoint (GET /auth/verificar?token=) -> 204 No Content
@@ -96,7 +115,7 @@ export const handlers = [
       return new HttpResponse(
         JSON.stringify({
           status: 400,
-          codigo: 'TOKEN_INVALIDO',
+          codigo: token === 'expired-token' ? 'TOKEN_EXPIRADO' : 'TOKEN_INVALIDO',
           detail: 'El enlace de verificación es inválido o ha expirado.',
         }),
         { status: 400, headers: { 'Content-Type': 'application/problem+json' } }
@@ -105,6 +124,9 @@ export const handlers = [
 
     return new HttpResponse(null, { status: 204 });
   }),
+
+  // Auth: Reenviar verificación (POST /auth/reenviar-verificacion) -> 202 siempre, exista o no el mail
+  http.post(`${API_URL}/auth/reenviar-verificacion`, () => new HttpResponse(null, { status: 202 })),
 
   // Auth: Login Endpoint (POST /auth/login) -> { accessToken, refreshToken, tokenType, expiresIn }
   http.post(`${API_URL}/auth/login`, async ({ request }) => {
@@ -120,7 +142,8 @@ export const handlers = [
         JSON.stringify({
           status: 403,
           codigo: 'EMAIL_NO_VERIFICADO',
-          detail: 'Tu cuenta aún no ha sido verificada. Revisá tu casilla de correo para activarla.',
+          detail:
+            'Tu cuenta aún no ha sido verificada. Revisá tu casilla de correo para activarla.',
         }),
         { status: 403, headers: { 'Content-Type': 'application/problem+json' } }
       );
@@ -139,8 +162,22 @@ export const handlers = [
 
     if ((id === 'admin@pica.edu.ar' || id === 'admin') && body.password === 'admin123') {
       mockCurrentUserState = {
-        usuario: { id: 1, username: 'admin', email: 'admin@pica.edu.ar', estado: 'ACTIVO', tieneContrasena: true },
-        persona: { nombres: 'Administrador', apellidos: 'PICA', tipoDoc: 'DNI', nroDoc: '30111222', fechaNacimiento: '1990-01-01', domicilioPostal: 'Av. Constitución 1234, Luján', telefono: '1122334455' },
+        usuario: {
+          id: 1,
+          username: 'admin',
+          email: 'admin@pica.edu.ar',
+          estado: 'ACTIVO',
+          tieneContrasena: true,
+        },
+        persona: {
+          nombres: 'Administrador',
+          apellidos: 'PICA',
+          tipoDoc: 'DNI',
+          nroDoc: '30111222',
+          fechaNacimiento: '1990-01-01',
+          domicilioPostal: 'Av. Constitución 1234, Luján',
+          telefono: '1122334455',
+        },
         roles: [{ id: 1, nombre: 'SUPER_USUARIO', nombreAmigable: 'Super Usuario' }],
         permisos: [...PERMISOS_SUPER_USUARIO],
         datosCompletos: true,
@@ -156,8 +193,22 @@ export const handlers = [
 
     if ((id === 'organizador@pica.edu.ar' || id === 'organizador') && body.password === 'org123') {
       mockCurrentUserState = {
-        usuario: { id: 4, username: 'organizador', email: 'organizador@pica.edu.ar', estado: 'ACTIVO', tieneContrasena: true },
-        persona: { nombres: 'Organizador', apellidos: 'Eventos', tipoDoc: 'DNI', nroDoc: '34555666', fechaNacimiento: '1987-03-20', domicilioPostal: 'Mitre 200, Luján', telefono: '1133221100' },
+        usuario: {
+          id: 4,
+          username: 'organizador',
+          email: 'organizador@pica.edu.ar',
+          estado: 'ACTIVO',
+          tieneContrasena: true,
+        },
+        persona: {
+          nombres: 'Organizador',
+          apellidos: 'Eventos',
+          tipoDoc: 'DNI',
+          nroDoc: '34555666',
+          fechaNacimiento: '1987-03-20',
+          domicilioPostal: 'Mitre 200, Luján',
+          telefono: '1133221100',
+        },
         roles: [{ id: 4, nombre: 'ORGANIZADOR', nombreAmigable: 'Organizador de Eventos' }],
         permisos: ['USUARIO_VER', 'PERSONA_VER'],
         datosCompletos: true,
@@ -173,8 +224,22 @@ export const handlers = [
 
     if ((id === 'user@pica.edu.ar' || id === 'usuario') && body.password === 'user123') {
       mockCurrentUserState = {
-        usuario: { id: 2, username: 'usuario', email: 'user@pica.edu.ar', estado: 'ACTIVO', tieneContrasena: true },
-        persona: { nombres: 'Usuario', apellidos: 'PICA', tipoDoc: 'DNI', nroDoc: '38123456', fechaNacimiento: '1995-05-15', domicilioPostal: 'San Martín 500, Luján', telefono: '1144556677' },
+        usuario: {
+          id: 2,
+          username: 'usuario',
+          email: 'user@pica.edu.ar',
+          estado: 'ACTIVO',
+          tieneContrasena: true,
+        },
+        persona: {
+          nombres: 'Usuario',
+          apellidos: 'PICA',
+          tipoDoc: 'DNI',
+          nroDoc: '38123456',
+          fechaNacimiento: '1995-05-15',
+          domicilioPostal: 'San Martín 500, Luján',
+          telefono: '1144556677',
+        },
         roles: [{ id: 2, nombre: 'PARTICIPANTE', nombreAmigable: 'Participante Estándar' }],
         permisos: [],
         datosCompletos: true,
@@ -190,8 +255,22 @@ export const handlers = [
 
     if (id && body.password) {
       mockCurrentUserState = {
-        usuario: { id: 3, username: id.split('@')[0], email: id.includes('@') ? id : `${id}@pica.edu.ar`, estado: 'ACTIVO', tieneContrasena: true },
-        persona: { nombres: id.split('@')[0], apellidos: 'Usuario', tipoDoc: 'DNI', nroDoc: '', fechaNacimiento: '', domicilioPostal: '', telefono: '' },
+        usuario: {
+          id: 3,
+          username: id.split('@')[0],
+          email: id.includes('@') ? id : `${id}@pica.edu.ar`,
+          estado: 'ACTIVO',
+          tieneContrasena: true,
+        },
+        persona: {
+          nombres: id.split('@')[0],
+          apellidos: 'Usuario',
+          tipoDoc: 'DNI',
+          nroDoc: '',
+          fechaNacimiento: '',
+          domicilioPostal: '',
+          telefono: '',
+        },
         roles: [{ id: 2, nombre: 'PARTICIPANTE', nombreAmigable: 'Participante' }],
         permisos: [],
         datosCompletos: false,
@@ -223,7 +302,7 @@ export const handlers = [
       return new HttpResponse(
         JSON.stringify({
           status: 400,
-          codigo: 'CODIGO_OAUTH_INVALIDO',
+          codigo: 'CODIGO_INVALIDO',
           detail: 'El código de autorización OAuth es inválido o ha expirado.',
         }),
         { status: 400, headers: { 'Content-Type': 'application/problem+json' } }
@@ -232,8 +311,22 @@ export const handlers = [
 
     // Usuario Google que nace sin datos completos (requiere nroDoc, fechaNacimiento, domicilioPostal, telefono)
     mockCurrentUserState = {
-      usuario: { id: 10, username: 'google_user', email: 'google.user@pica.edu.ar', estado: 'ACTIVO', tieneContrasena: false },
-      persona: { nombres: 'Usuario Google', apellidos: 'PICA', tipoDoc: 'DNI', nroDoc: '', fechaNacimiento: '', domicilioPostal: '', telefono: '' },
+      usuario: {
+        id: 10,
+        username: 'google_user',
+        email: 'google.user@pica.edu.ar',
+        estado: 'ACTIVO',
+        tieneContrasena: false,
+      },
+      persona: {
+        nombres: 'Usuario Google',
+        apellidos: 'PICA',
+        tipoDoc: 'DNI',
+        nroDoc: '',
+        fechaNacimiento: '',
+        domicilioPostal: '',
+        telefono: '',
+      },
       roles: [{ id: 2, nombre: 'PARTICIPANTE', nombreAmigable: 'Participante' }],
       permisos: [],
       datosCompletos: false,
@@ -283,8 +376,12 @@ export const handlers = [
     };
 
     const hasDoc = Boolean(newPersona.nroDoc && newPersona.nroDoc.trim().length > 0);
-    const hasFecha = Boolean(newPersona.fechaNacimiento && newPersona.fechaNacimiento.trim().length > 0);
-    const hasDom = Boolean(newPersona.domicilioPostal && newPersona.domicilioPostal.trim().length > 0);
+    const hasFecha = Boolean(
+      newPersona.fechaNacimiento && newPersona.fechaNacimiento.trim().length > 0
+    );
+    const hasDom = Boolean(
+      newPersona.domicilioPostal && newPersona.domicilioPostal.trim().length > 0
+    );
     const hasTel = Boolean(newPersona.telefono && newPersona.telefono.trim().length > 0);
 
     mockCurrentUserState = {
@@ -307,7 +404,7 @@ export const handlers = [
       return new HttpResponse(
         JSON.stringify({
           status: 400,
-          codigo: 'PASSWORD_INCORRECTA',
+          codigo: 'PASSWORD_ACTUAL_INCORRECTA',
           detail: 'La contraseña actual ingresada es incorrecta.',
         }),
         { status: 400, headers: { 'Content-Type': 'application/problem+json' } }
@@ -325,7 +422,7 @@ export const handlers = [
       return new HttpResponse(
         JSON.stringify({
           status: 401,
-          codigo: 'REFRESH_TOKEN_EXPIRED',
+          codigo: 'REFRESH_INVALIDO',
           detail: 'Refresh token expirado o inválido.',
         }),
         { status: 401, headers: { 'Content-Type': 'application/problem+json' } }
@@ -343,15 +440,5 @@ export const handlers = [
   // Auth: Logout (POST /auth/logout)
   http.post(`${API_URL}/auth/logout`, () => {
     return HttpResponse.json({ message: 'Sesión cerrada exitosamente' });
-  }),
-
-  // Admin Stats
-  http.get(`${API_URL}/admin/stats`, () => {
-    return HttpResponse.json({
-      totalUsers: 24,
-      activeProjects: 8,
-      systemStatus: 'OPERATIVO',
-      lastBackup: new Date().toISOString(),
-    });
   }),
 ];

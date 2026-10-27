@@ -1,5 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { mensajeDeError } from '../../shared/mensajesError';
+import { IconoAlerta, IconoEspera, IconoListo } from '../../shared/ui/Iconos';
+import { EstadoAuth } from '../components/EstadoAuth';
 import { useAuth } from '../hooks/useAuth';
 
 // El back vuelve con ?error=<CODIGO> cuando el login con Google falla antes del canje (ver /auth/exchange)
@@ -30,7 +33,7 @@ export const OAuthCallbackPage: React.FC = () => {
 
     if (!code) {
       setLoading(false);
-      setErrorMsg('No se recibió ningún código de autorización OAuth desde Google.');
+      setErrorMsg('Google no devolvió el código de ingreso. Probá de nuevo.');
       return;
     }
 
@@ -59,43 +62,37 @@ export const OAuthCallbackPage: React.FC = () => {
         }, 600);
       })
       .catch((err) => {
-        setErrorMsg(err.message || 'Error al completar la autenticación con Google.');
+        setErrorMsg(mensajeDeError(err, 'No se pudo terminar el ingreso con Google.'));
       })
       .finally(() => {
         setLoading(false);
       });
   }, [code, oauthError, loginWithOAuthCode, navigate]);
 
-  return (
-    <div style={{ maxWidth: '480px', margin: '3rem auto', textAlign: 'center' }} className="glass-card">
-      {loading ? (
-        <div style={{ padding: '2rem 1rem' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🔄</div>
-          <h2>Iniciando sesión con Google...</h2>
-          <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-            Aguardá unos instantes mientras completamos la verificación de credenciales.
-          </p>
-        </div>
-      ) : errorMsg ? (
-        <div style={{ padding: '1rem 0' }}>
-          <div style={{ fontSize: '3.5rem', marginBottom: '1rem', color: '#f87171' }}>⚠️</div>
-          <h2 style={{ marginBottom: '0.75rem', color: '#f87171' }}>Error de Autenticación OAuth</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '1.75rem' }}>
-            {errorMsg}
-          </p>
-          <Link to="/auth/login" className="btn btn-primary">
-            Volver a Iniciar Sesión
+  if (loading) {
+    return (
+      <EstadoAuth icono={<IconoEspera />} titulo="Ingresando con Google...">
+        <p className="auth-estado-texto">Esto tarda unos segundos.</p>
+      </EstadoAuth>
+    );
+  }
+
+  if (errorMsg) {
+    return (
+      <EstadoAuth icono={<IconoAlerta />} titulo="No pudimos ingresar con Google" tono="peligro">
+        <p className="auth-estado-texto">{errorMsg}</p>
+        <div className="auth-estado-acciones">
+          <Link to="/auth/login" className="btn btn-primary btn-block">
+            Volver a iniciar sesión
           </Link>
         </div>
-      ) : (
-        <div style={{ padding: '2rem 1rem' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '1rem', color: '#10b981' }}>✅</div>
-          <h2>¡Autenticación Exitosa!</h2>
-          <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-            Redirigiendo a tu panel...
-          </p>
-        </div>
-      )}
-    </div>
+      </EstadoAuth>
+    );
+  }
+
+  return (
+    <EstadoAuth icono={<IconoListo />} titulo="¡Listo!" tono="exito">
+      <p className="auth-estado-texto">Te estamos llevando a tu panel...</p>
+    </EstadoAuth>
   );
 };

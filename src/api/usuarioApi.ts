@@ -57,6 +57,15 @@ export interface UsuarioDetalle {
   roles: RolMinimo[];
   creadoEn: string;
   modificadoEn?: string | null;
+  /** El bloqueo vigente; solo viene en el detalle y en el POST de bloqueo. */
+  bloqueo?: BloqueoDatos | null;
+}
+
+export interface BloqueoDatos {
+  motivo: string;
+  desde: string;
+  /** null es indefinido */
+  hasta?: string | null;
 }
 
 export interface UsuarioCreatePayload {
@@ -116,5 +125,14 @@ export const usuarioApi = {
 
   updateRoles: async (id: number, roles: number[]): Promise<UsuarioDetalle> => {
     return httpClient.put<UsuarioDetalle>(`/admin/usuarios/${id}/roles`, { roles });
+  },
+
+  // Sin `hasta` el bloqueo es indefinido; con fecha, el back lo levanta en el primer login después
+  bloquear: async (id: number, motivo: string, hasta?: string | null): Promise<UsuarioDetalle> => {
+    return httpClient.post<UsuarioDetalle>(`/admin/usuarios/${id}/bloqueo`, { motivo, hasta: hasta ?? null });
+  },
+
+  levantarBloqueo: async (id: number): Promise<UsuarioDetalle> => {
+    return httpClient.delete<UsuarioDetalle>(`/admin/usuarios/${id}/bloqueo`);
   },
 };

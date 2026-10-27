@@ -111,6 +111,8 @@ export const performRefreshToken = async (): Promise<RefreshResponse> => {
 
 export interface RequestOptions extends RequestInit {
   _retry?: boolean;
+  /** La respuesta es un archivo (el PDF del reglamento): vuelve como Blob en lugar de JSON. */
+  comoBlob?: boolean;
   params?: Record<string, string | number | boolean | undefined | null>;
 }
 
@@ -175,11 +177,7 @@ export async function customFetch<T = unknown>(
     if (!refreshToken) {
       clearSessionTokens();
       notifyUnauthorized();
-      throw new ApiError('No autorizado', 401, {
-        status: 401,
-        codigo: 'CREDENCIALES_INVALIDAS',
-        detail: 'No autorizado',
-      });
+      throw new ApiError('No autorizado', 401, { status: 401, codigo: 'NO_AUTENTICADO' });
     }
 
     if (isRefreshing) {
@@ -238,13 +236,16 @@ export async function customFetch<T = unknown>(
     try {
       const data = await response.json();
       if (data && typeof data === 'object') {
-        problemDetail = {
+        // Se queda con todo el cuerpo: algunos códigos traen campos propios (faltantes, comisionMaxima...).
+        const problema: ProblemDetail = {
+          ...data,
           status: data.status || response.status,
           codigo: data.codigo || data.error || 'ERROR_DESCONOCIDO',
           detail: data.detail || data.message || data.error,
           errores: data.errores,
         };
-        errorMsg = problemDetail.detail || problemDetail.codigo || errorMsg;
+        problemDetail = problema;
+        errorMsg = problema.detail || problema.codigo || errorMsg;
       }
     } catch {
       // Body couldn't be parsed as JSON
@@ -253,7 +254,13 @@ export async function customFetch<T = unknown>(
     throw new ApiError(errorMsg, response.status, problemDetail);
   }
 
-  return await response.json();
+  if (options.comoBlob) {
+    return (await response.blob()) as T;
+  }
+
+  // 202 y otros éxitos pueden venir sin cuerpo
+  const texto = await response.text();
+  return (texto ? JSON.parse(texto) : {}) as T;
 }
 
 export const httpClient = {

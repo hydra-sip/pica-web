@@ -15,13 +15,13 @@ export const UnauthorizedPage: React.FC = () => {
         maxWidth: '560px',
         margin: '2rem auto',
       }}
-      className="glass-card"
+      className="card"
     >
       <div
         style={{
           fontSize: '4.5rem',
           fontWeight: 800,
-          background: 'linear-gradient(135deg, #f43f5e 0%, #fb7185 100%)',
+          background: 'var(--color-danger)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
           lineHeight: 1,
@@ -31,18 +31,18 @@ export const UnauthorizedPage: React.FC = () => {
         403
       </div>
       <h1 style={{ fontSize: '1.75rem', marginBottom: '0.75rem' }}>Acceso Denegado</h1>
-      <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '1.75rem', lineHeight: 1.5 }}>
+      <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem', marginBottom: '1.75rem', lineHeight: 1.5 }}>
         No poseés los permisos necesarios (<code>*_VER</code>) ni el rol adecuado para acceder a esta sección del módulo de administración.
       </p>
 
       <div
         style={{
-          background: 'rgba(239, 68, 68, 0.1)',
-          border: '1px solid rgba(239, 68, 68, 0.25)',
+          background: 'var(--color-danger-bg)',
+          border: '1px solid var(--color-danger-border)',
           padding: '0.85rem 1rem',
           borderRadius: 'var(--radius-sm)',
           fontSize: '0.85rem',
-          color: '#fca5a5',
+          color: 'var(--color-danger)',
           marginBottom: '1.75rem',
           textAlign: 'left',
           width: '100%',

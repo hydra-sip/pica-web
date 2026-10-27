@@ -1,0 +1,176 @@
+/* Login, registro y verificación (wireframes EP01.RF001_RF002 y EP01.RF001.5) */
+.auth {
+  width: 100%;
+  max-width: 440px;
+  margin: var(--space-5) auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.auth-marca {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  text-align: center;
+}
+
+.auth-logo {
+  height: 64px;
+  width: auto;
+  margin-bottom: var(--space-2);
+  color: var(--color-primary);
+}
+
+.auth-nombre {
+  margin: 0;
+  font-size: var(--text-2xl);
+}
+
+.auth-lema {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.auth-pestanas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 4px;
+  background-color: var(--color-surface);
+  border-radius: var(--radius-md);
+}
+
+.auth-pestanas a {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+}
+
+.auth-pestanas a.active {
+  color: var(--color-text);
+  background-color: var(--color-card);
+  box-shadow: var(--shadow-sm);
+}
+
+.auth-separador {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.auth-separador::before,
+.auth-separador::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: var(--color-border);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.auth-fila {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.auth-fila-doc {
+  grid-template-columns: 2fr 3fr;
+}
+
+/* Revisá tu correo, verificación y vuelta de Google */
+.auth-estado {
+  align-items: center;
+  text-align: center;
+}
+
+.auth-estado-icono {
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+}
+
+.auth-estado-icono svg {
+  width: 32px;
+  height: 32px;
+}
+
+.auth-estado-exito .auth-estado-icono {
+  color: var(--color-success);
+}
+
+.auth-estado-peligro .auth-estado-icono {
+  color: var(--color-danger);
+}
+
+.auth-estado-titulo {
+  margin: 0;
+  font-size: var(--text-xl);
+}
+
+.auth-estado-texto {
+  margin: 0;
+  font-size: var(--text-md);
+  color: var(--color-text-secondary);
+}
+
+.auth-estado > .alerta,
+.auth-estado > form,
+.auth-estado-acciones {
+  width: 100%;
+  text-align: left;
+}
+
+.auth-estado-acciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.auth-espera {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.auth-link {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  text-align: center;
+}
+
+/* En el celular la tarjeta ocupa la pantalla, como en el wireframe */
+@media (max-width: 480px) {
+  .auth.card {
+    margin: 0 auto;
+    padding: var(--space-2) 0;
+    border: 0;
+  }
+
+  .auth-fila,
+  .auth-fila-doc {
+    grid-template-columns: 1fr;
+  }
+}

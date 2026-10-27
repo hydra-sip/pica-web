@@ -4,7 +4,9 @@ import { FormModal, FormFieldSchema } from '../components/FormModal';
 import { StatusChip } from '../components/StatusChip';
 import { personaApi, PersonaResumen, PersonaDetalle, PersonaPayload } from '../../api/personaApi';
 import { useAuth } from '../../auth/hooks/useAuth';
-import { mensajeDeError } from '../mensajesError';
+import { mensajeDeError } from '../../shared/mensajesError';
+import { Button, Modal } from '../../shared/ui';
+import './PersonasPage.css';
 import {
   validateNombreApellido,
   validateDocumento,
@@ -88,7 +90,7 @@ export const PersonasPage: React.FC = () => {
       sortable: true,
       render: (p) => (
         <div>
-          <strong style={{ color: 'var(--text-primary)' }}>
+          <strong style={{ color: 'var(--color-text)' }}>
             {p.apellidos}, {p.nombres}
           </strong>
         </div>
@@ -101,7 +103,7 @@ export const PersonasPage: React.FC = () => {
       render: (p) => (
         <div>
           <span style={{ fontWeight: 600 }}>
-            <small style={{ color: 'var(--text-secondary)', marginRight: '0.25rem' }}>
+            <small style={{ color: 'var(--color-text-secondary)', marginRight: '0.25rem' }}>
               {p.tipoDoc || 'DNI'}:
             </small>
             {p.nroDoc || 'Sin doc'}
@@ -111,33 +113,21 @@ export const PersonasPage: React.FC = () => {
     },
     {
       key: 'tieneUsuario',
-      label: 'Usuario Vinculado',
+      label: 'Usuario',
       render: (p) => (
         <div>
           {p.tieneUsuario ? (
-            <button
-              type="button"
+            <Button
+              size="sm"
+              variant="ghost"
               onClick={() => abrirFichaUsuario(p)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                padding: '0.2rem 0.6rem',
-                borderRadius: 'var(--radius-sm)',
-                fontSize: '0.775rem',
-                fontWeight: 600,
-                backgroundColor: 'rgba(99, 102, 241, 0.15)',
-                color: 'var(--accent-secondary)',
-                border: '1px solid rgba(99, 102, 241, 0.3)',
-                cursor: 'pointer',
-              }}
-              title="Ver estado de vinculación"
+              title="Ver su usuario"
             >
-              👤 Vinculado
-            </button>
+              Ver usuario
+            </Button>
           ) : (
-            <span style={{ fontSize: '0.775rem', color: 'var(--text-muted)' }}>
-              Sin usuario vinculado
+            <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
+              Sin usuario
             </span>
           )}
         </div>
@@ -290,10 +280,9 @@ export const PersonasPage: React.FC = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       <div>
-        <span className="badge">Permiso: PERSONA_VER</span>
-        <h1 style={{ marginTop: '0.5rem' }}>Gestión de Personas</h1>
-        <p style={{ color: 'var(--text-secondary)' }}>
-          Registro de integrantes y padrón personal conectado al backend REST `pica-back`.
+        <h1 style={{ margin: 0 }}>Personas</h1>
+        <p style={{ color: 'var(--color-text-secondary)', margin: '0.25rem 0 0' }}>
+          Padrón de integrantes: los datos de cada persona, con o sin usuario.
         </p>
       </div>
 
@@ -304,9 +293,9 @@ export const PersonasPage: React.FC = () => {
             display: 'flex',
             justifyContent: 'space-between',
             gap: '1rem',
-            background: 'rgba(239, 68, 68, 0.15)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            color: '#f87171',
+            background: 'var(--color-danger-bg)',
+            border: '1px solid var(--color-danger-border)',
+            color: 'var(--color-danger)',
             padding: '0.75rem',
             borderRadius: 'var(--radius-sm)',
           }}
@@ -323,8 +312,8 @@ export const PersonasPage: React.FC = () => {
       )}
 
       <DataTable<PersonaResumen>
-        title="Padrón de Personas Registradas"
-        description="Filtro de búsqueda por documento o apellido. Paginado desde el servidor con validación de fecha no futura y control de baja con usuario activo (409)."
+        title="Listado de personas"
+        description="Buscá por apellido o documento, y filtrá por estado."
         data={personas}
         columns={columns}
         searchFields={['apellidos', 'nombres', 'nroDoc']}
@@ -358,7 +347,7 @@ export const PersonasPage: React.FC = () => {
         onEdit={puedeEditar ? handleEdit : undefined}
         onDelete={puedeEliminar ? handleDelete : undefined}
         onReactivate={puedeEliminar ? handleReactivate : undefined}
-        createButtonText="Registrar Persona"
+        createButtonText="Registrar persona"
       />
 
       {/* Form Modal for Create / Edit Persona */}
@@ -378,120 +367,57 @@ export const PersonasPage: React.FC = () => {
         onSubmit={handleSubmitForm}
       />
 
-      {/* User Profile Card Modal */}
-      {selectedUserCard && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(15, 23, 42, 0.8)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '1rem',
-          }}
-          onClick={() => setSelectedUserCard(null)}
-        >
-          <div
-            className="glass-card"
-            style={{ width: '100%', maxWidth: '440px', padding: '1.75rem' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                marginBottom: '1rem',
-              }}
-            >
-              <div>
-                <span className="badge">Usuario Vinculado</span>
-                <h3 style={{ fontSize: '1.25rem', marginTop: '0.4rem' }}>
-                  {selectedUserCard.nombres} {selectedUserCard.apellidos}
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedUserCard(null)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text-secondary)',
-                  fontSize: '1.5rem',
-                  cursor: 'pointer',
-                }}
-              >
-                &times;
-              </button>
+      {/* Ficha del usuario de la persona */}
+      <Modal
+        isOpen={selectedUserCard !== null}
+        title={selectedUserCard ? `${selectedUserCard.nombres} ${selectedUserCard.apellidos}` : ''}
+        size="sm"
+        onClose={() => setSelectedUserCard(null)}
+        footer={
+          <Button variant="secondary" onClick={() => setSelectedUserCard(null)}>
+            Cerrar
+          </Button>
+        }
+      >
+        {selectedUserCard && (
+          <dl className="ficha-datos">
+            <div>
+              <dt>Documento</dt>
+              <dd>
+                {selectedUserCard.tipoDoc || 'DOC'} {selectedUserCard.nroDoc || 'Sin documento'}
+              </dd>
             </div>
-
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.75rem',
-                fontSize: '0.875rem',
-              }}
-            >
-              <div>
-                <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
-                  Documento:
-                </span>
-                <div style={{ fontWeight: 600 }}>
-                  {selectedUserCard.tipoDoc || 'DOC'}: {selectedUserCard.nroDoc || 'Sin doc'}
-                </div>
-              </div>
-
-              {selectedUserCard.usuario ? (
-                <>
-                  <div>
-                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
-                      Usuario:
-                    </span>
-                    <div style={{ fontWeight: 600 }}>{selectedUserCard.usuario.username}</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+            {selectedUserCard.usuario ? (
+              <>
+                <div>
+                  <dt>Usuario</dt>
+                  <dd>
+                    @{selectedUserCard.usuario.username}
+                    <br />
+                    <span style={{ color: 'var(--color-text-secondary)' }}>
                       {selectedUserCard.usuario.email}
-                    </div>
-                  </div>
-                  <div>
-                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
-                      Estado:
                     </span>
-                    <div style={{ marginTop: '0.25rem' }}>
-                      <StatusChip
-                        status={
-                          selectedUserCard.usuario.eliminado
-                            ? 'ELIMINADO'
-                            : selectedUserCard.usuario.estado
-                        }
-                      />
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div style={{ color: 'var(--text-muted)' }}>Sin usuario vinculado.</div>
-              )}
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => setSelectedUserCard(null)}
-                style={{ fontSize: '0.85rem' }}
-              >
-                Cerrar Ficha
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Estado</dt>
+                  <dd>
+                    <StatusChip
+                      status={
+                        selectedUserCard.usuario.eliminado
+                          ? 'ELIMINADO'
+                          : selectedUserCard.usuario.estado
+                      }
+                    />
+                  </dd>
+                </div>
+              </>
+            ) : (
+              <p style={{ margin: 0, color: 'var(--color-text-muted)' }}>No tiene usuario.</p>
+            )}
+          </dl>
+        )}
+      </Modal>
     </div>
   );
 };

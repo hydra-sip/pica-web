@@ -1,6 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { authApi } from '../../api/authApi';
+import { codigoDeError, mensajeDeError } from '../../shared/mensajesError';
+import { IconoAlerta, IconoEspera, IconoListo } from '../../shared/ui/Iconos';
+import { EstadoAuth } from '../components/EstadoAuth';
 
 export const VerifyEmailPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -9,12 +12,14 @@ export const VerifyEmailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  // Con un enlace vencido o inválido se ofrece pedir otro; si ya se usó, alcanza con ingresar
+  const [puedePedirOtro, setPuedePedirOtro] = useState(true);
   const processedTokenRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!token) {
       setLoading(false);
-      setErrorMsg('No se proporcionó ningún token de verificación en la URL.');
+      setErrorMsg('El enlace no trae el código de verificación. Abrilo de nuevo desde el correo.');
       return;
     }
 
@@ -32,51 +37,55 @@ export const VerifyEmailPage: React.FC = () => {
       })
       .catch((err) => {
         setSuccess(false);
-        setErrorMsg(err.message || 'El enlace de verificación es inválido o ha expirado.');
+        setPuedePedirOtro(codigoDeError(err) !== 'TOKEN_USADO');
+        setErrorMsg(
+          mensajeDeError(err, 'El enlace de verificación no es válido o venció.', {
+            TOKEN_INVALIDO: 'El enlace de verificación no es válido.',
+          })
+        );
       })
       .finally(() => {
         setLoading(false);
       });
   }, [token]);
 
-  return (
-    <div style={{ maxWidth: '480px', margin: '3rem auto', textAlign: 'center' }} className="glass-card">
-      {loading ? (
-        <div style={{ padding: '2rem 1rem' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>⏳</div>
-          <h2>Verificando tu cuenta...</h2>
-          <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
-            Por favor aguardá unos instantes mientras validamos tu token de seguridad con el servidor.
-          </p>
-        </div>
-      ) : success ? (
-        <div style={{ padding: '1rem 0' }}>
-          <div style={{ fontSize: '3.5rem', marginBottom: '1rem', color: '#10b981' }}>🎉</div>
-          <h2 style={{ marginBottom: '0.75rem', color: '#34d399' }}>¡Verificación Exitosa!</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '1.75rem' }}>
-            Tu dirección de correo electrónico ha sido confirmada correctamente (HTTP 204). Ya podés iniciar sesión en PICA Web.
-          </p>
-          <Link to="/auth/login" className="btn btn-primary">
-            Iniciar Sesión Ahora
+  if (loading) {
+    return (
+      <EstadoAuth icono={<IconoEspera />} titulo="Verificando tu cuenta...">
+        <p className="auth-estado-texto">Esto tarda unos segundos.</p>
+      </EstadoAuth>
+    );
+  }
+
+  if (success) {
+    return (
+      <EstadoAuth icono={<IconoListo />} titulo="¡Cuenta verificada!" tono="exito">
+        <p className="auth-estado-texto">Ya podés iniciar sesión en PICA.</p>
+        <div className="auth-estado-acciones">
+          <Link to="/auth/login" className="btn btn-primary btn-block">
+            Iniciar sesión
           </Link>
         </div>
-      ) : (
-        <div style={{ padding: '1rem 0' }}>
-          <div style={{ fontSize: '3.5rem', marginBottom: '1rem', color: '#f87171' }}>⚠️</div>
-          <h2 style={{ marginBottom: '0.75rem', color: '#f87171' }}>Error de Verificación</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '1.75rem' }}>
-            {errorMsg}
-          </p>
-          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-            <Link to="/auth/register" className="btn btn-secondary">
-              Volver al Registro
-            </Link>
-            <Link to="/auth/login" className="btn btn-primary">
-              Ir a Iniciar Sesión
-            </Link>
-          </div>
-        </div>
-      )}
-    </div>
+      </EstadoAuth>
+    );
+  }
+
+  return (
+    <EstadoAuth icono={<IconoAlerta />} titulo="No pudimos verificar tu cuenta" tono="peligro">
+      <p className="auth-estado-texto">{errorMsg}</p>
+      <div className="auth-estado-acciones">
+        {puedePedirOtro && (
+          <Link to="/auth/check-email" className="btn btn-primary btn-block">
+            Pedir un enlace nuevo
+          </Link>
+        )}
+        <Link
+          to="/auth/login"
+          className={`btn btn-block ${puedePedirOtro ? 'btn-secondary' : 'btn-primary'}`}
+        >
+          Ir a iniciar sesión
+        </Link>
+      </div>
+    </EstadoAuth>
   );
 };

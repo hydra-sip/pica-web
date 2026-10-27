@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { StatusChip, EntityStatus } from './StatusChip';
 import { ConfirmModal } from './ConfirmModal';
+import { Button, Table } from '../../shared/ui';
 
 export interface ColumnDef<T> {
   key: string;
@@ -266,344 +267,177 @@ export function DataTable<T extends Record<string, any>>({
     }
   };
 
+  const hayAcciones = !!(onView || onEdit || onDelete || onReactivate || customActions);
+  const columnasTotales = columns.length + (hayAcciones ? 1 : 0);
+
   return (
-    <div className="glass-card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-      {/* Header bar: Title & Create button */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          flexWrap: 'wrap',
-          gap: '1rem',
-        }}
-      >
+    <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+      {/* Título y botón de alta */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 'var(--space-4)' }}>
         <div>
-          {title && <h2 style={{ fontSize: '1.35rem', color: 'var(--text-primary)' }}>{title}</h2>}
+          {title && <h2 style={{ fontSize: 'var(--text-xl)' }}>{title}</h2>}
           {description && (
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-              {description}
-            </p>
+            <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)', marginTop: 'var(--space-1)' }}>{description}</p>
           )}
         </div>
 
-        {onCreate && (
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={onCreate}
-            style={{ fontSize: '0.875rem', padding: '0.55rem 1.15rem' }}
-          >
-            + {createButtonText}
-          </button>
-        )}
+        {onCreate && <Button onClick={onCreate}>+ {createButtonText}</Button>}
       </div>
 
-      {/* Control bar: Search, Status filter, Page size */}
+      {/* Búsqueda, filtro de estado y filas por página */}
       <div
         style={{
           display: 'flex',
           flexWrap: 'wrap',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '1rem',
-          backgroundColor: 'rgba(15, 23, 42, 0.4)',
-          padding: '0.85rem 1rem',
-          borderRadius: 'var(--radius-sm)',
-          border: '1px solid var(--border-color)',
+          gap: 'var(--space-3)',
+          backgroundColor: 'var(--color-surface)',
+          padding: 'var(--space-3) var(--space-4)',
+          borderRadius: 'var(--radius-md)',
+          border: '1px solid var(--color-border)',
         }}
       >
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.75rem', flex: 1 }}>
-          {/* Búsqueda libre */}
-          <div style={{ position: 'relative', minWidth: '240px', flex: 1, maxWidth: '380px' }}>
-            <input
-              type="text"
-              placeholder="Buscar en la tabla..."
-              value={searchTerm}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.5rem 0.75rem 0.5rem 2.2rem',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-color)',
-                backgroundColor: 'rgba(15, 23, 42, 0.6)',
-                color: 'var(--text-primary)',
-                fontSize: '0.875rem',
-                outline: 'none',
-              }}
-            />
-            <span
-              style={{
-                position: 'absolute',
-                left: '0.75rem',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: 'var(--text-secondary)',
-                fontSize: '0.9rem',
-                pointerEvents: 'none',
-              }}
-            >
-              🔍
-            </span>
-          </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 'var(--space-3)', flex: '1 1 260px' }}>
+          <input
+            type="search"
+            className="input"
+            aria-label="Buscar en la tabla"
+            placeholder="Buscar en la tabla..."
+            value={searchTerm}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            style={{ flex: '1 1 220px', maxWidth: '380px' }}
+          />
 
-          {/* Filtro de Estado */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', fontWeight: 500 }}>Estado:</span>
-            <select
-              value={selectedStatusFilter}
-              onChange={(e) => handleStatusChange(e.target.value)}
-              style={{
-                padding: '0.5rem 0.75rem',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-color)',
-                backgroundColor: 'rgba(15, 23, 42, 0.6)',
-                color: 'var(--text-primary)',
-                fontSize: '0.85rem',
-                outline: 'none',
-                cursor: 'pointer',
-              }}
-            >
+          <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
+            Estado:
+            <select className="input" value={selectedStatusFilter} onChange={(e) => handleStatusChange(e.target.value)} style={{ width: 'auto' }}>
               {statusOptions.map((op) => (
                 <option key={op.value} value={op.value}>
                   {op.label}
                 </option>
               ))}
             </select>
-          </div>
+          </label>
 
-          {/* Extra filters */}
           {extraFilters}
         </div>
 
-        {/* Page size selector */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span style={{ fontSize: '0.825rem', color: 'var(--text-secondary)' }}>Filas por página:</span>
-          <select
-            value={pageSize}
-            onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-            style={{
-              padding: '0.4rem 0.6rem',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-color)',
-              backgroundColor: 'rgba(15, 23, 42, 0.6)',
-              color: 'var(--text-primary)',
-              fontSize: '0.85rem',
-              outline: 'none',
-              cursor: 'pointer',
-            }}
-          >
+        <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
+          Filas por página:
+          <select className="input" value={pageSize} onChange={(e) => handlePageSizeChange(Number(e.target.value))} style={{ width: 'auto' }}>
             <option value={5}>5</option>
             <option value={10}>10</option>
             <option value={20}>20</option>
           </select>
-        </div>
+        </label>
       </div>
 
-      {/* Table Container */}
-      <div style={{ overflowX: 'auto', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-        <table
-          style={{
-            width: '100%',
-            borderCollapse: 'collapse',
-            textAlign: 'left',
-            fontSize: '0.875rem',
-          }}
-        >
-          <thead>
-            <tr
-              style={{
-                backgroundColor: 'rgba(15, 23, 42, 0.7)',
-                borderBottom: '1px solid var(--border-color)',
-              }}
-            >
-              {columns.map((col) => (
-                <th
-                  key={col.key}
-                  onClick={() => handleSort(col.key, col.sortable)}
-                  style={{
-                    padding: '0.85rem 1rem',
-                    fontWeight: 600,
-                    color: 'var(--text-secondary)',
-                    cursor: col.sortable ? 'pointer' : 'default',
-                    userSelect: 'none',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                    {col.label}
-                    {col.sortable && (
-                      <span style={{ fontSize: '0.75rem', color: sortColumn === col.key ? 'var(--accent-primary)' : 'var(--text-muted)' }}>
-                        {sortColumn === col.key ? (sortDirection === 'asc' ? '▲' : '▼') : '↕'}
-                      </span>
-                    )}
-                  </div>
-                </th>
-              ))}
-              {(onView || onEdit || onDelete || onReactivate || customActions) && (
-                <th
-                  style={{
-                    padding: '0.85rem 1rem',
-                    fontWeight: 600,
-                    color: 'var(--text-secondary)',
-                    textAlign: 'right',
-                  }}
-                >
-                  Acciones
-                </th>
-              )}
+      <Table>
+        <thead>
+          <tr>
+            {columns.map((col) => (
+              <th
+                key={col.key}
+                onClick={() => handleSort(col.key, col.sortable)}
+                aria-sort={sortColumn === col.key ? (sortDirection === 'asc' ? 'ascending' : 'descending') : undefined}
+                style={{ cursor: col.sortable ? 'pointer' : 'default', userSelect: 'none' }}
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                  {col.label}
+                  {col.sortable && (
+                    <span aria-hidden="true" style={{ color: sortColumn === col.key ? 'var(--color-text)' : 'var(--color-text-muted)' }}>
+                      {sortColumn === col.key ? (sortDirection === 'asc' ? '▲' : '▼') : '↕'}
+                    </span>
+                  )}
+                </span>
+              </th>
+            ))}
+            {hayAcciones && <th style={{ textAlign: 'right' }}>Acciones</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {isLoading ? (
+            <tr>
+              <td colSpan={columnasTotales} className="table-vacia">
+                Cargando información...
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
-              <tr>
-                <td
-                  colSpan={columns.length + (onView || onEdit || onDelete || onReactivate || customActions ? 1 : 0)}
-                  style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}
-                >
-                  Cargando información...
-                </td>
-              </tr>
-            ) : paginatedData.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={columns.length + (onView || onEdit || onDelete || onReactivate || customActions ? 1 : 0)}
-                  style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}
-                >
-                  No se encontraron registros que coincidan con la búsqueda.
-                </td>
-              </tr>
-            ) : (
-              paginatedData.map((item, idx) => {
-                const itemId = item[idField as string] || idx;
-                const itemStatus = String(item[statusField as string] || '').toUpperCase();
-                // el contrato marca la baja lógica con eliminado: true; 'ELIMINADO' queda para las pantallas con datos locales
-                const isEliminado = item.eliminado === true || itemStatus === 'ELIMINADO';
-                const soloLectura = isReadOnly ? isReadOnly(item) : false;
-                const sePuedeDarDeBaja = canDelete ? canDelete(item) : true;
+          ) : paginatedData.length === 0 ? (
+            <tr>
+              <td colSpan={columnasTotales} className="table-vacia">
+                No se encontraron registros que coincidan con la búsqueda.
+              </td>
+            </tr>
+          ) : (
+            paginatedData.map((item, idx) => {
+              const itemId = item[idField as string] || idx;
+              const itemStatus = String(item[statusField as string] || '').toUpperCase();
+              // el contrato marca la baja lógica con eliminado: true; 'ELIMINADO' queda para las pantallas con datos locales
+              const isEliminado = item.eliminado === true || itemStatus === 'ELIMINADO';
+              const soloLectura = isReadOnly ? isReadOnly(item) : false;
+              const sePuedeDarDeBaja = canDelete ? canDelete(item) : true;
 
-                return (
-                  <tr
-                    key={itemId}
-                    style={{
-                      borderBottom: '1px solid var(--border-color)',
-                      transition: 'background-color 0.15s ease',
-                      backgroundColor: idx % 2 === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.015)',
-                    }}
-                  >
-                    {columns.map((col) => (
-                      <td key={col.key} style={{ padding: '0.85rem 1rem', color: 'var(--text-primary)' }}>
-                        {col.render
-                          ? col.render(item)
-                          : col.key === statusField
-                          ? <StatusChip status={(isEliminado ? 'ELIMINADO' : item[statusField as string]) as EntityStatus} />
-                          : String(item[col.key] ?? '-')}
-                      </td>
-                    ))}
+              return (
+                <tr key={itemId}>
+                  {columns.map((col) => (
+                    <td key={col.key}>
+                      {col.render
+                        ? col.render(item)
+                        : col.key === statusField
+                        ? <StatusChip status={(isEliminado ? 'ELIMINADO' : item[statusField as string]) as EntityStatus} />
+                        : String(item[col.key] ?? '-')}
+                    </td>
+                  ))}
 
-                    {/* Action buttons */}
-                    {(onView || onEdit || onDelete || onReactivate || customActions) && (
-                      <td style={{ padding: '0.85rem 1rem', textAlign: 'right', whiteSpace: 'nowrap' }}>
-                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                          {customActions && customActions(item)}
+                  {hayAcciones && (
+                    <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                        {customActions && customActions(item)}
 
-                          {onView && (
-                            <button
-                              type="button"
-                              title="Ver detalle"
-                              onClick={() => onView(item)}
-                              style={{
-                                background: 'rgba(255, 255, 255, 0.08)',
-                                border: '1px solid var(--border-color)',
-                                color: 'var(--text-primary)',
-                                padding: '0.35rem 0.6rem',
-                                borderRadius: 'var(--radius-sm)',
-                                cursor: 'pointer',
-                                fontSize: '0.8rem',
-                              }}
-                            >
-                              👁️ Ver
-                            </button>
-                          )}
+                        {onView && (
+                          <Button size="sm" variant="secondary" title="Ver detalle" onClick={() => onView(item)}>
+                            Ver
+                          </Button>
+                        )}
 
-                          {onEdit && !isEliminado && !soloLectura && (
-                            <button
-                              type="button"
-                              title="Editar registro"
-                              onClick={() => onEdit(item)}
-                              style={{
-                                background: 'rgba(99, 102, 241, 0.15)',
-                                border: '1px solid rgba(99, 102, 241, 0.3)',
-                                color: 'var(--accent-secondary)',
-                                padding: '0.35rem 0.6rem',
-                                borderRadius: 'var(--radius-sm)',
-                                cursor: 'pointer',
-                                fontSize: '0.8rem',
-                              }}
-                            >
-                              ✏️ Editar
-                            </button>
-                          )}
+                        {onEdit && !isEliminado && !soloLectura && (
+                          <Button size="sm" variant="secondary" title="Editar registro" onClick={() => onEdit(item)}>
+                            Editar
+                          </Button>
+                        )}
 
-                          {onDelete && !isEliminado && !soloLectura && sePuedeDarDeBaja && (
-                            <button
-                              type="button"
-                              title="Dar de baja"
-                              onClick={() => triggerDelete(item)}
-                              style={{
-                                background: 'rgba(239, 68, 68, 0.15)',
-                                border: '1px solid rgba(239, 68, 68, 0.3)',
-                                color: '#ef4444',
-                                padding: '0.35rem 0.6rem',
-                                borderRadius: 'var(--radius-sm)',
-                                cursor: 'pointer',
-                                fontSize: '0.8rem',
-                              }}
-                            >
-                              🗑️ Baja
-                            </button>
-                          )}
+                        {onDelete && !isEliminado && !soloLectura && sePuedeDarDeBaja && (
+                          <Button size="sm" variant="danger" title="Dar de baja" onClick={() => triggerDelete(item)}>
+                            Baja
+                          </Button>
+                        )}
 
-                          {onReactivate && isEliminado && !soloLectura && (
-                            <button
-                              type="button"
-                              title="Reactivar registro"
-                              onClick={() => triggerReactivate(item)}
-                              style={{
-                                background: 'rgba(16, 185, 129, 0.15)',
-                                border: '1px solid rgba(16, 185, 129, 0.3)',
-                                color: '#10b981',
-                                padding: '0.35rem 0.6rem',
-                                borderRadius: 'var(--radius-sm)',
-                                cursor: 'pointer',
-                                fontSize: '0.8rem',
-                              }}
-                            >
-                              🔄 Reactivar
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    )}
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+                        {onReactivate && isEliminado && !soloLectura && (
+                          <Button size="sm" variant="secondary" title="Reactivar registro" onClick={() => triggerReactivate(item)}>
+                            Reactivar
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                  )}
+                </tr>
+              );
+            })
+          )}
+        </tbody>
+      </Table>
 
-      {/* Pagination Footer */}
+      {/* Paginación */}
       <div
         style={{
           display: 'flex',
           flexWrap: 'wrap',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: '1rem',
-          fontSize: '0.85rem',
-          color: 'var(--text-secondary)',
-          paddingTop: '0.5rem',
+          gap: 'var(--space-3)',
+          fontSize: 'var(--text-sm)',
+          color: 'var(--color-text-secondary)',
         }}
       >
         <div>
@@ -611,61 +445,40 @@ export function DataTable<T extends Record<string, any>>({
           {Math.min(safeCurrentPage * pageSize, totalItems)} de {totalItems} registros
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-          <button
-            type="button"
+        <nav aria-label="Paginación" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.35rem' }}>
+          <Button
+            size="sm"
+            variant="secondary"
             disabled={safeCurrentPage <= 1}
             onClick={() => handlePageChange(Math.max(1, safeCurrentPage - 1))}
-            style={{
-              padding: '0.35rem 0.75rem',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-color)',
-              backgroundColor: 'rgba(15, 23, 42, 0.6)',
-              color: safeCurrentPage <= 1 ? 'var(--text-muted)' : 'var(--text-primary)',
-              cursor: safeCurrentPage <= 1 ? 'not-allowed' : 'pointer',
-            }}
           >
             &laquo; Anterior
-          </button>
+          </Button>
 
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => (
-            <button
+            <Button
               key={pg}
-              type="button"
+              size="sm"
+              variant={pg === safeCurrentPage ? 'primary' : 'secondary'}
+              aria-current={pg === safeCurrentPage ? 'page' : undefined}
               onClick={() => handlePageChange(pg)}
-              style={{
-                padding: '0.35rem 0.65rem',
-                borderRadius: 'var(--radius-sm)',
-                border: pg === safeCurrentPage ? '1px solid var(--accent-primary)' : '1px solid var(--border-color)',
-                backgroundColor: pg === safeCurrentPage ? 'rgba(99, 102, 241, 0.2)' : 'rgba(15, 23, 42, 0.6)',
-                color: pg === safeCurrentPage ? 'var(--accent-secondary)' : 'var(--text-primary)',
-                fontWeight: pg === safeCurrentPage ? 700 : 400,
-                cursor: 'pointer',
-              }}
             >
               {pg}
-            </button>
+            </Button>
           ))}
 
-          <button
-            type="button"
+          <Button
+            size="sm"
+            variant="secondary"
             disabled={safeCurrentPage >= totalPages}
             onClick={() => handlePageChange(Math.min(totalPages, safeCurrentPage + 1))}
-            style={{
-              padding: '0.35rem 0.75rem',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-color)',
-              backgroundColor: 'rgba(15, 23, 42, 0.6)',
-              color: safeCurrentPage >= totalPages ? 'var(--text-muted)' : 'var(--text-primary)',
-              cursor: safeCurrentPage >= totalPages ? 'not-allowed' : 'pointer',
-            }}
           >
             Siguiente &raquo;
-          </button>
-        </div>
+          </Button>
+        </nav>
       </div>
 
-      {/* Confirmation Modal for Delete/Reactivate */}
+      {/* Confirmación de baja o reactivación */}
       <ConfirmModal
         isOpen={confirmModalState.isOpen}
         title={confirmModalState.type === 'delete' ? 'Confirmar Baja' : 'Confirmar Reactivación'}
