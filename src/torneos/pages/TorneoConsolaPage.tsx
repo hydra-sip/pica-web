@@ -4,7 +4,9 @@ import { BracketTorneo, torneoApi, TorneoInformacion } from '../../api/torneoApi
 import { mensajeDeError } from '../../shared/mensajesError';
 import { Badge, Button, Card } from '../../shared/ui';
 import { Bracket } from '../components/Bracket';
-import { ESTADO_TORNEO_UI, participantes, TONO_ESTADO_TORNEO } from '../formato';
+import { InscripcionesDelTorneo } from '../components/InscripcionesDelTorneo';
+import { abreviarHash, ESTADO_TORNEO_UI, participantes, TONO_ESTADO_TORNEO } from '../formato';
+import { formatFecha } from '../utils/formatters';
 import '../torneos.css';
 
 const conResultados = (bracket: BracketTorneo): boolean =>
@@ -14,8 +16,8 @@ const conResultados = (bracket: BracketTorneo): boolean =>
 
 /**
  * Consola del torneo (wireframe "Consola Operativa del Torneo", PICA-217): el bracket y el botón para sortearlo con
- * la inscripción cerrada, o para volver a sortearlo mientras no haya resultados. Cerrar la inscripción (T206-3) va
- * acá también.
+ * la inscripción cerrada, o para volver a sortearlo mientras no haya resultados. Con la inscripción abierta, el
+ * organizador la cierra desde acá (HU-206); cerrada, se ve cuándo y el sello de la lista. Abajo, las inscripciones.
  */
 export const TorneoConsolaPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,6 +27,10 @@ export const TorneoConsolaPage: React.FC = () => {
   const [mensaje, setMensaje] = useState<{ tipo: 'exito' | 'error'; texto: string } | null>(null);
   const [sorteando, setSorteando] = useState(false);
   const [confirmando, setConfirmando] = useState(false);
+  const [cerrando, setCerrando] = useState(false);
+  const [confirmandoCierre, setConfirmandoCierre] = useState(false);
+  /** Cambia para volver a pedir las inscripciones: el cierre cancela las pendientes. */
+  const [recargaInscripciones, setRecargaInscripciones] = useState(0);
 
   useEffect(() => {
     let vigente = true;
@@ -100,6 +106,31 @@ export const TorneoConsolaPage: React.FC = () => {
     }
   };
 
+  const cerrarInscripcion = async () => {
+    setCerrando(true);
+    setMensaje(null);
+    try {
+      setTorneo(await torneoApi.cerrarInscripcion(torneo.id));
+      setMensaje({ tipo: 'exito', texto: 'Inscripción cerrada: la lista quedó fija.' });
+    } catch (err) {
+      setMensaje({
+        tipo: 'error',
+        texto: mensajeDeError(err, 'No se pudo cerrar la inscripción.'),
+      });
+      // pudo haberse cerrado sola mientras tanto, por el cupo o por la fecha
+      torneoApi
+        .obtener(torneo.id)
+        .then(setTorneo)
+        .catch(() => undefined);
+    } finally {
+      setCerrando(false);
+      setConfirmandoCierre(false);
+      setRecargaInscripciones((n) => n + 1);
+    }
+  };
+
+  const abierta = torneo.estado === 'INSCRIPCION_ABIERTA';
+
   return (
     <div className="torneos-page">
       <header>
@@ -118,19 +149,42 @@ export const TorneoConsolaPage: React.FC = () => {
         <div className="torneos-consola-aviso">
           <div>
             <strong>
-              {torneo.estado === 'INSCRIPCION_ABIERTA'
+              {abierta
                 ? 'La inscripción sigue abierta'
-                : bracket.listaHash
-                  ? 'Inscripción cerrada y sellada'
+                : torneo.inscripcionCerradaEn
+                  ? `Inscripción cerrada el ${formatFecha(torneo.inscripcionCerradaEn)}`
                   : 'Inscripción cerrada'}
             </strong>
             <p className="torneos-subtitulo">
-              {torneo.estado === 'INSCRIPCION_ABIERTA'
-                ? 'El bracket se sortea cuando se cierre la inscripción.'
+              {abierta
+                ? 'Se cierra sola al completarse el cupo o al llegar la fecha de cierre, y el bracket se sortea después.'
                 : 'Los cruces y los BYE salen de un sorteo con semilla: queda registrado y cualquiera lo puede recalcular.'}
             </p>
+            {torneo.listaHash && (
+              <p className="torneos-subtitulo">
+                Lista sellada:{' '}
+                <code title={torneo.listaHash}>{abreviarHash(torneo.listaHash)}</code>
+              </p>
+            )}
           </div>
           <div className="torneos-acciones">
+            {abierta && !confirmandoCierre && (
+              <Button onClick={() => setConfirmandoCierre(true)}>Cerrar inscripción</Button>
+            )}
+            {abierta && confirmandoCierre && (
+              <>
+                <Button
+                  variant="ghost"
+                  disabled={cerrando}
+                  onClick={() => setConfirmandoCierre(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button loading={cerrando} onClick={() => void cerrarInscripcion()}>
+                  Sí, cerrar la inscripción
+                </Button>
+              </>
+            )}
             {puedeGenerar && (
               <Button loading={sorteando} onClick={() => void sortear()}>
                 Generar bracket aleatorio
@@ -158,6 +212,12 @@ export const TorneoConsolaPage: React.FC = () => {
             El sorteo anterior queda en la auditoría junto con el nuevo.
           </p>
         )}
+        {confirmandoCierre && (
+          <p className="torneos-subtitulo" role="status">
+            Es definitivo: la lista queda fija y se cancelan los borradores y las pendientes de
+            pago.
+          </p>
+        )}
         {mensaje && (
           <div
             className={`alerta ${mensaje.tipo === 'exito' ? 'alerta-exito' : 'alerta-peligro'}`}
@@ -167,6 +227,8 @@ export const TorneoConsolaPage: React.FC = () => {
           </div>
         )}
       </Card>
+
+      <InscripcionesDelTorneo torneoId={torneo.id} recarga={recargaInscripciones} />
 
       <Card>
         <div className="torneos-tarjeta-titulo">
