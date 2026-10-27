@@ -60,6 +60,10 @@ export interface TorneoInformacion extends Omit<
   /** SHA-256 del esquema económico, sellado al publicar. */
   esquemaHash: string | null;
   publicadoEn: string | null;
+  /** Cuándo se cerró la inscripción (HU-206); null mientras está abierta. */
+  inscripcionCerradaEn: string | null;
+  /** SHA-256 de la lista de inscriptos, sellada al cerrar la inscripción. */
+  listaHash: string | null;
   creadoEn: string;
   modificadoEn: string;
   /**
@@ -255,6 +259,31 @@ export interface RondaBracket {
   partidos: PartidoBracket[];
 }
 
+export type EstadoInscripcion =
+  'BORRADOR' | 'PENDIENTE_PAGO' | 'CONFIRMADA' | 'CANCELADA' | 'REINTEGRADA';
+
+/** Lo que cualquiera puede ver de otro usuario, sin datos personales. */
+export interface UsuarioInscripto {
+  id: number;
+  username: string;
+  nombres: string;
+  apellidos: string;
+}
+
+/**
+ * Una fila de GET /torneos/{id}/inscripciones (HU-206): la individual lleva `usuario`; la de equipo, `equipo`,
+ * `capitan` y cuántos `jugadores` hay en la nómina, con el capitán.
+ */
+export interface InscripcionDelTorneo {
+  id: number;
+  estado: EstadoInscripcion;
+  creadoEn: string;
+  usuario: UsuarioInscripto | null;
+  equipo: { id: number; nombre: string } | null;
+  capitan: UsuarioInscripto | null;
+  jugadores: number | null;
+}
+
 /** GET /torneos/{id}/bracket (HU-207): sin generar, `rondas` vacío. */
 export interface BracketTorneo {
   torneoId: number;
@@ -366,6 +395,21 @@ export const torneoApi = {
 
   quitarArbitro: async (id: number, usuarioId: number): Promise<void> => {
     await httpClient.delete(`/torneos/${id}/arbitros/${usuarioId}`);
+  },
+
+  /** Solo el organizador; el cierre es definitivo y devuelve el torneo cerrado (HU-206). */
+  cerrarInscripcion: async (id: number): Promise<TorneoInformacion> => {
+    return httpClient.post<TorneoInformacion>(`/torneos/${id}/cerrar-inscripcion`);
+  },
+
+  /** Las del torneo para su organizador: sin borradores, de la más vieja a la más nueva. */
+  inscripciones: async (
+    id: number,
+    params: { estado?: EstadoInscripcion; page?: number; size?: number } = {}
+  ): Promise<PageResponse<InscripcionDelTorneo>> => {
+    return httpClient.get<PageResponse<InscripcionDelTorneo>>(`/torneos/${id}/inscripciones`, {
+      params,
+    });
   },
 
   /** Público: el de un torneo publicado (PICA-216). */
