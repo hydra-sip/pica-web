@@ -1,10 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { EvidenciaDetalle, PartidoDetalle, partidoApi } from '../../api/partidoApi';
+import {
+  EvidenciaDetalle,
+  ObjecionDetalle,
+  PartidoDetalle,
+  partidoApi,
+} from '../../api/partidoApi';
 import { LadoBracket } from '../../api/torneoApi';
 import { erroresPorCampo, mensajeDeError } from '../../shared/mensajesError';
-import { Badge, Button, Card, Field, Input } from '../../shared/ui';
+import { Badge, Button, Card } from '../../shared/ui';
+import { CamposMarcador } from '../components/CamposMarcador';
 import { EvidenciasPartido } from '../components/EvidenciasPartido';
+import { ObjetarResultado } from '../components/ObjetarResultado';
 import {
   CERRADOS,
   EN_JUEGO,
@@ -12,23 +19,18 @@ import {
   TONO_ESTADO_PARTIDO,
   tiempoRestante,
 } from '../formato';
+import { MARCADOR_VACIO, Marcador, erroresDelMarcador, payloadDelMarcador } from '../marcador';
 import '../partidos.css';
-
-interface Marcador {
-  local: string;
-  visitante: string;
-  penalesLocal: string;
-  penalesVisitante: string;
-}
-
-const VACIO: Marcador = { local: '', visitante: '', penalesLocal: '', penalesVisitante: '' };
-
-const numero = (valor: string): number | null => (valor.trim() === '' ? null : Number(valor));
 
 const marcador = (lado: LadoBracket | null): string =>
   lado?.puntaje == null
     ? '-'
     : `${lado.puntaje}${lado.penales == null ? '' : ` (${lado.penales})`}`;
+
+const propuesta = (o: ObjecionDetalle): string =>
+  o.penalesLocal == null
+    ? `${o.puntajeLocal} - ${o.puntajeVisitante}`
+    : `${o.puntajeLocal} (${o.penalesLocal}) - ${o.puntajeVisitante} (${o.penalesVisitante})`;
 
 /** Cuánto falta para `hasta`, actualizado cada segundo; null sin fecha. */
 const useCuentaRegresiva = (hasta: string | null): number | null => {
@@ -42,16 +44,17 @@ const useCuentaRegresiva = (hasta: string | null): number | null => {
 };
 
 /**
- * El partido (wireframe "Carga y Objeción Resultados", PICA-243). El capitán de un lado carga el marcador, con
- * evidencia opcional; el del otro ve el resultado recibido con el tiempo para objetarlo y lo acepta. Objetar es la
- * HU-302. Los demás ven el resultado.
+ * El partido (wireframe "Carga y Objeción Resultados", PICA-243 y PICA-245). El capitán de un lado carga el
+ * marcador, con evidencia opcional; el del otro ve el resultado recibido con el tiempo para objetarlo, y lo acepta o
+ * lo objeta con su resultado, el motivo y evidencia. Objetado, las partes ven la objeción hasta el laudo. Los demás
+ * ven el resultado.
  */
 export const PartidoPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [partido, setPartido] = useState<PartidoDetalle | null>(null);
   const [evidencias, setEvidencias] = useState<EvidenciaDetalle[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [form, setForm] = useState<Marcador>(VACIO);
+  const [form, setForm] = useState<Marcador>(MARCADOR_VACIO);
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [mensaje, setMensaje] = useState<{ tipo: 'exito' | 'error'; texto: string } | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -101,37 +104,20 @@ export const PartidoPage: React.FC = () => {
   const esperandoAlRival =
     partido.estado === 'RESULTADO_CARGADO' && partido.miLado === partido.cargadoPor;
   const puedeSubir = Boolean(partido.miLado) && conRivales && !CERRADOS.includes(partido.estado);
-  const empate = form.local !== '' && form.local === form.visitante;
   const rival = partido.miLado === 'LOCAL' ? partido.visitante : partido.local;
-
-  const cambiar = (campo: keyof Marcador) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setForm({ ...form, [campo]: e.target.value });
+  const objetor = partido.objecion?.lado === 'LOCAL' ? partido.local : partido.visitante;
+  const conEvidenciaPropia = evidencias.some((e) => e.lado === partido.miLado);
 
   const enviar = async (e: React.FormEvent) => {
     e.preventDefault();
-    const faltan: Record<string, string> = {};
-    if (form.local === '') faltan.puntajeLocal = 'Es obligatorio.';
-    if (form.visitante === '') faltan.puntajeVisitante = 'Es obligatorio.';
-    if (empate && form.penalesLocal === '')
-      faltan.penalesLocal = 'Con empate, se define por penales.';
-    if (empate && form.penalesVisitante === '')
-      faltan.penalesVisitante = 'Con empate, se define por penales.';
-    if (empate && form.penalesLocal !== '' && form.penalesLocal === form.penalesVisitante)
-      faltan.penalesVisitante = 'Los penales tienen que definir un ganador.';
+    const faltan = erroresDelMarcador(form);
     setErrores(faltan);
     if (Object.keys(faltan).length > 0) return;
 
     setEnviando(true);
     setMensaje(null);
     try {
-      setPartido(
-        await partidoApi.cargarResultado(partido.id, {
-          puntajeLocal: Number(form.local),
-          puntajeVisitante: Number(form.visitante),
-          penalesLocal: empate ? numero(form.penalesLocal) : null,
-          penalesVisitante: empate ? numero(form.penalesVisitante) : null,
-        })
-      );
+      setPartido(await partidoApi.cargarResultado(partido.id, payloadDelMarcador(form)));
       setMensaje({
         tipo: 'exito',
         texto: 'Resultado enviado. Ahora lo tiene que aceptar el rival.',
@@ -194,54 +180,13 @@ export const PartidoPage: React.FC = () => {
       <Card>
         {puedeCargar ? (
           <form className="partido-form" onSubmit={(e) => void enviar(e)} noValidate>
-            <div className="partido-marcador">
-              <Field label={partido.local?.nombre} error={errores.puntajeLocal}>
-                <Input
-                  type="number"
-                  min={0}
-                  inputMode="numeric"
-                  value={form.local}
-                  onChange={cambiar('local')}
-                />
-              </Field>
-              <span className="partido-guion" aria-hidden="true">
-                -
-              </span>
-              <Field label={partido.visitante?.nombre} error={errores.puntajeVisitante}>
-                <Input
-                  type="number"
-                  min={0}
-                  inputMode="numeric"
-                  value={form.visitante}
-                  onChange={cambiar('visitante')}
-                />
-              </Field>
-            </div>
-            {empate && (
-              <div className="partido-marcador">
-                <Field label="Penales local" error={errores.penalesLocal}>
-                  <Input
-                    type="number"
-                    min={0}
-                    inputMode="numeric"
-                    value={form.penalesLocal}
-                    onChange={cambiar('penalesLocal')}
-                  />
-                </Field>
-                <span className="partido-guion" aria-hidden="true">
-                  -
-                </span>
-                <Field label="Penales visitante" error={errores.penalesVisitante}>
-                  <Input
-                    type="number"
-                    min={0}
-                    inputMode="numeric"
-                    value={form.penalesVisitante}
-                    onChange={cambiar('penalesVisitante')}
-                  />
-                </Field>
-              </div>
-            )}
+            <CamposMarcador
+              marcador={form}
+              errores={errores}
+              nombreLocal={partido.local?.nombre}
+              nombreVisitante={partido.visitante?.nombre}
+              onChange={setForm}
+            />
             <EvidenciasPartido
               partidoId={partido.id}
               evidencias={evidencias}
@@ -288,6 +233,23 @@ export const PartidoPage: React.FC = () => {
               </div>
             )}
 
+            {partido.objecion && (
+              <div className="partido-objecion" role="status">
+                <p className="partido-rotulo">Resultado objetado</p>
+                <p>
+                  {objetor?.nombre ?? 'El rival'} propone{' '}
+                  <strong>{propuesta(partido.objecion)}</strong>.
+                </p>
+                <p>Motivo: {partido.objecion.motivo}</p>
+                {partido.estado === 'OBJETADO' && (
+                  <p className="partido-ayuda">
+                    Lo resuelve el árbitro: hasta el laudo, el cruce no avanza. Podés sumar
+                    evidencia.
+                  </p>
+                )}
+              </div>
+            )}
+
             {esperandoAlRival && (
               <p className="partido-ayuda" role="status">
                 Esperando que {rival?.nombre ?? 'el rival'} acepte el resultado.
@@ -304,6 +266,21 @@ export const PartidoPage: React.FC = () => {
               puedeSubir={puedeSubir}
               onSubida={(e) => setEvidencias([...evidencias, e])}
             />
+
+            {puedeAceptar && (
+              <ObjetarResultado
+                partido={partido}
+                conEvidencia={conEvidenciaPropia}
+                onObjetado={(p) => {
+                  setPartido(p);
+                  setMensaje({
+                    tipo: 'exito',
+                    texto:
+                      'Resultado objetado: se avisó al árbitro y el cruce queda frenado hasta el laudo.',
+                  });
+                }}
+              />
+            )}
           </div>
         )}
       </Card>

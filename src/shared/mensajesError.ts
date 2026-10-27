@@ -69,8 +69,9 @@ const POR_CODIGO: Record<string, string> = {
   PARTIDO_NO_EN_JUEGO: 'Este partido no está en juego: ya tiene resultado o falta el rival.',
   PARTIDO_CERRADO: 'El partido ya está cerrado: no se le puede sumar evidencia.',
   NO_ES_CAPITAN: 'Solo el capitán de uno de los dos lados puede hacerlo.',
-  RESULTADO_NO_PENDIENTE: 'No hay un resultado para aceptar: recargá la página.',
-  RESULTADO_PROPIO: 'El resultado que cargaste lo tiene que aceptar el rival.',
+  RESULTADO_NO_PENDIENTE: 'No hay un resultado para aceptar u objetar: recargá la página.',
+  RESULTADO_PROPIO: 'El resultado que cargaste lo acepta u objeta el rival.',
+  PLAZO_OBJECION_VENCIDO: 'Venció el plazo para objetar: el resultado ya se confirma.',
 };
 
 const POR_CODIGO_DE_CAMPO: Record<string, string> = {

@@ -185,3 +185,30 @@
   margin: 0;
   overflow-wrap: anywhere;
 }
+
+/* La objeción (PICA-245): el formulario del rival y lo que ven las partes después */
+.partido-objetar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.partido-objetar p {
+  margin: 0;
+}
+
+.partido-objecion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-md);
+}
+
+.partido-objecion p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
