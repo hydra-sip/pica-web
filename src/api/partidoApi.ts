@@ -3,7 +3,7 @@ import { EstadoPartido, LadoBracket } from './torneoApi';
 
 export type Lado = 'LOCAL' | 'VISITANTE';
 
-/** GET /partidos/{id} (HU-301): el partido con lo que hace falta para cargar, aceptar u objetar el resultado. */
+/** GET /partidos/{id} (HU-301): el partido con lo que hace falta para cargar, aceptar, objetar o laudar el resultado. */
 export interface PartidoDetalle {
   id: number;
   torneoId: number;
@@ -27,11 +27,13 @@ export interface PartidoDetalle {
   objecionVenceEn: string | null;
   /** El lado del que es capitán quien consulta, si juega el partido. */
   miLado: Lado | null;
-  /** Con el partido objetado o corregido (HU-302). */
+  /** Si lo objetaron (HU-302), con su laudo si ya se resolvió (HU-304). */
   objecion: ObjecionDetalle | null;
+  /** Con el partido objetado, si quien consulta lo puede laudar: el organizador o un árbitro con permiso. */
+  puedoResolver: boolean;
 }
 
-/** La objeción, como la ven las partes: quién objetó, por qué y el resultado que propone. */
+/** La objeción: quién objetó, por qué y el resultado que propone; y el laudo, si ya se resolvió. */
 export interface ObjecionDetalle {
   lado: Lado;
   motivo: string;
@@ -40,6 +42,16 @@ export interface ObjecionDetalle {
   penalesLocal: number | null;
   penalesVisitante: number | null;
   creadaEn: string;
+  /** CONFIRMADO si quedó el resultado cargado, CORREGIDO si cambió; null hasta el laudo. */
+  decision: 'CONFIRMADO' | 'CORREGIDO' | null;
+  justificacion: string | null;
+  /** Nombre y apellido de quien laudó. */
+  resueltaPor: string | null;
+  resueltaEn: string | null;
+  /** La evidencia que citó el laudo. */
+  evidenciaId: number | null;
+  /** Sello SHA-256 del laudo (`selloDelLaudo`). */
+  laudoHash: string | null;
 }
 
 /** Los penales solo con empate, y tienen que definir un ganador. */
@@ -53,6 +65,12 @@ export interface ResultadoPayload {
 /** El resultado que propone quien objeta, con las reglas de la carga, y por qué. */
 export interface ObjecionPayload extends ResultadoPayload {
   motivo: string;
+}
+
+/** El resultado oficial, con las reglas de la carga, la evidencia del partido en la que se basa y por qué. */
+export interface LaudoPayload extends ResultadoPayload {
+  justificacion: string;
+  evidenciaId: number;
 }
 
 export interface EvidenciaDetalle {
@@ -93,6 +111,11 @@ export const partidoApi = {
   /** La evidencia propia se sube antes: sin al menos una, el back responde 400 en `evidencia`. */
   objetarResultado: async (id: number, payload: ObjecionPayload): Promise<PartidoDetalle> => {
     return httpClient.post<PartidoDetalle>(`/partidos/${id}/objecion`, payload);
+  },
+
+  /** El partido queda confirmado o corregido y la llave avanza. */
+  laudar: async (id: number, payload: LaudoPayload): Promise<PartidoDetalle> => {
+    return httpClient.post<PartidoDetalle>(`/partidos/${id}/laudo`, payload);
   },
 
   evidencias: async (id: number): Promise<EvidenciaDetalle[]> => {

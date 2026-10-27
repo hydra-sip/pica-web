@@ -12,6 +12,9 @@ import { Badge, Button, Card } from '../../shared/ui';
 import { CamposMarcador } from '../components/CamposMarcador';
 import { EvidenciasPartido } from '../components/EvidenciasPartido';
 import { ObjetarResultado } from '../components/ObjetarResultado';
+import { ResolverObjecion } from '../components/ResolverObjecion';
+import { abreviarHash } from '../../torneos/formato';
+import { formatFecha } from '../../torneos/utils/formatters';
 import {
   CERRADOS,
   EN_JUEGO,
@@ -46,8 +49,8 @@ const useCuentaRegresiva = (hasta: string | null): number | null => {
 /**
  * El partido (wireframe "Carga y Objeción Resultados", PICA-243 y PICA-245). El capitán de un lado carga el
  * marcador, con evidencia opcional; el del otro ve el resultado recibido con el tiempo para objetarlo, y lo acepta o
- * lo objeta con su resultado, el motivo y evidencia. Objetado, las partes ven la objeción hasta el laudo. Los demás
- * ven el resultado.
+ * lo objeta con su resultado, el motivo y evidencia. Objetado, las partes ven la objeción, y el organizador o un
+ * árbitro con permiso emite el laudo (PICA-249). Los demás ven el resultado.
  */
 export const PartidoPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -235,19 +238,58 @@ export const PartidoPage: React.FC = () => {
 
             {partido.objecion && (
               <div className="partido-objecion" role="status">
-                <p className="partido-rotulo">Resultado objetado</p>
+                <p className="partido-rotulo">
+                  {partido.objecion.decision ? 'Objeción resuelta' : 'Resultado objetado'}
+                </p>
                 <p>
                   {objetor?.nombre ?? 'El rival'} propone{' '}
                   <strong>{propuesta(partido.objecion)}</strong>.
                 </p>
                 <p>Motivo: {partido.objecion.motivo}</p>
-                {partido.estado === 'OBJETADO' && (
+                {partido.estado === 'OBJETADO' && !partido.puedoResolver && (
                   <p className="partido-ayuda">
                     Lo resuelve el árbitro: hasta el laudo, el cruce no avanza. Podés sumar
                     evidencia.
                   </p>
                 )}
+                {partido.objecion.decision && (
+                  <>
+                    <p>
+                      <strong>Laudo:</strong>{' '}
+                      {partido.objecion.decision === 'CORREGIDO'
+                        ? 'se corrigió el resultado'
+                        : 'se confirmó el resultado cargado'}
+                      , por {partido.objecion.resueltaPor}
+                      {partido.objecion.resueltaEn &&
+                        ` el ${formatFecha(partido.objecion.resueltaEn)}`}
+                      .
+                    </p>
+                    <p>Justificación: {partido.objecion.justificacion}</p>
+                    {partido.objecion.laudoHash && (
+                      <p className="partido-hash">
+                        Sello SHA-256{' '}
+                        <code title={partido.objecion.laudoHash}>
+                          {abreviarHash(partido.objecion.laudoHash)}
+                        </code>
+                      </p>
+                    )}
+                  </>
+                )}
               </div>
+            )}
+
+            {partido.puedoResolver && partido.objecion && (
+              <ResolverObjecion
+                partido={partido}
+                evidencias={evidencias}
+                onLaudado={(p) => {
+                  setPartido(p);
+                  setMensaje({
+                    tipo: 'exito',
+                    texto: 'Laudo emitido: el resultado quedó firme y la llave avanzó.',
+                  });
+                }}
+              />
             )}
 
             {esperandoAlRival && (

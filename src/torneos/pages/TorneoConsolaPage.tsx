@@ -174,7 +174,7 @@ export const TorneoConsolaPage: React.FC = () => {
           {torneo.slug && <Link to={`/torneos/${torneo.slug}`}>Ver la ficha pública</Link>}
         </div>
         {generado ? (
-          <Bracket bracket={bracket} />
+          <Bracket bracket={bracket} conEnlaces />
         ) : (
           <p className="torneos-vacio">Todavía no hay bracket.</p>
         )}
