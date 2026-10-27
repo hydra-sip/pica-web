@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { EvidenciaDetalle, partidoApi } from '../../api/partidoApi';
 import { erroresPorCampo, mensajeDeError } from '../../shared/mensajesError';
-import { Button } from '../../shared/ui';
+import { Badge, Button } from '../../shared/ui';
 import { abreviarHash } from '../../torneos/formato';
 
 const IMAGENES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -30,6 +30,10 @@ interface EvidenciasPartidoProps {
   /** El capitán de un lado, con el partido sin cerrar. */
   puedeSubir: boolean;
   onSubida: (evidencia: EvidenciaDetalle) => void;
+  /** "Evidencia" si no viene. */
+  titulo?: string;
+  /** La que citó el laudo, marcada en la lista. */
+  citadaId?: number | null;
 }
 
 /**
@@ -41,6 +45,8 @@ export const EvidenciasPartido: React.FC<EvidenciasPartidoProps> = ({
   evidencias,
   puedeSubir,
   onSubida,
+  titulo = 'Evidencia',
+  citadaId = null,
 }) => {
   const input = useRef<HTMLInputElement>(null);
   const [subiendo, setSubiendo] = useState(false);
@@ -81,7 +87,7 @@ export const EvidenciasPartido: React.FC<EvidenciasPartidoProps> = ({
 
   return (
     <div className="partido-evidencias">
-      <strong>Evidencia</strong>
+      <strong>{titulo}</strong>
       {evidencias.length === 0 ? (
         <p className="partido-ayuda">
           {puedeSubir
@@ -95,6 +101,7 @@ export const EvidenciasPartido: React.FC<EvidenciasPartidoProps> = ({
               <span>
                 {e.tipoContenido.startsWith('video/') ? 'Video' : 'Foto'} de{' '}
                 {e.equipo ?? 'una parte'} · {tamanio(e.tamanioBytes)} ✓
+                {e.id === citadaId && <Badge tone="info">Citada en el laudo</Badge>}
                 <span className="partido-hash">
                   SHA-256 <code title={e.hash}>{abreviarHash(e.hash)}</code>
                 </span>

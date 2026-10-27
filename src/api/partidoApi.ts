@@ -85,6 +85,75 @@ export interface EvidenciaDetalle {
   subidaEn: string;
 }
 
+export type Decision = 'CONFIRMADO' | 'CORREGIDO';
+
+/** El resultado que sostiene una de las partes de un partido objetado (HU-303): la que lo cargó o la que lo objetó. */
+export interface VersionResultado {
+  lado: Lado;
+  /** El del equipo o, si se inscribe un jugador, su nombre y apellido. */
+  equipo: string;
+  puntajeLocal: number;
+  puntajeVisitante: number;
+  penalesLocal: number | null;
+  penalesVisitante: number | null;
+  /** Cuándo se cargó o se objetó. */
+  fecha: string;
+  /** La que subió ese lado; null en el listado del torneo. */
+  evidencias: EvidenciaDetalle[] | null;
+}
+
+/** GET /torneos/{id}/objeciones: una objeción del torneo, sin evidencias. */
+export interface ObjecionResumen {
+  partidoId: number;
+  ronda: number;
+  nombreRonda: string;
+  local: string;
+  visitante: string;
+  /** La que cargó el capitán, aunque un laudo CORREGIDO haya cambiado el resultado del partido. */
+  cargada: VersionResultado;
+  objetada: VersionResultado;
+  motivo: string;
+  creadaEn: string;
+  /** Null mientras está pendiente. */
+  decision: Decision | null;
+  resueltaEn: string | null;
+}
+
+export interface LaudoDetalle {
+  decision: Decision;
+  justificacion: string;
+  /** Nombre y apellido de quien laudó. */
+  resueltaPor: string;
+  resueltaEn: string;
+  /** La evidencia del partido que citó. */
+  evidenciaId: number;
+  laudoHash: string;
+}
+
+/** Un registro del historial del partido, sacado de la auditoría. */
+export interface EventoPartido {
+  evento: 'CARGADO' | 'ACEPTADO' | 'OBJETADO' | 'CONFIRMADO_POR_PLAZO' | 'LAUDO';
+  /** Nombre y apellido; null si lo hizo el sistema. */
+  usuario: string | null;
+  lado: Lado | null;
+  equipo: string | null;
+  fecha: string;
+  /** Solo en el laudo. */
+  decision: Decision | null;
+}
+
+/** GET /partidos/{id}/objecion: las dos versiones lado a lado, con su evidencia, el laudo y el historial. */
+export interface ObjecionComparada {
+  partidoId: number;
+  torneoId: number;
+  estado: EstadoPartido;
+  cargada: VersionResultado;
+  objetada: VersionResultado;
+  motivo: string;
+  laudo: LaudoDetalle | null;
+  historial: EventoPartido[];
+}
+
 export const partidoApi = {
   obtener: async (id: number): Promise<PartidoDetalle> => {
     return httpClient.get<PartidoDetalle>(`/partidos/${id}`);
@@ -116,6 +185,16 @@ export const partidoApi = {
   /** El partido queda confirmado o corregido y la llave avanza. */
   laudar: async (id: number, payload: LaudoPayload): Promise<PartidoDetalle> => {
     return httpClient.post<PartidoDetalle>(`/partidos/${id}/laudo`, payload);
+  },
+
+  /** Las ve el organizador o un árbitro con permiso para resolverlas; los demás, 403. Las pendientes primero. */
+  objecionesDelTorneo: async (torneoId: number): Promise<ObjecionResumen[]> => {
+    return httpClient.get<ObjecionResumen[]>(`/torneos/${torneoId}/objeciones`);
+  },
+
+  /** Los mismos que ven las objeciones del torneo; 404 si nadie lo objetó. */
+  objecion: async (id: number): Promise<ObjecionComparada> => {
+    return httpClient.get<ObjecionComparada>(`/partidos/${id}/objecion`);
   },
 
   evidencias: async (id: number): Promise<EvidenciaDetalle[]> => {

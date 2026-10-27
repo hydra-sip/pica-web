@@ -24,7 +24,8 @@ const desdeRifa = (rifa: RifaDetalle): PremioForm[] =>
 
 /**
  * Paso 2 del asistente, "Premios": PUT /rifas/{id}/premios con la lista completa en orden de puesto.
- * En borrador pueden sumar menos de 100 %; para publicar tienen que sumar exactamente 100. Guarda con
+ * En borrador pueden sumar menos de 100 %; para publicar, con lo destinado al torneo (que se carga en el
+ * paso 1), tienen que sumar exactamente 100. Guarda con
  * "Guardar como borrador" y, a pedido de la página, antes de cambiar de paso.
  */
 export const PremiosForm = forwardRef<PasoGuardable, PremiosFormProps>(function PremiosForm(
@@ -43,7 +44,8 @@ export const PremiosForm = forwardRef<PasoGuardable, PremiosFormProps>(function 
   }, [rifa.id]);
 
   const cantidadNumeros = rifa.numeroHasta - rifa.numeroDesde + 1;
-  const suma = sumaPorcentajes(premios);
+  const destinado = rifa.pctDestinadoTorneo;
+  const suma = sumaPorcentajes(premios) + destinado;
   const bloqueado = !editable || guardando;
 
   const actualizar = (i: number, campo: keyof PremioForm, valor: string) => {
@@ -75,7 +77,7 @@ export const PremiosForm = forwardRef<PasoGuardable, PremiosFormProps>(function 
     }
     setMensaje(null);
 
-    const encontrados = validatePremios(premios, cantidadNumeros);
+    const encontrados = validatePremios(premios, cantidadNumeros, destinado);
     setErrores(encontrados);
     if (encontrados.general || Object.values(encontrados.porFila).some(Boolean)) {
       setMensaje({ tipo: 'error', texto: encontrados.general ?? 'Revisá los premios marcados.' });
@@ -131,8 +133,18 @@ export const PremiosForm = forwardRef<PasoGuardable, PremiosFormProps>(function 
       )}
 
       <div className="alerta alerta-info">
-        Cada premio es un porcentaje del pozo de la rifa y entre todos tienen que sumar 100% para
-        poder publicarla.
+        {rifa.torneoNombre ? (
+          <>
+            El {destinado}% de lo recaudado va al pozo del torneo {rifa.torneoNombre} (se cambia en
+            el paso 1). Cada premio es un porcentaje de lo recaudado y, con lo del torneo, tienen
+            que sumar 100% para poder publicarla.
+          </>
+        ) : (
+          <>
+            Cada premio es un porcentaje del pozo de la rifa y entre todos tienen que sumar 100%
+            para poder publicarla.
+          </>
+        )}
       </div>
 
       {premios.length === 0 ? (
@@ -220,6 +232,12 @@ export const PremiosForm = forwardRef<PasoGuardable, PremiosFormProps>(function 
           <strong className={suma > 100 ? 'excedido' : suma === 100 ? 'completo' : ''}>
             {suma}%
           </strong>
+          {destinado > 0 && (
+            <>
+              {' '}
+              (torneo {destinado}% + premios {suma - destinado}%)
+            </>
+          )}
           {suma < 100 && premios.length > 0 && <> · faltan {100 - suma}% para publicar</>}
         </span>
         {editable && (

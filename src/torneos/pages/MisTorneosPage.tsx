@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { rifaApi } from '../../api/rifaApi';
 import { EstadoTorneo, MiTorneoResumen, MisTorneos, torneoApi } from '../../api/torneoApi';
+import { ESTADOS_TORNEO_CON_RIFA } from '../../rifas/formato';
 import { fecha, pesos } from '../../shared/formato';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { Badge, Button, Card, Input, Select, Table } from '../../shared/ui';
@@ -50,6 +52,7 @@ export const MisTorneosPage: React.FC = () => {
   const [datos, setDatos] = useState<MisTorneos | null>(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [rifaDeTorneo, setRifaDeTorneo] = useState<Map<number, number> | null>(null);
 
   // La búsqueda se manda cuando se deja de escribir.
   useEffect(() => {
@@ -81,6 +84,25 @@ export const MisTorneosPage: React.FC = () => {
       vigente = false;
     };
   }, [q, estado, disciplina, pagina]);
+
+  // La rifa de cada torneo, para ofrecer "Ver rifa" en lugar de "Crear rifa" (PICA-220)
+  useEffect(() => {
+    let vigente = true;
+    rifaApi
+      .listarMias({ size: 100 })
+      .then(
+        (p) =>
+          vigente &&
+          setRifaDeTorneo(
+            new Map(p.content.flatMap((r) => (r.torneoId ? [[r.torneoId, r.id] as const] : [])))
+          )
+      )
+      // Sin acceso a las rifas no se ofrece ninguna de las dos
+      .catch(() => vigente && setRifaDeTorneo(null));
+    return () => {
+      vigente = false;
+    };
+  }, []);
 
   const elegirEstado = (nuevo: EstadoTorneo | null) => {
     setEstado(nuevo);
@@ -231,6 +253,24 @@ export const MisTorneosPage: React.FC = () => {
                         </td>
                         <td>{t.estado === 'BORRADOR' ? 'Sin publicar' : fecha(t.fechaInicio)}</td>
                         <td style={{ textAlign: 'right' }}>
+                          {rifaDeTorneo?.has(t.id) ? (
+                            <Link
+                              to={`/rifas/${rifaDeTorneo.get(t.id)}/editar`}
+                              className="btn btn-sm btn-ghost"
+                            >
+                              Ver rifa
+                            </Link>
+                          ) : (
+                            rifaDeTorneo &&
+                            ESTADOS_TORNEO_CON_RIFA.includes(t.estado) && (
+                              <Link
+                                to={`/rifas/nueva?torneo=${t.id}`}
+                                className="btn btn-sm btn-ghost"
+                              >
+                                Crear rifa
+                              </Link>
+                            )
+                          )}
                           {(t.estado === 'INSCRIPCION_ABIERTA' ||
                             t.estado === 'INSCRIPCION_CERRADA') && (
                             <Link

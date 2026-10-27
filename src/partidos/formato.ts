@@ -1,3 +1,4 @@
+import { Decision, VersionResultado } from '../api/partidoApi';
 import { EstadoPartido } from '../api/torneoApi';
 import { BadgeTone } from '../shared/ui';
 
@@ -35,3 +36,12 @@ export const tiempoRestante = (milisegundos: number): string => {
   const minutos = Math.floor(segundos / 60);
   return minutos > 0 ? `${minutos} min ${segundos % 60} seg` : `${segundos} seg`;
 };
+
+/** `2 - 0`, o `1 (4) - 1 (2)` con penales. */
+export const marcadorDeVersion = (v: VersionResultado): string =>
+  v.penalesLocal == null
+    ? `${v.puntajeLocal} - ${v.puntajeVisitante}`
+    : `${v.puntajeLocal} (${v.penalesLocal}) - ${v.puntajeVisitante} (${v.penalesVisitante})`;
+
+export const ESTADO_OBJECION_UI = (decision: Decision | null): string =>
+  decision === 'CORREGIDO' ? 'Corregido' : decision === 'CONFIRMADO' ? 'Confirmado' : 'Pendiente';

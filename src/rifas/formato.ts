@@ -1,4 +1,5 @@
 import { EstadoRifa } from '../api/rifaApi';
+import { EstadoTorneo } from '../api/torneoApi';
 import { BadgeTone } from '../shared/ui';
 
 // Montos y fechas para mostrar, y los <input type="datetime-local">: shared/formato.ts
@@ -23,3 +24,10 @@ export const TONO_ESTADO_RIFA: Record<EstadoRifa, BadgeTone> = {
   LIQUIDADA: 'neutral',
   CANCELADA: 'peligro',
 };
+
+/** La rifa va con un torneo en borrador o publicado que todavía no empezó (lo mismo valida el back). */
+export const ESTADOS_TORNEO_CON_RIFA: EstadoTorneo[] = [
+  'BORRADOR',
+  'INSCRIPCION_ABIERTA',
+  'INSCRIPCION_CERRADA',
+];
