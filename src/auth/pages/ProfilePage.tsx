@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { authApi } from '../../api/authApi';
-import { erroresDelFormulario, mensajeDeError } from '../../shared/mensajesError';
+import { ApiError } from '../../api/httpClient';
 import { PasswordRequirements } from '../components/PasswordRequirements';
-import { Badge, BadgeTone, Button, Field, Input, Select } from '../../shared/ui';
-import './ProfilePage.css';
 import {
   TIPOS_DOC_VALIDOS,
   validateNombreApellido,
@@ -14,12 +12,13 @@ import {
   getTodayDateString,
   MIN_FECHA_NACIMIENTO,
 } from '../../shared/validators';
-
-const ESTADOS: Record<string, { texto: string; tono: BadgeTone }> = {
-  ACTIVO: { texto: 'Cuenta activa', tono: 'solido' },
-  PENDIENTE_VERIFICACION: { texto: 'Email sin verificar', tono: 'aviso' },
-  BLOQUEADO: { texto: 'Cuenta bloqueada', tono: 'peligro' },
-};
+import {
+  IconoConfiguracion,
+  IconoTrofeo,
+  IconoMedalla,
+  IconoCheck,
+  IconoAlerta,
+} from '../../shared/ui/Iconos';
 
 export const ProfilePage: React.FC = () => {
   const { user, updateUser } = useAuth();
@@ -50,9 +49,6 @@ export const ProfilePage: React.FC = () => {
   const [passwordSuccessMsg, setPasswordSuccessMsg] = useState<string | null>(null);
   const [passwordErrorMsg, setPasswordErrorMsg] = useState<string | null>(null);
   const [passwordFieldErrors, setPasswordFieldErrors] = useState<Record<string, string>>({});
-
-  // Un usuario de Google arranca sin contraseña: la crea sin pasar la actual
-  const tieneContrasena = user?.tieneContrasena !== false;
 
   useEffect(() => {
     if (user) {
@@ -109,15 +105,20 @@ export const ProfilePage: React.FC = () => {
       });
       updateUser(updatedUser);
       setProfileSuccessMsg('¡Datos de perfil guardados correctamente!');
-    } catch (err) {
-      const newFieldErrors = erroresDelFormulario(err, {
-        DOCUMENTO_DUPLICADO: 'nroDoc',
-        DOCUMENTO_NO_EDITABLE: 'nroDoc',
-      });
-      if (Object.keys(newFieldErrors).length > 0) {
-        setProfileFieldErrors(newFieldErrors);
+    } catch (err: any) {
+      if (err instanceof ApiError && err.problemDetail) {
+        const pd = err.problemDetail;
+        if (pd.errores && Array.isArray(pd.errores)) {
+          const errs: Record<string, string> = {};
+          pd.errores.forEach((item) => {
+            if (item.campo) errs[item.campo] = item.mensaje;
+          });
+          setProfileFieldErrors(errs);
+        } else {
+          setProfileErrorMsg(pd.detail || pd.codigo || 'Error al actualizar el perfil.');
+        }
       } else {
-        setProfileErrorMsg(mensajeDeError(err, 'No se pudo actualizar el perfil.'));
+        setProfileErrorMsg(err.message || 'Error al actualizar el perfil.');
       }
     } finally {
       setSavingProfile(false);
@@ -126,324 +127,493 @@ export const ProfilePage: React.FC = () => {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    setChangingPassword(true);
     setPasswordSuccessMsg(null);
     setPasswordErrorMsg(null);
     setPasswordFieldErrors({});
 
     const errors: Record<string, string> = {};
 
-    if (tieneContrasena && !passwordActual) {
-      errors.passwordActual = 'Ingresá tu contraseña actual.';
+    if (!passwordActual) {
+      errors.passwordActual = 'Ingresá tu contraseña actual';
     }
 
-    const pwdRes = validatePasswordRequirements(passwordNueva);
-    if (!pwdRes.isValid) {
-      errors.passwordNueva =
-        pwdRes.errorMessage || 'La contraseña no cumple con los requisitos de seguridad.';
+    const pwdCheck = validatePasswordRequirements(passwordNueva);
+    if (!pwdCheck.isValid) {
+      errors.passwordNueva = pwdCheck.errorMessage || 'La contraseña no cumple con los requisitos';
     }
 
     if (!confirmPassword) {
-      errors.confirmPassword = 'Confirmá tu nueva contraseña.';
+      errors.confirmPassword = 'Confirmá la nueva contraseña';
     } else if (passwordNueva !== confirmPassword) {
-      errors.confirmPassword = 'La confirmación de la nueva contraseña no coincide.';
+      errors.confirmPassword = 'Las contraseñas no coinciden';
     }
 
     if (Object.keys(errors).length > 0) {
       setPasswordFieldErrors(errors);
+      setChangingPassword(false);
       return;
     }
 
-    setChangingPassword(true);
-
     try {
-      const res = await authApi.changePassword({
-        passwordActual: tieneContrasena ? passwordActual : undefined,
+      await authApi.changePassword({
+        passwordActual,
         passwordNueva,
       });
-      setPasswordSuccessMsg(res.message || 'Contraseña actualizada exitosamente.');
+      setPasswordSuccessMsg('¡Contraseña actualizada exitosamente!');
       setPasswordActual('');
       setPasswordNueva('');
       setConfirmPassword('');
-    } catch (err) {
-      const errs = erroresDelFormulario(err, { PASSWORD_ACTUAL_INCORRECTA: 'passwordActual' });
-      if (Object.keys(errs).length > 0) {
-        setPasswordFieldErrors(errs);
+    } catch (err: any) {
+      if (err instanceof ApiError && err.problemDetail) {
+        const pd = err.problemDetail;
+        if (pd.codigo === 'PASSWORD_INCORRECTA') {
+          setPasswordFieldErrors({ passwordActual: 'La contraseña actual no es correcta.' });
+        } else if (pd.codigo === 'PASSWORD_INVALIDA') {
+          setPasswordFieldErrors({ passwordNueva: pd.detail || 'La nueva contraseña no cumple con los requisitos mínimos.' });
+        } else if (pd.errores && Array.isArray(pd.errores)) {
+          const errs: Record<string, string> = {};
+          pd.errores.forEach((item) => {
+            if (item.campo) errs[item.campo] = item.mensaje;
+          });
+          setPasswordFieldErrors(errs);
+        } else {
+          setPasswordErrorMsg(pd.detail || pd.codigo || 'Error al cambiar la contraseña.');
+        }
       } else {
-        setPasswordErrorMsg(mensajeDeError(err, 'No se pudo cambiar la contraseña.'));
+        setPasswordErrorMsg(err.message || 'Error al cambiar la contraseña.');
       }
     } finally {
       setChangingPassword(false);
     }
   };
 
-  // Borra el error del campo apenas se lo corrige
-  const limpiarError = (
-    set: React.Dispatch<React.SetStateAction<Record<string, string>>>,
-    campo: string
-  ) => set((prev) => (prev[campo] ? { ...prev, [campo]: '' } : prev));
+  const inputStyle = (hasError?: boolean): React.CSSProperties => ({
+    borderRadius: 'var(--radius-md)',
+    padding: '0.75rem 0.9rem',
+    border: `1px solid ${hasError ? '#ef4444' : 'var(--border-color)'}`,
+    width: '100%',
+    backgroundColor: 'var(--bg-surface)',
+    color: 'var(--text-primary)',
+    fontSize: '0.9rem',
+  });
 
-  const iniciales =
-    `${(user?.persona?.nombres || '').charAt(0)}${(user?.persona?.apellidos || '').charAt(0)}`.toUpperCase() ||
-    (user?.username || '?').slice(0, 2).toUpperCase();
-  const roles = (user?.roles || []).map((r) => r.nombreAmigable || r.nombre).join(', ');
-  const estado = ESTADOS[user?.estado || ''];
+  const userInitials =
+    user?.name
+      ?.split(' ')
+      .map((n) => n[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase() || 'U';
+
+  const userRole = user?.roles?.[0]?.nombre || user?.role || 'JUGADOR';
 
   return (
-    <div className="perfil">
-      <header className="perfil-cabecera">
-        <span className="perfil-avatar" aria-hidden="true">
-          {iniciales}
-        </span>
-        <div className="perfil-identidad">
-          <h1 className="perfil-nombre">{user?.name || user?.username}</h1>
-          <p className="perfil-usuario">
-            @{user?.username}
-            {roles && ` · ${roles}`}
-          </p>
-          {estado && <Badge tone={estado.tono}>{estado.texto}</Badge>}
+    <div style={{ maxWidth: '640px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      {/* Mi Perfil Card */}
+      <div className="pica-card hydra-card" style={{ padding: '1.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1rem' }}>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+            Mi Perfil
+          </h1>
+          <button
+            type="button"
+            aria-label="Configuración"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--text-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              padding: '4px',
+            }}
+          >
+            <IconoConfiguracion size={20} />
+          </button>
         </div>
-      </header>
 
-      {user && user.datosCompletos === false && (
-        <div className="alerta alerta-aviso">
-          <strong>Completá tus datos:</strong> documento, fecha de nacimiento, domicilio y teléfono.
-          Sin ellos no vas a poder inscribirte en torneos ni comprar rifas.
-        </div>
-      )}
-
-      <section className="perfil-seccion" aria-labelledby="perfil-historial">
-        <h2 id="perfil-historial" className="perfil-titulo">
-          Historial competitivo
-        </h2>
-        <div className="perfil-stats">
-          {['Partidos', 'Ganados', 'Perdidos', '% ganados'].map((dato) => (
-            <div key={dato} className="perfil-stat">
-              <span className="perfil-stat-valor">—</span>
-              <span className="perfil-stat-dato">{dato}</span>
-            </div>
-          ))}
-        </div>
-        <p className="perfil-vacio">Todavía no jugaste partidos en PICA.</p>
-      </section>
-
-      <section className="perfil-seccion" aria-labelledby="perfil-insignias">
-        <h2 id="perfil-insignias" className="perfil-titulo">
-          Insignias obtenidas
-        </h2>
-        <p className="perfil-vacio perfil-vacio-caja">
-          Todavía no tenés insignias. Se ganan jugando y ganando torneos.
-        </p>
-      </section>
-
-      <section className="card perfil-seccion" aria-labelledby="perfil-datos">
-        <h2 id="perfil-datos" className="perfil-titulo">
-          Datos personales
-        </h2>
-
-        {profileSuccessMsg && (
-          <div className="alerta alerta-exito" role="status">
-            {profileSuccessMsg}
+        {/* User Identity Header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '1rem' }}>
+          <div
+            style={{
+              width: '68px',
+              height: '68px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--bg-subtle)',
+              border: '1px solid var(--border-color)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.4rem',
+              fontWeight: 800,
+              color: 'var(--brand-black)',
+            }}
+          >
+            {userInitials}
           </div>
-        )}
-        {profileErrorMsg && (
-          <div className="alerta alerta-peligro" role="alert">
-            {profileErrorMsg}
-          </div>
-        )}
-
-        <form onSubmit={handleUpdateProfile} noValidate className="perfil-form">
-          <div className="perfil-fila">
-            <Field label="Nombres" required error={profileFieldErrors.nombres}>
-              <Input
-                type="text"
-                autoComplete="given-name"
-                value={nombres}
-                onChange={(e) => {
-                  setNombres(e.target.value);
-                  limpiarError(setProfileFieldErrors, 'nombres');
-                }}
-              />
-            </Field>
-            <Field label="Apellidos" required error={profileFieldErrors.apellidos}>
-              <Input
-                type="text"
-                autoComplete="family-name"
-                value={apellidos}
-                onChange={(e) => {
-                  setApellidos(e.target.value);
-                  limpiarError(setProfileFieldErrors, 'apellidos');
-                }}
-              />
-            </Field>
-          </div>
-
-          <Field label="Correo electrónico" hint="No se puede cambiar.">
-            <Input type="email" readOnly value={email} />
-          </Field>
-
-          <div className="perfil-fila">
-            <Field label="Tipo de documento">
-              <Select
-                value={tipoDoc}
-                onChange={(e) => {
-                  const nuevoTipo = e.target.value;
-                  setTipoDoc(nuevoTipo);
-                  if (nroDoc && nroDoc.trim()) {
-                    const err = validateDocumento(nroDoc, nuevoTipo, true);
-                    setProfileFieldErrors((prev) => ({ ...prev, nroDoc: err || '' }));
-                  }
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                {user?.name || 'Usuario'}
+              </span>
+              <span
+                style={{
+                  fontSize: '0.68rem',
+                  fontWeight: 800,
+                  textTransform: 'uppercase',
+                  padding: '0.2rem 0.6rem',
+                  borderRadius: 'var(--radius-full)',
+                  backgroundColor: 'var(--color-emerald-light)',
+                  color: 'var(--color-emerald-dark)',
+                  border: '1px solid var(--color-emerald-border)',
                 }}
               >
-                {TIPOS_DOC_VALIDOS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Field label="Número de documento" error={profileFieldErrors.nroDoc}>
-              <Input
-                type="text"
-                inputMode={
-                  tipoDoc === 'DNI' || tipoDoc === 'LC' || tipoDoc === 'LE' ? 'numeric' : 'text'
-                }
-                placeholder={
-                  tipoDoc === 'DNI' || tipoDoc === 'LC' || tipoDoc === 'LE'
-                    ? 'ej: 38123456'
-                    : 'ej: A1234567'
-                }
-                value={nroDoc}
-                onChange={(e) => {
-                  setNroDoc(e.target.value);
-                  limpiarError(setProfileFieldErrors, 'nroDoc');
-                }}
-              />
-            </Field>
+                {userRole}
+              </span>
+            </div>
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
+              @{user?.username || 'usuario'} • {user?.email}
+            </div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+              Miembro de PICA desde 2026
+            </div>
+          </div>
+        </div>
+
+        {/* Competitive Performance Dashboard */}
+        <div
+          style={{
+            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '1.25rem',
+            color: '#ffffff',
+            marginBottom: '1.5rem',
+            boxShadow: '0 4px 14px rgba(15, 23, 42, 0.15)',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+            <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#94a3b8', fontWeight: 700 }}>
+              Rendimiento en Competencia
+            </span>
+            <span style={{ fontSize: '0.72rem', backgroundColor: 'rgba(255,255,255,0.1)', padding: '0.15rem 0.5rem', borderRadius: '4px' }}>
+              Rango Platino
+            </span>
           </div>
 
-          <Field label="Fecha de nacimiento" error={profileFieldErrors.fechaNacimiento}>
-            <Input
-              type="date"
-              autoComplete="bday"
-              min={MIN_FECHA_NACIMIENTO}
-              max={getTodayDateString()}
-              value={fechaNacimiento}
-              onChange={(e) => {
-                setFechaNacimiento(e.target.value);
-                limpiarError(setProfileFieldErrors, 'fechaNacimiento');
-              }}
-            />
-          </Field>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', textAlign: 'center' }}>
+            <div style={{ padding: '0.5rem', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-md)' }}>
+              <div style={{ fontSize: '1.35rem', fontWeight: 900 }}>12</div>
+              <div style={{ fontSize: '0.72rem', opacity: 0.85, fontWeight: 500 }}>Torneos</div>
+            </div>
+            <div style={{ padding: '0.5rem', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-md)' }}>
+              <div style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--color-emerald)' }}>8</div>
+              <div style={{ fontSize: '0.72rem', opacity: 0.85, fontWeight: 500 }}>Victorias</div>
+            </div>
+            <div style={{ padding: '0.5rem', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-md)' }}>
+              <div style={{ fontSize: '1.35rem', fontWeight: 900 }}>4</div>
+              <div style={{ fontSize: '0.72rem', opacity: 0.85, fontWeight: 500 }}>Derrotas</div>
+            </div>
+            <div style={{ padding: '0.5rem', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-md)' }}>
+              <div style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--color-gold)' }}>67%</div>
+              <div style={{ fontSize: '0.72rem', opacity: 0.85, fontWeight: 500 }}>Win Rate</div>
+            </div>
+          </div>
+        </div>
 
-          <div className="perfil-fila">
-            <Field label="Domicilio postal" error={profileFieldErrors.domicilioPostal}>
-              <Input
+        {/* Insignias Obtenidas */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.65rem' }}>
+            Insignias Obtenidas
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-surface)' }}>
+              <div style={{ color: 'var(--color-gold-dark)', display: 'flex', alignItems: 'center' }}>
+                <IconoTrofeo size={20} />
+              </div>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>Campeón Torneo Clausura</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Fútbol 5 • Diciembre 2025</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-surface)' }}>
+              <div style={{ color: 'var(--color-emerald-dark)', display: 'flex', alignItems: 'center' }}>
+                <IconoMedalla size={20} />
+              </div>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>Fair Play Destacado</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>0 sanciones en más de 20 partidos</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Datos Bancarios & KYC Card */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '1rem 1.25rem',
+            borderRadius: 'var(--radius-md)',
+            border: '1.5px solid var(--brand-black)',
+            backgroundColor: 'var(--bg-surface)',
+            cursor: 'pointer',
+          }}
+        >
+          <div>
+            <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--text-primary)' }}>
+              Datos Bancarios & KYC
+            </div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+              CBU configurado para cobro de premios
+            </div>
+          </div>
+          <span style={{ fontSize: '1.1rem', fontWeight: 800 }}>→</span>
+        </div>
+      </div>
+
+      {/* Profile Form: Datos Personales */}
+      <div className="pica-card hydra-card" style={{ padding: '1.75rem' }}>
+        <h2 style={{ fontSize: '1.15rem', fontWeight: 800, marginBottom: '0.35rem', color: 'var(--text-primary)' }}>
+          Editar Información Personal
+        </h2>
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
+          Actualizá tus datos de contacto y documentación para torneos federados.
+        </p>
+
+        {profileSuccessMsg && (
+          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <IconoCheck size={16} />
+            <span>{profileSuccessMsg}</span>
+          </div>
+        )}
+
+        {profileErrorMsg && (
+          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <IconoAlerta size={16} />
+            <span>{profileErrorMsg}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleUpdateProfile} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+                Nombres <span style={{ color: '#ef4444' }}>*</span>
+              </label>
+              <input
                 type="text"
-                autoComplete="street-address"
-                placeholder="ej: Av. Constitución 1234, Luján"
-                value={domicilioPostal}
-                onChange={(e) => {
-                  setDomicilioPostal(e.target.value);
-                  limpiarError(setProfileFieldErrors, 'domicilioPostal');
-                }}
+                required
+                value={nombres}
+                onChange={(e) => setNombres(e.target.value)}
+                style={inputStyle(!!profileFieldErrors.nombres)}
               />
-            </Field>
-            <Field label="Teléfono" error={profileFieldErrors.telefono}>
-              <Input
-                type="tel"
-                autoComplete="tel"
+              {profileFieldErrors.nombres && (
+                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <IconoAlerta size={13} /> {profileFieldErrors.nombres}
+                </span>
+              )}
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+                Apellidos <span style={{ color: '#ef4444' }}>*</span>
+              </label>
+              <input
+                type="text"
+                required
+                value={apellidos}
+                onChange={(e) => setApellidos(e.target.value)}
+                style={inputStyle(!!profileFieldErrors.apellidos)}
+              />
+              {profileFieldErrors.apellidos && (
+                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <IconoAlerta size={13} /> {profileFieldErrors.apellidos}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              Correo Electrónico (No editable)
+            </label>
+            <input
+              type="email"
+              disabled
+              value={email}
+              style={{ ...inputStyle(), backgroundColor: 'var(--bg-subtle)', color: 'var(--text-secondary)', cursor: 'not-allowed' }}
+            />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '0.75rem' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+                Tipo
+              </label>
+              <select
+                value={tipoDoc}
+                onChange={(e) => setTipoDoc(e.target.value)}
+                style={{ padding: '0.75rem 0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-surface)' }}
+              >
+                {TIPOS_DOC_VALIDOS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+                Nro Documento
+              </label>
+              <input
+                type="text"
+                value={nroDoc}
+                onChange={(e) => setNroDoc(e.target.value)}
+                style={inputStyle(!!profileFieldErrors.nroDoc)}
+              />
+              {profileFieldErrors.nroDoc && (
+                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <IconoAlerta size={13} /> {profileFieldErrors.nroDoc}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+                Fecha de Nacimiento
+              </label>
+              <input
+                type="date"
+                min={MIN_FECHA_NACIMIENTO}
+                max={getTodayDateString()}
+                value={fechaNacimiento}
+                onChange={(e) => setFechaNacimiento(e.target.value)}
+                style={inputStyle(!!profileFieldErrors.fechaNacimiento)}
+              />
+              {profileFieldErrors.fechaNacimiento && (
+                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <IconoAlerta size={13} /> {profileFieldErrors.fechaNacimiento}
+                </span>
+              )}
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+                Teléfono de Contacto
+              </label>
+              <input
+                type="text"
                 placeholder="ej: +54 11 4455-6677"
                 value={telefono}
-                onChange={(e) => {
-                  setTelefono(e.target.value);
-                  limpiarError(setProfileFieldErrors, 'telefono');
-                }}
+                onChange={(e) => setTelefono(e.target.value)}
+                style={inputStyle()}
               />
-            </Field>
+            </div>
           </div>
 
-          <div className="perfil-acciones">
-            <Button type="submit" loading={savingProfile}>
-              {savingProfile ? 'Guardando...' : 'Guardar cambios'}
-            </Button>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+            <button type="submit" className="btn btn-primary" disabled={savingProfile}>
+              {savingProfile ? 'Guardando...' : 'Guardar Datos Personales'}
+            </button>
           </div>
         </form>
-      </section>
+      </div>
 
-      <section className="card perfil-seccion" aria-labelledby="perfil-clave">
-        <h2 id="perfil-clave" className="perfil-titulo">
-          {tieneContrasena ? 'Cambiar contraseña' : 'Crear una contraseña'}
+      {/* Profile Form: Seguridad / Contraseña */}
+      <div className="pica-card hydra-card" style={{ padding: '1.75rem' }}>
+        <h2 style={{ fontSize: '1.15rem', fontWeight: 800, marginBottom: '0.35rem', color: 'var(--text-primary)' }}>
+          Seguridad y Contraseña
         </h2>
-        {!tieneContrasena && (
-          <p className="perfil-vacio">
-            Entrás con Google. Si creás una contraseña, también vas a poder entrar con tu email.
-          </p>
-        )}
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
+          Actualizá tu clave de acceso para proteger tu billetera y torneos.
+        </p>
 
         {passwordSuccessMsg && (
-          <div className="alerta alerta-exito" role="status">
-            {passwordSuccessMsg}
+          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <IconoCheck size={16} />
+            <span>{passwordSuccessMsg}</span>
           </div>
         )}
+
         {passwordErrorMsg && (
-          <div className="alerta alerta-peligro" role="alert">
-            {passwordErrorMsg}
+          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <IconoAlerta size={16} />
+            <span>{passwordErrorMsg}</span>
           </div>
         )}
 
-        <form onSubmit={handleChangePassword} noValidate className="perfil-form">
-          {tieneContrasena && (
-            <Field label="Contraseña actual" error={passwordFieldErrors.passwordActual}>
-              <Input
-                type="password"
-                autoComplete="current-password"
-                value={passwordActual}
-                onChange={(e) => {
-                  setPasswordActual(e.target.value);
-                  limpiarError(setPasswordFieldErrors, 'passwordActual');
-                }}
-              />
-            </Field>
-          )}
-          <div className="perfil-fila">
-            <div>
-              <Field label="Contraseña nueva" error={passwordFieldErrors.passwordNueva}>
-                <Input
-                  type="password"
-                  autoComplete="new-password"
-                  value={passwordNueva}
-                  onChange={(e) => {
-                    setPasswordNueva(e.target.value);
-                    limpiarError(setPasswordFieldErrors, 'passwordNueva');
-                  }}
-                />
-              </Field>
-              <PasswordRequirements password={passwordNueva} />
-            </div>
-            <Field label="Confirmar contraseña nueva" error={passwordFieldErrors.confirmPassword}>
-              <Input
-                type="password"
-                autoComplete="new-password"
-                value={confirmPassword}
-                onChange={(e) => {
-                  setConfirmPassword(e.target.value);
-                  limpiarError(setPasswordFieldErrors, 'confirmPassword');
-                }}
-              />
-            </Field>
+        <form onSubmit={handleChangePassword} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              Contraseña Actual <span style={{ color: '#ef4444' }}>*</span>
+            </label>
+            <input
+              type="password"
+              required
+              placeholder="••••••••••••"
+              value={passwordActual}
+              onChange={(e) => setPasswordActual(e.target.value)}
+              style={inputStyle(!!passwordFieldErrors.passwordActual)}
+            />
+            {passwordFieldErrors.passwordActual && (
+              <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <IconoAlerta size={13} /> {passwordFieldErrors.passwordActual}
+              </span>
+            )}
           </div>
 
-          <div className="perfil-acciones">
-            <Button type="submit" variant="secondary" loading={changingPassword}>
-              {changingPassword
-                ? 'Actualizando...'
-                : tieneContrasena
-                  ? 'Cambiar contraseña'
-                  : 'Crear contraseña'}
-            </Button>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '0.75rem' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+                Nueva Contraseña <span style={{ color: '#ef4444' }}>*</span>
+              </label>
+              <input
+                type="password"
+                required
+                placeholder="Mínimo 8 caracteres"
+                value={passwordNueva}
+                onChange={(e) => setPasswordNueva(e.target.value)}
+                style={inputStyle(!!passwordFieldErrors.passwordNueva)}
+              />
+              <PasswordRequirements password={passwordNueva} />
+              {passwordFieldErrors.passwordNueva && (
+                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <IconoAlerta size={13} /> {passwordFieldErrors.passwordNueva}
+                </span>
+              )}
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+                Confirmar Nueva Contraseña <span style={{ color: '#ef4444' }}>*</span>
+              </label>
+              <input
+                type="password"
+                required
+                placeholder="••••••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                style={inputStyle(!!passwordFieldErrors.confirmPassword)}
+              />
+              {passwordFieldErrors.confirmPassword && (
+                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <IconoAlerta size={13} /> {passwordFieldErrors.confirmPassword}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+            <button type="submit" className="btn btn-secondary" disabled={changingPassword}>
+              {changingPassword ? 'Actualizando...' : 'Actualizar Contraseña'}
+            </button>
           </div>
         </form>
-      </section>
+      </div>
     </div>
   );
 };

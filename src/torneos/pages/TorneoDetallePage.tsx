@@ -11,6 +11,13 @@ import { TorneoDetalleSkeleton } from '../components/TorneoSkeleton';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { fecha, fechaHora, pesos, valorInscripcion } from '../../shared/formato';
 import { formatFormatoTorneo, formatModalidad, formatTipoParticipante } from '../utils/formatters';
+import {
+  IconoTrofeo,
+  IconoAlerta,
+  IconoRefrescar,
+  IconoDocumento,
+  IconoCalendario,
+} from '../../shared/ui/Iconos';
 import './TorneoDetallePage.css';
 
 export const TorneoDetallePage: React.FC = () => {
@@ -74,12 +81,15 @@ export const TorneoDetallePage: React.FC = () => {
             borderColor: 'var(--color-danger-border)',
           }}
         >
-          <div style={{ fontSize: '3rem', marginBottom: 'var(--space-2)' }}>🏟️❌</div>
+          <div style={{ color: 'var(--color-danger)', marginBottom: 'var(--space-3)' }}>
+            <IconoAlerta size={48} />
+          </div>
           <h1
             style={{
               fontSize: 'var(--text-xl)',
               marginBottom: 'var(--space-2)',
               color: 'var(--color-danger)',
+              fontWeight: 800,
             }}
           >
             Torneo no encontrado
@@ -103,8 +113,9 @@ export const TorneoDetallePage: React.FC = () => {
               flexWrap: 'wrap',
             }}
           >
-            <Link to="/" className="btn btn-primary">
-              🏆 Ir al Inicio y Explorar Torneos
+            <Link to="/" className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+              <IconoTrofeo size={18} />
+              <span>Ir al Inicio y Explorar Torneos</span>
             </Link>
           </div>
         </div>
@@ -127,12 +138,15 @@ export const TorneoDetallePage: React.FC = () => {
             backgroundColor: 'var(--color-danger-bg)',
           }}
         >
-          <div style={{ fontSize: '3rem', marginBottom: 'var(--space-2)' }}>⚠️</div>
+          <div style={{ color: 'var(--color-danger)', marginBottom: 'var(--space-2)' }}>
+            <IconoAlerta size={40} />
+          </div>
           <h2
             style={{
               fontSize: 'var(--text-lg)',
               color: 'var(--color-danger)',
               marginBottom: 'var(--space-2)',
+              fontWeight: 700,
             }}
           >
             Error al consultar el torneo
@@ -140,8 +154,14 @@ export const TorneoDetallePage: React.FC = () => {
           <p style={{ color: 'var(--color-text)', marginBottom: 'var(--space-4)' }}>
             {errorMsg || 'No se pudo obtener la información solicitada.'}
           </p>
-          <button type="button" className="btn btn-primary" onClick={fetchTorneoDetalle}>
-            🔄 Reintentar
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={fetchTorneoDetalle}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', margin: '0 auto' }}
+          >
+            <IconoRefrescar size={16} />
+            <span>Reintentar</span>
           </button>
         </div>
       </div>
@@ -200,7 +220,7 @@ export const TorneoDetallePage: React.FC = () => {
                 textTransform: 'uppercase',
               }}
             >
-              ⚽ {torneo.disciplina}
+              {torneo.disciplina}
             </span>
             <StatusChip status={torneo.estado} />
           </div>
@@ -225,13 +245,13 @@ export const TorneoDetallePage: React.FC = () => {
             marginBottom: 'var(--space-4)',
           }}
         >
-          <span className="badge">🎯 Formato: {formatFormatoTorneo(torneo.formato)}</span>
-          <span className="badge">📍 Modalidad: {formatModalidad(torneo.modalidad)}</span>
+          <span className="badge">Formato: {formatFormatoTorneo(torneo.formato)}</span>
+          <span className="badge">Modalidad: {formatModalidad(torneo.modalidad)}</span>
           <span className="badge">
-            👥 Modalidad de juego:{' '}
+            Modalidad de juego:{' '}
             {formatTipoParticipante(torneo.tipoParticipante, torneo.tamanioEquipo)}
           </span>
-          {torneo.sede && <span className="badge">🏟️ Sede: {torneo.sede}</span>}
+          {torneo.sede && <span className="badge">Sede: {torneo.sede}</span>}
         </div>
 
         {/* Barra de Llamada a la Acción (CTA) */}
@@ -248,7 +268,7 @@ export const TorneoDetallePage: React.FC = () => {
               Valor de inscripción:
             </div>
             <div
-              style={{ fontSize: 'var(--text-2xl)', fontWeight: 700, color: 'var(--color-text)' }}
+              style={{ fontSize: 'var(--text-2xl)', fontWeight: 800, color: 'var(--color-text)' }}
             >
               {valorInscripcion(torneo.valorInscripcion)}
             </div>
@@ -259,22 +279,22 @@ export const TorneoDetallePage: React.FC = () => {
               <button
                 type="button"
                 className="btn btn-primary"
-                style={{ padding: '0.75rem 1.75rem', fontSize: 'var(--text-md)' }}
+                style={{ padding: '0.75rem 1.75rem', fontSize: 'var(--text-md)', fontWeight: 700 }}
                 onClick={handleInscripcionClick}
               >
                 {isAuthenticated
                   ? torneo.tipoParticipante === 'EQUIPO'
-                    ? '⚡ Inscribir a mi Equipo'
-                    : '⚡ Inscribirme al Torneo'
-                  : '🔐 Iniciar Sesión para Inscribirme'}
+                    ? 'Inscribir a mi Equipo'
+                    : 'Inscribirme al Torneo'
+                  : 'Iniciar Sesión para Inscribirme'}
               </button>
             ) : torneo.cupoDisponible === 0 && torneo.estado === 'INSCRIPCION_ABIERTA' ? (
               <button type="button" className="btn btn-secondary" disabled>
-                🚫 Cupos Agotados
+                Cupos Agotados
               </button>
             ) : (
               <button type="button" className="btn btn-secondary" disabled>
-                🔒 Inscripción No Disponible
+                Inscripción No Disponible
               </button>
             )}
           </div>
@@ -309,34 +329,52 @@ export const TorneoDetallePage: React.FC = () => {
         </div>
       </div>
 
-      {isAuthenticated && torneo.estado === 'EN_CURSO' && <TuProximoCruce torneoId={torneo.id} />}
+      {/* Próximo cruce si es capitán */}
+      <TuProximoCruce torneoId={torneo.id} />
 
-      {/* Grid de Bloques Informativos */}
-      <div className="torneo-detalle-grid">
-        {/* Bloque 1: Cupos & Participación */}
+      {/* Grilla de Información Técnica, Fechas y Reglamento */}
+      <div className="torneo-grid-cards">
+        {/* Bloque 1: Datos Técnicos y Capacidad */}
         <div className="torneo-block-card">
           <div className="torneo-block-title">
-            <span>👥</span>
-            <span>Cupos y Participación</span>
+            <span>Datos Técnicos y Capacidad</span>
           </div>
 
-          <div className="torneo-cupos-box" style={{ margin: 0 }}>
-            <div className="torneo-cupos-header">
-              <span className="torneo-cupos-label">
+          {/* Medidor de Ocupación */}
+          <div style={{ marginBottom: 'var(--space-3)' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                fontSize: 'var(--text-xs)',
+                fontWeight: 600,
+                color: 'var(--color-text-secondary)',
+                marginBottom: '0.35rem',
+              }}
+            >
+              <span>
                 {torneo.cupoDisponible === 0
-                  ? 'Cupos agotados'
-                  : `${torneo.cupoDisponible} lugares restantes`}
+                  ? 'Cupos Agotados'
+                  : `${torneo.cupoDisponible} cupos disponibles`}
               </span>
-              <span className="torneo-cupos-count">
-                {cuposOcupados} / {torneo.cupoMaximo} ocupados
-              </span>
+              <span>{porcentajeOcupacion}% ocupación</span>
             </div>
-            <div className="torneo-cupos-progress-bg">
+            <div
+              style={{
+                height: '8px',
+                width: '100%',
+                backgroundColor: 'var(--color-border)',
+                borderRadius: 'var(--radius-full)',
+                overflow: 'hidden',
+              }}
+            >
               <div
-                className="torneo-cupos-progress-fill"
                 style={{
+                  height: '100%',
                   width: `${porcentajeOcupacion}%`,
                   backgroundColor: progressBarColor,
+                  borderRadius: 'var(--radius-full)',
+                  transition: 'width 0.3s ease',
                 }}
               />
             </div>
@@ -372,8 +410,8 @@ export const TorneoDetallePage: React.FC = () => {
 
         {/* Bloque 2: Cronograma y Fechas Clave */}
         <div className="torneo-block-card">
-          <div className="torneo-block-title">
-            <span>📅</span>
+          <div className="torneo-block-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <IconoCalendario size={18} />
             <span>Cronograma y Fechas</span>
           </div>
 
@@ -392,9 +430,10 @@ export const TorneoDetallePage: React.FC = () => {
                   color: 'var(--color-warning)',
                   textTransform: 'uppercase',
                   fontWeight: 700,
+                  letterSpacing: '0.04em',
                 }}
               >
-                ⏳ Cierre de Inscripción
+                Cierre de Inscripción
               </div>
               <div
                 style={{
@@ -409,14 +448,14 @@ export const TorneoDetallePage: React.FC = () => {
             </div>
 
             <div className="torneo-info-row">
-              <span className="torneo-info-label">🚀 Inicio del torneo</span>
+              <span className="torneo-info-label">Inicio del torneo</span>
               <span className="torneo-info-value">
                 {torneo.fechaInicio ? fecha(torneo.fechaInicio) : 'A definir'}
               </span>
             </div>
 
             <div className="torneo-info-row">
-              <span className="torneo-info-label">🏁 Fin estimado</span>
+              <span className="torneo-info-label">Fin estimado</span>
               <span className="torneo-info-value">
                 {torneo.fechaFin ? fecha(torneo.fechaFin) : 'A definir'}
               </span>
@@ -426,8 +465,8 @@ export const TorneoDetallePage: React.FC = () => {
 
         {/* Bloque 3: Reglamento Oficial */}
         <div className="torneo-block-card">
-          <div className="torneo-block-title">
-            <span>📜</span>
+          <div className="torneo-block-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <IconoDocumento size={18} />
             <span>Reglamento Oficial</span>
           </div>
 
@@ -477,9 +516,10 @@ export const TorneoDetallePage: React.FC = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-secondary"
-                  style={{ width: '100%', gap: '0.5rem' }}
+                  style={{ width: '100%', gap: '0.5rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                 >
-                  📄 Descargar / Ver Reglamento (PDF) ↗
+                  <IconoDocumento size={16} />
+                  <span>Descargar / Ver Reglamento (PDF) ↗</span>
                 </a>
               )}
 
@@ -522,8 +562,8 @@ export const TorneoDetallePage: React.FC = () => {
 
       {/* Bloque 4: Pozo y Distribución de Premios */}
       <div className="torneo-block-card">
-        <div className="torneo-block-title">
-          <span>🏆</span>
+        <div className="torneo-block-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <IconoTrofeo size={20} />
           <span>Pozo Estimado y Premiación</span>
         </div>
 

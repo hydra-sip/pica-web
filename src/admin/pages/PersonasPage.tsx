@@ -6,6 +6,7 @@ import { personaApi, PersonaResumen, PersonaDetalle, PersonaPayload } from '../.
 import { useAuth } from '../../auth/hooks/useAuth';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { Button, Modal } from '../../shared/ui';
+import { IconoCruz } from '../../shared/ui/Iconos';
 import './PersonasPage.css';
 import {
   validateNombreApellido,
@@ -304,9 +305,9 @@ export const PersonasPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setAviso(null)}
-            style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}
+            style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
           >
-            ✕
+            <IconoCruz size={14} />
           </button>
         </div>
       )}

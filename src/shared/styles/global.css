@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@600;700;800&family=JetBrains+Mono:wght@500;600&display=swap');
+
 /*
  * Tema de PICA, sacado del UI kit del Figma "Hydra" (página "Info, UI Kit & Navegación"): claro,
  * con Inter. El Figma es un wireframe en grises: la marca sale del ícono (la pica azul sobre negro)
@@ -7,8 +9,8 @@
  */
 :root {
   --font-primary: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-heading: var(--font-primary);
-  --font-mono: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --font-heading: 'Outfit', 'Inter', var(--font-primary);
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
   /* Marca: el azul de la pica y el fondo del ícono */
   --color-brand: #1b4468;
@@ -35,29 +37,66 @@
   --color-overlay: rgba(11, 23, 36, 0.5);
   --color-focus: var(--color-brand-light);
 
-  /* Estados */
-  --color-success: #15803d;
-  --color-success-bg: #dcfce7;
-  --color-success-border: #86efac;
-  --color-warning: #b45309;
-  --color-warning-bg: #fef3c7;
-  --color-warning-border: #fcd34d;
-  --color-danger: #b91c1c;
-  --color-danger-bg: #fee2e2;
-  --color-danger-border: #fca5a5;
-  --color-info: #1d4ed8;
-  --color-info-bg: #dbeafe;
-  --color-info-border: #93c5fd;
+  /* Tokens deportivos y de alto impacto para catálogo y fichas públicas */
+  --bg-app: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-subtle: #f1f5f9;
+  --bg-muted: #e2e8f0;
+  --brand-black: #0f172a;
+  --brand-black-hover: #1e293b;
+  --brand-charcoal: #1e293b;
 
-  /* Tipografía (escala del UI kit, en rem sobre 16px) */
-  --text-xs: 0.6875rem;
-  --text-sm: 0.8125rem;
-  --text-md: 0.9375rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.25rem;
-  --text-2xl: 1.5rem;
-  --text-display: clamp(1.75rem, 5vw, 2.25rem);
+  --color-emerald: #10b981;
+  --color-emerald-glow: rgba(16, 185, 129, 0.25);
+  --color-emerald-dark: #047857;
+  --color-emerald-light: #ecfdf5;
+  --color-emerald-border: #a7f3d0;
 
+  --color-gold: #f59e0b;
+  --color-gold-glow: rgba(245, 158, 11, 0.28);
+  --color-gold-dark: #b45309;
+  --color-gold-light: #fffbeb;
+  --color-gold-border: #fde68a;
+  --color-gold-gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+
+  --color-indigo: #6366f1;
+  --color-indigo-dark: #4338ca;
+  --color-indigo-light: #eef2ff;
+  --color-indigo-border: #c7d2fe;
+
+  --color-crimson: #ef4444;
+  --color-crimson-light: #fef2f2;
+  --color-crimson-border: #fecaca;
+
+  /* Estados Funcionales */
+  --color-success: #10b981;
+  --color-success-bg: #ecfdf5;
+  --color-success-border: #a7f3d0;
+  --color-warning: #f59e0b;
+  --color-warning-bg: #fffbeb;
+  --color-warning-border: #fde68a;
+  --color-danger: #ef4444;
+  --color-danger-bg: #fef2f2;
+  --color-danger-border: #fecaca;
+  --color-info: #0284c7;
+  --color-info-bg: #f0f9ff;
+  --color-info-border: #bae6fd;
+
+  /* Borders & Focus Rings */
+  --border-color: #e2e8f0;
+  --border-color-subtle: #f1f5f9;
+  --border-color-focus: #0f172a;
+
+  /* Tipografía */
+  --text-xs: 0.72rem;
+  --text-sm: 0.85rem;
+  --text-md: 0.95rem;
+  --text-lg: 1.15rem;
+  --text-xl: 1.35rem;
+  --text-2xl: 1.65rem;
+  --text-display: clamp(1.85rem, 5vw, 2.5rem);
+
+  /* Spacing */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -65,17 +104,25 @@
   --space-5: 1.5rem;
   --space-6: 2rem;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.16);
+  /* Sombras y Elevaciones Premium */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 10px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 12px 24px -4px rgba(15, 23, 42, 0.08), 0 4px 8px -2px rgba(15, 23, 42, 0.04);
+  --shadow-xl: 0 20px 32px -8px rgba(15, 23, 42, 0.12);
+  --shadow-gold: 0 8px 20px -4px rgba(245, 158, 11, 0.25);
+  --shadow-emerald: 0 8px 20px -4px rgba(16, 185, 129, 0.25);
 
+  /* Radios de curvatura */
+  --radius-xs: 4px;
   --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
   --radius-full: 9999px;
 
-  --transition-fast: 0.15s ease;
-  --transition-normal: 0.25s ease;
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 * {
@@ -84,68 +131,245 @@
   padding: 0;
 }
 
-html,
 body {
-  height: 100%;
-  background-color: var(--color-bg);
-  color: var(--color-text);
   font-family: var(--font-primary);
-  font-size: 16px;
-  line-height: 1.5;
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
-}
-
-/* RNF-USA-01: sin scroll horizontal desde 360 px; lo ancho (tablas) scrollea adentro de su caja */
-body {
-  overflow-x: hidden;
-}
-
-#root {
-  display: flex;
-  flex-direction: column;
+  -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+/* Tipografía de títulos */
+h1, h2, h3, h4, .font-heading {
   font-family: var(--font-heading);
-  font-weight: 700;
-  line-height: 1.25;
-  color: var(--color-text);
+  letter-spacing: -0.02em;
 }
 
-a {
-  color: inherit;
+/* Tabular figures para números y dinero */
+.tabular-nums, .font-mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
-:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-}
-
-::placeholder {
-  color: var(--color-text-muted);
-}
-
-/* Contenedor de página */
+/* Contenedores */
 .container {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1240px;
   margin: 0 auto;
-  padding: 0 var(--space-4);
+  padding: 0 1.25rem;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
+/* Tarjetas Base PICA */
+.pica-card, .hydra-card, .card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-fast);
+}
+
+.pica-card:hover, .hydra-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* Isotipo PICA con brillo dinámico */
+.pica-logo-badge, .hydra-logo-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--brand-black);
+  color: #ffffff;
+  font-weight: 900;
+  font-family: var(--font-heading);
+  box-shadow: 0 0 16px var(--color-emerald-glow);
+  transition: transform var(--transition-fast);
+  user-select: none;
+}
+
+.pica-logo-badge:hover, .hydra-logo-badge:hover {
+  transform: scale(1.05);
+}
+
+/* Botones Base */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 40px;
+  padding: 0.55rem 1.15rem;
+  font-family: var(--font-primary);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  line-height: 1.2;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background-color: var(--brand-black);
+  color: #ffffff;
+  box-shadow: var(--shadow-xs);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--brand-black-hover);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+}
+
+.btn-secondary {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+  box-shadow: var(--shadow-xs);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--text-primary);
+  background-color: var(--bg-subtle);
+}
+
+.btn-emerald {
+  background-color: var(--color-emerald);
+  color: #ffffff;
+  box-shadow: var(--shadow-emerald);
+}
+
+.btn-emerald:hover:not(:disabled) {
+  background-color: var(--color-emerald-dark);
+}
+
+.btn-gold {
+  background: var(--color-gold-gradient);
+  color: #0f172a;
+  font-weight: 800;
+  box-shadow: var(--shadow-gold);
+}
+
+.btn-gold:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+/* Badges e Insignias de Estado con Indicador Pulsante */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.65rem;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  line-height: 1.3;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-subtle);
+  color: var(--text-secondary);
+}
+
+.badge-exito {
+  background-color: var(--color-emerald-light);
+  border-color: var(--color-emerald-border);
+  color: var(--color-emerald-dark);
+}
+
+.badge-aviso {
+  background-color: var(--color-gold-light);
+  border-color: var(--color-gold-border);
+  color: var(--color-gold-dark);
+}
+
+.badge-peligro {
+  background-color: var(--color-crimson-light);
+  border-color: var(--color-crimson-border);
+  color: var(--color-crimson);
+}
+
+.badge-info {
+  background-color: var(--color-indigo-light);
+  border-color: var(--color-indigo-border);
+  color: var(--color-indigo-dark);
+}
+
+/* Indicador de pulso activo */
+.pulse-beacon {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: currentColor;
+  box-shadow: 0 0 0 0 currentColor;
+  animation: beacon-pulse 1.8s infinite cubic-bezier(0.66, 0, 0, 1);
+  display: inline-block;
+}
+
+@keyframes beacon-pulse {
   to {
-    opacity: 1;
-    transform: none;
+    box-shadow: 0 0 0 7px transparent;
   }
+}
+
+/* Segmented Control Base */
+.pica-segmented-control, .hydra-segmented-control {
+  display: flex;
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  gap: 2px;
+}
+
+.pica-segmented-tab, .hydra-segmented-tab {
+  flex: 1;
+  text-align: center;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.pica-segmented-tab:hover, .hydra-segmented-tab:hover {
+  color: var(--text-primary);
+}
+
+.pica-segmented-tab.active, .hydra-segmented-tab.active {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  font-weight: 700;
+  box-shadow: var(--shadow-xs);
+}
+
+/* Scrollbar sutil */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-subtle);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color-strong);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
 }

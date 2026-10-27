@@ -76,3 +76,12 @@ export const formatTipoParticipante = (tipo: string, tamanioEquipo?: number | nu
   }
   return 'Individual';
 };
+
+export const calcularPremioPuesto = (
+  pozoTotal: number,
+  pctPozoCompetidores: number,
+  pctPuesto: number
+): number => {
+  const pozoCompetidores = (pozoTotal * pctPozoCompetidores) / 100;
+  return (pozoCompetidores * pctPuesto) / 100;
+};

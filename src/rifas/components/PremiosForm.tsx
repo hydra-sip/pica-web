@@ -2,6 +2,7 @@ import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'rea
 import { rifaApi, RifaDetalle } from '../../api/rifaApi';
 import { erroresPorCampo, mensajeDeError } from '../../shared/mensajesError';
 import { Button, Input } from '../../shared/ui';
+import { IconoCruz } from '../../shared/ui/Iconos';
 import {
   ErroresPremios,
   PremioForm,
@@ -211,7 +212,7 @@ export const PremiosForm = forwardRef<PasoGuardable, PremiosFormProps>(function 
                       disabled={guardando}
                       onClick={() => quitar(i)}
                     >
-                      ✕
+                      <IconoCruz size={14} />
                     </Button>
                   </div>
                 )}
