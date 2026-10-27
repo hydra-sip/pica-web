@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
-import { BracketTorneo, torneoApi, TorneoInformacion } from '../../api/torneoApi';
+import { BracketTorneo, EstadoTorneo, torneoApi, TorneoInformacion } from '../../api/torneoApi';
+import { useTorneoRealtime } from '../../realtime/useTorneoRealtime';
 import { ObjecionesTorneo } from '../../partidos/components/ObjecionesTorneo';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { Badge, Button, Card } from '../../shared/ui';
@@ -34,19 +35,42 @@ export const TorneoConsolaPage: React.FC = () => {
   /** Cambia para volver a pedir las inscripciones: el cierre cancela las pendientes. */
   const [recargaInscripciones, setRecargaInscripciones] = useState(0);
 
-  useEffect(() => {
-    let vigente = true;
+  const recargarConsola = useCallback(() => {
+    if (!id) return;
     Promise.all([torneoApi.obtener(Number(id)), torneoApi.bracket(Number(id))])
       .then(([t, b]) => {
-        if (!vigente) return;
         setTorneo(t);
         setBracket(b);
       })
-      .catch((err) => vigente && setError(mensajeDeError(err, 'No se pudo cargar el torneo.')));
-    return () => {
-      vigente = false;
-    };
+      .catch((err) => setError(mensajeDeError(err, 'No se pudo cargar el torneo.')));
   }, [id]);
+
+  useEffect(() => {
+    recargarConsola();
+  }, [recargarConsola]);
+
+  useTorneoRealtime(id ? Number(id) : null, {
+    onBracketChange: (nuevoBracket) => {
+      setBracket(nuevoBracket);
+    },
+    onEstadoChange: (nuevoEstado) => {
+      setTorneo((prev) => (prev ? { ...prev, estado: nuevoEstado as EstadoTorneo } : prev));
+    },
+    onActualizar: (data) => {
+      if (data.bracket) {
+        setBracket(data.bracket);
+      }
+      if (data.estado) {
+        setTorneo((prev) => (prev ? { ...prev, estado: data.estado as EstadoTorneo } : prev));
+      }
+      if (!data.bracket && !data.estado) {
+        recargarConsola();
+      }
+    },
+    onReconnect: () => {
+      recargarConsola();
+    },
+  });
 
   const volver = (
     <Link to="/mis-torneos" className="torneos-volver">

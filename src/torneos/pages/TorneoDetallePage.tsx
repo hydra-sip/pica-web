@@ -2,7 +2,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { torneoApi } from '../../api/torneoApi';
 import { ApiError } from '../../api/httpClient';
-import { TorneoDetalle } from '../types/torneo';
+import { EstadoTorneo, TorneoDetalle } from '../types/torneo';
+import { useTorneoRealtime } from '../../realtime/useTorneoRealtime';
 import { StatusChip } from '../../admin/components/StatusChip';
 import { TorneoPremiosList } from '../components/TorneoPremiosList';
 import { BracketDelTorneo } from '../components/BracketDelTorneo';
@@ -57,6 +58,42 @@ export const TorneoDetallePage: React.FC = () => {
   useEffect(() => {
     fetchTorneoDetalle();
   }, [fetchTorneoDetalle]);
+
+  useTorneoRealtime(torneo?.id, {
+    onPozoChange: (pozoEstimado, premioRifaEstimado) => {
+      setTorneo((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          pozoEstimado,
+          ...(premioRifaEstimado !== undefined ? { premioRifaEstimado } : {}),
+        };
+      });
+    },
+    onEstadoChange: (estado) => {
+      setTorneo((prev) => (prev ? { ...prev, estado: estado as EstadoTorneo } : prev));
+    },
+    onActualizar: (data) => {
+      if (data.pozoEstimado !== undefined || data.estado || data.premioRifaEstimado !== undefined) {
+        setTorneo((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            ...(data.pozoEstimado !== undefined ? { pozoEstimado: data.pozoEstimado } : {}),
+            ...(data.premioRifaEstimado !== undefined
+              ? { premioRifaEstimado: data.premioRifaEstimado }
+              : {}),
+            ...(data.estado ? { estado: data.estado as EstadoTorneo } : {}),
+          };
+        });
+      } else {
+        void fetchTorneoDetalle();
+      }
+    },
+    onReconnect: () => {
+      void fetchTorneoDetalle();
+    },
+  });
 
   // Pantalla de Carga
   if (isLoading) {
@@ -113,7 +150,11 @@ export const TorneoDetallePage: React.FC = () => {
               flexWrap: 'wrap',
             }}
           >
-            <Link to="/" className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Link
+              to="/"
+              className="btn btn-primary"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+            >
               <IconoTrofeo size={18} />
               <span>Ir al Inicio y Explorar Torneos</span>
             </Link>
@@ -158,7 +199,12 @@ export const TorneoDetallePage: React.FC = () => {
             type="button"
             className="btn btn-primary"
             onClick={fetchTorneoDetalle}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', margin: '0 auto' }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              margin: '0 auto',
+            }}
           >
             <IconoRefrescar size={16} />
             <span>Reintentar</span>
@@ -410,7 +456,10 @@ export const TorneoDetallePage: React.FC = () => {
 
         {/* Bloque 2: Cronograma y Fechas Clave */}
         <div className="torneo-block-card">
-          <div className="torneo-block-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div
+            className="torneo-block-title"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
             <IconoCalendario size={18} />
             <span>Cronograma y Fechas</span>
           </div>
@@ -465,7 +514,10 @@ export const TorneoDetallePage: React.FC = () => {
 
         {/* Bloque 3: Reglamento Oficial */}
         <div className="torneo-block-card">
-          <div className="torneo-block-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div
+            className="torneo-block-title"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
             <IconoDocumento size={18} />
             <span>Reglamento Oficial</span>
           </div>
@@ -516,7 +568,13 @@ export const TorneoDetallePage: React.FC = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-secondary"
-                  style={{ width: '100%', gap: '0.5rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                  style={{
+                    width: '100%',
+                    gap: '0.5rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
                 >
                   <IconoDocumento size={16} />
                   <span>Descargar / Ver Reglamento (PDF) ↗</span>
@@ -562,7 +620,10 @@ export const TorneoDetallePage: React.FC = () => {
 
       {/* Bloque 4: Pozo y Distribución de Premios */}
       <div className="torneo-block-card">
-        <div className="torneo-block-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div
+          className="torneo-block-title"
+          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+        >
           <IconoTrofeo size={20} />
           <span>Pozo Estimado y Premiación</span>
         </div>

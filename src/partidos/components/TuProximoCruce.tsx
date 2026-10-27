@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PartidoDetalle, partidoApi } from '../../api/partidoApi';
+import { useTorneoRealtime } from '../../realtime/useTorneoRealtime';
 import { Badge } from '../../shared/ui';
 import { ESTADO_PARTIDO_UI, TONO_ESTADO_PARTIDO } from '../formato';
 import '../partidos.css';
@@ -8,11 +9,12 @@ import '../partidos.css';
 /**
  * En la ficha del torneo, para quien lo juega (PICA-243): su primer partido sin cerrar, con el enlace para cargar o
  * aceptar el resultado. Si no juega, quedó afuera o no se puede consultar, no muestra nada.
+ * Suscripto a `/topic/torneos/{id}` para actualizar el próximo cruce cuando avanza la llave.
  */
 export const TuProximoCruce: React.FC<{ torneoId: number }> = ({ torneoId }) => {
   const [partido, setPartido] = useState<PartidoDetalle | null>(null);
 
-  useEffect(() => {
+  const cargarProximo = useCallback(() => {
     let vigente = true;
     partidoApi
       .miProximo(torneoId)
@@ -22,6 +24,19 @@ export const TuProximoCruce: React.FC<{ torneoId: number }> = ({ torneoId }) => 
       vigente = false;
     };
   }, [torneoId]);
+
+  useEffect(() => {
+    return cargarProximo();
+  }, [cargarProximo]);
+
+  useTorneoRealtime(torneoId, {
+    onActualizar: () => {
+      cargarProximo();
+    },
+    onReconnect: () => {
+      cargarProximo();
+    },
+  });
 
   if (!partido) return null;
 
@@ -33,7 +48,6 @@ export const TuProximoCruce: React.FC<{ torneoId: number }> = ({ torneoId }) => 
   return (
     <div className="torneo-block-card">
       <div className="torneo-block-title">
-        <span>⚔️</span>
         <span>Tu próximo cruce</span>
       </div>
       <div className="partido-proximo">
