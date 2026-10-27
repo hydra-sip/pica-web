@@ -169,6 +169,11 @@ export const PartidoPage: React.FC = () => {
           </Badge>
         </div>
         <p className="partido-ayuda">{detalle}</p>
+        {partido.puedoResolver && (
+          <Link to={`/torneos/${partido.torneoId}/objeciones`} className="partido-volver">
+            Ver todas las objeciones del torneo →
+          </Link>
+        )}
       </header>
 
       {mensaje && (

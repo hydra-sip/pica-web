@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { BracketTorneo, torneoApi, TorneoInformacion } from '../../api/torneoApi';
+import { ObjecionesTorneo } from '../../partidos/components/ObjecionesTorneo';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { Badge, Button, Card } from '../../shared/ui';
 import { Bracket } from '../components/Bracket';
@@ -15,7 +16,7 @@ const conResultados = (bracket: BracketTorneo): boolean =>
 /**
  * Consola del torneo (wireframe "Consola Operativa del Torneo", PICA-217): el bracket y el botón para sortearlo con
  * la inscripción cerrada, o para volver a sortearlo mientras no haya resultados. Cerrar la inscripción (T206-3) va
- * acá también.
+ * acá también. Con el bracket sorteado, las objeciones del torneo (PICA-247).
  */
 export const TorneoConsolaPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -179,6 +180,15 @@ export const TorneoConsolaPage: React.FC = () => {
           <p className="torneos-vacio">Todavía no hay bracket.</p>
         )}
       </Card>
+
+      {generado && (
+        <Card>
+          <div className="torneos-tarjeta-titulo">
+            <h2>Objeciones</h2>
+          </div>
+          <ObjecionesTorneo torneoId={torneo.id} />
+        </Card>
+      )}
     </div>
   );
 };
