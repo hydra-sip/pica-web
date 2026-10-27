@@ -172,12 +172,20 @@ export interface DatosRifaForm {
   ventaHasta: string;
   /** Fecha programada del sorteo (PICA-219); opcional en borrador, posterior al fin de la venta. */
   fechaSorteo: string;
+  /** Id del torneo (PICA-218); vacío sin torneo. */
+  torneoId: string;
+  /** % de lo recaudado que va al pozo del torneo; solo cuenta con torneo. */
+  pctDestinadoTorneo: string;
 }
 
-/** Errores por campo del paso "Datos generales". `premiosCargados` evita achicar el rango por debajo. */
+/**
+ * Errores por campo del paso "Datos generales". `premiosCargados` evita achicar el rango por debajo, y
+ * `sumaPremios` que lo destinado al torneo pase de 100 con los premios ya cargados.
+ */
 export const validateDatosRifa = (
   datos: DatosRifaForm,
-  premiosCargados: number = 0
+  premiosCargados: number = 0,
+  sumaPremios: number = 0
 ): Partial<Record<keyof DatosRifaForm, string>> => {
   const errores: Partial<Record<keyof DatosRifaForm, string>> = {};
   const titulo = datos.titulo.trim();
@@ -228,6 +236,15 @@ export const validateDatosRifa = (
       errores.fechaSorteo = 'El sorteo tiene que ser después de que termina la venta.';
     }
   }
+
+  if (datos.torneoId) {
+    const pct = Number(datos.pctDestinadoTorneo);
+    if (!/^\d+$/.test(datos.pctDestinadoTorneo) || pct > 99) {
+      errores.pctDestinadoTorneo = 'Tiene que ser un número entero de 0 a 99.';
+    } else if (pct + sumaPremios > 100) {
+      errores.pctDestinadoTorneo = `Con los premios cargados suma ${pct + sumaPremios}%: no puede pasar de 100.`;
+    }
+  }
   return errores;
 };
 
@@ -242,10 +259,14 @@ export interface ErroresPremios {
 }
 
 /**
- * Cada % es un entero de 1 a 100 (la pantalla no usa decimales, aunque el back acepta hasta 2);
- * la suma no pasa de 100 ni hay más premios que números.
+ * Cada % es un entero de 1 a 100; la suma, con lo destinado al torneo, no pasa de 100 ni hay más premios
+ * que números.
  */
-export const validatePremios = (premios: PremioForm[], cantidadNumeros: number): ErroresPremios => {
+export const validatePremios = (
+  premios: PremioForm[],
+  cantidadNumeros: number,
+  pctDestinadoTorneo: number = 0
+): ErroresPremios => {
   const porFila: Record<number, string> = {};
   premios.forEach((premio, i) => {
     const pct = Number(premio.pct);
@@ -257,9 +278,11 @@ export const validatePremios = (premios: PremioForm[], cantidadNumeros: number):
   });
 
   let general: string | undefined;
-  const suma = sumaPorcentajes(premios);
+  const suma = sumaPorcentajes(premios) + pctDestinadoTorneo;
   if (suma > 100) {
-    general = `Los premios suman ${suma}%: no pueden pasar de 100.`;
+    general = pctDestinadoTorneo
+      ? `El torneo y los premios suman ${suma}%: no pueden pasar de 100.`
+      : `Los premios suman ${suma}%: no pueden pasar de 100.`;
   } else if (premios.length > cantidadNumeros) {
     general = `Hay ${premios.length} premios y la rifa tiene solo ${cantidadNumeros} números.`;
   }

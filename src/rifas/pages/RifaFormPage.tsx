@@ -17,10 +17,10 @@ const PASOS_URL = ['', 'premios', 'publicar'];
 const SIN_BORRADOR = 'Se habilita al guardar el borrador';
 
 /**
- * Alta, edición y publicación de una rifa sin torneo (PICA-227, T402-4), como asistente en tres pasos
- * con el formato de "Crear Nueva Competencia". Los dos primeros se guardan por separado, también al
- * cambiar de paso (si tienen errores no se cambia); el tercero la publica. Fuera de BORRADOR todo es
- * de solo lectura.
+ * Alta, edición y publicación de una rifa, con o sin torneo (PICA-227, T402-4, PICA-220), como asistente
+ * en tres pasos con el formato de "Crear Nueva Competencia". Los dos primeros se guardan por separado,
+ * también al cambiar de paso (si tienen errores no se cambia); el tercero la publica. Fuera de BORRADOR
+ * todo es de solo lectura. Desde Mis torneos se llega con ?torneo= y el torneo ya elegido.
  */
 export const RifaFormPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -35,6 +35,7 @@ export const RifaFormPage: React.FC = () => {
   const datosRef = useRef<PasoGuardable>(null);
   const premiosRef = useRef<PasoGuardable>(null);
 
+  const torneoInicial = Number(searchParams.get('torneo')) || undefined;
   const pedido = Math.max(0, PASOS_URL.indexOf(searchParams.get('paso') ?? ''));
   const paso = rifa ? pedido : 0;
   const editable = !rifa || rifa.estado === 'BORRADOR';
@@ -130,9 +131,13 @@ export const RifaFormPage: React.FC = () => {
           <h1>{rifa ? rifa.titulo : 'Crear nueva rifa'}</h1>
           <Badge tone={TONO_ESTADO_RIFA[estado]}>{ESTADO_RIFA_UI[estado]}</Badge>
         </div>
-        <p className="rifas-subtitulo">
-          Rifa sin torneo asociado: el pozo se reparte entre sus premios.
-        </p>
+        {rifa && (
+          <p className="rifas-subtitulo">
+            {rifa.torneoNombre
+              ? `Recauda para el torneo ${rifa.torneoNombre}: el ${rifa.pctDestinadoTorneo}% va a su pozo y el resto a los premios.`
+              : 'Rifa sin torneo asociado: el pozo se reparte entre sus premios.'}
+          </p>
+        )}
       </header>
 
       {recienPublicada ? (
@@ -151,7 +156,7 @@ export const RifaFormPage: React.FC = () => {
         actual={paso}
         onIr={(indice) => void irAPaso(indice)}
         pasos={[
-          { titulo: 'Datos generales', subtitulo: 'Números, precio y fechas de venta y sorteo' },
+          { titulo: 'Datos generales', subtitulo: 'Torneo, números, precio y fechas' },
           {
             titulo: 'Premios',
             subtitulo: rifa ? 'Porcentaje del pozo por puesto' : SIN_BORRADOR,
@@ -171,6 +176,7 @@ export const RifaFormPage: React.FC = () => {
           <DatosGeneralesForm
             ref={datosRef}
             rifa={rifa}
+            torneoInicial={torneoInicial}
             editable={editable}
             onGuardada={alGuardarDatos}
             onSiguiente={() => void irAPaso(1)}
