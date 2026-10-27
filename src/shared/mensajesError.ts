@@ -45,6 +45,8 @@ const POR_CODIGO: Record<string, string> = {
   RIFA_NO_ENCONTRADA: 'La rifa no existe o no es tuya.',
   RIFA_NO_EDITABLE: 'La rifa ya no está en borrador: no se puede modificar.',
   RIFA_INCOMPLETA: 'A la rifa le falta completar datos para publicarse.',
+  TORNEO_CON_RIFA: 'Ese torneo ya tiene una rifa.',
+  TORNEO_NO_ADMITE_RIFA: 'Ese torneo ya empezó o terminó: no se le puede asociar una rifa.',
   TORNEO_NO_ENCONTRADO: 'El torneo no existe o no es tuyo.',
   TORNEO_NO_EDITABLE: 'El torneo ya no se puede modificar desde acá.',
   CAMPOS_BLOQUEADOS:

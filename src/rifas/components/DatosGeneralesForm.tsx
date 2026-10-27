@@ -1,8 +1,10 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { rifaApi, RifaDetalle, RifaPayload } from '../../api/rifaApi';
+import { torneoApi } from '../../api/torneoApi';
+import { ESTADOS_TORNEO_CON_RIFA } from '../formato';
 import { erroresPorCampo, mensajeDeError } from '../../shared/mensajesError';
 import { DatosRifaForm, validateDatosRifa } from '../../shared/validators';
-import { Button, Field, Input, Textarea } from '../../shared/ui';
+import { Button, Field, Input, Select, Textarea } from '../../shared/ui';
 import { inputLocalAIso, isoAInputLocal } from '../../shared/formato';
 import { CampoFechaHora } from './CampoFechaHora';
 import { PasoGuardable } from './pasoGuardable';
@@ -10,6 +12,8 @@ import { PasoGuardable } from './pasoGuardable';
 interface DatosGeneralesFormProps {
   /** null en el alta. */
   rifa: RifaDetalle | null;
+  /** En el alta desde un torneo ("Crear rifa" en Mis torneos), el torneo ya elegido. */
+  torneoInicial?: number;
   editable: boolean;
   onGuardada: (rifa: RifaDetalle) => void;
   /** Pasa al paso de premios; la página guarda antes con {@link PasoGuardable.guardar}. */
@@ -19,7 +23,12 @@ interface DatosGeneralesFormProps {
 type Formulario = DatosRifaForm & { descripcion: string };
 type Errores = Partial<Record<keyof Formulario, string>>;
 
-const desdeRifa = (rifa: RifaDetalle | null): Formulario => ({
+interface TorneoOpcion {
+  id: number;
+  nombre: string;
+}
+
+const desdeRifa = (rifa: RifaDetalle | null, torneoInicial?: number): Formulario => ({
   titulo: rifa?.titulo ?? '',
   descripcion: rifa?.descripcion ?? '',
   numeroDesde: rifa ? String(rifa.numeroDesde) : '',
@@ -28,26 +37,85 @@ const desdeRifa = (rifa: RifaDetalle | null): Formulario => ({
   ventaDesde: isoAInputLocal(rifa?.ventaDesde ?? null),
   ventaHasta: isoAInputLocal(rifa?.ventaHasta ?? null),
   fechaSorteo: isoAInputLocal(rifa?.fechaSorteo ?? null),
+  torneoId: String((rifa ? rifa.torneoId : torneoInicial) ?? ''),
+  pctDestinadoTorneo: String(rifa?.pctDestinadoTorneo ?? 0),
 });
 
 /**
  * Paso 1 del asistente, "Datos generales": POST /rifas en el alta y PUT /rifas/{id} después.
  * No toca los premios, que se guardan en el paso 2. Guarda con "Guardar como borrador" y, a pedido de
- * la página, antes de cambiar de paso.
+ * la página, antes de cambiar de paso. Con torneo (PICA-220), el % para el torneo arranca con el que el
+ * torneo reserva para la rifa, y el organizador lo puede cambiar.
  */
 export const DatosGeneralesForm = forwardRef<PasoGuardable, DatosGeneralesFormProps>(
-  ({ rifa, editable, onGuardada, onSiguiente }, ref) => {
-    const [form, setForm] = useState(() => desdeRifa(rifa));
+  ({ rifa, torneoInicial, editable, onGuardada, onSiguiente }, ref) => {
+    const [form, setForm] = useState(() => desdeRifa(rifa, torneoInicial));
     const [errores, setErrores] = useState<Errores>({});
     const [mensaje, setMensaje] = useState<{ tipo: 'exito' | 'error'; texto: string } | null>(null);
     const [guardando, setGuardando] = useState(false);
+    const [torneos, setTorneos] = useState<TorneoOpcion[]>([]);
 
     // Se reinicia al pasar de una rifa a otra, no cada vez que se guarda.
     useEffect(() => {
-      setForm(desdeRifa(rifa));
+      setForm(desdeRifa(rifa, torneoInicial));
       setErrores({});
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [rifa?.id]);
+
+    useEffect(() => {
+      if (!editable) {
+        return;
+      }
+      let vigente = true;
+      torneoApi
+        .misTorneos({ size: 100 })
+        .then(
+          (pagina) =>
+            vigente &&
+            setTorneos(pagina.content.filter((t) => ESTADOS_TORNEO_CON_RIFA.includes(t.estado)))
+        )
+        // Sin la lista se puede seguir armando la rifa sin torneo
+        .catch(() => vigente && setTorneos([]));
+      return () => {
+        vigente = false;
+      };
+    }, [editable]);
+
+    const completarPorcentaje = async (torneoId: number) => {
+      try {
+        const torneo = await torneoApi.obtener(torneoId);
+        // El torneo lo guarda con decimales; la rifa usa enteros
+        const pct = String(Math.floor(torneo.economia.pctPremioRifa ?? 0));
+        setForm((prev) =>
+          prev.torneoId === String(torneoId) ? { ...prev, pctDestinadoTorneo: pct } : prev
+        );
+      } catch {
+        // Queda el porcentaje que estaba
+      }
+    };
+
+    // Alta desde un torneo: el porcentaje sale del torneo
+    useEffect(() => {
+      if (!rifa && torneoInicial) {
+        void completarPorcentaje(torneoInicial);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const elegirTorneo = (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const valor = e.target.value;
+      setForm((prev) => ({ ...prev, torneoId: valor, pctDestinadoTorneo: '0' }));
+      setErrores((prev) => ({ ...prev, torneoId: undefined, pctDestinadoTorneo: undefined }));
+      if (valor) {
+        void completarPorcentaje(Number(valor));
+      }
+    };
+
+    // La rifa puede tener un torneo que ya no está en la lista (por ejemplo, porque empezó)
+    const opcionesTorneo: TorneoOpcion[] =
+      rifa?.torneoId && !torneos.some((t) => t.id === rifa.torneoId)
+        ? [{ id: rifa.torneoId, nombre: rifa.torneoNombre ?? '' }, ...torneos]
+        : torneos;
 
     const cambiarValor = (campo: keyof Formulario) => (valor: string) => {
       setForm((prev) => ({ ...prev, [campo]: valor }));
@@ -66,7 +134,11 @@ export const DatosGeneralesForm = forwardRef<PasoGuardable, DatosGeneralesFormPr
       }
       setMensaje(null);
 
-      const encontrados: Errores = validateDatosRifa(form, rifa?.premios.length ?? 0);
+      const encontrados: Errores = validateDatosRifa(
+        form,
+        rifa?.premios.length ?? 0,
+        rifa?.premios.reduce((total, p) => total + p.pct, 0) ?? 0
+      );
       if (form.descripcion.trim().length > 2000) {
         encontrados.descripcion = 'La descripción no puede superar los 2000 caracteres.';
       }
@@ -76,7 +148,7 @@ export const DatosGeneralesForm = forwardRef<PasoGuardable, DatosGeneralesFormPr
         return null;
       }
       // Sin cambios no hace falta ir al back (cambiar de paso no debería guardar de más)
-      if (rifa && JSON.stringify(form) === JSON.stringify(desdeRifa(rifa))) {
+      if (rifa && JSON.stringify(form) === JSON.stringify(desdeRifa(rifa, torneoInicial))) {
         return rifa;
       }
 
@@ -89,6 +161,8 @@ export const DatosGeneralesForm = forwardRef<PasoGuardable, DatosGeneralesFormPr
         ventaDesde: inputLocalAIso(form.ventaDesde),
         ventaHasta: inputLocalAIso(form.ventaHasta),
         fechaSorteo: inputLocalAIso(form.fechaSorteo),
+        torneoId: form.torneoId ? Number(form.torneoId) : null,
+        pctDestinadoTorneo: form.torneoId ? Number(form.pctDestinadoTorneo) : 0,
       };
 
       setGuardando(true);
@@ -100,7 +174,15 @@ export const DatosGeneralesForm = forwardRef<PasoGuardable, DatosGeneralesFormPr
         onGuardada(guardada);
         return guardada;
       } catch (err) {
-        setErrores(erroresPorCampo(err));
+        const delBack = erroresPorCampo(err);
+        // Lo demás de las fechas ya lo validó la pantalla; con torneo, el back controla sus fechas
+        if (form.torneoId && delBack.ventaDesde) {
+          delBack.ventaDesde = 'No puede empezar antes de que se publique el torneo.';
+        }
+        if (form.torneoId && delBack.ventaHasta) {
+          delBack.ventaHasta = 'Tiene que terminar antes de que empiece el torneo.';
+        }
+        setErrores(delBack);
         setMensaje({ tipo: 'error', texto: mensajeDeError(err, 'No se pudo guardar la rifa.') });
         return null;
       } finally {
@@ -172,6 +254,44 @@ export const DatosGeneralesForm = forwardRef<PasoGuardable, DatosGeneralesFormPr
             placeholder="Para qué se recaudan los fondos, cómo se sortea"
           />
         </Field>
+
+        <div className="rifas-grilla">
+          <Field
+            label="Torneo"
+            error={errores.torneoId}
+            hint="Opcional. La venta tiene que terminar antes de que empiece el torneo."
+          >
+            <Select value={form.torneoId} onChange={elegirTorneo} disabled={bloqueado}>
+              <option value="">Sin torneo</option>
+              {opcionesTorneo.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.nombre}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          {form.torneoId && (
+            <Field
+              label="Destinado al pozo del torneo (%)"
+              required
+              error={errores.pctDestinadoTorneo}
+              hint="El resto de lo recaudado se reparte en los premios."
+            >
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={99}
+                step={1}
+                value={form.pctDestinadoTorneo}
+                onChange={(e) =>
+                  cambiarValor('pctDestinadoTorneo')(e.target.value.replace(/\D/g, ''))
+                }
+                disabled={bloqueado}
+              />
+            </Field>
+          )}
+        </div>
 
         <div className="rifas-grilla">
           {campo('numeroDesde', 'Número desde', { type: 'number', min: 0, step: 1 }, true)}
