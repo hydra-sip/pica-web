@@ -26,6 +26,14 @@ import { type ErrorCampo, problema, validacion } from './adminHandlers';
 //                          409 COBRO_RECHAZADO y la inscripción sigue PENDIENTE_PAGO.
 //   torneo-cerrado         Con la inscripción cerrada: crear, editar, confirmar y pagar responden
 //                          409 INSCRIPCION_NO_ABIERTA.
+//   copa-de-invierno       Por equipos con costo (3 a 4, $ 15.000), abierto: Deportivo Luján ya está
+//                          inscripto y confirmado (inscripción 902), con dos reemplazos.
+//   copa-sin-lugar         Por equipos, abierto pero con el cupo completo: Los Galácticos confirmados
+//                          (inscripción 903) ocupan el último lugar. Reemplazar responde 409
+//                          INSCRIPCION_NO_ABIERTA.
+//   copa-cerrada           Por equipos con la inscripción cerrada (antes de la fecha de cierre): Los
+//                          Galácticos confirmados (inscripción 904). Reemplazar responde 409
+//                          INSCRIPCION_NO_ABIERTA.
 //   Cualquier otro slug: este handler lo deja pasar y lo atiende el de los torneos públicos
 //   (torneoHandlers.ts), que responde su propio 404 TORNEO_NO_ENCONTRADO.
 // Cada inscripción (detalle y resumen) trae `torneo {id, nombre, slug}` del torneo de esta lista.
@@ -38,6 +46,9 @@ import { type ErrorCampo, problema, validacion } from './adminHandlers';
 //   - En torneo-apertura-f5 hay una inscripción CONFIRMADA de otro equipo ("Los Rivales", capitán Carlos
 //     Rivas) con Sofía Martínez, Pablo López, Ana Rodríguez y Juan Pérez: sumar a cualquiera de los cinco
 //     responde 409 JUGADOR_YA_INSCRIPTO.
+//   - En copa-de-invierno, Deportivo Luján está CONFIRMADA (902) con el capitán, Joaquín Gómez y Salvador
+//     Báez. Su historial (GET /inscripciones/902/reemplazos) tiene dos reemplazos del capitán: salió Lucas
+//     Fernández y entró Joaquín Gómez, y después salió Matías Rossi y entró Salvador Báez.
 //   - Jugadores (GET /usuarios?q=, mínimo 3 caracteres, solo activos): Lucas Fernández (lucas_f99),
 //     Matías Rossi (mrossi), Joaquín Gómez (joaco_g), Salvador Báez (salva_b), Sofía Martínez (sofi_m),
 //     Pablo López (pablo_l), Ana Rodríguez (ana_r), Juan Pérez (juanp), Carlos Rivas (rival_c),
@@ -92,6 +103,15 @@ interface InscripcionMock {
   reglamentoAceptadoEn: string | null;
   creadoEn: string;
   modificadoEn: string;
+}
+
+/** Un reemplazo del historial: los usuarios van por id. */
+interface ReemplazoMock {
+  inscripcionId: number;
+  saleId: number;
+  entraId: number;
+  reemplazadoEn: string;
+  realizadoPorId: number;
 }
 
 interface JugadorMock extends UsuarioPublico {
@@ -193,6 +213,13 @@ const TORNEOS: TorneoMock[] = [
     estado: 'INSCRIPCION_CERRADA',
     cierreInscripcionEn: CIERRE_PASADO,
   }),
+  torneo(8, 'copa-de-invierno', 'Copa de Invierno', {}),
+  torneo(9, 'copa-sin-lugar', 'Copa Sin Lugar', {
+    cupoMaximo: 8,
+    cupoMinimo: 4,
+    ocupadasAparte: 7,
+  }),
+  torneo(10, 'copa-cerrada', 'Copa Cerrada', { estado: 'INSCRIPCION_CERRADA' }),
 ];
 
 const jugador = (
@@ -252,7 +279,59 @@ const estadoInicial = () => ({
       creadoEn: HACE_UN_RATO,
       modificadoEn: HACE_UN_RATO,
     },
+    {
+      id: 902,
+      torneoId: 8,
+      duenioId: CAPITAN,
+      usuarioId: null,
+      equipoId: 3,
+      nomina: [CAPITAN, 103, 104],
+      estado: 'CONFIRMADA',
+      reglamentoAceptadoEn: HACE_UN_RATO,
+      creadoEn: HACE_UN_RATO,
+      modificadoEn: HACE_UN_RATO,
+    },
+    {
+      id: 903,
+      torneoId: 9,
+      duenioId: CAPITAN,
+      usuarioId: null,
+      equipoId: 1,
+      nomina: [CAPITAN, 101, 102],
+      estado: 'CONFIRMADA',
+      reglamentoAceptadoEn: HACE_UN_RATO,
+      creadoEn: HACE_UN_RATO,
+      modificadoEn: HACE_UN_RATO,
+    },
+    {
+      id: 904,
+      torneoId: 10,
+      duenioId: CAPITAN,
+      usuarioId: null,
+      equipoId: 1,
+      nomina: [CAPITAN, 101, 102],
+      estado: 'CONFIRMADA',
+      reglamentoAceptadoEn: HACE_UN_RATO,
+      creadoEn: HACE_UN_RATO,
+      modificadoEn: HACE_UN_RATO,
+    },
   ] as InscripcionMock[],
+  reemplazos: [
+    {
+      inscripcionId: 902,
+      saleId: 101,
+      entraId: 103,
+      reemplazadoEn: '2026-10-21T14:05:00Z',
+      realizadoPorId: CAPITAN,
+    },
+    {
+      inscripcionId: 902,
+      saleId: 102,
+      entraId: 104,
+      reemplazadoEn: '2026-10-22T18:30:00Z',
+      realizadoPorId: CAPITAN,
+    },
+  ] as ReemplazoMock[],
   siguienteEquipo: 100,
   siguienteInscripcion: 1000,
 });
@@ -625,6 +704,100 @@ export const crearInscripcionesHandlers = (sesion: () => SesionMock) => {
       return i
         ? HttpResponse.json(detalle(s, i))
         : noEncontrado('INSCRIPCION_NO_ENCONTRADA', 'La inscripción no existe o no es tuya');
+    }),
+
+    // El historial lo ven el capitán, los jugadores de la nómina y el organizador del torneo, del más
+    // viejo al más nuevo.
+    http.get(`${API_URL}/inscripciones/:id/reemplazos`, ({ request, params }) => {
+      const s = conSesion(request);
+      if (!s) return sinSesion();
+      const i = estado.inscripciones.find(
+        (x) =>
+          x.id === idDe(params) &&
+          (x.duenioId === s.usuario.id ||
+            x.nomina?.includes(s.usuario.id) ||
+            buscarTorneo(x.torneoId)!.organizador.id === s.usuario.id)
+      );
+      if (!i)
+        return noEncontrado('INSCRIPCION_NO_ENCONTRADA', 'La inscripción no existe o no es tuya');
+      return HttpResponse.json(
+        estado.reemplazos
+          .filter((r) => r.inscripcionId === i.id)
+          .sort((a, b) => a.reemplazadoEn.localeCompare(b.reemplazadoEn))
+          .map((r) => ({
+            sale: usuarioPublico(s, r.saleId),
+            entra: usuarioPublico(s, r.entraId),
+            reemplazadoEn: r.reemplazadoEn,
+            realizadoPor: usuarioPublico(s, r.realizadoPorId),
+          }))
+      );
+    }),
+
+    // Reemplazo: solo el capitán y solo en una CONFIRMADA de equipo. Sale uno de la nómina (nunca el
+    // capitán) y entra otro que no esté en ella ni en otra inscripción activa del torneo.
+    http.post(`${API_URL}/inscripciones/:id/reemplazos`, async ({ request, params }) => {
+      const s = conSesion(request);
+      if (!s) return sinSesion();
+      if (!puedeGestionar(s)) return sinPermiso();
+      const cuerpo = await leerCuerpo(request);
+      const sale = cuerpo?.saleUsuarioId;
+      const entra = cuerpo?.entraUsuarioId;
+      if (!Number.isInteger(sale) || !Number.isInteger(entra) || sale === entra) {
+        return validacion([
+          invalido(
+            'entraUsuarioId',
+            'INVALIDO',
+            'Hay que indicar quién sale y quién entra, y ser distintos'
+          ),
+        ]);
+      }
+      const i = propia(s, idDe(params));
+      if (i instanceof Response) return i;
+      if (!i.nomina) {
+        return conflicto('REEMPLAZO_INVALIDO', 'Una inscripción individual no tiene nómina');
+      }
+      if (i.estado !== 'CONFIRMADA') {
+        return conflicto(
+          'INSCRIPCION_NO_EDITABLE',
+          'Solo se reemplaza en una inscripción confirmada'
+        );
+      }
+      // Con el cupo completo la lista queda fija, aunque el torneo siga en INSCRIPCION_ABIERTA.
+      const t = buscarTorneo(i.torneoId)!;
+      if (!abierto(t) || cupoDisponible(t) === 0) {
+        return conflicto('INSCRIPCION_NO_ABIERTA', 'La inscripción del torneo ya cerró');
+      }
+      if (!usuarioPublico(s, entra as number)) {
+        return noEncontrado('USUARIO_NO_ENCONTRADO', 'El jugador que entra no existe');
+      }
+      if (
+        sale === i.duenioId ||
+        !i.nomina.includes(sale as number) ||
+        i.nomina.includes(entra as number)
+      ) {
+        return conflicto('REEMPLAZO_INVALIDO', 'El jugador no se puede reemplazar en esta nómina');
+      }
+      if (inscripcionActivaDe(i.torneoId, entra as number, i.id)) {
+        return conflicto(
+          'JUGADOR_YA_INSCRIPTO',
+          'El jugador ya figura en otra inscripción del torneo'
+        );
+      }
+      if (buscarJugador(entra as number)?.bloqueado) {
+        return prohibido('USUARIO_BLOQUEADO', 'El jugador que entra tiene un bloqueo vigente');
+      }
+      if (buscarJugador(entra as number)?.inactivoAlGuardar) {
+        return conflicto('USUARIO_NO_ACTIVO', 'El jugador que entra no está activo');
+      }
+      cambiar(i, { nomina: i.nomina.map((id) => (id === sale ? (entra as number) : id)) });
+      estado.reemplazos.push({
+        inscripcionId: i.id,
+        saleId: sale as number,
+        entraId: entra as number,
+        reemplazadoEn: ahora(),
+        realizadoPorId: s.usuario.id,
+      });
+      return HttpResponse.json(detalle(s, i));
     }),
 
     http.put(`${API_URL}/inscripciones/:id`, async ({ request, params }) => {

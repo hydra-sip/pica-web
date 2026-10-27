@@ -71,6 +71,10 @@ describe('paso 2: confirmar y pagar', () => {
     expect(screen.getByText(/Los Galácticos/)).toBeInTheDocument();
     expect(screen.getByText(/Torneo Apertura F5/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /inicio/i })).toHaveAttribute('href', '/');
+    expect(screen.getByRole('link', { name: 'Ver mi inscripción' })).toHaveAttribute(
+      'href',
+      `/inscripciones/${ID}`
+    );
     expect((await inscripcionApi.obtener(ID)).estado).toBe('CONFIRMADA');
   });
 
