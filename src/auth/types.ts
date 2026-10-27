@@ -22,6 +22,8 @@ export interface ProblemDetail {
   faltantes?: string[];
   /** Solo en RIFA_INCOMPLETA y TORNEO_INCOMPLETO: cuánto suman hoy los premios. */
   sumaPremios?: number;
+  /** Solo en DEMASIADOS_INTENTOS: cuánto falta para poder volver a intentar. */
+  reintentarEnSegundos?: number;
 }
 
 export interface PersonaInfo {
