@@ -71,6 +71,7 @@ const POR_CODIGO: Record<string, string> = {
   RESULTADO_NO_PENDIENTE: 'No hay un resultado para aceptar u objetar: recargá la página.',
   RESULTADO_PROPIO: 'El resultado que cargaste lo acepta u objeta el rival.',
   PLAZO_OBJECION_VENCIDO: 'Venció el plazo para objetar: el resultado ya se confirma.',
+  PARTIDO_NO_OBJETADO: 'El partido ya no está objetado: recargá la página.',
 };
 
 const POR_CODIGO_DE_CAMPO: Record<string, string> = {

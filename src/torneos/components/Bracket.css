@@ -98,3 +98,15 @@
 .bracket-semilla code {
   font-family: var(--font-mono);
 }
+
+/* En la consola, cada partido lleva a su pantalla */
+.bracket-partido-enlace {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.bracket-partido-enlace:hover,
+.bracket-partido-enlace:focus-visible {
+  border-color: var(--color-primary);
+}

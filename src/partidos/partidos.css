@@ -212,3 +212,89 @@
   margin: 0;
   overflow-wrap: anywhere;
 }
+
+/* El laudo (PICA-249): el formulario de quien resuelve y el resumen del modal */
+.partido-laudo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.partido-laudo p {
+  margin: 0;
+}
+
+.partido-opciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.partido-opciones legend {
+  margin-bottom: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.partido-opciones label,
+.partido-definitivo {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.partido-opciones input,
+.partido-definitivo input {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.partido-laudo-resumen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.partido-laudo-resumen p,
+.partido-laudo-resumen blockquote {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.partido-laudo-resumen strong {
+  white-space: nowrap;
+}
+
+.partido-laudo-resumen blockquote {
+  padding-left: var(--space-3);
+  border-left: 3px solid var(--color-border);
+  font-style: italic;
+}
+
+.partido-laudo-actas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+}
+
+@media (max-width: 480px) {
+  .partido-laudo-actas {
+    grid-template-columns: 1fr;
+  }
+
+  .partido-laudo-actas > span {
+    display: none;
+  }
+}
