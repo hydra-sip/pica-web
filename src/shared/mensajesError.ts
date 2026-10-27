@@ -18,6 +18,7 @@ const POR_CODIGO: Record<string, string> = {
   ROL_NO_ENCONTRADO: 'El rol no existe o está dado de baja.',
   PERMISO_NO_ENCONTRADO: 'Hay permisos que no existen.',
   CREDENCIALES_INVALIDAS: 'Usuario, email o contraseña incorrectos.',
+  DEMASIADOS_INTENTOS: 'Demasiados intentos fallidos. Esperá unos minutos y probá de nuevo.',
   EMAIL_NO_VERIFICADO:
     'Tiene el email sin verificar: no se lo puede pasar a Activo hasta que lo verifique.',
   USUARIO_BLOQUEADO:
@@ -104,6 +105,15 @@ export const mensajeDeError = (
   propios: Record<string, string> = {}
 ): string => {
   const problema = problemaDe(err);
+  // RNF-SEG-06: el login responde 429 con cuánto falta para poder volver a intentar
+  if (
+    problema?.codigo === 'DEMASIADOS_INTENTOS' &&
+    problema.reintentarEnSegundos &&
+    !propios[problema.codigo]
+  ) {
+    const minutos = Math.ceil(problema.reintentarEnSegundos / 60);
+    return `Demasiados intentos fallidos. Probá de nuevo en ${minutos} ${minutos === 1 ? 'minuto' : 'minutos'}.`;
+  }
   if (problema?.codigo && (propios[problema.codigo] || POR_CODIGO[problema.codigo])) {
     return propios[problema.codigo] || POR_CODIGO[problema.codigo];
   }
