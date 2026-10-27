@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   EvidenciaDetalle,
+  ObjecionComparada,
   ObjecionDetalle,
   PartidoDetalle,
   partidoApi,
@@ -10,6 +11,7 @@ import { LadoBracket } from '../../api/torneoApi';
 import { erroresPorCampo, mensajeDeError } from '../../shared/mensajesError';
 import { Badge, Button, Card } from '../../shared/ui';
 import { CamposMarcador } from '../components/CamposMarcador';
+import { ComparativoObjecion } from '../components/ComparativoObjecion';
 import { EvidenciasPartido } from '../components/EvidenciasPartido';
 import { ObjetarResultado } from '../components/ObjetarResultado';
 import { ResolverObjecion } from '../components/ResolverObjecion';
@@ -50,12 +52,14 @@ const useCuentaRegresiva = (hasta: string | null): number | null => {
  * El partido (wireframe "Carga y Objeción Resultados", PICA-243 y PICA-245). El capitán de un lado carga el
  * marcador, con evidencia opcional; el del otro ve el resultado recibido con el tiempo para objetarlo, y lo acepta o
  * lo objeta con su resultado, el motivo y evidencia. Objetado, las partes ven la objeción, y el organizador o un
- * árbitro con permiso emite el laudo (PICA-249). Los demás ven el resultado.
+ * árbitro con permiso compara las dos versiones con su evidencia y el historial (PICA-247) y emite el laudo
+ * (PICA-249). Los demás ven el resultado.
  */
 export const PartidoPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [partido, setPartido] = useState<PartidoDetalle | null>(null);
   const [evidencias, setEvidencias] = useState<EvidenciaDetalle[]>([]);
+  const [comparada, setComparada] = useState<ObjecionComparada | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<Marcador>(MARCADOR_VACIO);
   const [errores, setErrores] = useState<Record<string, string>>({});
@@ -77,6 +81,13 @@ export const PartidoPage: React.FC = () => {
           .evidencias(p.id)
           .then((e) => vigente && setEvidencias(e))
           .catch(() => vigente && setEvidencias([]));
+        // El comparativo (HU-303) lo ve quien puede laudar, también después del laudo; a los demás, 403.
+        if (p.objecion) {
+          partidoApi
+            .objecion(p.id)
+            .then((c) => vigente && setComparada(c))
+            .catch(() => vigente && setComparada(null));
+        }
       })
       .catch((err) => vigente && setError(mensajeDeError(err, 'No se pudo cargar el partido.')));
     return () => {
@@ -169,6 +180,11 @@ export const PartidoPage: React.FC = () => {
           </Badge>
         </div>
         <p className="partido-ayuda">{detalle}</p>
+        {comparada && (
+          <Link to={`/torneos/${partido.torneoId}/objeciones`} className="partido-volver">
+            Ver todas las objeciones del torneo →
+          </Link>
+        )}
       </header>
 
       {mensaje && (
@@ -278,12 +294,18 @@ export const PartidoPage: React.FC = () => {
               </div>
             )}
 
+            {comparada && <ComparativoObjecion partidoId={partido.id} comparada={comparada} />}
+
             {partido.puedoResolver && partido.objecion && (
               <ResolverObjecion
                 partido={partido}
                 evidencias={evidencias}
                 onLaudado={(p) => {
                   setPartido(p);
+                  partidoApi
+                    .objecion(p.id)
+                    .then(setComparada)
+                    .catch(() => setComparada(null));
                   setMensaje({
                     tipo: 'exito',
                     texto: 'Laudo emitido: el resultado quedó firme y la llave avanzó.',
@@ -302,12 +324,14 @@ export const PartidoPage: React.FC = () => {
               </p>
             )}
 
-            <EvidenciasPartido
-              partidoId={partido.id}
-              evidencias={evidencias}
-              puedeSubir={puedeSubir}
-              onSubida={(e) => setEvidencias([...evidencias, e])}
-            />
+            {!comparada && (
+              <EvidenciasPartido
+                partidoId={partido.id}
+                evidencias={evidencias}
+                puedeSubir={puedeSubir}
+                onSubida={(e) => setEvidencias([...evidencias, e])}
+              />
+            )}
 
             {puedeAceptar && (
               <ObjetarResultado
