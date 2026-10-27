@@ -6,6 +6,7 @@ import { TorneoDetalle } from '../types/torneo';
 import { StatusChip } from '../../admin/components/StatusChip';
 import { TorneoPremiosList } from '../components/TorneoPremiosList';
 import { BracketDelTorneo } from '../components/BracketDelTorneo';
+import { TuProximoCruce } from '../../partidos/components/TuProximoCruce';
 import { TorneoDetalleSkeleton } from '../components/TorneoSkeleton';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { fecha, fechaHora, pesos, valorInscripcion } from '../../shared/formato';
@@ -308,6 +309,8 @@ export const TorneoDetallePage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {isAuthenticated && torneo.estado === 'EN_CURSO' && <TuProximoCruce torneoId={torneo.id} />}
 
       {/* Grid de Bloques Informativos */}
       <div className="torneo-detalle-grid">

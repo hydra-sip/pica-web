@@ -18,6 +18,7 @@ const POR_CODIGO: Record<string, string> = {
   ROL_NO_ENCONTRADO: 'El rol no existe o está dado de baja.',
   PERMISO_NO_ENCONTRADO: 'Hay permisos que no existen.',
   CREDENCIALES_INVALIDAS: 'Usuario, email o contraseña incorrectos.',
+  DEMASIADOS_INTENTOS: 'Demasiados intentos fallidos. Esperá unos minutos y probá de nuevo.',
   EMAIL_NO_VERIFICADO:
     'Tiene el email sin verificar: no se lo puede pasar a Activo hasta que lo verifique.',
   USUARIO_BLOQUEADO:
@@ -65,6 +66,15 @@ const POR_CODIGO: Record<string, string> = {
   BRACKET_YA_GENERADO: 'El torneo ya tiene bracket: recargá la página.',
   SIN_ARBITROS: 'Designá al menos un árbitro en el paso 2: cada partido necesita uno.',
   BRACKET_CON_RESULTADOS: 'Ya hay resultados cargados: el bracket no se puede volver a sortear.',
+  PARTIDO_NO_ENCONTRADO: 'El partido no existe.',
+  EVIDENCIA_NO_ENCONTRADA: 'Ese archivo ya no está: recargá la página.',
+  PARTIDO_NO_EN_JUEGO: 'Este partido no está en juego: ya tiene resultado o falta el rival.',
+  PARTIDO_CERRADO: 'El partido ya está cerrado: no se le puede sumar evidencia.',
+  NO_ES_CAPITAN: 'Solo el capitán de uno de los dos lados puede hacerlo.',
+  RESULTADO_NO_PENDIENTE: 'No hay un resultado para aceptar u objetar: recargá la página.',
+  RESULTADO_PROPIO: 'El resultado que cargaste lo acepta u objeta el rival.',
+  PLAZO_OBJECION_VENCIDO: 'Venció el plazo para objetar: el resultado ya se confirma.',
+  PARTIDO_NO_OBJETADO: 'El partido ya no está objetado: recargá la página.',
 };
 
 const POR_CODIGO_DE_CAMPO: Record<string, string> = {
@@ -98,6 +108,15 @@ export const mensajeDeError = (
   propios: Record<string, string> = {}
 ): string => {
   const problema = problemaDe(err);
+  // RNF-SEG-06: el login responde 429 con cuánto falta para poder volver a intentar
+  if (
+    problema?.codigo === 'DEMASIADOS_INTENTOS' &&
+    problema.reintentarEnSegundos &&
+    !propios[problema.codigo]
+  ) {
+    const minutos = Math.ceil(problema.reintentarEnSegundos / 60);
+    return `Demasiados intentos fallidos. Probá de nuevo en ${minutos} ${minutos === 1 ? 'minuto' : 'minutos'}.`;
+  }
   if (problema?.codigo && (propios[problema.codigo] || POR_CODIGO[problema.codigo])) {
     return propios[problema.codigo] || POR_CODIGO[problema.codigo];
   }
