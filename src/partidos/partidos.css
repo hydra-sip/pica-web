@@ -406,3 +406,32 @@
     display: none;
   }
 }
+
+/* La sala de check-in (HU-308): la ventana, la cuenta regresiva y cada lado */
+.partido-checkin {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.partido-checkin p {
+  margin: 0;
+}
+
+.partido-checkin-lados {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-2) 0;
+  padding: 0;
+  list-style: none;
+}
+
+.partido-checkin-lados li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+  overflow-wrap: anywhere;
+}

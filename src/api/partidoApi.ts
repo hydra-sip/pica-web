@@ -163,6 +163,27 @@ export interface ObjecionComparada {
   historial: EventoPartido[];
 }
 
+export type EstadoVentana = 'SIN_VENTANA' | 'ANTES' | 'ABIERTA' | 'CERRADA';
+
+/** Un lado del partido y cuándo confirmó su presencia. */
+export interface LadoCheckin {
+  nombre: string;
+  checkinEn: string | null;
+}
+
+/** GET y POST /partidos/{id}/checkin (HU-308): la ventana y el check-in de cada lado. */
+export interface CheckinPartido {
+  /** Sin la tolerancia; null si el torneo no la configuró o el partido no tiene fecha. */
+  ventana: { abreEn: string; cierraEn: string } | null;
+  /** Con la tolerancia de 2 minutos en cada extremo. */
+  estadoVentana: EstadoVentana;
+  local: LadoCheckin | null;
+  /** Null hasta que se sabe quién juega. */
+  visitante: LadoCheckin | null;
+  /** El lado del que es capitán quien consulta. */
+  miLado: Lado | null;
+}
+
 export const partidoApi = {
   obtener: async (id: number): Promise<PartidoDetalle> => {
     return httpClient.get<PartidoDetalle>(`/partidos/${id}`);
@@ -180,6 +201,15 @@ export const partidoApi = {
   /** El organizador le pone fecha y hora mientras está PROGRAMADO (HU-308); a los demás, 404. */
   programar: async (id: number, fechaProgramada: string): Promise<PartidoDetalle> => {
     return httpClient.put<PartidoDetalle>(`/partidos/${id}/programacion`, { fechaProgramada });
+  },
+
+  checkin: async (id: number): Promise<CheckinPartido> => {
+    return httpClient.get<CheckinPartido>(`/partidos/${id}/checkin`);
+  },
+
+  /** El capitán confirma la presencia de su lado; repetirlo no cambia la hora. */
+  hacerCheckin: async (id: number): Promise<CheckinPartido> => {
+    return httpClient.post<CheckinPartido>(`/partidos/${id}/checkin`);
   },
 
   cargarResultado: async (id: number, payload: ResultadoPayload): Promise<PartidoDetalle> => {

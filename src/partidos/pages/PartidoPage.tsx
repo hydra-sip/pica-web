@@ -15,6 +15,7 @@ import { ComparativoObjecion } from '../components/ComparativoObjecion';
 import { EvidenciasPartido } from '../components/EvidenciasPartido';
 import { ObjetarResultado } from '../components/ObjetarResultado';
 import { ResolverObjecion } from '../components/ResolverObjecion';
+import { SalaCheckin } from '../components/SalaCheckin';
 import { abreviarHash } from '../../torneos/formato';
 import { formatFecha } from '../../torneos/utils/formatters';
 import {
@@ -53,7 +54,7 @@ const useCuentaRegresiva = (hasta: string | null): number | null => {
  * marcador, con evidencia opcional; el del otro ve el resultado recibido con el tiempo para objetarlo, y lo acepta o
  * lo objeta con su resultado, el motivo y evidencia. Objetado, las partes ven la objeción, y el organizador o un
  * árbitro con permiso compara las dos versiones con su evidencia y el historial (PICA-247) y emite el laudo
- * (PICA-249). Los demás ven el resultado.
+ * (PICA-249). Los demás ven el resultado. Antes de jugar, la sala de check-in (HU-308).
  */
 export const PartidoPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -194,6 +195,14 @@ export const PartidoPage: React.FC = () => {
         >
           {mensaje.texto}
         </div>
+      )}
+
+      {EN_JUEGO.includes(partido.estado) && (
+        <SalaCheckin
+          partidoId={partido.id}
+          // el check-in cambia el estado del partido: CHECK_IN con el primero, EN_JUEGO con los dos
+          onConfirmado={() => void partidoApi.obtener(partido.id).then(setPartido)}
+        />
       )}
 
       <Card>
