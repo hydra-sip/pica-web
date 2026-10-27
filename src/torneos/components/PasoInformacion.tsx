@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
-import { DisciplinaOpcion, OpcionesTorneo } from '../../api/torneoApi';
+import {
+  CampoTorneo,
+  DisciplinaOpcion,
+  OpcionesTorneo,
+  TorneoInformacion,
+} from '../../api/torneoApi';
 import { Button, Field, Input, Textarea } from '../../shared/ui';
 import { ErroresTorneo, FormTorneo, MAX_REGLAMENTO } from '../validacion';
+import { ReglamentoPdf } from './ReglamentoPdf';
 
 interface PasoInformacionProps {
   form: FormTorneo;
@@ -9,9 +15,14 @@ interface PasoInformacionProps {
   errores: ErroresTorneo;
   /** false en solo lectura o mientras se guarda. */
   habilitado: boolean;
+  /** Los que ya no se pueden cambiar en un torneo publicado (HU-202). */
+  bloqueados?: CampoTorneo[];
   opciones: OpcionesTorneo;
   /** Canchas que ya existen en la sede escrita. */
   sugerenciasCanchas: string[];
+  /** Null hasta guardar el primer borrador; hace falta para subir el PDF. */
+  torneo: TorneoInformacion | null;
+  onTorneo: (torneo: TorneoInformacion) => void;
 }
 
 const igual = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
@@ -63,9 +74,13 @@ export const PasoInformacion: React.FC<PasoInformacionProps> = ({
   onCambio,
   errores,
   habilitado,
+  bloqueados = [],
   opciones,
   sugerenciasCanchas,
+  torneo,
+  onTorneo,
 }) => {
+  const puede = (campo: CampoTorneo) => habilitado && !bloqueados.includes(campo);
   const sugerida = opciones.disciplinas.find((d) => igual(d.nombre, form.disciplina));
   const [otroElegido, setOtroElegido] = useState(false);
   const otro = otroElegido || (form.disciplina.trim() !== '' && !sugerida);
@@ -108,7 +123,7 @@ export const PasoInformacion: React.FC<PasoInformacionProps> = ({
         <Input
           value={form.nombre}
           onChange={texto('nombre')}
-          disabled={!habilitado}
+          disabled={!puede('nombre')}
           maxLength={100}
           placeholder="Torneo Apertura F5 2026"
         />
@@ -120,7 +135,7 @@ export const PasoInformacion: React.FC<PasoInformacionProps> = ({
             key={d.nombre}
             elegida={!otro && sugerida?.nombre === d.nombre}
             onElegir={() => elegirDisciplina(d)}
-            disabled={!habilitado}
+            disabled={!puede('disciplina')}
             titulo={d.nombre}
             detalle={d.reglas}
           />
@@ -128,7 +143,7 @@ export const PasoInformacion: React.FC<PasoInformacionProps> = ({
         <Opcion
           elegida={otro}
           onElegir={elegirOtro}
-          disabled={!habilitado}
+          disabled={!puede('disciplina')}
           titulo="Otro"
           detalle="Cualquier deporte o juego"
         />
@@ -138,7 +153,7 @@ export const PasoInformacion: React.FC<PasoInformacionProps> = ({
           <Input
             value={form.disciplina}
             onChange={texto('disciplina')}
-            disabled={!habilitado}
+            disabled={!puede('disciplina')}
             maxLength={50}
             placeholder="Truco, Hockey, Counter-Strike..."
           />
@@ -151,7 +166,7 @@ export const PasoInformacion: React.FC<PasoInformacionProps> = ({
             key={f.codigo}
             elegida={f.disponible}
             onElegir={() => undefined}
-            disabled={!habilitado || !f.disponible}
+            disabled={!puede('formato') || !f.disponible}
             titulo={f.nombre}
             detalle={f.disponible ? undefined : 'Próximamente'}
           />
@@ -163,13 +178,13 @@ export const PasoInformacion: React.FC<PasoInformacionProps> = ({
           <Opcion
             elegida={form.modalidad === 'PRESENCIAL'}
             onElegir={() => onCambio({ modalidad: 'PRESENCIAL' })}
-            disabled={!habilitado}
+            disabled={!puede('modalidad')}
             titulo="Presencial"
           />
           <Opcion
             elegida={form.modalidad === 'ONLINE'}
             onElegir={() => onCambio({ modalidad: 'ONLINE' })}
-            disabled={!habilitado}
+            disabled={!puede('modalidad')}
             titulo="Online"
           />
         </Grupo>
@@ -177,13 +192,13 @@ export const PasoInformacion: React.FC<PasoInformacionProps> = ({
           <Opcion
             elegida={form.tipoParticipante === 'INDIVIDUAL'}
             onElegir={() => onCambio({ tipoParticipante: 'INDIVIDUAL' })}
-            disabled={!habilitado}
+            disabled={!puede('tipoParticipante')}
             titulo="Jugadores"
           />
           <Opcion
             elegida={form.tipoParticipante === 'EQUIPO'}
             onElegir={() => onCambio({ tipoParticipante: 'EQUIPO' })}
-            disabled={!habilitado}
+            disabled={!puede('tipoParticipante')}
             titulo="Equipos"
           />
         </Grupo>
@@ -199,7 +214,7 @@ export const PasoInformacion: React.FC<PasoInformacionProps> = ({
             <Input
               value={form.sede}
               onChange={texto('sede')}
-              disabled={!habilitado}
+              disabled={!puede('sede')}
               maxLength={255}
               placeholder="Club Mercedes — Av. 29 N° 850, Mercedes"
             />
@@ -207,7 +222,7 @@ export const PasoInformacion: React.FC<PasoInformacionProps> = ({
           <Field
             label="Canchas habilitadas"
             hint={
-              habilitado
+              puede('canchas')
                 ? 'Escribí el nombre y apretá Enter. Podés dejarlas para después.'
                 : undefined
             }
@@ -218,7 +233,7 @@ export const PasoInformacion: React.FC<PasoInformacionProps> = ({
                   {form.canchas.map((c) => (
                     <span key={c} className="torneos-cancha">
                       {c}
-                      {habilitado && (
+                      {puede('canchas') && (
                         <button
                           type="button"
                           aria-label={`Quitar ${c}`}
@@ -231,7 +246,7 @@ export const PasoInformacion: React.FC<PasoInformacionProps> = ({
                   ))}
                 </div>
               )}
-              {habilitado && (
+              {puede('canchas') && (
                 <div className="torneos-cancha-nueva">
                   <Input
                     value={nuevaCancha}
@@ -272,7 +287,7 @@ export const PasoInformacion: React.FC<PasoInformacionProps> = ({
             type="datetime-local"
             value={form.fechaInicio}
             onChange={texto('fechaInicio')}
-            disabled={!habilitado}
+            disabled={!puede('fechaInicio')}
           />
         </Field>
         <Field label="Fecha estimada de fin" error={errores.fechaFin}>
@@ -280,7 +295,7 @@ export const PasoInformacion: React.FC<PasoInformacionProps> = ({
             type="datetime-local"
             value={form.fechaFin}
             onChange={texto('fechaFin')}
-            disabled={!habilitado}
+            disabled={!puede('fechaFin')}
           />
         </Field>
         <Field label="Fecha límite de inscripción" required error={errores.cierreInscripcionEn}>
@@ -288,7 +303,7 @@ export const PasoInformacion: React.FC<PasoInformacionProps> = ({
             type="datetime-local"
             value={form.cierreInscripcionEn}
             onChange={texto('cierreInscripcionEn')}
-            disabled={!habilitado}
+            disabled={!puede('cierreInscripcionEn')}
           />
         </Field>
       </div>
@@ -296,7 +311,7 @@ export const PasoInformacion: React.FC<PasoInformacionProps> = ({
       <div className="torneos-grilla">
         <Field
           label="Reglamento y pautas operativas (lo ven los inscriptos)"
-          required
+          required={!torneo?.reglamentoUrl}
           error={errores.reglamentoTexto}
         >
           <div>
@@ -304,7 +319,7 @@ export const PasoInformacion: React.FC<PasoInformacionProps> = ({
               rows={7}
               value={form.reglamentoTexto}
               onChange={texto('reglamentoTexto')}
-              disabled={!habilitado}
+              disabled={!puede('reglamentoTexto')}
               maxLength={MAX_REGLAMENTO}
               placeholder={
                 '1. Partidos de dos tiempos de 20 minutos.\n2. Tolerancia máxima de espera: 15 minutos.'
@@ -315,11 +330,7 @@ export const PasoInformacion: React.FC<PasoInformacionProps> = ({
             </span>
           </div>
         </Field>
-        <div className="torneos-anexo">
-          <strong>Anexo en PDF</strong>
-          Próximamente vas a poder adjuntar el reglamento en PDF. Mientras tanto, alcanza con el
-          texto.
-        </div>
+        <ReglamentoPdf torneo={torneo} habilitado={puede('reglamentoTexto')} onTorneo={onTorneo} />
       </div>
     </>
   );

@@ -1,4 +1,5 @@
 import React from 'react';
+import { CampoTorneo } from '../../api/torneoApi';
 import { Field, Input } from '../../shared/ui';
 import { participantes } from '../formato';
 import { ErroresTorneo, FormTorneo } from '../validacion';
@@ -8,6 +9,8 @@ interface PasoCuposProps {
   onCambio: (cambios: Partial<FormTorneo>) => void;
   errores: ErroresTorneo;
   habilitado: boolean;
+  /** Los que ya no se pueden cambiar en un torneo publicado (HU-202). */
+  bloqueados?: CampoTorneo[];
   /** Máximo de participantes que admite la plataforma (GET /torneos/opciones). */
   cupoTope: number;
 }
@@ -19,15 +22,17 @@ const minimoSugerido = (cupo: number): number => Math.max(2, Math.ceil(cupo * 0.
 
 /**
  * Paso 2, "Cupos" (wireframe "Wizard Creacion de Torneo - Paso 2"): cupo máximo, mínimo para iniciar y,
- * si se inscriben equipos, titulares y nómina máxima. Los árbitros del wireframe esperan su módulo.
+ * si se inscriben equipos, titulares y nómina máxima. Los árbitros van aparte, en ArbitrosTorneo.
  */
 export const PasoCupos: React.FC<PasoCuposProps> = ({
   form,
   onCambio,
   errores,
   habilitado,
+  bloqueados = [],
   cupoTope,
 }) => {
+  const puede = (campo: CampoTorneo) => habilitado && !bloqueados.includes(campo);
   const quienes = participantes(form.tipoParticipante);
   const cupo = Number(form.cupoMaximo);
   const sugerido = Number.isInteger(cupo) && cupo >= 2 ? minimoSugerido(cupo) : null;
@@ -52,7 +57,7 @@ export const PasoCupos: React.FC<PasoCuposProps> = ({
               type="button"
               className="torneos-opcion"
               aria-pressed={form.cupoMaximo === String(c)}
-              disabled={!habilitado}
+              disabled={!puede('cupoMaximo')}
               onClick={() => elegirCupo(c)}
             >
               <span className="torneos-opcion-titulo">{c}</span>
@@ -71,7 +76,7 @@ export const PasoCupos: React.FC<PasoCuposProps> = ({
             step={1}
             value={form.cupoMaximo}
             onChange={numero('cupoMaximo')}
-            disabled={!habilitado}
+            disabled={!puede('cupoMaximo')}
           />
         </Field>
         <Field
@@ -90,7 +95,7 @@ export const PasoCupos: React.FC<PasoCuposProps> = ({
             step={1}
             value={form.cupoMinimo}
             onChange={numero('cupoMinimo')}
-            disabled={!habilitado}
+            disabled={!puede('cupoMinimo')}
           />
         </Field>
       </div>
@@ -109,7 +114,7 @@ export const PasoCupos: React.FC<PasoCuposProps> = ({
               step={1}
               value={form.tamanioEquipo}
               onChange={numero('tamanioEquipo')}
-              disabled={!habilitado}
+              disabled={!puede('tamanioEquipo')}
             />
           </Field>
           <Field
@@ -124,7 +129,7 @@ export const PasoCupos: React.FC<PasoCuposProps> = ({
               step={1}
               value={form.nominaMaxima}
               onChange={numero('nominaMaxima')}
-              disabled={!habilitado}
+              disabled={!puede('nominaMaxima')}
             />
           </Field>
         </div>

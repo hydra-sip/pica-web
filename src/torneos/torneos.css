@@ -321,8 +321,12 @@
   color: var(--color-text-muted);
 }
 
-/* Recuadro del PDF del reglamento, que todavía no se puede subir */
+/* Recuadro del PDF del reglamento */
 .torneos-anexo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-self: start;
   padding: var(--space-4);
   border: 1px dashed var(--color-border-strong);
   border-radius: var(--radius-md);
@@ -332,9 +336,22 @@
 }
 
 .torneos-anexo strong {
-  display: block;
-  margin-bottom: var(--space-1);
   color: var(--color-text);
+}
+
+.torneos-anexo-archivo {
+  overflow-wrap: anywhere;
+  color: var(--color-text);
+}
+
+.torneos-anexo-hash code {
+  font-size: var(--text-xs);
+}
+
+.torneos-anexo-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
 /* Pie del asistente: "Paso 1 de 3" a la izquierda y los botones a la derecha */
@@ -358,4 +375,392 @@
   flex-wrap: wrap;
   gap: var(--space-3);
   margin-left: auto;
+}
+
+/* --- Paso 3: esquema económico ---------------------------------------------- */
+
+.torneos-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.torneos-seccion > .btn {
+  align-self: flex-start;
+}
+
+.torneos-seccion h3 {
+  margin: 0;
+  font-size: var(--text-md);
+}
+
+.torneos-subtitulo-seccion {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+}
+
+.torneos-dato {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+}
+
+.torneos-dato span,
+.torneos-dato small {
+  color: var(--color-text-secondary);
+}
+
+.torneos-cuentas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+}
+
+.torneos-linea {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.torneos-linea.destacada {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--text-md);
+}
+
+.torneos-linea.destacada strong {
+  color: var(--color-primary);
+}
+
+.torneos-suma {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.torneos-suma.ok {
+  color: var(--color-success);
+}
+
+.torneos-suma.pendiente {
+  color: var(--color-warning);
+}
+
+/* Gastos: descripción, monto y acciones en una fila; en el celular, uno abajo del otro */
+.torneos-gastos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.torneos-gasto {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 160px) auto;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.torneos-gasto > strong {
+  text-align: right;
+}
+
+.torneos-gasto-acciones {
+  display: flex;
+  gap: var(--space-1);
+  justify-content: flex-end;
+}
+
+.torneos-gasto-nuevo {
+  padding-top: var(--space-2);
+  border-top: 1px dashed var(--color-border);
+}
+
+/* Designación de árbitros, en el paso 2 */
+.torneos-arbitros {
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--color-border);
+  border-bottom: none;
+}
+
+.torneos-arbitros-titulo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.torneos-arbitros-ayuda {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.torneos-arbitros-lista {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.torneos-arbitro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.torneos-arbitro + .torneos-arbitro {
+  border-top: 1px solid var(--color-border);
+}
+
+.torneos-arbitro-opcion {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.torneos-arbitro-nombre {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.torneos-arbitro-nombre span,
+.torneos-arbitro-permisos {
+  color: var(--color-text-secondary);
+}
+
+.torneos-arbitros-buscar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.torneos-arbitros-permisos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-size: var(--text-sm);
+}
+
+.torneos-arbitros-permisos legend {
+  margin-bottom: var(--space-2);
+  font-weight: 600;
+}
+
+.torneos-arbitros-permisos label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .torneos-arbitro {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  /* el nombre y Quitar arriba; los permisos y el estado debajo, a todo el ancho */
+  .torneos-arbitro-permisos {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .torneos-arbitro > .badge {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    justify-self: start;
+  }
+}
+
+.torneos-premios {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.torneos-premio {
+  display: grid;
+  grid-template-columns: 7rem 7rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.torneos-premio-puesto {
+  font-weight: 600;
+}
+
+.torneos-premio-monto {
+  color: var(--color-text-secondary);
+}
+
+.torneos-terminos {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.torneos-terminos input {
+  margin-top: 3px;
+}
+
+.torneos-faltantes {
+  margin: var(--space-2) 0 0;
+  padding-left: var(--space-5);
+}
+
+.torneos-ir-paso {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (max-width: 560px) {
+  .torneos-gasto {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .torneos-gasto > strong {
+    text-align: left;
+  }
+
+  .torneos-gasto-acciones {
+    justify-content: flex-start;
+  }
+
+  .torneos-premio {
+    grid-template-columns: 6rem minmax(0, 1fr) auto;
+  }
+
+  .torneos-premio-monto {
+    grid-column: 1 / -1;
+  }
+}
+
+/* --- Torneo publicado --------------------------------------------------------- */
+
+.torneo-publicado {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  text-align: center;
+}
+
+.torneo-publicado-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto;
+  border-radius: var(--radius-full);
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
+  font-size: var(--text-2xl);
+}
+
+.torneo-publicado h2 {
+  margin: 0;
+  font-size: var(--text-xl);
+}
+
+.torneo-publicado-datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+  text-align: left;
+}
+
+.torneo-publicado-sello {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+  text-align: left;
+  font-size: var(--text-sm);
+}
+
+.torneo-publicado-sello code {
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+.torneo-publicado-enlace {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+  text-align: left;
+}
+
+.torneo-publicado-enlace .input {
+  flex: 1 1 240px;
+  min-width: 0;
+}
+
+.torneo-publicado-etiqueta {
+  margin: 0 0 var(--space-2);
+  text-align: left;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.torneo-publicado-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+/* "Editar" al lado de "Ver torneo" en Mis torneos (PICA-207) */
+.torneos-accion-editar {
+  margin-right: 8px;
+}
+
+/* Consola del torneo (PICA-217): el estado de la inscripción y el botón del sorteo */
+.torneos-consola-aviso {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.torneos-consola-aviso p {
+  margin: var(--space-1) 0 0;
 }

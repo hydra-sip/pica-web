@@ -5,6 +5,8 @@ import { ApiError } from '../../api/httpClient';
 import { TorneoDetalle } from '../types/torneo';
 import { StatusChip } from '../../admin/components/StatusChip';
 import { TorneoPremiosList } from '../components/TorneoPremiosList';
+import { BracketDelTorneo } from '../components/BracketDelTorneo';
+import { TuProximoCruce } from '../../partidos/components/TuProximoCruce';
 import { TorneoDetalleSkeleton } from '../components/TorneoSkeleton';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { fecha, fechaHora, pesos, valorInscripcion } from '../../shared/formato';
@@ -307,6 +309,8 @@ export const TorneoDetallePage: React.FC = () => {
         </div>
       </div>
 
+      {isAuthenticated && torneo.estado === 'EN_CURSO' && <TuProximoCruce torneoId={torneo.id} />}
+
       {/* Grid de Bloques Informativos */}
       <div className="torneo-detalle-grid">
         {/* Bloque 1: Cupos & Participación */}
@@ -438,7 +442,7 @@ export const TorneoDetallePage: React.FC = () => {
             play aprobadas para esta competencia.
           </p>
 
-          {torneo.reglamentoUrl ? (
+          {torneo.reglamentoUrl || torneo.reglamentoTexto ? (
             <div
               style={{
                 display: 'flex',
@@ -447,15 +451,37 @@ export const TorneoDetallePage: React.FC = () => {
                 marginTop: 'auto',
               }}
             >
-              <a
-                href={torneo.reglamentoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-secondary"
-                style={{ width: '100%', gap: '0.5rem' }}
-              >
-                📄 Descargar / Ver Reglamento (PDF) ↗
-              </a>
+              {/* El reglamento escrito en el asistente; el PDF es opcional */}
+              {torneo.reglamentoTexto && (
+                <div
+                  style={{
+                    whiteSpace: 'pre-wrap',
+                    maxHeight: '240px',
+                    overflowY: 'auto',
+                    backgroundColor: 'var(--color-surface)',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: 'var(--radius-sm)',
+                    padding: 'var(--space-3)',
+                    fontSize: 'var(--text-sm)',
+                    color: 'var(--color-text)',
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {torneo.reglamentoTexto}
+                </div>
+              )}
+
+              {torneo.reglamentoUrl && (
+                <a
+                  href={torneo.reglamentoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-secondary"
+                  style={{ width: '100%', gap: '0.5rem' }}
+                >
+                  📄 Descargar / Ver Reglamento (PDF) ↗
+                </a>
+              )}
 
               {torneo.reglamentoHash && (
                 <div
@@ -468,7 +494,7 @@ export const TorneoDetallePage: React.FC = () => {
                     borderRadius: 'var(--radius-sm)',
                     wordBreak: 'break-all',
                   }}
-                  title="Hash SHA-256 de integridad del documento"
+                  title="Hash SHA-256 del reglamento, sellado al publicar"
                 >
                   <strong style={{ color: 'var(--color-text)' }}>SHA-256: </strong>
                   {torneo.reglamentoHash}
@@ -522,9 +548,12 @@ export const TorneoDetallePage: React.FC = () => {
           pozoEstimado={torneo.pozoEstimado}
           pctPozoCompetidores={torneo.pctPozoCompetidores}
           pctPremioRifa={torneo.pctPremioRifa}
+          premioRifaEstimado={torneo.premioRifaEstimado}
           moneda={torneo.moneda}
         />
       </div>
+
+      {torneo.estado !== 'INSCRIPCION_ABIERTA' && <BracketDelTorneo torneoId={torneo.id} />}
     </div>
   );
 };
