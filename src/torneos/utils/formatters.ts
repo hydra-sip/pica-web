@@ -60,8 +60,9 @@ export const formatModalidad = (modalidad: string): string => {
   switch (modalidad) {
     case 'PRESENCIAL':
       return 'Presencial';
+    case 'ONLINE':
     case 'VIRTUAL':
-      return 'Virtual / Online';
+      return 'Online';
     case 'HIBRIDA':
       return 'Híbrida';
     default:

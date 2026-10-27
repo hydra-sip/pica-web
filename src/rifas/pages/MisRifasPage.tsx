@@ -142,7 +142,8 @@ export const MisRifasPage: React.FC = () => {
                   <td>
                     <span className="rifas-titulo-fila">{rifa.titulo}</span>
                     <span className="rifas-celda-secundaria">
-                      Sin torneo · creada el {fechaHora(rifa.creadoEn)}
+                      {rifa.torneoNombre ? `Torneo ${rifa.torneoNombre}` : 'Sin torneo'} · creada el{' '}
+                      {fechaHora(rifa.creadoEn)}
                     </span>
                   </td>
                   <td>

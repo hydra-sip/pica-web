@@ -18,6 +18,8 @@ import {
   IconoRifas,
   IconoCandado,
   IconoCruz,
+  IconoDocumento,
+  IconoTrofeo,
 } from '../../shared/ui/Iconos';
 
 interface ModuloPermisos {
@@ -32,6 +34,8 @@ const MODULO_UI: Record<ModuloPermisosApi['modulo'], { modulo: string; icono: Re
   ROLES: { modulo: 'Módulo Roles y Seguridad', icono: <IconoEscudo size={18} /> },
   PERSONAS: { modulo: 'Módulo Personas y Padrón', icono: <IconoPersonas size={18} /> },
   RIFAS: { modulo: 'Módulo Rifas', icono: <IconoRifas size={18} /> },
+  INSCRIPCIONES: { modulo: 'Módulo Inscripciones', icono: <IconoDocumento size={18} /> },
+  TORNEOS: { modulo: 'Módulo Torneos', icono: <IconoTrofeo size={18} /> },
 };
 
 const aModulosUi = (catalogo: ModuloPermisosApi[]): ModuloPermisos[] =>

@@ -1,43 +1,57 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@600;700;800&family=JetBrains+Mono:wght@500;600&display=swap');
 
+/*
+ * Tema de PICA, sacado del UI kit del Figma "Hydra" (página "Info, UI Kit & Navegación"): claro,
+ * con Inter. El Figma es un wireframe en grises: la marca sale del ícono (la pica azul sobre negro)
+ * y los colores de estado (--color-success/warning/danger/info) son nuestros. Todo pasa AA.
+ * Los componentes base (src/shared/ui) usan estos tokens; las pantallas no deberían escribir
+ * colores a mano.
+ */
 :root {
-  --font-primary: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-primary: 'Inter', system-ui, -apple-system, sans-serif;
   --font-heading: 'Outfit', 'Inter', var(--font-primary);
   --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
-  /* =========================================================================
-     PICA COLOR SYSTEM - Plataforma Integral de Competencia Amateur
-     Competitive Sports, High Stakes, Fluid Performance & Cryptographic Security
-     ========================================================================= */
+  /* Marca: el azul de la pica y el fondo del ícono */
+  --color-brand: #1b4468;
+  --color-brand-dark: #102a43;
+  --color-brand-light: #2f6496;
+  --color-brand-soft: #e8eef5;
+  --color-ink: #0b1724;
 
-  /* Neutral Surfaces - Clean Obsidian & Premium Slate */
-  --bg-app: #f8fafc; /* Slate 50 with crisp clarity */
+  /* Neutros, apenas azulados para que combinen con la marca */
+  --color-bg: #ffffff;
+  --color-surface: #f3f6f9;
+  --color-card: #ffffff;
+  --color-border: #dbe2ea;
+  --color-border-strong: #66788a;
+  --color-text: #0f1d2b;
+  --color-text-secondary: #5b6b7c;
+  --color-text-muted: #8796a6;
+  --color-primary: var(--color-brand);
+  --color-primary-hover: var(--color-brand-dark);
+  --color-on-primary: #ffffff;
+  --color-input-bg: #ffffff;
+  --color-disabled-bg: #f3f6f9;
+  --color-disabled-text: #8796a6;
+  --color-overlay: rgba(11, 23, 36, 0.5);
+  --color-focus: var(--color-brand-light);
+
+  /* Tokens deportivos y de alto impacto para catálogo y fichas públicas */
+  --bg-app: #f8fafc;
   --bg-surface: #ffffff;
-  --bg-subtle: #f1f5f9; /* Slate 100 */
-  --bg-muted: #e2e8f0;  /* Slate 200 */
-  --bg-nav: rgba(255, 255, 255, 0.95);
-  --bg-nav-dark: #0b0f19;
-
-  /* Typography Colors - High contrast for outdoor daylight readability */
-  --text-primary: #0f172a;   /* Slate 900 */
-  --text-secondary: #334155; /* Slate 700 - optimized contrast */
-  --text-muted: #64748b;     /* Slate 500 - legible in direct sunlight */
-  --text-on-dark: #ffffff;
-  --text-on-dark-muted: #94a3b8;
-
-  /* Brand Signature: Obsidian Carbon */
+  --bg-subtle: #f1f5f9;
+  --bg-muted: #e2e8f0;
   --brand-black: #0f172a;
   --brand-black-hover: #1e293b;
   --brand-charcoal: #1e293b;
 
-  /* Cyber Jade / Electric Emerald - Live Competitions, Success & Active Escrow */
   --color-emerald: #10b981;
   --color-emerald-glow: rgba(16, 185, 129, 0.25);
   --color-emerald-dark: #047857;
   --color-emerald-light: #ecfdf5;
   --color-emerald-border: #a7f3d0;
 
-  /* Trophy Gold / Pozo de Premios - High Stakes, Cash Rewards & Podiums */
   --color-gold: #f59e0b;
   --color-gold-glow: rgba(245, 158, 11, 0.28);
   --color-gold-dark: #b45309;
@@ -45,34 +59,14 @@
   --color-gold-border: #fde68a;
   --color-gold-gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
 
-  /* Tech Indigo - Cryptographic SHA-256 Audit & Administrative Security */
   --color-indigo: #6366f1;
   --color-indigo-dark: #4338ca;
   --color-indigo-light: #eef2ff;
   --color-indigo-border: #c7d2fe;
 
-  /* Coral Crimson - Alertas, Bloqueos y Penalizaciones */
   --color-crimson: #ef4444;
   --color-crimson-light: #fef2f2;
   --color-crimson-border: #fecaca;
-
-  /* Compatibility Tokens for UI Kit */
-  --color-bg: #ffffff;
-  --color-surface: #f8fafc;
-  --color-card: #ffffff;
-  --color-border: #e2e8f0;
-  --color-border-strong: #94a3b8;
-  --color-text: #0f172a;
-  --color-text-secondary: #475569;
-  --color-text-muted: #94a3b8;
-  --color-primary: #0f172a;
-  --color-primary-hover: #1e293b;
-  --color-on-primary: #ffffff;
-  --color-input-bg: #ffffff;
-  --color-disabled-bg: #f1f5f9;
-  --color-disabled-text: #94a3b8;
-  --color-overlay: rgba(15, 23, 42, 0.65);
-  --color-focus: #0f172a;
 
   /* Estados Funcionales */
   --color-success: #10b981;

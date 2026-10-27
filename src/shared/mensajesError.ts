@@ -18,6 +18,7 @@ const POR_CODIGO: Record<string, string> = {
   ROL_NO_ENCONTRADO: 'El rol no existe o está dado de baja.',
   PERMISO_NO_ENCONTRADO: 'Hay permisos que no existen.',
   CREDENCIALES_INVALIDAS: 'Usuario, email o contraseña incorrectos.',
+  DEMASIADOS_INTENTOS: 'Demasiados intentos fallidos. Esperá unos minutos y probá de nuevo.',
   EMAIL_NO_VERIFICADO:
     'Tiene el email sin verificar: no se lo puede pasar a Activo hasta que lo verifique.',
   USUARIO_BLOQUEADO:
@@ -35,7 +36,8 @@ const POR_CODIGO: Record<string, string> = {
   DOCUMENTO_NO_EDITABLE: 'El documento no se puede cambiar una vez cargado.',
   ROL_INACTIVO: 'El rol está inactivo.',
   USUARIO_NO_ACTIVO: 'Solo se le pueden cambiar los roles a un usuario activo.',
-  USUARIO_YA_BLOQUEADO: 'El usuario ya está bloqueado. Para cambiar el motivo o la duración, levantá el bloqueo y volvé a bloquearlo.',
+  USUARIO_YA_BLOQUEADO:
+    'El usuario ya está bloqueado. Para cambiar el motivo o la duración, levantá el bloqueo y volvé a bloquearlo.',
   USUARIO_PROTEGIDO: 'El usuario Admin del sistema no se puede modificar.',
   ROL_PROTEGIDO: 'Ese cambio no está permitido en este rol del sistema.',
   ULTIMO_ASIGNADOR: 'No podés quitarte tu último rol que permite asignar roles.',
@@ -43,6 +45,52 @@ const POR_CODIGO: Record<string, string> = {
     'No podés darte de baja, bloquearte ni resetear tu contraseña desde acá. Tu contraseña se cambia en Mi perfil.',
   RIFA_NO_ENCONTRADA: 'La rifa no existe o no es tuya.',
   RIFA_NO_EDITABLE: 'La rifa ya no está en borrador: no se puede modificar.',
+  RIFA_INCOMPLETA: 'A la rifa le falta completar datos para publicarse.',
+  TORNEO_CON_RIFA: 'Ese torneo ya tiene una rifa.',
+  TORNEO_NO_ADMITE_RIFA: 'Ese torneo ya empezó o terminó: no se le puede asociar una rifa.',
+  TORNEO_NO_EDITABLE: 'El torneo ya no se puede modificar desde acá.',
+  CAMPOS_BLOQUEADOS:
+    'Algunos datos ya no se pueden cambiar porque hay inscripciones pagas: recargá la página.',
+  TORNEO_INCOMPLETO: 'Al torneo le falta completar datos para publicarse.',
+  GASTO_NO_ENCONTRADO: 'Ese gasto ya no existe: recargá la página.',
+  REGLAMENTO_NO_ENCONTRADO: 'El torneo no tiene el reglamento en PDF.',
+  ARBITRO_NO_ENCONTRADO: 'Ese árbitro ya no está en el torneo: recargá la página.',
+  USUARIO_NO_ES_ARBITRO: 'Ese usuario no es un árbitro activo.',
+  ARBITRO_DUPLICADO: 'Ese árbitro ya está designado en el torneo.',
+  ARBITRO_NO_PERMITIDO: 'No puede arbitrar este torneo: es el organizador o está inscripto.',
+  ARBITRO_CON_PARTIDOS: 'Tiene partidos asignados: reasignalos antes de quitarlo.',
+  INSCRIPCION_NO_CERRADA: 'El bracket se genera cuando se cierra la inscripción.',
+  PARTICIPANTES_INSUFICIENTES:
+    'Hacen falta al menos 2 inscripciones confirmadas para armar el bracket.',
+  BRACKET_YA_GENERADO: 'El torneo ya tiene bracket: recargá la página.',
+  SIN_ARBITROS: 'Designá al menos un árbitro en el paso 2: cada partido necesita uno.',
+  BRACKET_CON_RESULTADOS: 'Ya hay resultados cargados: el bracket no se puede volver a sortear.',
+  PARTIDO_NO_ENCONTRADO: 'El partido no existe.',
+  EVIDENCIA_NO_ENCONTRADA: 'Ese archivo ya no está: recargá la página.',
+  PARTIDO_NO_EN_JUEGO: 'Este partido no está en juego: ya tiene resultado o falta el rival.',
+  PARTIDO_CERRADO: 'El partido ya está cerrado: no se le puede sumar evidencia.',
+  NO_ES_CAPITAN: 'Solo el capitán de uno de los dos lados puede hacerlo.',
+  RESULTADO_NO_PENDIENTE: 'No hay un resultado para aceptar u objetar: recargá la página.',
+  RESULTADO_PROPIO: 'El resultado que cargaste lo acepta u objeta el rival.',
+  PLAZO_OBJECION_VENCIDO: 'Venció el plazo para objetar: el resultado ya se confirma.',
+  PARTIDO_NO_OBJETADO: 'El partido ya no está objetado: recargá la página.',
+  TORNEO_NO_ENCONTRADO: 'El torneo no existe o ya no está disponible.',
+  INSCRIPCION_NO_ENCONTRADA: 'La inscripción no existe o no es tuya.',
+  EQUIPO_NO_ENCONTRADO: 'El equipo no existe o no es tuyo.',
+  INSCRIPCION_NO_ABIERTA: 'La inscripción a este torneo no está abierta o ya cerró.',
+  INSCRIPCION_DUPLICADA: 'Ya hay una inscripción tuya, o de ese equipo, en este torneo.',
+  INSCRIPCION_NO_EDITABLE:
+    'La inscripción cambió de estado y ya no se puede hacer esto. Recargá la pantalla para ver cómo quedó.',
+  REGLAMENTO_NO_ACEPTADO: 'Tenés que aceptar el reglamento para continuar.',
+  CUPO_COMPLETO: 'Se completó el cupo del torneo y no queda lugar. No se te cobró nada.',
+  JUGADOR_YA_INSCRIPTO:
+    'Hay un jugador (o vos como capitán) que ya figura en otra inscripción de este torneo. Elegí a otro jugador.',
+  NOMINA_INVALIDA:
+    'La nómina no cumple lo que pide el torneo: revisá la cantidad de jugadores y que estés vos como capitán.',
+  COBRO_RECHAZADO:
+    'No se aprobó el pago y no se cobró nada. Tu inscripción sigue pendiente: probá de nuevo.',
+  INSCRIPCION_NO_PERMITIDA_EN_TORNEO:
+    'El organizador y los árbitros de un torneo no pueden inscribirse en él.',
 };
 
 const POR_CODIGO_DE_CAMPO: Record<string, string> = {
@@ -56,6 +104,9 @@ const POR_CODIGO_DE_CAMPO: Record<string, string> = {
   RANGO_INVALIDO: 'El rango de números no es válido.',
   VENTANA_INVALIDA: 'Las fechas de venta no son válidas.',
   PREMIOS_INVALIDOS: 'Los premios no son válidos.',
+  FECHAS_INVALIDAS: 'Las fechas no son válidas.',
+  REPARTO_INVALIDO: 'Competidores, rifa y comisión tienen que sumar 100 %.',
+  COMISION_EXCEDIDA: 'La comisión pasa el máximo que permite la plataforma.',
   VALOR_INVALIDO: 'El valor no es válido.',
 };
 
@@ -73,6 +124,15 @@ export const mensajeDeError = (
   propios: Record<string, string> = {}
 ): string => {
   const problema = problemaDe(err);
+  // RNF-SEG-06: el login responde 429 con cuánto falta para poder volver a intentar
+  if (
+    problema?.codigo === 'DEMASIADOS_INTENTOS' &&
+    problema.reintentarEnSegundos &&
+    !propios[problema.codigo]
+  ) {
+    const minutos = Math.ceil(problema.reintentarEnSegundos / 60);
+    return `Demasiados intentos fallidos. Probá de nuevo en ${minutos} ${minutos === 1 ? 'minuto' : 'minutos'}.`;
+  }
   if (problema?.codigo && (propios[problema.codigo] || POR_CODIGO[problema.codigo])) {
     return propios[problema.codigo] || POR_CODIGO[problema.codigo];
   }
@@ -81,12 +141,15 @@ export const mensajeDeError = (
   return problema?.detail || (err instanceof Error && err.message) || porDefecto;
 };
 
-/** Errores de un 400 VALIDACION por campo del JSON. */
-export const erroresPorCampo = (err: unknown): Record<string, string> => {
+/** Errores de un 400 VALIDACION por campo del JSON; `propios` pisa el texto de un código en una pantalla. */
+export const erroresPorCampo = (
+  err: unknown,
+  propios: Record<string, string> = {}
+): Record<string, string> => {
   const errores: Record<string, string> = {};
   (problemaDe(err)?.errores || []).forEach((e) => {
     if (e.campo && !errores[e.campo]) {
-      errores[e.campo] = POR_CODIGO_DE_CAMPO[e.codigo] || e.mensaje;
+      errores[e.campo] = propios[e.codigo] || POR_CODIGO_DE_CAMPO[e.codigo] || e.mensaje;
     }
   });
   return errores;

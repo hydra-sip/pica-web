@@ -1,7 +1,8 @@
 import { EstadoRifa } from '../api/rifaApi';
+import { EstadoTorneo } from '../api/torneoApi';
 import { BadgeTone } from '../shared/ui';
 
-// Montos y fechas para mostrar: pesos() y fechaHora() de shared/formato.ts
+// Montos y fechas para mostrar, y los <input type="datetime-local">: shared/formato.ts
 
 export const ESTADO_RIFA_UI: Record<EstadoRifa, string> = {
   BORRADOR: 'Borrador',
@@ -24,16 +25,9 @@ export const TONO_ESTADO_RIFA: Record<EstadoRifa, BadgeTone> = {
   CANCELADA: 'peligro',
 };
 
-/** ISO de la API → valor de un <input type="datetime-local"> en la hora local del navegador. */
-export const isoAInputLocal = (iso: string | null): string => {
-  if (!iso) {
-    return '';
-  }
-  const fecha = new Date(iso);
-  const local = new Date(fecha.getTime() - fecha.getTimezoneOffset() * 60_000);
-  return local.toISOString().slice(0, 16);
-};
-
-/** Valor de un <input type="datetime-local"> → ISO en UTC para la API (null si está vacío). */
-export const inputLocalAIso = (valor: string): string | null =>
-  valor ? new Date(valor).toISOString() : null;
+/** La rifa va con un torneo en borrador o publicado que todavía no empezó (lo mismo valida el back). */
+export const ESTADOS_TORNEO_CON_RIFA: EstadoTorneo[] = [
+  'BORRADOR',
+  'INSCRIPCION_ABIERTA',
+  'INSCRIPCION_CERRADA',
+];

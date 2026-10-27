@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { adminHandlers } from './adminHandlers';
+import { crearInscripcionesHandlers } from './inscripcionesHandlers';
 import { torneoHandlers } from './torneoHandlers';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
@@ -21,8 +22,11 @@ const PERMISOS_SUPER_USUARIO = [
   'ROL_ASIGNAR',
 ];
 
-// In-memory mock store for current user profile state according to openapi.yaml
-let mockCurrentUserState = {
+// El PARTICIPANTE puede inscribirse a torneos (seed del back); el organizador de los mocks no.
+const PERMISOS_PARTICIPANTE = ['INSCRIPCION_GESTIONAR'];
+
+// Perfil del usuario de la sesión según openapi.yaml; es el que devuelve GET /me hasta que alguien inicia sesión.
+const USUARIO_INICIAL = {
   usuario: {
     id: 1,
     username: 'admin',
@@ -44,9 +48,37 @@ let mockCurrentUserState = {
   datosCompletos: true,
 };
 
+// El refresh token vive en localStorage y sobrevive a recargar la página; el usuario de los mocks también tiene
+// que sobrevivir, si no al escribir una URL a mano /me devolvería otra vez al admin.
+const CLAVE_USUARIO_MOCK = 'pica_mock_usuario';
+
+const usuarioGuardado = (): typeof USUARIO_INICIAL | null => {
+  try {
+    const guardado = localStorage.getItem(CLAVE_USUARIO_MOCK);
+    return guardado ? (JSON.parse(guardado) as typeof USUARIO_INICIAL) : null;
+  } catch {
+    return null;
+  }
+};
+
+let mockCurrentUserState = usuarioGuardado() ?? USUARIO_INICIAL;
+
+const establecerUsuario = (usuario: typeof USUARIO_INICIAL) => {
+  mockCurrentUserState = usuario;
+  try {
+    localStorage.setItem(CLAVE_USUARIO_MOCK, JSON.stringify(usuario));
+  } catch {
+    // sin localStorage (por ejemplo, navegación privada): el usuario dura lo que dure la página
+  }
+};
+
 export const handlers = [
   // Backoffice (usuarios, personas, roles y permisos) según el contrato
   ...adminHandlers,
+  // Inscripción en dos pasos: el capitán es el usuario logueado de estos mocks. Va antes que los torneos
+  // públicos: atiende los slugs de sus escenarios y deja pasar los que no conoce.
+  ...crearInscripcionesHandlers(() => mockCurrentUserState),
+
   // Torneos públicos (HU-208 / T208-2)
   ...torneoHandlers,
 
@@ -161,7 +193,7 @@ export const handlers = [
     }
 
     if ((id === 'admin@pica.edu.ar' || id === 'admin') && body.password === 'admin123') {
-      mockCurrentUserState = {
+      establecerUsuario({
         usuario: {
           id: 1,
           username: 'admin',
@@ -181,7 +213,7 @@ export const handlers = [
         roles: [{ id: 1, nombre: 'SUPER_USUARIO', nombreAmigable: 'Super Usuario' }],
         permisos: [...PERMISOS_SUPER_USUARIO],
         datosCompletos: true,
-      };
+      });
 
       return HttpResponse.json({
         accessToken: 'mock-jwt-access-token-admin-12345',
@@ -192,7 +224,7 @@ export const handlers = [
     }
 
     if ((id === 'organizador@pica.edu.ar' || id === 'organizador') && body.password === 'org123') {
-      mockCurrentUserState = {
+      establecerUsuario({
         usuario: {
           id: 4,
           username: 'organizador',
@@ -212,7 +244,7 @@ export const handlers = [
         roles: [{ id: 4, nombre: 'ORGANIZADOR', nombreAmigable: 'Organizador de Eventos' }],
         permisos: ['USUARIO_VER', 'PERSONA_VER'],
         datosCompletos: true,
-      };
+      });
 
       return HttpResponse.json({
         accessToken: 'mock-jwt-access-token-organizador-12345',
@@ -223,7 +255,7 @@ export const handlers = [
     }
 
     if ((id === 'user@pica.edu.ar' || id === 'usuario') && body.password === 'user123') {
-      mockCurrentUserState = {
+      establecerUsuario({
         usuario: {
           id: 2,
           username: 'usuario',
@@ -241,9 +273,9 @@ export const handlers = [
           telefono: '1144556677',
         },
         roles: [{ id: 2, nombre: 'PARTICIPANTE', nombreAmigable: 'Participante Estándar' }],
-        permisos: [],
+        permisos: [...PERMISOS_PARTICIPANTE],
         datosCompletos: true,
-      };
+      });
 
       return HttpResponse.json({
         accessToken: 'mock-jwt-access-token-user-12345',
@@ -254,7 +286,7 @@ export const handlers = [
     }
 
     if (id && body.password) {
-      mockCurrentUserState = {
+      establecerUsuario({
         usuario: {
           id: 3,
           username: id.split('@')[0],
@@ -272,9 +304,9 @@ export const handlers = [
           telefono: '',
         },
         roles: [{ id: 2, nombre: 'PARTICIPANTE', nombreAmigable: 'Participante' }],
-        permisos: [],
+        permisos: [...PERMISOS_PARTICIPANTE],
         datosCompletos: false,
-      };
+      });
 
       return HttpResponse.json({
         accessToken: `mock-jwt-access-token-${Date.now()}`,
@@ -310,7 +342,7 @@ export const handlers = [
     }
 
     // Usuario Google que nace sin datos completos (requiere nroDoc, fechaNacimiento, domicilioPostal, telefono)
-    mockCurrentUserState = {
+    establecerUsuario({
       usuario: {
         id: 10,
         username: 'google_user',
@@ -330,7 +362,7 @@ export const handlers = [
       roles: [{ id: 2, nombre: 'PARTICIPANTE', nombreAmigable: 'Participante' }],
       permisos: [],
       datosCompletos: false,
-    };
+    });
 
     return HttpResponse.json({
       accessToken: 'mock-oauth-access-token-google-888',
@@ -384,11 +416,11 @@ export const handlers = [
     );
     const hasTel = Boolean(newPersona.telefono && newPersona.telefono.trim().length > 0);
 
-    mockCurrentUserState = {
+    establecerUsuario({
       ...mockCurrentUserState,
       persona: newPersona,
       datosCompletos: hasDoc && hasFecha && hasDom && hasTel,
-    };
+    });
 
     return HttpResponse.json(mockCurrentUserState);
   }),
@@ -439,6 +471,12 @@ export const handlers = [
 
   // Auth: Logout (POST /auth/logout)
   http.post(`${API_URL}/auth/logout`, () => {
+    try {
+      localStorage.removeItem(CLAVE_USUARIO_MOCK);
+    } catch {
+      // sin localStorage no hay nada que limpiar
+    }
+    mockCurrentUserState = USUARIO_INICIAL;
     return HttpResponse.json({ message: 'Sesión cerrada exitosamente' });
   }),
 ];

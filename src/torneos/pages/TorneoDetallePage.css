@@ -1,322 +1,160 @@
-.torneo-detalle-figma-container {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  width: 100%;
-  max-width: 900px;
+.torneo-detalle-container {
+  max-width: 1050px;
   margin: 0 auto;
-}
-
-/* Header bar */
-.torneo-figma-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.torneo-back-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-  background-color: var(--bg-surface);
-  color: var(--text-primary);
-  font-size: 1.2rem;
-  font-weight: 700;
-  cursor: pointer;
-  text-decoration: none;
-  transition: all var(--transition-fast);
-  box-shadow: var(--shadow-xs);
-}
-
-.torneo-back-btn:hover {
-  background-color: var(--bg-subtle);
-  border-color: #cbd5e1;
-  transform: translateX(-2px);
-}
-
-.torneo-header-title {
-  font-size: 1.35rem;
-  font-weight: 900;
-  color: var(--text-primary);
-  margin: 0;
-  text-align: center;
-  letter-spacing: -0.02em;
-}
-
-.torneo-options-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-  background-color: var(--bg-surface);
-  color: var(--text-primary);
-  font-size: 1.2rem;
-  cursor: pointer;
-  box-shadow: var(--shadow-xs);
-  transition: all var(--transition-fast);
-}
-
-.torneo-options-btn:hover {
-  background-color: var(--bg-subtle);
-  border-color: #cbd5e1;
-}
-
-/* Bolsa de Premios Card - High Impact Escrow Trophy Banner */
-.bolsa-premios-card {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(251, 191, 36, 0.18) 100%);
-  border: 1.5px solid var(--color-gold-border);
-  border-radius: var(--radius-lg);
-  padding: 1.35rem 1.6rem;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0.65rem;
-  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.1);
+  gap: var(--space-5);
+}
+
+.torneo-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.torneo-breadcrumb a {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.torneo-breadcrumb a:hover {
+  color: var(--color-text);
+  text-decoration: underline;
+}
+
+/* Hero Section */
+.torneo-hero-card {
   position: relative;
   overflow: hidden;
-}
-
-.bolsa-premios-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.bolsa-premios-title {
-  font-size: 0.82rem;
-  font-weight: 800;
-  color: var(--color-gold-dark);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.bolsa-escrow-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  background-color: #ffffff;
-  border: 1px solid var(--color-gold-border);
-  color: #78350f;
-  font-size: 0.72rem;
-  font-weight: 800;
-  padding: 0.2rem 0.6rem;
-  border-radius: var(--radius-full);
-  box-shadow: 0 1px 2px rgba(245, 158, 11, 0.15);
-}
-
-.bolsa-premios-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.bolsa-premios-label {
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: #92400e;
-}
-
-.bolsa-premios-val-bold {
-  font-size: 1.65rem;
-  font-weight: 900;
-  color: #78350f;
-  letter-spacing: -0.02em;
-}
-
-.bolsa-premios-secondary {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.78rem;
-  color: #92400e;
-  border-top: 1px dashed rgba(245, 158, 11, 0.3);
-  padding-top: 0.5rem;
-}
-
-/* Tabs */
-.torneo-tabs-bar {
-  display: flex;
-  background-color: var(--bg-subtle);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 4px;
-  gap: 4px;
-  overflow-x: auto;
-}
-
-.torneo-tab-btn {
-  flex: 1;
-  text-align: center;
-  padding: 0.65rem 0.85rem;
-  font-size: 0.88rem;
-  font-weight: 600;
   border-radius: var(--radius-md);
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all var(--transition-fast);
+  padding: 2rem 1.75rem;
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
 }
 
-.torneo-tab-btn:hover {
-  color: var(--text-primary);
-}
-
-.torneo-tab-btn.active {
-  background-color: var(--bg-surface);
-  color: var(--text-primary);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  font-weight: 800;
-}
-
-/* Tab Content Areas */
-.torneo-tab-content {
+.torneo-hero-top {
   display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-/* Bracket styling */
-.bracket-header-row {
-  display: flex;
-  align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.5rem;
-}
-
-.bracket-updating-chip {
-  display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  padding: 0.3rem 0.75rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  border-radius: var(--radius-full);
-  background-color: var(--color-emerald-light);
-  border: 1px solid var(--color-emerald-border);
-  color: var(--color-emerald-dark);
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
 }
 
-.bracket-pulse-dot {
-  width: 7px;
-  height: 7px;
+.torneo-hero-title {
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  color: var(--color-text);
+  margin-bottom: var(--space-3);
+  line-height: 1.25;
+}
+
+.torneo-hero-desc {
+  font-size: var(--text-md);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin-bottom: var(--space-4);
+  max-width: 800px;
+}
+
+.torneo-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.torneo-organizador-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.torneo-organizador-avatar {
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background-color: var(--color-emerald);
-  animation: beacon-pulse 1.8s infinite cubic-bezier(0.66, 0, 0, 1);
-}
-
-.bracket-tree-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-}
-
-.bracket-match-box {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 0.85rem 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  transition: all var(--transition-fast);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-}
-
-.bracket-match-box.active {
-  border-color: var(--color-indigo);
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
-}
-
-.bracket-team-row {
+  background-color: var(--color-primary);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  font-size: 0.9rem;
+  justify-content: center;
+  font-weight: 700;
+  color: var(--color-on-primary);
+  font-size: var(--text-sm);
 }
 
-.bracket-team-name {
-  font-weight: 600;
-  color: var(--text-primary);
+/* Grid of blocks */
+.torneo-detalle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-4);
 }
 
-.bracket-team-name.winner {
-  font-weight: 800;
-  color: var(--text-primary);
-}
-
-.bracket-team-name.muted {
-  color: var(--text-muted);
-}
-
-.bracket-team-score {
-  font-weight: 800;
-  font-size: 0.95rem;
-  font-family: var(--font-mono);
-}
-
-/* Captain banner (Figma #33:686) */
-.captain-match-banner {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  color: #ffffff;
-  border-radius: var(--radius-lg);
-  border-left: 5px solid var(--color-emerald);
-  padding: 1.35rem 1.5rem;
+.torneo-block-card {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
+  gap: var(--space-3);
+}
+
+.torneo-block-title {
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
-  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.2);
+  font-size: var(--text-md);
+  font-weight: 700;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-2);
 }
 
-.captain-banner-subtitle {
-  font-size: 0.75rem;
-  font-weight: 800;
-  color: var(--color-emerald);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+.torneo-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.35rem 0;
+  font-size: var(--text-sm);
 }
 
-.captain-banner-title {
-  font-size: 1.25rem;
-  font-weight: 900;
-  color: #ffffff;
-  margin: 0;
-  letter-spacing: -0.01em;
+.torneo-info-label {
+  color: var(--color-text-secondary);
 }
 
-.captain-banner-details {
-  font-size: 0.85rem;
-  color: #cbd5e1;
+.torneo-info-value {
+  font-weight: 600;
+  color: var(--color-text);
+  text-align: right;
 }
 
-.captain-report-btn {
-  margin-top: 0.75rem;
-  width: 100%;
-  background: var(--color-emerald);
-  color: #ffffff;
-  border: none;
-  font-weight: 800;
-  padding: 0.75rem;
-  border-radius: var(--radius-md);
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
-  transition: all var(--transition-fast);
+/* Call to action bar */
+.torneo-cta-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  align-items: center;
+  text-align: center;
+  margin-bottom: var(--space-4);
 }
 
-.captain-report-btn:hover {
-  background: #059669;
-  transform: translateY(-1px);
+@media (min-width: 640px) {
+  .torneo-cta-bar {
+    flex-direction: row;
+    justify-content: space-between;
+    text-align: left;
+  }
 }

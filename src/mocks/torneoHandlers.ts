@@ -3,7 +3,12 @@ import { TorneoDetalle, TorneoResumen } from '../torneos/types/torneo';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
-export const mockTorneosDetalle: (TorneoDetalle & { esBorrador?: boolean })[] = [
+type DetalleMock = Omit<TorneoDetalle, 'premios' | 'premioRifaEstimado' | 'reglamentoTexto'> & {
+  premios: { puesto: number; pct: number }[];
+  esBorrador?: boolean;
+};
+
+const detalles: DetalleMock[] = [
   {
     id: 1,
     slug: 'dev-copa-abierta',
@@ -225,6 +230,16 @@ export const mockTorneosDetalle: (TorneoDetalle & { esBorrador?: boolean })[] = 
     esBorrador: true, // No publicado / Borrador
   },
 ];
+
+/** Los montos se derivan como en el back: cada puesto es su % del pozo neto y la rifa su % de la bolsa. */
+export const mockTorneosDetalle: (TorneoDetalle & { esBorrador?: boolean })[] = detalles.map(
+  (t) => ({
+    ...t,
+    reglamentoTexto: null,
+    premioRifaEstimado: (t.valorInscripcion * t.cupoMaximo * t.pctPremioRifa) / 100,
+    premios: t.premios.map((p) => ({ ...p, monto: (t.pozoEstimado * p.pct) / 100 })),
+  })
+);
 
 export const torneoHandlers = [
   // GET /torneos/resumen (Público, sin sesión)

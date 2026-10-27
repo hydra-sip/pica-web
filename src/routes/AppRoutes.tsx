@@ -1,7 +1,6 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { PublicLayout } from '../shared/layouts/PublicLayout';
-import { AdminLayout } from '../admin/layouts/AdminLayout';
+import { AppLayout } from '../shared/layouts/AppLayout';
 import { HomePage } from '../shared/pages/HomePage';
 import { LoginPage } from '../auth/pages/LoginPage';
 import { RegisterPage } from '../auth/pages/RegisterPage';
@@ -19,15 +18,27 @@ import { RequireAuth } from '../auth/components/RequireAuth';
 import { RequirePermiso } from '../auth/components/RequirePermiso';
 import { MisRifasPage } from '../rifas/pages/MisRifasPage';
 import { RifaFormPage } from '../rifas/pages/RifaFormPage';
+import { MisTorneosPage } from '../torneos/pages/MisTorneosPage';
+import { TorneoFormPage } from '../torneos/pages/TorneoFormPage';
+import { TorneoPublicadoPage } from '../torneos/pages/TorneoPublicadoPage';
+import { TorneoConsolaPage } from '../torneos/pages/TorneoConsolaPage';
 import { TorneosCatalogoPage } from '../torneos/pages/TorneosCatalogoPage';
 import { TorneoDetallePage } from '../torneos/pages/TorneoDetallePage';
+import { InscripcionEntradaPage } from '../inscripciones/pages/InscripcionEntradaPage';
+import { InscripcionNominaPage } from '../inscripciones/pages/InscripcionNominaPage';
+import { MiInscripcionPage } from '../inscripciones/pages/MiInscripcionPage';
+import { InscripcionPagoPage } from '../inscripciones/pages/InscripcionPagoPage';
+import { PartidoPage } from '../partidos/pages/PartidoPage';
+import { ObjecionesTorneoPage } from '../partidos/pages/ObjecionesTorneoPage';
 
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
-      {/* Layout Principal de la Plataforma */}
-      <Route path="/" element={<PublicLayout />}>
-        {/* Rutas de autenticación y verificación (libres para ingresar o registrarse) */}
+      {/* Sitio: sidebar en escritorio, barra inferior en el celular */}
+      <Route path="/" element={<AppLayout seccion="sitio" />}>
+        <Route index element={<HomePage />} />
+        <Route path="torneos" element={<TorneosCatalogoPage />} />
+        <Route path="torneos/:slug" element={<TorneoDetallePage />} />
         <Route path="auth/login" element={<LoginPage />} />
         <Route path="auth/register" element={<RegisterPage />} />
         <Route path="auth/check-email" element={<CheckEmailPage />} />
@@ -35,32 +46,50 @@ export const AppRoutes: React.FC = () => {
         <Route path="oauth/callback" element={<OAuthCallbackPage />} />
         <Route path="unauthorized" element={<UnauthorizedPage />} />
 
-        {/* Rutas Públicas (HU-208: Catálogo y detalle público sin iniciar sesión) */}
-        <Route index element={<HomePage />} />
-        <Route path="torneos" element={<TorneosCatalogoPage />} />
-        <Route path="torneos/:slug" element={<TorneoDetallePage />} />
-
-        {/* Rutas que requieren autenticación */}
+        {/* Rutas Autenticadas Públicas / Perfil */}
         <Route element={<RequireAuth />}>
           <Route path="mi-perfil" element={<ProfilePage />} />
 
-          {/* Rifas del organizador (PICA-227): RIFA_GESTIONAR */}
+          {/* Cargar y aceptar el resultado (PICA-243): lo decide el back según el lado del que es capitán */}
+          <Route path="partidos/:id" element={<PartidoPage />} />
+
+          {/* Objeciones del torneo (PICA-247): el organizador o un árbitro con permiso; si no, el back responde 403 */}
+          <Route path="torneos/:id/objeciones" element={<ObjecionesTorneoPage />} />
+
+          {/* Torneos del organizador (PICA-202, PICA-205): TORNEO_GESTIONAR lo tienen ORGANIZADOR y ADMINISTRADOR */}
+          <Route element={<RequirePermiso permisos="TORNEO_GESTIONAR" />}>
+            <Route path="mis-torneos" element={<MisTorneosPage />} />
+            <Route path="torneos/nuevo" element={<TorneoFormPage />} />
+            <Route path="torneos/:id/editar" element={<TorneoFormPage />} />
+            <Route path="torneos/:id/publicado" element={<TorneoPublicadoPage />} />
+            <Route path="torneos/:id/consola" element={<TorneoConsolaPage />} />
+          </Route>
+
+          {/* Rifas del organizador (PICA-227): RIFA_GESTIONAR lo tienen ORGANIZADOR y ADMINISTRADOR */}
           <Route element={<RequirePermiso permisos="RIFA_GESTIONAR" />}>
             <Route path="mis-rifas" element={<MisRifasPage />} />
             <Route path="rifas/nueva" element={<RifaFormPage />} />
             <Route path="rifas/:id/editar" element={<RifaFormPage />} />
+          </Route>
+
+          {/* Inscripción en dos pasos (PICA-211): INSCRIPCION_GESTIONAR lo tiene PARTICIPANTE */}
+          <Route element={<RequirePermiso permisos="INSCRIPCION_GESTIONAR" />}>
+            <Route path="torneos/:slug/inscripcion" element={<InscripcionEntradaPage />} />
+            <Route path="inscripciones/:id" element={<MiInscripcionPage />} />
+            <Route path="inscripciones/:id/nomina" element={<InscripcionNominaPage />} />
+            <Route path="inscripciones/:id/pago" element={<InscripcionPagoPage />} />
           </Route>
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />
       </Route>
 
-      {/* Layout de Administración Protegido (Backoffice PICA) */}
+      {/* Layout de Administración Protegido (HU-107 Backoffice Protection) */}
       <Route element={<RequireAuth />}>
         <Route
           element={
             <RequirePermiso permisos={['USUARIO_VER', 'ROL_VER', 'PERSONA_VER']}>
-              <AdminLayout />
+              <AppLayout seccion="admin" />
             </RequirePermiso>
           }
         >
