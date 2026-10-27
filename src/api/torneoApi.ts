@@ -71,6 +71,16 @@ export interface TorneoInformacion extends Omit<
    * inscripciones pagas; en curso o después, todos.
    */
   camposBloqueados: CampoTorneo[];
+  /** Ventana de check-in (HU-308): cuántos minutos antes del cruce abre; null sin configurar. */
+  checkinMinAntes: number | null;
+  /** Cuántos minutos dura la ventana de check-in. */
+  checkinDuracion: number | null;
+}
+
+/** PUT /torneos/{id}/checkin: `duracion` no más que `minAntes`, así la ventana cierra antes del cruce. */
+export interface CheckinTorneoPayload {
+  minAntes: number | null;
+  duracion: number | null;
 }
 
 /** Un campo de PUT /torneos/{id}/informacion. */
@@ -329,6 +339,14 @@ export const torneoApi = {
     payload: EconomiaTorneoPayload
   ): Promise<TorneoInformacion> => {
     return httpClient.put<TorneoInformacion>(`/torneos/${id}/economia`, payload);
+  },
+
+  /** La ventana de check-in de todos los partidos del torneo; los check-ins hechos no cambian. */
+  configurarCheckin: async (
+    id: number,
+    payload: CheckinTorneoPayload
+  ): Promise<TorneoInformacion> => {
+    return httpClient.put<TorneoInformacion>(`/torneos/${id}/checkin`, payload);
   },
 
   resumenEconomico: async (id: number): Promise<ResumenEconomico> => {

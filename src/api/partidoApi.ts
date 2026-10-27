@@ -132,7 +132,14 @@ export interface LaudoDetalle {
 
 /** Un registro del historial del partido, sacado de la auditoría. */
 export interface EventoPartido {
-  evento: 'CARGADO' | 'ACEPTADO' | 'OBJETADO' | 'CONFIRMADO_POR_PLAZO' | 'LAUDO';
+  evento:
+    | 'PROGRAMADO'
+    | 'CHECKIN'
+    | 'CARGADO'
+    | 'ACEPTADO'
+    | 'OBJETADO'
+    | 'CONFIRMADO_POR_PLAZO'
+    | 'LAUDO';
   /** Nombre y apellido; null si lo hizo el sistema. */
   usuario: string | null;
   lado: Lado | null;
@@ -140,6 +147,8 @@ export interface EventoPartido {
   fecha: string;
   /** Solo en el laudo. */
   decision: Decision | null;
+  /** Solo en PROGRAMADO: para cuándo se programó el partido. */
+  fechaProgramada: string | null;
 }
 
 /** GET /partidos/{id}/objecion: las dos versiones lado a lado, con su evidencia, el laudo y el historial. */
@@ -166,6 +175,11 @@ export const partidoApi = {
       `/torneos/${torneoId}/mi-proximo-partido`
     );
     return partido.id === undefined ? null : (partido as PartidoDetalle);
+  },
+
+  /** El organizador le pone fecha y hora mientras está PROGRAMADO (HU-308); a los demás, 404. */
+  programar: async (id: number, fechaProgramada: string): Promise<PartidoDetalle> => {
+    return httpClient.put<PartidoDetalle>(`/partidos/${id}/programacion`, { fechaProgramada });
   },
 
   cargarResultado: async (id: number, payload: ResultadoPayload): Promise<PartidoDetalle> => {
