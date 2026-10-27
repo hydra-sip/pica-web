@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
+import { PartidoDetalle } from '../../api/partidoApi';
 import { BracketTorneo, torneoApi, TorneoInformacion } from '../../api/torneoApi';
 import { ObjecionesTorneo } from '../../partidos/components/ObjecionesTorneo';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { Badge, Button, Card } from '../../shared/ui';
-import { PartidoDetalle } from '../../api/partidoApi';
 import { Bracket } from '../components/Bracket';
 import { CheckinTorneo } from '../components/CheckinTorneo';
 import { InscripcionesDelTorneo } from '../components/InscripcionesDelTorneo';
