@@ -10,6 +10,7 @@ import { Badge, Button } from '../../shared/ui';
 import { BloqueoModal } from '../components/BloqueoModal';
 import { MotivoBloqueoModal } from '../components/MotivoBloqueoModal';
 import { StatusChip } from '../components/StatusChip';
+import { IconoCruz, IconoBuscar } from '../../shared/ui/Iconos';
 
 const TIPOS_DOC = ['DNI', 'LC', 'LE', 'CI', 'PASAPORTE'];
 
@@ -577,9 +578,9 @@ export const UsuariosPage: React.FC = () => {
           <button
             type="button"
             onClick={() => setAviso(null)}
-            style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}
+            style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
           >
-            ✕
+            <IconoCruz size={14} />
           </button>
         </div>
       )}
@@ -770,9 +771,10 @@ export const UsuariosPage: React.FC = () => {
                         className="btn btn-secondary"
                         onClick={handleSearchPersona}
                         disabled={isSearchingPersona}
-                        style={{ padding: '0.5rem 0.9rem', fontSize: '0.85rem' }}
+                        style={{ padding: '0.5rem 0.9rem', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
                       >
-                        {isSearchingPersona ? 'Buscando...' : '🔍 Buscar'}
+                        <IconoBuscar size={14} />
+                        <span>{isSearchingPersona ? 'Buscando...' : 'Buscar'}</span>
                       </button>
                     </div>
 
@@ -834,13 +836,13 @@ export const UsuariosPage: React.FC = () => {
                                 <span
                                   style={{ color: 'var(--color-danger)', fontSize: '0.75rem', fontWeight: 600 }}
                                 >
-                                  ⚠️ Ya tiene usuario
+                                  Ya tiene usuario
                                 </span>
                               ) : isSelected ? (
                                 <span
                                   style={{ color: 'var(--color-success)', fontSize: '0.75rem', fontWeight: 600 }}
                                 >
-                                  ✓ Seleccionada
+                                  Seleccionada
                                 </span>
                               ) : null}
                             </div>
@@ -1680,7 +1682,7 @@ export const UsuariosPage: React.FC = () => {
                 }}
                 style={{ fontSize: '0.8rem', padding: '0.4rem' }}
               >
-                ⚡ Generar Clave Temporal Válida (ej: Pica2026#1234)
+                Generar Clave Temporal Válida (ej: Pica2026#1234)
               </button>
 
               <div

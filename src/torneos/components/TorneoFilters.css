@@ -1,37 +1,191 @@
-.torneo-filters-bar {
+.torneo-figma-filters {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-4);
-  margin-bottom: var(--space-5);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  width: 100%;
 }
 
-.torneo-filters-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-3);
+.torneo-search-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
-@media (min-width: 640px) {
-  .torneo-filters-grid {
-    grid-template-columns: 2fr 1.5fr auto;
-    align-items: flex-end;
+.torneo-search-input-wrap {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.torneo-search-icon {
+  position: absolute;
+  left: 1rem;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.torneo-search-input {
+  width: 100%;
+  padding: 0.8rem 2.4rem 0.8rem 2.8rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-surface);
+  font-size: 0.92rem;
+  color: var(--text-primary);
+  outline: none;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+  transition: all var(--transition-fast);
+}
+
+.torneo-search-input:focus {
+  border-color: var(--color-indigo);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.torneo-search-clear {
+  position: absolute;
+  right: 0.85rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+}
+
+.torneo-search-clear:hover {
+  color: var(--text-primary);
+}
+
+.torneo-notification-bell {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+  flex-shrink: 0;
+}
+
+.torneo-notification-bell:hover {
+  background-color: var(--bg-subtle);
+  border-color: #cbd5e1;
+}
+
+.bell-dot {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 7px;
+  height: 7px;
+  background-color: var(--color-emerald);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--bg-surface);
+}
+
+.torneo-chips-and-status-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+@media (min-width: 768px) {
+  .torneo-chips-and-status-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
   }
 }
 
-.torneo-filter-field {
+.torneo-category-chips {
   display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+  scrollbar-width: none;
 }
 
-.torneo-filter-label {
-  font-size: var(--text-xs);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--color-text-secondary);
+.torneo-category-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.torneo-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.95rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-surface);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+.torneo-chip-icon {
+  font-size: 0.9rem;
+}
+
+.torneo-chip:hover {
+  background-color: var(--bg-subtle);
+  color: var(--text-primary);
+  border-color: #cbd5e1;
+}
+
+.torneo-chip.active {
+  background-color: var(--brand-black);
+  color: #ffffff;
+  border-color: var(--brand-black);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.15);
+}
+
+.torneo-status-dropdown-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.torneo-status-select {
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-surface);
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  font-weight: 600;
+  cursor: pointer;
+  min-width: 185px;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.torneo-status-select:focus {
+  border-color: var(--color-indigo);
+}
+
+.torneo-reset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.85rem;
+  border-radius: var(--radius-md);
 }

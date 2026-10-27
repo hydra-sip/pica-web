@@ -49,7 +49,6 @@ const POR_CODIGO: Record<string, string> = {
   RIFA_INCOMPLETA: 'A la rifa le falta completar datos para publicarse.',
   TORNEO_CON_RIFA: 'Ese torneo ya tiene una rifa.',
   TORNEO_NO_ADMITE_RIFA: 'Ese torneo ya empezó o terminó: no se le puede asociar una rifa.',
-  TORNEO_NO_ENCONTRADO: 'El torneo no existe o no es tuyo.',
   TORNEO_NO_EDITABLE: 'El torneo ya no se puede modificar desde acá.',
   CAMPOS_BLOQUEADOS:
     'Algunos datos ya no se pueden cambiar porque hay inscripciones pagas: recargá la página.',
@@ -80,6 +79,23 @@ const POR_CODIGO: Record<string, string> = {
   CHECKIN_FUERA_DE_VENTANA: 'El check-in no está abierto.',
   PARTIDO_NO_PROGRAMABLE:
     'El partido ya no se puede programar: ya hicieron check-in o se está jugando.',
+  TORNEO_NO_ENCONTRADO: 'El torneo no existe o ya no está disponible.',
+  INSCRIPCION_NO_ENCONTRADA: 'La inscripción no existe o no es tuya.',
+  EQUIPO_NO_ENCONTRADO: 'El equipo no existe o no es tuyo.',
+  INSCRIPCION_NO_ABIERTA: 'La inscripción a este torneo no está abierta o ya cerró.',
+  INSCRIPCION_DUPLICADA: 'Ya hay una inscripción tuya, o de ese equipo, en este torneo.',
+  INSCRIPCION_NO_EDITABLE:
+    'La inscripción cambió de estado y ya no se puede hacer esto. Recargá la pantalla para ver cómo quedó.',
+  REGLAMENTO_NO_ACEPTADO: 'Tenés que aceptar el reglamento para continuar.',
+  CUPO_COMPLETO: 'Se completó el cupo del torneo y no queda lugar. No se te cobró nada.',
+  JUGADOR_YA_INSCRIPTO:
+    'Hay un jugador (o vos como capitán) que ya figura en otra inscripción de este torneo. Elegí a otro jugador.',
+  NOMINA_INVALIDA:
+    'La nómina no cumple lo que pide el torneo: revisá la cantidad de jugadores y que estés vos como capitán.',
+  COBRO_RECHAZADO:
+    'No se aprobó el pago y no se cobró nada. Tu inscripción sigue pendiente: probá de nuevo.',
+  INSCRIPCION_NO_PERMITIDA_EN_TORNEO:
+    'El organizador y los árbitros de un torneo no pueden inscribirse en él.',
 };
 
 const POR_CODIGO_DE_CAMPO: Record<string, string> = {

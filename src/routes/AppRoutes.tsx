@@ -24,6 +24,10 @@ import { TorneoPublicadoPage } from '../torneos/pages/TorneoPublicadoPage';
 import { TorneoConsolaPage } from '../torneos/pages/TorneoConsolaPage';
 import { TorneosCatalogoPage } from '../torneos/pages/TorneosCatalogoPage';
 import { TorneoDetallePage } from '../torneos/pages/TorneoDetallePage';
+import { InscripcionEntradaPage } from '../inscripciones/pages/InscripcionEntradaPage';
+import { InscripcionNominaPage } from '../inscripciones/pages/InscripcionNominaPage';
+import { MiInscripcionPage } from '../inscripciones/pages/MiInscripcionPage';
+import { InscripcionPagoPage } from '../inscripciones/pages/InscripcionPagoPage';
 import { PartidoPage } from '../partidos/pages/PartidoPage';
 import { ObjecionesTorneoPage } from '../partidos/pages/ObjecionesTorneoPage';
 
@@ -66,6 +70,14 @@ export const AppRoutes: React.FC = () => {
             <Route path="mis-rifas" element={<MisRifasPage />} />
             <Route path="rifas/nueva" element={<RifaFormPage />} />
             <Route path="rifas/:id/editar" element={<RifaFormPage />} />
+          </Route>
+
+          {/* Inscripción en dos pasos (PICA-211): INSCRIPCION_GESTIONAR lo tiene PARTICIPANTE */}
+          <Route element={<RequirePermiso permisos="INSCRIPCION_GESTIONAR" />}>
+            <Route path="torneos/:slug/inscripcion" element={<InscripcionEntradaPage />} />
+            <Route path="inscripciones/:id" element={<MiInscripcionPage />} />
+            <Route path="inscripciones/:id/nomina" element={<InscripcionNominaPage />} />
+            <Route path="inscripciones/:id/pago" element={<InscripcionPagoPage />} />
           </Route>
         </Route>
 
