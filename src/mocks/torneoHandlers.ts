@@ -3,7 +3,14 @@ import { TorneoDetalle, TorneoResumen } from '../torneos/types/torneo';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
-type DetalleMock = Omit<TorneoDetalle, 'premios' | 'premioRifaEstimado' | 'reglamentoTexto'> & {
+type DetalleMock = Omit<
+  TorneoDetalle,
+  | 'premios'
+  | 'reglamentoTexto'
+  | 'pctGastosAdministrativos'
+  | 'gastosAdministrativos'
+  | 'totalAPagar'
+> & {
   premios: { puesto: number; pct: number }[];
   esBorrador?: boolean;
 };
@@ -26,8 +33,6 @@ const detalles: DetalleMock[] = [
     tamanioEquipo: 3,
     valorInscripcion: 5000.0,
     moneda: 'ARS',
-    pctPozoCompetidores: 70.0,
-    pctPremioRifa: 20.0,
     pozoEstimado: 48000.0,
     premios: [
       { puesto: 1, pct: 60.0 },
@@ -64,8 +69,6 @@ const detalles: DetalleMock[] = [
     tamanioEquipo: 2,
     valorInscripcion: 8000.0,
     moneda: 'ARS',
-    pctPozoCompetidores: 75.0,
-    pctPremioRifa: 15.0,
     pozoEstimado: 120000.0,
     premios: [
       { puesto: 1, pct: 70.0 },
@@ -101,8 +104,6 @@ const detalles: DetalleMock[] = [
     tamanioEquipo: null,
     valorInscripcion: 2500.0,
     moneda: 'ARS',
-    pctPozoCompetidores: 80.0,
-    pctPremioRifa: 0.0,
     pozoEstimado: 75000.0,
     premios: [
       { puesto: 1, pct: 50.0 },
@@ -139,8 +140,6 @@ const detalles: DetalleMock[] = [
     tamanioEquipo: 4,
     valorInscripcion: 6000.0,
     moneda: 'ARS',
-    pctPozoCompetidores: 70.0,
-    pctPremioRifa: 20.0,
     pozoEstimado: 65000.0,
     premios: [
       { puesto: 1, pct: 60.0 },
@@ -175,8 +174,6 @@ const detalles: DetalleMock[] = [
     tamanioEquipo: 6,
     valorInscripcion: 4000.0,
     moneda: 'ARS',
-    pctPozoCompetidores: 70.0,
-    pctPremioRifa: 10.0,
     pozoEstimado: 40000.0,
     premios: [
       { puesto: 1, pct: 60.0 },
@@ -212,8 +209,6 @@ const detalles: DetalleMock[] = [
     tamanioEquipo: 1,
     valorInscripcion: 10000,
     moneda: 'ARS',
-    pctPozoCompetidores: 80,
-    pctPremioRifa: 0,
     pozoEstimado: 160000,
     premios: [{ puesto: 1, pct: 100 }],
     cierreInscripcionEn: null,
@@ -231,12 +226,14 @@ const detalles: DetalleMock[] = [
   },
 ];
 
-/** Los montos se derivan como en el back: cada puesto es su % del pozo neto y la rifa su % de la bolsa. */
+/** Los montos se derivan como en el back: cada puesto es su % del pozo neto y los gastos administrativos (10 %) van aparte. */
 export const mockTorneosDetalle: (TorneoDetalle & { esBorrador?: boolean })[] = detalles.map(
   (t) => ({
     ...t,
     reglamentoTexto: null,
-    premioRifaEstimado: (t.valorInscripcion * t.cupoMaximo * t.pctPremioRifa) / 100,
+    pctGastosAdministrativos: 10,
+    gastosAdministrativos: t.valorInscripcion / 10,
+    totalAPagar: t.valorInscripcion * 1.1,
     premios: t.premios.map((p) => ({ ...p, monto: (t.pozoEstimado * p.pct) / 100 })),
   })
 );
@@ -298,6 +295,7 @@ export const torneoHandlers = [
       cupoMaximo: t.cupoMaximo,
       cupoDisponible: t.cupoDisponible,
       valorInscripcion: t.valorInscripcion,
+      gastosAdministrativos: t.gastosAdministrativos,
       moneda: t.moneda,
       pozoEstimado: t.pozoEstimado,
       cierreInscripcionEn: t.cierreInscripcionEn,

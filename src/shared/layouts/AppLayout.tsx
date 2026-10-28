@@ -1,13 +1,14 @@
 import React from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/hooks/useAuth';
+import { Footer } from '../components/Footer';
 import { IncompleteProfileBanner } from '../components/IncompleteProfileBanner';
 import { IconoSalir, IconoSitio } from '../ui/Iconos';
 import { LogoPica } from '../ui/LogoPica';
 import { ItemNavegacion, NAVEGACION, Seccion } from './navegacion';
 import './AppLayout.css';
 
-const MAX_ITEMS_CELULAR = 4;
+const MAX_ITEMS_CELULAR = 5;
 
 interface AppLayoutProps {
   seccion: Seccion;
@@ -108,6 +109,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ seccion }) => {
         <main className={`app-contenido app-contenido-${seccion}`}>
           <Outlet />
         </main>
+        {seccion === 'sitio' && <Footer />}
       </div>
 
       <nav aria-label="Navegación principal" className="app-barra-inferior">

@@ -1,10 +1,10 @@
-# PICA Web 🌐
+# PICA Web
 
 Módulo Frontend Web para la Plataforma de Gestión de Torneos **PICA** (Trabajo Práctico Integrador - SIP / UNLu).
 
 ---
 
-## 🚀 Arquitectura y Stack Tecnológico
+## Arquitectura y Stack Tecnológico
 
 - **Framework Core**: Vite + React 18 + TypeScript.
 - **Enrutamiento**: `react-router-dom` con rutas públicas y privadas.
@@ -17,7 +17,7 @@ Módulo Frontend Web para la Plataforma de Gestión de Torneos **PICA** (Trabajo
 
 ---
 
-## 🐳 Despliegue con Docker
+## Despliegue con Docker
 
 El proyecto cuenta con un `Dockerfile`
 
@@ -55,7 +55,7 @@ services:
 
 ---
 
-## 💻 Desarrollo Local
+## Desarrollo Local
 
 Para iniciar el servidor de desarrollo local con Hot Module Replacement (HMR) y MSW habilitado:
 
@@ -65,12 +65,12 @@ npm run dev
 
 Abre tu navegador en `http://localhost:5173`.
 
-> 💡 **Nota sobre MSW Mocks**:
+> **Nota sobre MSW Mocks**:
 > En modo desarrollo (`npm run dev`), MSW interceptará las llamadas a la API mockeada.
 
 ---
 
-## 📜 Scripts Disponibles
+## Scripts Disponibles
 
 - `npm run dev`: Inicia el servidor de desarrollo.
 - `npm run build`: Compila TypeScript y genera el bundle de producción en `dist/`.

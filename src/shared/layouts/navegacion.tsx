@@ -1,11 +1,12 @@
-import React from 'react';
 import {
   IconoBackoffice,
+  IconoEscudoCheck,
   IconoExplorar,
   IconoIngresar,
   IconoPanel,
   IconoPerfil,
   IconoPersonas,
+  IconoPronosticos,
   IconoRifas,
   IconoRoles,
   IconoTorneos,
@@ -35,6 +36,10 @@ export const PERMISOS_BACKOFFICE = ['USUARIO_VER', 'ROL_VER', 'PERSONA_VER'];
 export const NAVEGACION: Record<Seccion, ItemNavegacion[]> = {
   sitio: [
     { ruta: '/', texto: 'Explorar', icono: <IconoExplorar />, exacta: true },
+    // HU-306 / T306-2: Pronósticos y ranking de torneos
+    { ruta: '/pronosticos', texto: 'Pronósticos', icono: <IconoPronosticos /> },
+    // HU-505 / T505-1: Portal público de verificación de sorteos
+    { ruta: '/verificacion', texto: 'Verificación', icono: <IconoEscudoCheck /> },
     // PICA-202: TORNEO_GESTIONAR lo tienen ORGANIZADOR y ADMINISTRADOR
     { ruta: '/mis-torneos', texto: 'Mis torneos', icono: <IconoTorneos />, permisos: ['TORNEO_GESTIONAR'] },
     // PICA-227: RIFA_GESTIONAR lo tienen ORGANIZADOR y ADMINISTRADOR

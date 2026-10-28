@@ -1,168 +1,232 @@
-.torneo-card {
+.torneo-card-elevated {
   display: flex;
   flex-direction: column;
-  background-color: var(--color-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-4);
-  transition:
-    border-color var(--transition-fast),
-    box-shadow var(--transition-fast);
-  text-decoration: none;
-  color: inherit;
+  padding: 1.35rem 1.4rem;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.2s ease;
   position: relative;
+  overflow: hidden;
 }
 
-.torneo-card:hover {
-  border-color: var(--color-border-strong);
-  box-shadow: var(--shadow-md);
+.torneo-card-elevated:hover {
+  transform: translateY(-3px);
+  border-color: #cbd5e1;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(16, 185, 129, 0.15);
 }
 
-.torneo-card-header {
+.torneo-card-top {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--space-2);
-  margin-bottom: var(--space-2);
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
 }
 
-.torneo-card-disciplina {
+.torneo-card-disciplina-pill {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  font-size: var(--text-xs);
+  font-size: 0.75rem;
   font-weight: 700;
-  text-transform: uppercase;
-  color: var(--color-text-secondary);
-  letter-spacing: 0.03em;
+  color: var(--text-secondary);
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+}
+
+.disciplina-emoji {
+  font-size: 0.85rem;
 }
 
 .torneo-card-title {
-  font-size: var(--text-lg);
-  font-weight: 700;
-  color: var(--color-text);
-  margin-bottom: var(--space-2);
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 0.35rem 0;
   line-height: 1.3;
+  letter-spacing: -0.01em;
 }
 
-.torneo-card-desc {
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
-  line-height: 1.5;
-  margin-bottom: var(--space-3);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-height: 2.5rem;
+.torneo-title-link {
+  color: inherit;
+  text-decoration: none;
+  transition: color var(--transition-fast);
 }
 
-.torneo-card-tags {
+.torneo-title-link:hover {
+  color: var(--color-indigo);
+}
+
+.torneo-card-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0 0 1rem 0;
+  line-height: 1.4;
+}
+
+/* Pozo de Premios High-Stakes Box */
+.torneo-pozo-box {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1);
-  margin-bottom: var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(251, 191, 36, 0.15) 100%);
+  border: 1px solid var(--color-gold-border);
+  border-radius: var(--radius-md);
+  padding: 0.65rem 0.85rem;
+  margin-bottom: 0.95rem;
 }
 
-.torneo-tag {
-  font-size: var(--text-xs);
-  padding: 0.15rem 0.5rem;
-  border-radius: var(--radius-sm);
-  background-color: var(--color-surface);
-  color: var(--color-text-secondary);
-  border: 1px solid var(--color-border);
+.torneo-pozo-left {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
 }
 
-/* Cupos progress box */
-.torneo-cupos-box {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
+.torneo-pozo-icon {
+  width: 32px;
+  height: 32px;
   border-radius: var(--radius-sm);
-  padding: 0.5rem 0.75rem;
-  margin-bottom: var(--space-3);
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  box-shadow: 0 1px 3px rgba(245, 158, 11, 0.2);
+  flex-shrink: 0;
+}
+
+.torneo-pozo-label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--color-gold-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+}
+
+.torneo-pozo-amount {
+  display: block;
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: #78350f;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.torneo-pozo-tag {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.45rem;
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--color-gold-border);
+  color: var(--color-gold-dark);
+  border-radius: var(--radius-sm);
+}
+
+/* Sección de Cupos y Progreso */
+.torneo-cupos-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.95rem;
 }
 
 .torneo-cupos-header {
   display: flex;
   justify-content: space-between;
-  font-size: var(--text-xs);
-  margin-bottom: 0.35rem;
+  align-items: center;
+  font-size: 0.78rem;
 }
 
-.torneo-cupos-label {
-  color: var(--color-text-secondary);
-  font-weight: 500;
-}
-
-.torneo-cupos-count {
+.torneo-cupos-status {
   font-weight: 700;
-  color: var(--color-text);
+  color: var(--text-primary);
 }
 
-.torneo-cupos-progress-bg {
+.torneo-cupos-status.status-alerta {
+  color: #b45309;
+}
+
+.torneo-cupos-status.status-agotado {
+  color: var(--color-crimson);
+}
+
+.torneo-cupos-ratio {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.torneo-cupos-progress-track {
   width: 100%;
   height: 6px;
-  background-color: var(--color-border);
+  background-color: var(--bg-subtle);
   border-radius: var(--radius-full);
   overflow: hidden;
+  border: 1px solid var(--border-color);
 }
 
 .torneo-cupos-progress-fill {
   height: 100%;
   border-radius: var(--radius-full);
-  transition: width 0.3s ease;
+  transition: width 0.4s ease;
 }
 
-/* Métricas económicas */
-.torneo-metrics-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-2);
-  margin-bottom: var(--space-3);
+.torneo-cupos-progress-fill.fill-normal {
+  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
 }
 
-.torneo-metric-item {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: 0.45rem 0.65rem;
+.torneo-cupos-progress-fill.fill-alerta {
+  background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
 }
 
-.torneo-metric-title {
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--color-text-muted);
-  margin-bottom: 0.2rem;
+.torneo-cupos-progress-fill.fill-agotado {
+  background-color: var(--text-muted);
 }
 
-.torneo-metric-val {
-  font-size: var(--text-md);
-  font-weight: 700;
-  color: var(--color-text);
-}
-
-/* Fechas y footer */
-.torneo-fechas-box {
+/* Metadatos extra (Inscripción / Inicio) */
+.torneo-card-extra {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  margin-bottom: var(--space-3);
-  font-size: var(--text-xs);
-  color: var(--color-text-secondary);
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  padding: 0.45rem 0.75rem;
+  border-radius: var(--radius-sm);
+  margin-bottom: 1.15rem;
 }
 
-.torneo-fecha-row {
+.torneo-extra-item {
   display: flex;
   align-items: center;
   gap: 0.35rem;
 }
 
-.torneo-card-footer {
+.torneo-extra-label {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.torneo-card-btn {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 0.88rem;
+  text-align: center;
   margin-top: auto;
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--color-border);
-  display: flex;
-  justify-content: flex-end;
+  letter-spacing: 0.01em;
 }

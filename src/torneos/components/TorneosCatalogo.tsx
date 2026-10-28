@@ -6,6 +6,7 @@ import { TorneoCard } from './TorneoCard';
 import { TorneoFilters } from './TorneoFilters';
 import { TorneoPagination } from './TorneoPagination';
 import { TorneoCardSkeleton } from './TorneoSkeleton';
+import { IconoAlerta, IconoRefrescar, IconoBuscar } from '../../shared/ui/Iconos';
 
 interface TorneosCatalogoProps {
   pageSize?: number;
@@ -138,7 +139,9 @@ export const TorneosCatalogo: React.FC<TorneosCatalogoProps> = ({ pageSize = 9 }
             backgroundColor: 'var(--color-danger-bg)',
           }}
         >
-          <div style={{ fontSize: '2.5rem', marginBottom: 'var(--space-2)' }}>⚠️</div>
+          <div style={{ marginBottom: 'var(--space-2)', color: 'var(--color-danger)', display: 'flex', justifyContent: 'center' }}>
+            <IconoAlerta size={40} />
+          </div>
           <h3
             style={{
               fontSize: 'var(--text-lg)',
@@ -157,8 +160,14 @@ export const TorneosCatalogo: React.FC<TorneosCatalogoProps> = ({ pageSize = 9 }
           >
             {errorMsg}
           </p>
-          <button type="button" className="btn btn-primary" onClick={fetchTorneos}>
-            🔄 Reintentar
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={fetchTorneos}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem' }}
+          >
+            <IconoRefrescar size={16} />
+            <span>Reintentar</span>
           </button>
         </div>
       ) : isLoading ? (
@@ -182,7 +191,9 @@ export const TorneosCatalogo: React.FC<TorneosCatalogoProps> = ({ pageSize = 9 }
             backgroundColor: 'var(--color-surface)',
           }}
         >
-          <div style={{ fontSize: '2.5rem', marginBottom: 'var(--space-2)' }}>🔍</div>
+          <div style={{ marginBottom: 'var(--space-2)', color: 'var(--text-muted)', display: 'flex', justifyContent: 'center' }}>
+            <IconoBuscar size={40} />
+          </div>
           <h3 style={{ fontSize: 'var(--text-lg)', marginBottom: 'var(--space-2)' }}>
             No se encontraron torneos
           </h3>

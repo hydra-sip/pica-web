@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { rifaApi, RifaDetalle } from '../../api/rifaApi';
+import { useRifaRealtime } from '../../realtime/useRifaRealtime';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { Badge, Card } from '../../shared/ui';
 import { PasosAsistente } from '../../shared/components/PasosAsistente';
@@ -17,10 +18,10 @@ const PASOS_URL = ['', 'premios', 'publicar'];
 const SIN_BORRADOR = 'Se habilita al guardar el borrador';
 
 /**
- * Alta, edición y publicación de una rifa sin torneo (PICA-227, T402-4), como asistente en tres pasos
- * con el formato de "Crear Nueva Competencia". Los dos primeros se guardan por separado, también al
- * cambiar de paso (si tienen errores no se cambia); el tercero la publica. Fuera de BORRADOR todo es
- * de solo lectura.
+ * Alta, edición y publicación de una rifa, con o sin torneo (PICA-227, T402-4, PICA-220), como asistente
+ * en tres pasos con el formato de "Crear Nueva Competencia". Los dos primeros se guardan por separado,
+ * también al cambiar de paso (si tienen errores no se cambia); el tercero la publica. Fuera de BORRADOR
+ * todo es de solo lectura. Desde Mis torneos se llega con ?torneo= y el torneo ya elegido.
  */
 export const RifaFormPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -35,28 +36,54 @@ export const RifaFormPage: React.FC = () => {
   const datosRef = useRef<PasoGuardable>(null);
   const premiosRef = useRef<PasoGuardable>(null);
 
+  const torneoInicial = Number(searchParams.get('torneo')) || undefined;
   const pedido = Math.max(0, PASOS_URL.indexOf(searchParams.get('paso') ?? ''));
   const paso = rifa ? pedido : 0;
   const editable = !rifa || rifa.estado === 'BORRADOR';
   const estado = rifa?.estado ?? 'BORRADOR';
+
+  const recargarRifa = useCallback(() => {
+    if (!id) {
+      setRifa(null);
+      return;
+    }
+    rifaApi
+      .obtener(Number(id))
+      .then(setRifa)
+      .catch((err) => setError(mensajeDeError(err, 'No se pudo cargar la rifa.')))
+      .finally(() => setCargando(false));
+  }, [id]);
 
   useEffect(() => {
     if (!id) {
       setRifa(null);
       return;
     }
-    let vigente = true;
     setCargando(true);
     setError(null);
-    rifaApi
-      .obtener(Number(id))
-      .then((r) => vigente && setRifa(r))
-      .catch((err) => vigente && setError(mensajeDeError(err, 'No se pudo cargar la rifa.')))
-      .finally(() => vigente && setCargando(false));
-    return () => {
-      vigente = false;
-    };
-  }, [id]);
+    recargarRifa();
+  }, [id, recargarRifa]);
+
+  useRifaRealtime(id ? Number(id) : null, {
+    onRifaChange: (nuevaRifa) => {
+      setRifa(nuevaRifa);
+    },
+    onEstadoChange: (nuevoEstado) => {
+      setRifa((prev) => (prev ? { ...prev, estado: nuevoEstado } : prev));
+    },
+    onActualizar: (data) => {
+      if (data.rifa) {
+        setRifa(data.rifa);
+      } else if (data.estado) {
+        setRifa((prev) => (prev ? { ...prev, estado: data.estado! } : prev));
+      } else {
+        recargarRifa();
+      }
+    },
+    onReconnect: () => {
+      recargarRifa();
+    },
+  });
 
   const urlDePaso = (rifaId: number, indice: number) =>
     `/rifas/${rifaId}/editar${indice > 0 ? `?paso=${PASOS_URL[indice]}` : ''}`;
@@ -130,9 +157,13 @@ export const RifaFormPage: React.FC = () => {
           <h1>{rifa ? rifa.titulo : 'Crear nueva rifa'}</h1>
           <Badge tone={TONO_ESTADO_RIFA[estado]}>{ESTADO_RIFA_UI[estado]}</Badge>
         </div>
-        <p className="rifas-subtitulo">
-          Rifa sin torneo asociado: el pozo se reparte entre sus premios.
-        </p>
+        {rifa && (
+          <p className="rifas-subtitulo">
+            {rifa.torneoNombre
+              ? `Recauda para el torneo ${rifa.torneoNombre}: el ${rifa.pctDestinadoTorneo}% va a su pozo y el resto a los premios.`
+              : 'Rifa sin torneo asociado: el pozo se reparte entre sus premios.'}
+          </p>
+        )}
       </header>
 
       {recienPublicada ? (
@@ -151,7 +182,7 @@ export const RifaFormPage: React.FC = () => {
         actual={paso}
         onIr={(indice) => void irAPaso(indice)}
         pasos={[
-          { titulo: 'Datos generales', subtitulo: 'Números, precio y fechas de venta y sorteo' },
+          { titulo: 'Datos generales', subtitulo: 'Torneo, números, precio y fechas' },
           {
             titulo: 'Premios',
             subtitulo: rifa ? 'Porcentaje del pozo por puesto' : SIN_BORRADOR,
@@ -171,6 +202,7 @@ export const RifaFormPage: React.FC = () => {
           <DatosGeneralesForm
             ref={datosRef}
             rifa={rifa}
+            torneoInicial={torneoInicial}
             editable={editable}
             onGuardada={alGuardarDatos}
             onSiguiente={() => void irAPaso(1)}

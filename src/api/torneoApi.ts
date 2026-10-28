@@ -60,6 +60,10 @@ export interface TorneoInformacion extends Omit<
   /** SHA-256 del esquema económico, sellado al publicar. */
   esquemaHash: string | null;
   publicadoEn: string | null;
+  /** Cuándo se cerró la inscripción (HU-206); null mientras está abierta. */
+  inscripcionCerradaEn: string | null;
+  /** SHA-256 de la lista de inscriptos, sellada al cerrar la inscripción. */
+  listaHash: string | null;
   creadoEn: string;
   modificadoEn: string;
   /**
@@ -67,6 +71,16 @@ export interface TorneoInformacion extends Omit<
    * inscripciones pagas; en curso o después, todos.
    */
   camposBloqueados: CampoTorneo[];
+  /** Ventana de check-in (HU-308): cuántos minutos antes del cruce abre; null sin configurar. */
+  checkinMinAntes: number | null;
+  /** Cuántos minutos dura la ventana de check-in. */
+  checkinDuracion: number | null;
+}
+
+/** PUT /torneos/{id}/checkin: `duracion` no más que `minAntes`, así la ventana cierra antes del cruce. */
+export interface CheckinTorneoPayload {
+  minAntes: number | null;
+  duracion: number | null;
 }
 
 /** Un campo de PUT /torneos/{id}/informacion. */
@@ -78,25 +92,24 @@ export interface PremioPuesto {
 }
 
 /**
- * Paso 3. La bolsa se reparte en pozo de competidores, premio de la rifa y comisión, que suman 100; los premios
- * reparten el pozo de competidores menos los gastos.
+ * Paso 3. La inscripción va entera al pozo de competidores y los premios lo reparten, menos los gastos previstos.
+ * Quien se inscribe paga aparte los gastos administrativos de la plataforma.
  */
 export interface EconomiaTorneo {
   valorInscripcion: number | null;
   moneda: string;
-  pctPozoCompetidores: number | null;
-  pctPremioRifa: number | null;
-  /** El resto hasta 100; null sin los otros dos. */
-  pctComision: number | null;
+  /** El sellado al publicar; en borrador, el vigente de la plataforma. */
+  pctGastosAdministrativos: number;
+  /** Lo que se paga de gastos por cada inscripción; null sin valor. */
+  gastosAdministrativos: number | null;
+  /** Valor de la inscripción más gastos administrativos; null sin valor. */
+  totalAPagar: number | null;
   premios: PremioPuesto[];
 }
 
 /** PUT /torneos/{id}/economia: los premios, en orden de puesto. */
 export interface EconomiaTorneoPayload {
   valorInscripcion: number;
-  pctPozoCompetidores: number;
-  pctPremioRifa: number;
-  pctComision: number;
   premios: number[];
 }
 
@@ -116,10 +129,11 @@ export interface ResumenEconomico {
   participantes: number | null;
   valorInscripcion: number | null;
   moneda: string;
+  pctGastosAdministrativos: number;
+  /** Por inscripción, aparte del valor. */
+  gastosAdministrativos: number | null;
+  totalAPagar: number | null;
   recaudacion: number | null;
-  comision: number | null;
-  premioRifa: number | null;
-  pozoCompetidores: number | null;
   gastos: number;
   pozoNeto: number | null;
   premios: { puesto: number; pct: number; monto: number | null }[];
@@ -158,8 +172,8 @@ export interface OpcionesTorneo {
   modalidades: Modalidad[];
   /** Máximo de participantes que admite la plataforma. */
   cupoMaximo: number;
-  /** Tope del % de comisión de la plataforma en el paso 3. */
-  comisionMaxima: number;
+  /** % vigente de gastos administrativos que paga aparte quien se inscribe; al publicar queda fijo. */
+  pctGastosAdministrativos: number;
   /** Las que ya existen en la sede pedida. */
   canchas: string[];
 }
@@ -255,6 +269,31 @@ export interface RondaBracket {
   partidos: PartidoBracket[];
 }
 
+export type EstadoInscripcion =
+  'BORRADOR' | 'PENDIENTE_PAGO' | 'CONFIRMADA' | 'CANCELADA' | 'REINTEGRADA';
+
+/** Lo que cualquiera puede ver de otro usuario, sin datos personales. */
+export interface UsuarioInscripto {
+  id: number;
+  username: string;
+  nombres: string;
+  apellidos: string;
+}
+
+/**
+ * Una fila de GET /torneos/{id}/inscripciones (HU-206): la individual lleva `usuario`; la de equipo, `equipo`,
+ * `capitan` y cuántos `jugadores` hay en la nómina, con el capitán.
+ */
+export interface InscripcionDelTorneo {
+  id: number;
+  estado: EstadoInscripcion;
+  creadoEn: string;
+  usuario: UsuarioInscripto | null;
+  equipo: { id: number; nombre: string } | null;
+  capitan: UsuarioInscripto | null;
+  jugadores: number | null;
+}
+
 /** GET /torneos/{id}/bracket (HU-207): sin generar, `rondas` vacío. */
 export interface BracketTorneo {
   torneoId: number;
@@ -300,6 +339,14 @@ export const torneoApi = {
     payload: EconomiaTorneoPayload
   ): Promise<TorneoInformacion> => {
     return httpClient.put<TorneoInformacion>(`/torneos/${id}/economia`, payload);
+  },
+
+  /** La ventana de check-in de todos los partidos del torneo; los check-ins hechos no cambian. */
+  configurarCheckin: async (
+    id: number,
+    payload: CheckinTorneoPayload
+  ): Promise<TorneoInformacion> => {
+    return httpClient.put<TorneoInformacion>(`/torneos/${id}/checkin`, payload);
   },
 
   resumenEconomico: async (id: number): Promise<ResumenEconomico> => {
@@ -366,6 +413,21 @@ export const torneoApi = {
 
   quitarArbitro: async (id: number, usuarioId: number): Promise<void> => {
     await httpClient.delete(`/torneos/${id}/arbitros/${usuarioId}`);
+  },
+
+  /** Solo el organizador; el cierre es definitivo y devuelve el torneo cerrado (HU-206). */
+  cerrarInscripcion: async (id: number): Promise<TorneoInformacion> => {
+    return httpClient.post<TorneoInformacion>(`/torneos/${id}/cerrar-inscripcion`);
+  },
+
+  /** Las del torneo para su organizador: sin borradores, de la más vieja a la más nueva. */
+  inscripciones: async (
+    id: number,
+    params: { estado?: EstadoInscripcion; page?: number; size?: number } = {}
+  ): Promise<PageResponse<InscripcionDelTorneo>> => {
+    return httpClient.get<PageResponse<InscripcionDelTorneo>>(`/torneos/${id}/inscripciones`, {
+      params,
+    });
   },
 
   /** Público: el de un torneo publicado (PICA-216). */

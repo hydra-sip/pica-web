@@ -9,9 +9,6 @@ import { ProblemDetail } from '../auth/types';
 /** Lo que edita el paso 3, como lo tienen los inputs; los premios van en orden de puesto. */
 export interface FormEconomia {
   valorInscripcion: string;
-  pctPozoCompetidores: string;
-  pctPremioRifa: string;
-  pctComision: string;
   premios: string[];
 }
 
@@ -21,28 +18,11 @@ const CIEN = 100;
 
 const texto = (n: number | null): string => (n === null ? '' : String(n));
 
-/**
- * Un borrador sin parte económica arranca como el wireframe: 90 % a competidores, 0 a la rifa, la comisión en el
- * tope de la plataforma y 60/25/15 por puesto.
- */
-export const desdeEconomia = (e: EconomiaTorneo | null, comisionMaxima: number): FormEconomia => {
-  if (!e || e.pctPozoCompetidores === null) {
-    return {
-      valorInscripcion: texto(e?.valorInscripcion ?? null),
-      pctPozoCompetidores: String(CIEN - comisionMaxima),
-      pctPremioRifa: '0',
-      pctComision: String(comisionMaxima),
-      premios: e?.premios.length ? e.premios.map((p) => String(p.pct)) : ['60', '25', '15'],
-    };
-  }
-  return {
-    valorInscripcion: texto(e.valorInscripcion),
-    pctPozoCompetidores: texto(e.pctPozoCompetidores),
-    pctPremioRifa: texto(e.pctPremioRifa),
-    pctComision: texto(e.pctComision),
-    premios: e.premios.map((p) => String(p.pct)),
-  };
-};
+/** Un borrador sin parte económica arranca como el wireframe: 60/25/15 por puesto. */
+export const desdeEconomia = (e: EconomiaTorneo | null): FormEconomia => ({
+  valorInscripcion: texto(e?.valorInscripcion ?? null),
+  premios: e?.premios.length ? e.premios.map((p) => String(p.pct)) : ['60', '25', '15'],
+});
 
 const numero = (valor: string): number | null => {
   if (valor.trim() === '') return null;
@@ -54,16 +34,10 @@ const numero = (valor: string): number | null => {
 const sumar = (valores: (number | null)[]): number =>
   Math.round(valores.reduce<number>((total, v) => total + (v ?? 0), 0) * CIEN) / CIEN;
 
-export const sumaReparto = (f: FormEconomia): number =>
-  sumar([numero(f.pctPozoCompetidores), numero(f.pctPremioRifa), numero(f.pctComision)]);
-
 export const sumaPremios = (f: FormEconomia): number => sumar(f.premios.map(numero));
 
 export const aPayloadEconomia = (f: FormEconomia): EconomiaTorneoPayload => ({
   valorInscripcion: Number(f.valorInscripcion),
-  pctPozoCompetidores: Number(f.pctPozoCompetidores),
-  pctPremioRifa: Number(f.pctPremioRifa),
-  pctComision: Number(f.pctComision),
   premios: f.premios.map(Number),
 });
 
@@ -78,7 +52,6 @@ const porcentajeValido = (valor: string): boolean => {
  */
 export const validarEconomia = (
   f: FormEconomia,
-  comisionMaxima: number,
   cupo: number | null,
   alPublicar: boolean
 ): ErroresEconomia => {
@@ -88,20 +61,6 @@ export const validarEconomia = (
     errores.valorInscripcion = 'Es obligatorio.';
   } else if (valor <= 0) {
     errores.valorInscripcion = 'Tiene que ser mayor a $ 0.';
-  }
-
-  (['pctPozoCompetidores', 'pctPremioRifa', 'pctComision'] as const).forEach((campo) => {
-    if (!porcentajeValido(f[campo])) errores[campo] = 'Entre 0 y 100.';
-  });
-  if (!errores.pctPozoCompetidores && !errores.pctPremioRifa && !errores.pctComision) {
-    const suma = sumaReparto(f);
-    if (suma !== CIEN) {
-      errores.pctPozoCompetidores = `Competidores, rifa y comisión suman ${suma} %: tienen que sumar 100.`;
-    }
-  }
-  const comision = numero(f.pctComision);
-  if (!errores.pctComision && comision !== null && comision > comisionMaxima) {
-    errores.pctComision = `La comisión de la plataforma no puede pasar del ${comisionMaxima} %.`;
   }
 
   const premios = sumaPremios(f);
@@ -119,13 +78,14 @@ export const validarEconomia = (
 
 export interface CuentasEconomia {
   recaudacion: number | null;
-  comision: number | null;
-  premioRifa: number | null;
-  pozoCompetidores: number | null;
   gastos: number;
   pozoNeto: number | null;
   /** Monto de cada puesto, en el orden de los premios. */
   porPuesto: (number | null)[];
+  /** Lo que paga aparte cada inscripción. */
+  gastosAdministrativos: number | null;
+  /** Valor más gastos administrativos. */
+  totalAPagar: number | null;
 }
 
 const porcentaje = (monto: number | null, pct: number | null): number | null =>
@@ -133,27 +93,28 @@ const porcentaje = (monto: number | null, pct: number | null): number | null =>
 
 /**
  * Las cuentas de GET /torneos/{id}/resumen-economico con lo que hay escrito, para verlas mientras se edita:
- * recaudación con el cupo completo, la bolsa repartida por sus %, y el pozo neto (competidores menos gastos)
- * repartido por puesto.
+ * recaudación con el cupo completo, que va entera al pozo; el pozo neto (menos los gastos previstos) repartido por
+ * puesto, y lo que paga cada uno con los gastos administrativos.
  */
 export const calcular = (
   f: FormEconomia,
   cupo: number | null,
-  gastos: GastoDetalle[]
+  gastos: GastoDetalle[],
+  pctGastosAdministrativos: number
 ): CuentasEconomia => {
   const valor = numero(f.valorInscripcion);
   const recaudacion = valor === null || cupo === null ? null : valor * cupo;
-  const pozoCompetidores = porcentaje(recaudacion, numero(f.pctPozoCompetidores));
   const totalGastos = sumar(gastos.map((g) => g.monto));
-  const pozoNeto = pozoCompetidores === null ? null : pozoCompetidores - totalGastos;
+  const pozoNeto = recaudacion === null ? null : recaudacion - totalGastos;
+  const gastosAdministrativos = porcentaje(valor, pctGastosAdministrativos);
   return {
     recaudacion,
-    comision: porcentaje(recaudacion, numero(f.pctComision)),
-    premioRifa: porcentaje(recaudacion, numero(f.pctPremioRifa)),
-    pozoCompetidores,
     gastos: totalGastos,
     pozoNeto,
     porPuesto: f.premios.map((p) => porcentaje(pozoNeto, numero(p))),
+    gastosAdministrativos,
+    totalAPagar:
+      valor === null || gastosAdministrativos === null ? null : valor + gastosAdministrativos,
   };
 };
 
@@ -165,7 +126,7 @@ export const FALTANTES: Record<FaltanteTorneo, { texto: string; paso: 1 | 2 | 3 
     paso: 1,
   },
   CUPOS: { texto: 'Completar los cupos y, si es por equipos, la nómina.', paso: 2 },
-  ECONOMIA: { texto: 'Guardar el valor de la inscripción y el reparto.', paso: 3 },
+  ECONOMIA: { texto: 'Guardar el valor de la inscripción.', paso: 3 },
   SIN_PREMIOS: { texto: 'Cargar al menos un puesto con premio.', paso: 3 },
   PREMIOS_NO_SUMAN_100: { texto: 'Los premios por puesto tienen que sumar 100 %.', paso: 3 },
   POZO_NETO_NO_POSITIVO: {

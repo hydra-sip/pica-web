@@ -37,6 +37,34 @@
   flex: 1;
 }
 
+/* En la consola, el partido con su programación abajo (HU-308) */
+.bracket-celda {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.bracket-programacion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.bracket-programacion-editando {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.bracket-programacion-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
 .bracket-partido {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -97,4 +125,16 @@
 
 .bracket-semilla code {
   font-family: var(--font-mono);
+}
+
+/* En la consola, cada partido lleva a su pantalla */
+.bracket-partido-enlace {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.bracket-partido-enlace:hover,
+.bracket-partido-enlace:focus-visible {
+  border-color: var(--color-primary);
 }

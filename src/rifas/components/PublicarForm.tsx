@@ -14,7 +14,10 @@ interface PublicarFormProps {
   onIrAPaso: (indice: number) => void;
 }
 
-const FALTANTES: Record<FaltantePublicacion, { texto: (suma: number) => string; paso: number }> = {
+const FALTANTES: Record<
+  FaltantePublicacion,
+  { texto: (suma: number, conTorneo: boolean) => string; paso: number }
+> = {
   VENTANA: { texto: () => 'Cargá las fechas de inicio y fin de la venta.', paso: 0 },
   VENTA_YA_EMPEZO: {
     texto: () => 'Las fechas de venta quedaron en el pasado: actualizalas.',
@@ -23,14 +26,25 @@ const FALTANTES: Record<FaltantePublicacion, { texto: (suma: number) => string; 
   FECHA_SORTEO: { texto: () => 'Cargá la fecha del sorteo.', paso: 0 },
   SIN_PREMIOS: { texto: () => 'Cargá al menos un premio.', paso: 1 },
   PREMIOS_NO_SUMAN_100: {
-    texto: (suma) => `Los premios suman ${suma}%: tienen que sumar 100%.`,
+    texto: (suma, conTorneo) =>
+      conTorneo
+        ? `El torneo y los premios suman ${suma}%: tienen que sumar 100%.`
+        : `Los premios suman ${suma}%: tienen que sumar 100%.`,
     paso: 1,
+  },
+  TORNEO_NO_PUBLICADO: { texto: () => 'El torneo todavía no está publicado.', paso: 0 },
+  VENTANA_FUERA_DEL_TORNEO: {
+    texto: () => 'Las fechas de venta no coinciden con las del torneo.',
+    paso: 0,
   },
 };
 
 const NOMBRE_PASO = ['Datos generales', 'Premios'];
 
-/** Lo mismo que controla el back, para avisar antes de intentar publicar. */
+/**
+ * Lo mismo que controla el back, para avisar antes de intentar publicar. Lo del torneo (publicado y
+ * fechas) lo avisa el back al publicar.
+ */
 const faltantesDe = (rifa: RifaDetalle): FaltantePublicacion[] => {
   const faltantes: FaltantePublicacion[] = [];
   if (!rifa.ventaDesde || !rifa.ventaHasta) {
@@ -41,7 +55,7 @@ const faltantesDe = (rifa: RifaDetalle): FaltantePublicacion[] => {
   if (!rifa.fechaSorteo) {
     faltantes.push('FECHA_SORTEO');
   }
-  const suma = rifa.premios.reduce((total, p) => total + p.pct, 0);
+  const suma = rifa.premios.reduce((total, p) => total + p.pct, rifa.pctDestinadoTorneo);
   if (rifa.premios.length === 0) {
     faltantes.push('SIN_PREMIOS');
   } else if (suma !== 100) {
@@ -71,7 +85,7 @@ export const PublicarForm: React.FC<PublicarFormProps> = ({
   // Lo que respondió el back vale hasta que se guarda algo en otro paso; ahí se vuelve a calcular
   useEffect(() => setFaltantesDelBack(null), [rifa]);
   const faltantes = useMemo(() => faltantesDelBack ?? faltantesDe(rifa), [rifa, faltantesDelBack]);
-  const sumaPremios = rifa.premios.reduce((total, p) => total + p.pct, 0);
+  const suma = rifa.premios.reduce((total, p) => total + p.pct, rifa.pctDestinadoTorneo);
 
   const publicar = async () => {
     setError(null);
@@ -133,7 +147,7 @@ export const PublicarForm: React.FC<PublicarFormProps> = ({
           <ul className="rifas-faltantes">
             {faltantes.map((f) => (
               <li key={f}>
-                {FALTANTES[f].texto(sumaPremios)}{' '}
+                {FALTANTES[f].texto(suma, rifa.pctDestinadoTorneo > 0)}{' '}
                 <button
                   type="button"
                   className="rifas-link"
@@ -148,6 +162,12 @@ export const PublicarForm: React.FC<PublicarFormProps> = ({
       )}
 
       <dl className="rifas-resumen">
+        {rifa.torneoNombre && (
+          <div>
+            <dt>Torneo</dt>
+            <dd>{rifa.torneoNombre}</dd>
+          </div>
+        )}
         <div>
           <dt>Números</dt>
           <dd>
@@ -172,12 +192,18 @@ export const PublicarForm: React.FC<PublicarFormProps> = ({
         </div>
         {/* A todo el ancho: cada premio en su línea, y una descripción larga sigue abajo al llegar al borde */}
         <div className="rifas-resumen-ancho">
-          <dt>Premios</dt>
+          <dt>{rifa.torneoNombre ? 'Destino de lo recaudado' : 'Premios'}</dt>
           <dd>
-            {rifa.premios.length === 0 ? (
+            {rifa.premios.length === 0 && !rifa.torneoNombre ? (
               '-'
             ) : (
               <ul className="rifas-resumen-premios">
+                {/* Lo del torneo no es un premio: no tiene puesto y no se sortea */}
+                {rifa.torneoNombre && (
+                  <li>
+                    {rifa.pctDestinadoTorneo}% al pozo del torneo {rifa.torneoNombre}
+                  </li>
+                )}
                 {rifa.premios.map((p) => (
                   <li key={p.puesto}>
                     {p.puesto}º {p.pct}%{p.descripcion && ` ${p.descripcion}`}
