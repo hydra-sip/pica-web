@@ -199,16 +199,24 @@ export const IconoListo: React.FC<{ size?: number }> = ({ size }) => (
   </Icono>
 );
 
-export const IconoAlerta: React.FC<{ size?: number }> = ({ size }) => (
-  <Icono size={size}>
+export const IconoAlerta: React.FC<{ size?: number; className?: string; style?: React.CSSProperties }> = ({
+  size,
+  className,
+  style,
+}) => (
+  <Icono size={size} className={className} style={style}>
     <circle cx="12" cy="12" r="9" />
     <path d="M12 7v6" />
     <path d="M12 16.5v.5" />
   </Icono>
 );
 
-export const IconoEspera: React.FC<{ size?: number }> = ({ size }) => (
-  <Icono size={size}>
+export const IconoEspera: React.FC<{ size?: number; className?: string; style?: React.CSSProperties }> = ({
+  size,
+  className,
+  style,
+}) => (
+  <Icono size={size} className={className} style={style}>
     <circle cx="12" cy="12" r="9" />
     <path d="M12 7v5l3 2" />
   </Icono>
@@ -384,4 +392,18 @@ export const IconoSimulacion: React.FC<{ size?: number; className?: string; styl
     <line x1="17" y1="16" x2="23" y2="16" />
   </Icono>
 );
+
+export const IconoTicket: React.FC<{ size?: number; className?: string; style?: React.CSSProperties }> = ({
+  size,
+  className,
+  style,
+}) => (
+  <Icono size={size} className={className} style={style}>
+    <path d="M2 9a3 3 0 0 1 0 6v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a3 3 0 0 1 0-6V5a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z" />
+    <line x1="13" y1="5" x2="13" y2="7" />
+    <line x1="13" y1="11" x2="13" y2="13" />
+    <line x1="13" y1="17" x2="13" y2="19" />
+  </Icono>
+);
+
 
