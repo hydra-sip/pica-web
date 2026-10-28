@@ -108,3 +108,64 @@ export const rifaApi = {
     });
   },
 };
+
+// --- Para quien compra (HU-403, PICA-221): públicas, sin login ------------------------------------
+
+/** Fila de GET /rifas/publicas: en venta y con la venta sin terminar. */
+export interface RifaPublicaResumen {
+  id: number;
+  titulo: string;
+  torneoNombre: string | null;
+  numeroDesde: number;
+  numeroHasta: number;
+  precioNumero: number;
+  moneda: string;
+  /** Si es futura, la venta todavía no empezó. */
+  ventaDesde: string;
+  ventaHasta: string;
+  fechaSorteo: string;
+}
+
+/** GET /rifas/publicas/{id}: sin datos del organizador ni de los compradores. */
+export interface RifaPublicaDetalle {
+  id: number;
+  titulo: string;
+  descripcion: string | null;
+  estado: EstadoRifa;
+  /** El slug lleva a la ficha pública del torneo; null sin torneo. */
+  torneo: { id: number; nombre: string; slug: string | null } | null;
+  pctDestinadoTorneo: number;
+  numeroDesde: number;
+  numeroHasta: number;
+  precioNumero: number;
+  moneda: string;
+  ventaDesde: string;
+  ventaHasta: string;
+  fechaSorteo: string;
+  premios: PremioRifa[];
+}
+
+export type EstadoNumero = 'VENDIDO' | 'RESERVADO' | 'REINTEGRADO';
+
+/** Un número de la grilla que no se puede elegir; los demás del rango están libres. */
+export interface NumeroOcupado {
+  numero: number;
+  estado: EstadoNumero;
+}
+
+export const rifaPublicaApi = {
+  enVenta: async (params?: {
+    page?: number;
+    size?: number;
+  }): Promise<PageResponse<RifaPublicaResumen>> => {
+    return httpClient.get<PageResponse<RifaPublicaResumen>>('/rifas/publicas', { params });
+  },
+
+  obtener: async (id: number): Promise<RifaPublicaDetalle> => {
+    return httpClient.get<RifaPublicaDetalle>(`/rifas/publicas/${id}`);
+  },
+
+  numerosOcupados: async (id: number): Promise<NumeroOcupado[]> => {
+    return httpClient.get<NumeroOcupado[]>(`/rifas/publicas/${id}/numeros`);
+  },
+};

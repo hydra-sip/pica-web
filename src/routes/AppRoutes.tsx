@@ -31,6 +31,8 @@ import { InscripcionPagoPage } from '../inscripciones/pages/InscripcionPagoPage'
 import { PartidoPage } from '../partidos/pages/PartidoPage';
 import { ObjecionesTorneoPage } from '../partidos/pages/ObjecionesTorneoPage';
 import { PronosticosPage } from '../pronosticos/pages/PronosticosPage';
+import { RifasEnVentaPage } from '../rifas/pages/RifasEnVentaPage';
+import { RifaPublicaPage } from '../rifas/pages/RifaPublicaPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -42,6 +44,9 @@ export const AppRoutes: React.FC = () => {
         <Route path="torneos/:slug" element={<TorneoDetallePage />} />
         {/* HU-306 / T306-2: Pronósticos y ranking */}
         <Route path="pronosticos" element={<PronosticosPage />} />
+        {/* Rifas para quien compra (PICA-221): públicas, sin login */}
+        <Route path="rifas" element={<RifasEnVentaPage />} />
+        <Route path="rifas/:id" element={<RifaPublicaPage />} />
         <Route path="auth/login" element={<LoginPage />} />
         <Route path="auth/register" element={<RegisterPage />} />
         <Route path="auth/check-email" element={<CheckEmailPage />} />
