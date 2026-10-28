@@ -73,9 +73,15 @@ export const ResumenDePago: React.FC<ResumenDePagoProps> = ({ resumen, onPagada 
             <dt>Cuota de inscripción</dt>
             <dd>{pesos(resumen.monto)}</dd>
           </div>
+          {resumen.gastosAdministrativos > 0 && (
+            <div>
+              <dt>Gastos administrativos</dt>
+              <dd>{pesos(resumen.gastosAdministrativos)}</dd>
+            </div>
+          )}
           <div className="resumen-pago-total">
             <dt>Total a pagar</dt>
-            <dd>{pesos(resumen.monto)}</dd>
+            <dd>{pesos(resumen.total)}</dd>
           </div>
         </dl>
         <p className="resumen-pago-extra">
@@ -109,7 +115,7 @@ export const ResumenDePago: React.FC<ResumenDePagoProps> = ({ resumen, onPagada 
 
       <div className="inscripcion-acciones">
         <Button block onClick={pagar} loading={pagando}>
-          {pagando ? 'Confirmando el pago...' : `Confirmar pago de ${pesos(resumen.monto)}`}
+          {pagando ? 'Confirmando el pago...' : `Confirmar pago de ${pesos(resumen.total)}`}
         </Button>
 
         {/* En una inscripción individual no hay nómina que modificar */}

@@ -79,7 +79,7 @@ export const TorneoFormPage: React.FC = () => {
   const [sugerenciasCanchas, setSugerenciasCanchas] = useState<string[]>([]);
   // El alta navega a la URL de edición: ese torneo ya está cargado y no hace falta pedirlo de nuevo.
   const recienCreado = useRef<number | null>(null);
-  // El paso 3 se arma una vez por torneo, cuando están el torneo y el tope de comisión.
+  // El paso 3 se arma una vez por torneo, cuando están el torneo y las opciones.
   const economiaDe = useRef<number | null | undefined>(undefined);
 
   const pedido = pasoDe(searchParams.get('paso'));
@@ -145,7 +145,7 @@ export const TorneoFormPage: React.FC = () => {
   useEffect(() => {
     if (!opciones || economiaDe.current === (torneo?.id ?? null)) return;
     economiaDe.current = torneo?.id ?? null;
-    setFormEco(desdeEconomia(torneo?.economia ?? null, opciones.comisionMaxima));
+    setFormEco(desdeEconomia(torneo?.economia ?? null));
   }, [torneo, opciones]);
 
   // Canchas que ya existen en la sede, para sugerirlas mientras se escribe.
@@ -182,8 +182,6 @@ export const TorneoFormPage: React.FC = () => {
     setErroresEco((prev) => {
       const siguen = { ...prev };
       (Object.keys(cambios) as (keyof FormEconomia)[]).forEach((campo) => delete siguen[campo]);
-      // el reparto se marca en competidores aunque se haya cambiado la rifa o la comisión
-      if ('pctPremioRifa' in cambios || 'pctComision' in cambios) delete siguen.pctPozoCompetidores;
       return siguen;
     });
   };
@@ -251,12 +249,7 @@ export const TorneoFormPage: React.FC = () => {
     if (!torneo || !formEco || !opciones) return null;
     setMensaje(null);
     setFaltantes([]);
-    const encontrados = validarEconomia(
-      formEco,
-      opciones.comisionMaxima,
-      torneo.cupoMaximo,
-      alPublicar
-    );
+    const encontrados = validarEconomia(formEco, torneo.cupoMaximo, alPublicar);
     setErroresEco(encontrados);
     if (Object.keys(encontrados).length > 0) {
       setMensaje({ tipo: 'error', texto: 'Revisá los campos marcados.' });
@@ -265,7 +258,7 @@ export const TorneoFormPage: React.FC = () => {
     try {
       const guardado = await torneoApi.actualizarEconomia(torneo.id, aPayloadEconomia(formEco));
       setTorneo(guardado);
-      setFormEco(desdeEconomia(guardado.economia, opciones.comisionMaxima));
+      setFormEco(desdeEconomia(guardado.economia));
       return guardado;
     } catch (err) {
       setErroresEco(erroresPorCampo(err) as ErroresEconomia);
@@ -467,7 +460,7 @@ export const TorneoFormPage: React.FC = () => {
               habilitado={habilitado}
               cupo={torneo.cupoMaximo}
               quienes={participantes(torneo.tipoParticipante)}
-              comisionMaxima={opciones.comisionMaxima}
+              pctGastosAdministrativos={torneo.economia.pctGastosAdministrativos}
               gastos={gastos}
               onGastos={setGastos}
             />
