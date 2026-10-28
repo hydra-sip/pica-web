@@ -24,6 +24,9 @@ export interface ProblemDetail {
   sumaPremios?: number;
   /** Solo en DEMASIADOS_INTENTOS: cuánto falta para poder volver a intentar. */
   reintentarEnSegundos?: number;
+  /** Solo en CHECKIN_FUERA_DE_VENTANA: cuándo abre y cuándo cierra la ventana, sin la tolerancia. */
+  abreEn?: string;
+  cierraEn?: string;
 }
 
 export interface PersonaInfo {

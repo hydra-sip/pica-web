@@ -41,12 +41,14 @@ const Partido: React.FC<{ partido: PartidoBracket }> = ({ partido }) => (
 /**
  * El bracket de eliminación directa (HU-207), compartido por la consola del organizador y la ficha pública: una
  * columna por ronda, de la primera a la final. En un celular se desliza de costado dentro de su caja. En la consola
- * cada partido lleva a su pantalla, donde se ve el resultado y se resuelven las objeciones (HU-304).
+ * cada partido lleva a su pantalla, donde se ve el resultado y se resuelven las objeciones (HU-304), y abajo, fuera
+ * del enlace, lleva su `pie`: la programación (HU-308).
  */
-export const Bracket: React.FC<{ bracket: BracketTorneo; conEnlaces?: boolean }> = ({
-  bracket,
-  conEnlaces = false,
-}) => (
+export const Bracket: React.FC<{
+  bracket: BracketTorneo;
+  conEnlaces?: boolean;
+  pie?: (partido: PartidoBracket) => React.ReactNode;
+}> = ({ bracket, conEnlaces = false, pie }) => (
   <div className="bracket">
     <div className="bracket-rondas">
       {bracket.rondas.map((ronda) => (
@@ -55,18 +57,27 @@ export const Bracket: React.FC<{ bracket: BracketTorneo; conEnlaces?: boolean }>
           <div className="bracket-partidos">
             {ronda.partidos.map((p) => {
               const clases = `bracket-partido${p.bye ? ' bracket-partido-bye' : ''}`;
-              return conEnlaces && !p.bye ? (
-                <Link
-                  key={p.id}
-                  to={`/partidos/${p.id}`}
-                  className={`${clases} bracket-partido-enlace`}
-                >
-                  <Partido partido={p} />
-                </Link>
-              ) : (
-                <div key={p.id} className={clases}>
-                  <Partido partido={p} />
+              const partido =
+                conEnlaces && !p.bye ? (
+                  <Link
+                    key={p.id}
+                    to={`/partidos/${p.id}`}
+                    className={`${clases} bracket-partido-enlace`}
+                  >
+                    <Partido partido={p} />
+                  </Link>
+                ) : (
+                  <div key={p.id} className={clases}>
+                    <Partido partido={p} />
+                  </div>
+                );
+              return pie ? (
+                <div key={p.id} className="bracket-celda">
+                  {partido}
+                  {pie(p)}
                 </div>
+              ) : (
+                partido
               );
             })}
           </div>

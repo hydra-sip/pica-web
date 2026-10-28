@@ -1,4 +1,5 @@
 import { ProblemDetail } from '../auth/types';
+import { fechaHora } from './formato';
 
 // La UI decide el mensaje por `codigo` (openapi.yaml, CodigoError); `detail` queda de respaldo.
 const SESION_VENCIDA = 'Tu sesión venció. Iniciá sesión de nuevo.';
@@ -74,6 +75,10 @@ const POR_CODIGO: Record<string, string> = {
   RESULTADO_PROPIO: 'El resultado que cargaste lo acepta u objeta el rival.',
   PLAZO_OBJECION_VENCIDO: 'Venció el plazo para objetar: el resultado ya se confirma.',
   PARTIDO_NO_OBJETADO: 'El partido ya no está objetado: recargá la página.',
+  CHECKIN_SIN_VENTANA: 'Este partido no tiene check-in: no tiene fecha o el torneo no lo usa.',
+  CHECKIN_FUERA_DE_VENTANA: 'El check-in no está abierto.',
+  PARTIDO_NO_PROGRAMABLE:
+    'El partido ya no se puede programar: ya hicieron check-in o se está jugando.',
   TORNEO_NO_ENCONTRADO: 'El torneo no existe o ya no está disponible.',
   INSCRIPCION_NO_ENCONTRADA: 'La inscripción no existe o no es tuya.',
   EQUIPO_NO_ENCONTRADO: 'El equipo no existe o no es tuyo.',
@@ -132,6 +137,17 @@ export const mensajeDeError = (
   ) {
     const minutos = Math.ceil(problema.reintentarEnSegundos / 60);
     return `Demasiados intentos fallidos. Probá de nuevo en ${minutos} ${minutos === 1 ? 'minuto' : 'minutos'}.`;
+  }
+  // HU-308: el 409 trae cuándo abre y cuándo cierra la ventana
+  if (
+    problema?.codigo === 'CHECKIN_FUERA_DE_VENTANA' &&
+    problema.abreEn &&
+    problema.cierraEn &&
+    !propios[problema.codigo]
+  ) {
+    return Date.now() < new Date(problema.abreEn).getTime()
+      ? `Todavía no abrió el check-in: abre el ${fechaHora(problema.abreEn)}.`
+      : `El check-in cerró el ${fechaHora(problema.cierraEn)}.`;
   }
   if (problema?.codigo && (propios[problema.codigo] || POR_CODIGO[problema.codigo])) {
     return propios[problema.codigo] || POR_CODIGO[problema.codigo];
