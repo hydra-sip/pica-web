@@ -5,6 +5,8 @@ import { marcadorDeVersion } from '../formato';
 import { EvidenciasPartido } from './EvidenciasPartido';
 
 const ACCION: Record<EventoPartido['evento'], string> = {
+  PROGRAMADO: 'programó el partido',
+  CHECKIN: 'hizo check-in',
   CARGADO: 'cargó el resultado',
   ACEPTADO: 'aceptó el resultado',
   OBJETADO: 'objetó el resultado',
@@ -12,12 +14,15 @@ const ACCION: Record<EventoPartido['evento'], string> = {
   LAUDO: 'laudó',
 };
 
-const accion = (e: EventoPartido): string =>
-  e.evento !== 'LAUDO'
-    ? ACCION[e.evento]
-    : e.decision === 'CORREGIDO'
-      ? 'laudó: corrigió el resultado'
-      : 'laudó: confirmó el resultado cargado';
+const accion = (e: EventoPartido): string => {
+  if (e.evento === 'PROGRAMADO' && e.fechaProgramada) {
+    return `programó el partido para el ${formatFecha(e.fechaProgramada)}`;
+  }
+  if (e.evento !== 'LAUDO') return ACCION[e.evento];
+  return e.decision === 'CORREGIDO'
+    ? 'laudó: corrigió el resultado'
+    : 'laudó: confirmó el resultado cargado';
+};
 
 interface ComparativoObjecionProps {
   partidoId: number;

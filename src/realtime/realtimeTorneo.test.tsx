@@ -192,6 +192,8 @@ const torneoInformacionMock: TorneoInformacion = {
   creadoEn: '2026-10-10T10:00:00Z',
   modificadoEn: '2026-10-10T10:00:00Z',
   camposBloqueados: [],
+  checkinMinAntes: null,
+  checkinDuracion: null,
   economia: {
     valorInscripcion: 5000,
     moneda: 'ARS',

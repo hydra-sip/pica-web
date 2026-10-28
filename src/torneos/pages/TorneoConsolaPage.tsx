@@ -1,12 +1,15 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
+import { PartidoDetalle } from '../../api/partidoApi';
 import { BracketTorneo, EstadoTorneo, torneoApi, TorneoInformacion } from '../../api/torneoApi';
 import { useTorneoRealtime } from '../../realtime/useTorneoRealtime';
 import { ObjecionesTorneo } from '../../partidos/components/ObjecionesTorneo';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { Badge, Button, Card } from '../../shared/ui';
 import { Bracket } from '../components/Bracket';
+import { CheckinTorneo } from '../components/CheckinTorneo';
 import { InscripcionesDelTorneo } from '../components/InscripcionesDelTorneo';
+import { ProgramacionPartido } from '../components/ProgramacionPartido';
 import { abreviarHash, ESTADO_TORNEO_UI, participantes, TONO_ESTADO_TORNEO } from '../formato';
 import { formatFecha } from '../utils/formatters';
 import '../torneos.css';
@@ -20,7 +23,8 @@ const conResultados = (bracket: BracketTorneo): boolean =>
  * Consola del torneo (wireframe "Consola Operativa del Torneo", PICA-217): el bracket y el botón para sortearlo con
  * la inscripción cerrada, o para volver a sortearlo mientras no haya resultados. Con la inscripción abierta, el
  * organizador la cierra desde acá (HU-206); cerrada, se ve cuándo y el sello de la lista. Abajo, las inscripciones.
- * Con el bracket sorteado, las objeciones del torneo (PICA-247).
+ * Con el bracket sorteado, las objeciones del torneo (PICA-247). La ventana de check-in del torneo y la fecha de cada
+ * partido, en el bracket (HU-308).
  */
 export const TorneoConsolaPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -109,6 +113,19 @@ export const TorneoConsolaPage: React.FC = () => {
     generado &&
     (torneo.estado === 'INSCRIPCION_CERRADA' || torneo.estado === 'EN_CURSO') &&
     !conResultados(bracket);
+
+  const programable = torneo.estado === 'INSCRIPCION_CERRADA' || torneo.estado === 'EN_CURSO';
+
+  const programado = (partido: PartidoDetalle) =>
+    setBracket({
+      ...bracket,
+      rondas: bracket.rondas.map((r) => ({
+        ...r,
+        partidos: r.partidos.map((p) =>
+          p.id === partido.id ? { ...p, fechaProgramada: partido.fechaProgramada } : p
+        ),
+      })),
+    });
 
   const sortear = async () => {
     setSorteando(true);
@@ -262,10 +279,23 @@ export const TorneoConsolaPage: React.FC = () => {
           {torneo.slug && <Link to={`/torneos/${torneo.slug}`}>Ver la ficha pública</Link>}
         </div>
         {generado ? (
-          <Bracket bracket={bracket} conEnlaces />
+          <Bracket
+            bracket={bracket}
+            conEnlaces
+            pie={(p) => (
+              <ProgramacionPartido partido={p} editable={programable} onProgramado={programado} />
+            )}
+          />
         ) : (
           <p className="torneos-vacio">Todavía no hay bracket.</p>
         )}
+      </Card>
+
+      <Card>
+        <div className="torneos-tarjeta-titulo">
+          <h2>Check-in</h2>
+        </div>
+        <CheckinTorneo torneo={torneo} onGuardado={setTorneo} />
       </Card>
 
       {generado && (
