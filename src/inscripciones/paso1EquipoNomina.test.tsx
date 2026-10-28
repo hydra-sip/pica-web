@@ -193,7 +193,7 @@ describe('paso 1: equipo y nómina (alta)', () => {
   it('el botón de continuar muestra el monto y sigue deshabilitado hasta tener reglamento, equipo y nómina válida', async () => {
     const { user } = await renderRuta(ALTA_F5); // nómina de 5 a 7
     const continuar = await screen.findByRole('button', {
-      name: /^Continuar al pago \(\$\s20\.000,00\)$/,
+      name: /^Continuar al pago \(\$\s22\.000,00\)$/,
     });
     expect(continuar).toBeDisabled();
 

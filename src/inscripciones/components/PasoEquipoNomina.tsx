@@ -238,7 +238,7 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
         <Button block disabled={!puedeContinuar} loading={ocupado} onClick={continuar}>
           {gratis
             ? 'Confirmar inscripción'
-            : `Continuar al pago (${pesos(torneo.valorInscripcion)})`}
+            : `Continuar al pago (${pesos(torneo.totalAPagar)})`}
         </Button>
         <Button
           block

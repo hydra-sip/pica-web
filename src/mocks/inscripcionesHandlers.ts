@@ -126,12 +126,18 @@ const CIERRE_PASADO = '2026-01-15T23:59:00Z';
 const FECHA_INICIO = '2031-01-10T15:00:00Z';
 const HACE_UN_RATO = '2026-10-20T15:00:00Z';
 
+/** Los gastos administrativos salen del valor y el % del torneo, como en el back. */
+const conGastos = (t: TorneoMock): TorneoMock => {
+  const gastos = (t.valorInscripcion * (t.pctGastosAdministrativos ?? 0)) / 100;
+  return { ...t, gastosAdministrativos: gastos, totalAPagar: t.valorInscripcion + gastos };
+};
+
 const torneo = (
   id: number,
   slug: string,
   nombre: string,
   extra: Partial<TorneoMock>
-): TorneoMock => ({
+): TorneoMock => conGastos({
   id,
   slug,
   nombre,

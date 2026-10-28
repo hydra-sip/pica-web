@@ -379,7 +379,7 @@ export const TorneoFormPage: React.FC = () => {
           { titulo: 'Cupos', subtitulo: 'Equipos o jugadores y nómina' },
           {
             titulo: 'Esquema económico',
-            subtitulo: torneo ? 'Reparto, gastos y premios' : 'Después de guardar el borrador',
+            subtitulo: torneo ? 'Valor, gastos y premios' : 'Después de guardar el borrador',
             bloqueado: !torneo,
           },
         ]}
