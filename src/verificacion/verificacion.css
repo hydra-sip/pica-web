@@ -1,0 +1,509 @@
+/**
+ * Estilos del Portal Público de Verificación Criptográfica (HU-505)
+ */
+
+.verificacion-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+.verificacion-hero {
+  margin-bottom: 2rem;
+  background: var(--bg-superficie, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 12px;
+  padding: 1.75rem 2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.verificacion-hero-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.verificacion-hero-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-color, #1e293b);
+  margin: 0;
+}
+
+.verificacion-hero-desc {
+  color: var(--text-muted, #64748b);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Selector y Búsqueda */
+.verificacion-toolbar {
+  background: var(--bg-superficie, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 10px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.verificacion-tipo-tabs {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  padding-bottom: 0.75rem;
+}
+
+.verificacion-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted, #64748b);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.verificacion-tab-btn:hover {
+  background: var(--bg-hover, #f1f5f9);
+  color: var(--text-color, #1e293b);
+}
+
+.verificacion-tab-btn.activo {
+  background: var(--color-primario, #2563eb);
+  color: #ffffff;
+}
+
+.verificacion-busqueda-row {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.verificacion-input-grupo {
+  flex: 1;
+  min-width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.verificacion-label {
+  font-size: 0.825rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted, #64748b);
+}
+
+.verificacion-select,
+.verificacion-input {
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.95rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-color, #cbd5e1);
+  background: var(--bg-input, #ffffff);
+  color: var(--text-color, #1e293b);
+  transition: border-color 0.2s;
+}
+
+.verificacion-select:focus,
+.verificacion-input:focus {
+  outline: none;
+  border-color: var(--color-primario, #2563eb);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* Banner de Estado Criptográfico */
+.verificacion-banner-status {
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  border: 1px solid transparent;
+}
+
+.verificacion-banner-status.info {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #166534;
+}
+
+.verificacion-banner-status.verificado {
+  background: #f0fdf4;
+  border-color: #86efac;
+  color: #14532d;
+}
+
+.verificacion-banner-status.discrepancia {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #991b1b;
+}
+
+.verificacion-banner-icono {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+.verificacion-banner-contenido {
+  flex: 1;
+}
+
+.verificacion-banner-titulo {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.verificacion-banner-desc {
+  font-size: 0.9rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
+/* Tarjeta Principal de Auditoría */
+.verificacion-card {
+  background: var(--bg-superficie, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 12px;
+  padding: 1.75rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.verificacion-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  padding-bottom: 1rem;
+}
+
+.verificacion-card-titulo {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-color, #1e293b);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.verificacion-card-subtitulo {
+  font-size: 0.85rem;
+  color: var(--text-muted, #64748b);
+  margin-top: 0.2rem;
+}
+
+/* Grilla de Criptografía (hashes, semilla, firma) */
+.verificacion-crypto-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .verificacion-crypto-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.verificacion-campo-card {
+  background: var(--bg-tarjeta, #f8fafc);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.verificacion-campo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.verificacion-campo-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted, #64748b);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.verificacion-campo-badge {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  font-weight: 600;
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.verificacion-mono-box {
+  background: var(--bg-code, #0f172a);
+  color: #38bdf8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.825rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 6px;
+  word-break: break-all;
+  user-select: all;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.verificacion-btn-copiar {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0.2rem;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 4px;
+  transition: color 0.2s, background 0.2s;
+}
+
+.verificacion-btn-copiar:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.verificacion-campo-explicacion {
+  font-size: 0.75rem;
+  color: var(--text-muted, #64748b);
+  line-height: 1.35;
+  margin: 0;
+}
+
+/* Panel de Simulación / Auditoría */
+.verificacion-simulacion-panel {
+  background: #fdf2f8;
+  border: 1px solid #fbcfe8;
+  border-radius: 10px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.verificacion-simulacion-panel.activo {
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+
+.verificacion-simulacion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.verificacion-simulacion-titulo {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #9a3412;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.verificacion-simulacion-acciones {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.verificacion-simulacion-nota {
+  font-size: 0.85rem;
+  color: #7c2d12;
+  margin: 0 0 1rem;
+  line-height: 1.4;
+}
+
+/* Botones de acción */
+.verificacion-acciones-principales {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.verificacion-btn-recalcular {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  background: var(--color-primario, #2563eb);
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+  transition: all 0.2s ease;
+}
+
+.verificacion-btn-recalcular:hover {
+  background: var(--color-primario-hover, #1d4ed8);
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+}
+
+.verificacion-btn-secundario {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 6px;
+  background: var(--bg-superficie, #ffffff);
+  color: var(--text-color, #1e293b);
+  border: 1px solid var(--border-color, #cbd5e1);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.verificacion-btn-secundario:hover {
+  background: var(--bg-hover, #f1f5f9);
+}
+
+.verificacion-btn-alterar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 6px;
+  background: #ea580c;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.verificacion-btn-alterar:hover {
+  background: #c2410c;
+}
+
+/* Tablas de Resultados */
+.verificacion-tabla-wrapper {
+  overflow-x: auto;
+  margin-top: 1rem;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 8px;
+}
+
+.verificacion-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+.verificacion-tabla th {
+  background: var(--bg-tarjeta, #f8fafc);
+  color: var(--text-muted, #64748b);
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  white-space: nowrap;
+}
+
+.verificacion-tabla td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  vertical-align: middle;
+}
+
+.verificacion-tabla tr:last-child td {
+  border-bottom: none;
+}
+
+.verificacion-tabla tr.mismatch {
+  background: #fff1f2;
+}
+
+.verificacion-tabla tr.match {
+  background: #f8fafc;
+}
+
+.verificacion-badge-coincide {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  background: #dcfce7;
+  color: #166534;
+}
+
+.verificacion-badge-difiere {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.verificacion-hash-celda {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.775rem;
+  color: var(--text-muted, #64748b);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.verificacion-bye-badge {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 4px;
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+/* Copiado Feedback */
+.verificacion-copiado-aviso {
+  font-size: 0.75rem;
+  color: #22c55e;
+  font-weight: 600;
+}
