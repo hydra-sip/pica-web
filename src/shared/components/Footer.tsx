@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import './Footer.css';
 
 export const Footer: React.FC = () => {
@@ -17,10 +18,26 @@ export const Footer: React.FC = () => {
           </p>
         </div>
         <div className="footer-meta">
-          <span className="badge badge-info footer-badge">
-            <span className="pulse-beacon" style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--color-emerald)', display: 'inline-block', marginRight: '4px' }} />
-            Sistema PICA v1.0 • SHA-256 Verificado
-          </span>
+          <Link
+            to="/verificacion"
+            className="badge badge-info footer-badge"
+            style={{ textDecoration: 'none', cursor: 'pointer' }}
+            title="Portal público de verificación y auditoría de sorteos"
+            data-testid="footer-link-verificacion"
+          >
+            <span
+              className="pulse-beacon"
+              style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                backgroundColor: 'var(--color-emerald)',
+                display: 'inline-block',
+                marginRight: '4px',
+              }}
+            />
+            Verificación Criptográfica SHA-256
+          </Link>
           <p className="copyright">
             &copy; {new Date().getFullYear()} PICA. Todos los derechos reservados.
           </p>
@@ -29,3 +46,4 @@ export const Footer: React.FC = () => {
     </footer>
   );
 };
+

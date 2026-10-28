@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { BracketTorneo, torneoApi } from '../../api/torneoApi';
 import { useTorneoRealtime } from '../../realtime/useTorneoRealtime';
-import { IconoTrofeo } from '../../shared/ui/Iconos';
+import { IconoEscudoCheck, IconoTrofeo } from '../../shared/ui/Iconos';
 import { Bracket } from './Bracket';
 
 /**
@@ -55,12 +55,39 @@ export const BracketDelTorneo: React.FC<{ torneoId: number }> = ({ torneoId }) =
     <div className="torneo-block-card torneo-detalle-bracket">
       <div
         className="torneo-block-title"
-        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '0.5rem',
+        }}
       >
-        <IconoTrofeo size={20} />
-        <span>Bracket</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <IconoTrofeo size={20} />
+          <span>Bracket</span>
+        </div>
+        <a
+          href={`/verificacion?tipo=torneo&id=${torneoId}`}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.35rem',
+            fontSize: '0.85rem',
+            fontWeight: 500,
+            color: 'var(--color-primario, #2563eb)',
+            textDecoration: 'none',
+          }}
+          title="Verificar y recalcular sorteo en el portal público"
+          data-testid="link-verificar-bracket"
+        >
+          <IconoEscudoCheck size={16} />
+          <span>Verificar sorteo</span>
+        </a>
       </div>
       <Bracket bracket={bracket} />
     </div>
   );
 };
+
+
