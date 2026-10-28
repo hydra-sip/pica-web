@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { rifaApi, RifaDetalle } from '../../api/rifaApi';
+import { useRifaRealtime } from '../../realtime/useRifaRealtime';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { Badge, Card } from '../../shared/ui';
 import { PasosAsistente } from '../../shared/components/PasosAsistente';
@@ -41,23 +42,48 @@ export const RifaFormPage: React.FC = () => {
   const editable = !rifa || rifa.estado === 'BORRADOR';
   const estado = rifa?.estado ?? 'BORRADOR';
 
+  const recargarRifa = useCallback(() => {
+    if (!id) {
+      setRifa(null);
+      return;
+    }
+    rifaApi
+      .obtener(Number(id))
+      .then(setRifa)
+      .catch((err) => setError(mensajeDeError(err, 'No se pudo cargar la rifa.')))
+      .finally(() => setCargando(false));
+  }, [id]);
+
   useEffect(() => {
     if (!id) {
       setRifa(null);
       return;
     }
-    let vigente = true;
     setCargando(true);
     setError(null);
-    rifaApi
-      .obtener(Number(id))
-      .then((r) => vigente && setRifa(r))
-      .catch((err) => vigente && setError(mensajeDeError(err, 'No se pudo cargar la rifa.')))
-      .finally(() => vigente && setCargando(false));
-    return () => {
-      vigente = false;
-    };
-  }, [id]);
+    recargarRifa();
+  }, [id, recargarRifa]);
+
+  useRifaRealtime(id ? Number(id) : null, {
+    onRifaChange: (nuevaRifa) => {
+      setRifa(nuevaRifa);
+    },
+    onEstadoChange: (nuevoEstado) => {
+      setRifa((prev) => (prev ? { ...prev, estado: nuevoEstado } : prev));
+    },
+    onActualizar: (data) => {
+      if (data.rifa) {
+        setRifa(data.rifa);
+      } else if (data.estado) {
+        setRifa((prev) => (prev ? { ...prev, estado: data.estado! } : prev));
+      } else {
+        recargarRifa();
+      }
+    },
+    onReconnect: () => {
+      recargarRifa();
+    },
+  });
 
   const urlDePaso = (rifaId: number, indice: number) =>
     `/rifas/${rifaId}/editar${indice > 0 ? `?paso=${PASOS_URL[indice]}` : ''}`;
