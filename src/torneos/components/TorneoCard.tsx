@@ -95,6 +95,9 @@ export const TorneoCard: React.FC<TorneoCardProps> = ({ torneo }) => {
         <div className="torneo-extra-item">
           <span className="torneo-extra-label">Inscripción:</span>
           <strong>{valorInscripcion(torneo.valorInscripcion)}</strong>
+          {torneo.gastosAdministrativos > 0 && (
+            <small> + {pesos(torneo.gastosAdministrativos)} de gastos adm.</small>
+          )}
         </div>
         {torneo.fechaInicio && (
           <div className="torneo-extra-item">

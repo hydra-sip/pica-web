@@ -61,29 +61,19 @@ export const TorneoDetallePage: React.FC = () => {
   }, [fetchTorneoDetalle]);
 
   useTorneoRealtime(torneo?.id, {
-    onPozoChange: (pozoEstimado, premioRifaEstimado) => {
-      setTorneo((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          pozoEstimado,
-          ...(premioRifaEstimado !== undefined ? { premioRifaEstimado } : {}),
-        };
-      });
+    onPozoChange: (pozoEstimado) => {
+      setTorneo((prev) => (prev ? { ...prev, pozoEstimado } : prev));
     },
     onEstadoChange: (estado) => {
       setTorneo((prev) => (prev ? { ...prev, estado: estado as EstadoTorneo } : prev));
     },
     onActualizar: (data) => {
-      if (data.pozoEstimado !== undefined || data.estado || data.premioRifaEstimado !== undefined) {
+      if (data.pozoEstimado !== undefined || data.estado) {
         setTorneo((prev) => {
           if (!prev) return prev;
           return {
             ...prev,
             ...(data.pozoEstimado !== undefined ? { pozoEstimado: data.pozoEstimado } : {}),
-            ...(data.premioRifaEstimado !== undefined
-              ? { premioRifaEstimado: data.premioRifaEstimado }
-              : {}),
             ...(data.estado ? { estado: data.estado as EstadoTorneo } : {}),
           };
         });
@@ -319,6 +309,12 @@ export const TorneoDetallePage: React.FC = () => {
             >
               {valorInscripcion(torneo.valorInscripcion)}
             </div>
+            {torneo.gastosAdministrativos > 0 && (
+              <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>
+                + {pesos(torneo.gastosAdministrativos)} de gastos administrativos · total{' '}
+                {pesos(torneo.totalAPagar)}
+              </div>
+            )}
           </div>
 
           <div>
@@ -648,9 +644,6 @@ export const TorneoDetallePage: React.FC = () => {
         <TorneoPremiosList
           premios={torneo.premios}
           pozoEstimado={torneo.pozoEstimado}
-          pctPozoCompetidores={torneo.pctPozoCompetidores}
-          pctPremioRifa={torneo.pctPremioRifa}
-          premioRifaEstimado={torneo.premioRifaEstimado}
           moneda={torneo.moneda}
         />
       </div>

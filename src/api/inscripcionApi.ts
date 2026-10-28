@@ -56,8 +56,12 @@ export interface ResumenPago {
   torneo: { id: number; nombre: string };
   participante?: UsuarioPublico | null;
   equipo?: EquipoInscripto | null;
-  /** El valor de la inscripción, sin comisiones. */
+  /** El valor de la inscripción, que va entero al torneo. */
   monto: number;
+  /** Los de la plataforma, que se cobran aparte. */
+  gastosAdministrativos: number;
+  /** Monto más gastos administrativos: lo que se cobra. */
+  total: number;
   moneda: string;
   cupoMaximo: number;
   /** El cupo máximo menos las inscripciones confirmadas. */

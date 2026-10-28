@@ -113,8 +113,6 @@ const POR_CODIGO_DE_CAMPO: Record<string, string> = {
   VENTANA_INVALIDA: 'Las fechas de venta no son válidas.',
   PREMIOS_INVALIDOS: 'Los premios no son válidos.',
   FECHAS_INVALIDAS: 'Las fechas no son válidas.',
-  REPARTO_INVALIDO: 'Competidores, rifa y comisión tienen que sumar 100 %.',
-  COMISION_EXCEDIDA: 'La comisión pasa el máximo que permite la plataforma.',
   VALOR_INVALIDO: 'El valor no es válido.',
 };
 
