@@ -7,7 +7,7 @@ import { LogoPica } from '../ui/LogoPica';
 import { ItemNavegacion, NAVEGACION, Seccion } from './navegacion';
 import './AppLayout.css';
 
-const MAX_ITEMS_CELULAR = 4;
+const MAX_ITEMS_CELULAR = 5;
 
 interface AppLayoutProps {
   seccion: Seccion;

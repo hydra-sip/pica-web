@@ -30,6 +30,7 @@ import { MiInscripcionPage } from '../inscripciones/pages/MiInscripcionPage';
 import { InscripcionPagoPage } from '../inscripciones/pages/InscripcionPagoPage';
 import { PartidoPage } from '../partidos/pages/PartidoPage';
 import { ObjecionesTorneoPage } from '../partidos/pages/ObjecionesTorneoPage';
+import { PronosticosPage } from '../pronosticos/pages/PronosticosPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -39,6 +40,8 @@ export const AppRoutes: React.FC = () => {
         <Route index element={<HomePage />} />
         <Route path="torneos" element={<TorneosCatalogoPage />} />
         <Route path="torneos/:slug" element={<TorneoDetallePage />} />
+        {/* HU-306 / T306-2: Pronósticos y ranking */}
+        <Route path="pronosticos" element={<PronosticosPage />} />
         <Route path="auth/login" element={<LoginPage />} />
         <Route path="auth/register" element={<RegisterPage />} />
         <Route path="auth/check-email" element={<CheckEmailPage />} />

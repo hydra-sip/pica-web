@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import { adminHandlers } from './adminHandlers';
 import { crearInscripcionesHandlers } from './inscripcionesHandlers';
+import { pronosticoHandlers } from './pronosticoHandlers';
 import { torneoHandlers } from './torneoHandlers';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
@@ -81,6 +82,9 @@ export const handlers = [
 
   // Torneos públicos (HU-208 / T208-2)
   ...torneoHandlers,
+
+  // Pronósticos y Ranking (HU-306 / T306-2)
+  ...pronosticoHandlers,
 
   // Auth: Registro Endpoint (POST /auth/registro) -> 201 { id }
   http.post(`${API_URL}/auth/registro`, async ({ request }) => {
