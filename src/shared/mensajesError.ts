@@ -96,6 +96,9 @@ const POR_CODIGO: Record<string, string> = {
     'No se aprobó el pago y no se cobró nada. Tu inscripción sigue pendiente: probá de nuevo.',
   INSCRIPCION_NO_PERMITIDA_EN_TORNEO:
     'El organizador y los árbitros de un torneo no pueden inscribirse en él.',
+  PRONOSTICO_FUERA_DE_VENTANA:
+    'La ventana para cargar o modificar el pronóstico ya cerró o el partido ya finalizó.',
+  PRONOSTICO_INVALIDO: 'El pronóstico indicado no es válido.',
 };
 
 const POR_CODIGO_DE_CAMPO: Record<string, string> = {
@@ -148,6 +151,14 @@ export const mensajeDeError = (
     return Date.now() < new Date(problema.abreEn).getTime()
       ? `Todavía no abrió el check-in: abre el ${fechaHora(problema.abreEn)}.`
       : `El check-in cerró el ${fechaHora(problema.cierraEn)}.`;
+  }
+  // HU-306: la ventana de pronóstico cerró
+  if (
+    problema?.codigo === 'PRONOSTICO_FUERA_DE_VENTANA' &&
+    problema.cierraEn &&
+    !propios[problema.codigo]
+  ) {
+    return `La ventana para pronosticar cerró el ${fechaHora(problema.cierraEn)}.`;
   }
   if (problema?.codigo && (propios[problema.codigo] || POR_CODIGO[problema.codigo])) {
     return propios[problema.codigo] || POR_CODIGO[problema.codigo];

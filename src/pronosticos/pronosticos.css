@@ -1,0 +1,764 @@
+/* Pronósticos y Ranking - PICA (HU-306 / T306-2) */
+
+.pronosticos-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.pronosticos-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.pronosticos-titulo-seccion {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.pronosticos-icono-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgba(var(--color-primary-rgb, 14, 165, 233), 0.15), rgba(var(--color-primary-rgb, 14, 165, 233), 0.05));
+  color: var(--color-primary);
+  border: 1px solid rgba(var(--color-primary-rgb, 14, 165, 233), 0.25);
+  flex-shrink: 0;
+}
+
+.pronosticos-titulo {
+  font-family: 'Outfit', sans-serif;
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.pronosticos-subtitulo {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Reglas y banner de puntuación */
+.pronosticos-reglas-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.pronosticos-reglas-card strong {
+  color: var(--color-text);
+}
+
+.pronosticos-reglas-puntos {
+  display: inline-flex;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.pronosticos-regla-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* Pestañas principales */
+.pronosticos-tabs {
+  display: flex;
+  gap: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--space-1);
+  overflow-x: auto;
+}
+
+.pronosticos-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.pronosticos-tab-btn:hover {
+  color: var(--color-text);
+}
+
+.pronosticos-tab-btn.activo {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+.pronosticos-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 7px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  background-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.pronosticos-tab-btn.activo .pronosticos-tab-badge {
+  background-color: var(--color-primary);
+  color: #fff;
+}
+
+/* Barra de Filtros */
+.pronosticos-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+}
+
+.pronosticos-filtro-grupo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.pronosticos-select {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.pronosticos-chips {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.pronosticos-chip-btn {
+  padding: 4px 10px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pronosticos-chip-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-text);
+}
+
+.pronosticos-chip-btn.activo {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+/* Grilla de Partidos */
+.pronosticos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-4);
+}
+
+/* Tarjeta de Partido */
+.pronostico-card {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  gap: var(--space-3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.pronostico-card:hover {
+  border-color: rgba(var(--color-primary-rgb, 14, 165, 233), 0.4);
+}
+
+.pronostico-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+}
+
+.pronostico-torneo-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pronostico-torneo-nombre {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.pronostico-ronda-nombre {
+  color: var(--color-text-secondary);
+}
+
+.pronostico-fecha-box {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  background-color: var(--color-surface);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+}
+
+/* Equipos y Marcador */
+.pronostico-enfrentamiento {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.pronostico-equipo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  text-align: center;
+  gap: 6px;
+}
+
+.pronostico-equipo-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: var(--text-sm);
+  color: var(--color-text);
+}
+
+.pronostico-equipo-nombre {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.2;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.pronostico-marcador-central {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  min-width: 60px;
+}
+
+.pronostico-vs {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.05em;
+}
+
+.pronostico-goles-reales {
+  font-family: 'Outfit', sans-serif;
+  font-size: var(--text-xl);
+  font-weight: 800;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Selector de Elección (1 - X - 2) */
+.pronostico-opciones-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.pronostico-opciones-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.pronostico-botones-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+}
+
+.pronostico-btn-opcion {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: var(--space-2) var(--space-1);
+  min-height: 48px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pronostico-btn-opcion:not(:disabled):hover {
+  border-color: var(--color-primary);
+  background-color: rgba(var(--color-primary-rgb, 14, 165, 233), 0.06);
+}
+
+.pronostico-btn-opcion strong {
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.pronostico-btn-opcion.seleccionado {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(var(--color-primary-rgb, 14, 165, 233), 0.3);
+}
+
+.pronostico-btn-opcion.seleccionado strong {
+  color: #fff;
+}
+
+.pronostico-btn-opcion:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pronostico-btn-opcion.seleccionado:disabled {
+  opacity: 1;
+  background-color: var(--color-card);
+  border: 2px solid var(--color-primary);
+  color: var(--color-primary);
+}
+
+.pronostico-btn-opcion.seleccionado:disabled strong {
+  color: var(--color-primary);
+}
+
+/* Pie de Tarjeta y Puntos */
+.pronostico-card-footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: auto;
+}
+
+.pronostico-resultado-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.pronostico-resultado-acierto {
+  background-color: rgba(34, 197, 94, 0.12);
+  color: #16a34a;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.pronostico-resultado-fallo {
+  background-color: rgba(100, 116, 139, 0.12);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}
+
+.pronostico-resultado-espera {
+  background-color: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.pronostico-error-mensaje {
+  font-size: var(--text-xs);
+  color: var(--color-danger);
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  line-height: 1.4;
+}
+
+/* ========================================================
+   SECCIÓN DE RANKING / TABLA DE POSICIONES
+   ======================================================== */
+
+.pronosticos-ranking-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* Podio de los primeros 3 */
+.pronosticos-podio {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+  align-items: flex-end;
+  max-width: 700px;
+  margin: var(--space-2) auto;
+  width: 100%;
+}
+
+.podio-columna {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.podio-columna-1 {
+  order: 2;
+}
+
+.podio-columna-2 {
+  order: 1;
+}
+
+.podio-columna-3 {
+  order: 3;
+}
+
+.podio-tarjeta {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-4) var(--space-2);
+  border-radius: var(--radius-md);
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  gap: var(--space-2);
+  position: relative;
+  transition: transform 0.2s ease;
+}
+
+.podio-columna-1 .podio-tarjeta {
+  border-color: #eab308;
+  background: linear-gradient(180deg, rgba(234, 179, 8, 0.08) 0%, var(--color-card) 60%);
+  padding-top: var(--space-6);
+}
+
+.podio-columna-2 .podio-tarjeta {
+  border-color: #94a3b8;
+  background: linear-gradient(180deg, rgba(148, 163, 184, 0.08) 0%, var(--color-card) 60%);
+}
+
+.podio-columna-3 .podio-tarjeta {
+  border-color: #b45309;
+  background: linear-gradient(180deg, rgba(180, 83, 9, 0.08) 0%, var(--color-card) 60%);
+}
+
+.podio-tarjeta:hover {
+  transform: translateY(-2px);
+}
+
+.podio-medalla {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: var(--text-xs);
+  font-weight: 800;
+  position: absolute;
+  top: -14px;
+}
+
+.podio-columna-1 .podio-medalla {
+  background-color: #eab308;
+  color: #000;
+}
+
+.podio-columna-2 .podio-medalla {
+  background-color: #94a3b8;
+  color: #000;
+}
+
+.podio-columna-3 .podio-medalla {
+  background-color: #b45309;
+  color: #fff;
+}
+
+.podio-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: var(--color-surface);
+  border: 2px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-md);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.podio-columna-1 .podio-avatar {
+  width: 56px;
+  height: 56px;
+  border-color: #eab308;
+}
+
+.podio-nombre {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--color-text);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.podio-puntos {
+  font-family: 'Outfit', sans-serif;
+  font-size: var(--text-xl);
+  font-weight: 800;
+  color: var(--color-text);
+  line-height: 1;
+}
+
+.podio-columna-1 .podio-puntos {
+  color: #eab308;
+  font-size: var(--text-2xl);
+}
+
+.podio-aciertos {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+/* Tabla completa de posiciones */
+.pronosticos-tabla-card {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.pronosticos-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: var(--text-sm);
+}
+
+.pronosticos-tabla th {
+  background-color: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.pronosticos-tabla td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.pronosticos-tabla tr:last-child td {
+  border-bottom: none;
+}
+
+.pronosticos-tabla tr:hover td {
+  background-color: rgba(var(--color-primary-rgb, 14, 165, 233), 0.03);
+}
+
+.pronosticos-tabla tr.es-usuario-actual td {
+  background-color: rgba(var(--color-primary-rgb, 14, 165, 233), 0.08);
+  font-weight: 600;
+}
+
+.pronosticos-posicion-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  background-color: var(--color-surface);
+  color: var(--color-text);
+}
+
+.pronosticos-posicion-1 {
+  background-color: rgba(234, 179, 8, 0.2);
+  color: #ca8a04;
+  border: 1px solid #eab308;
+}
+
+.pronosticos-posicion-2 {
+  background-color: rgba(148, 163, 184, 0.2);
+  color: #64748b;
+  border: 1px solid #94a3b8;
+}
+
+.pronosticos-posicion-3 {
+  background-color: rgba(180, 83, 9, 0.2);
+  color: #b45309;
+  border: 1px solid #b45309;
+}
+
+.pronosticos-usuario-celda {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.pronosticos-usuario-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--color-text);
+  flex-shrink: 0;
+}
+
+.pronosticos-puntos-destacados {
+  font-family: 'Outfit', sans-serif;
+  font-size: var(--text-md);
+  font-weight: 800;
+  color: var(--color-primary);
+}
+
+/* Estado Vacío */
+.pronosticos-vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-8) var(--space-4);
+  background-color: var(--color-card);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  gap: var(--space-3);
+  color: var(--color-text-secondary);
+}
+
+.pronosticos-vacio h3 {
+  margin: 0;
+  font-size: var(--text-lg);
+  color: var(--color-text);
+}
+
+.pronosticos-vacio p {
+  margin: 0;
+  font-size: var(--text-sm);
+  max-width: 420px;
+  line-height: 1.5;
+}
+
+/* Spinner de carga */
+.pronosticos-cargando {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-8);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
+@media (max-width: 640px) {
+  .pronosticos-podio {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+
+  .podio-columna-1,
+  .podio-columna-2,
+  .podio-columna-3 {
+    order: unset;
+  }
+
+  .pronosticos-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pronosticos-filtro-grupo {
+    justify-content: space-between;
+  }
+}

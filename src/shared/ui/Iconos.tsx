@@ -3,10 +3,11 @@ import React from 'react';
 interface IconoProps {
   size?: number | string;
   className?: string;
+  style?: React.CSSProperties;
   children: React.ReactNode;
 }
 
-const Icono: React.FC<IconoProps> = ({ size = 20, className = '', children }) => (
+const Icono: React.FC<IconoProps> = ({ size = 20, className = '', style, children }) => (
   <svg
     width={size}
     height={size}
@@ -19,7 +20,7 @@ const Icono: React.FC<IconoProps> = ({ size = 20, className = '', children }) =>
     aria-hidden="true"
     focusable="false"
     className={className}
-    style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0 }}
+    style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0, ...style }}
   >
     {children}
   </svg>
@@ -237,8 +238,12 @@ export const IconoDescargar: React.FC<{ size?: number }> = ({ size }) => (
   </Icono>
 );
 
-export const IconoRefrescar: React.FC<{ size?: number }> = ({ size }) => (
-  <Icono size={size}>
+export const IconoRefrescar: React.FC<{ size?: number; className?: string; style?: React.CSSProperties }> = ({
+  size,
+  className,
+  style,
+}) => (
+  <Icono size={size} className={className} style={style}>
     <polyline points="23 4 23 10 17 10" />
     <polyline points="1 20 1 14 7 14" />
     <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
@@ -268,8 +273,12 @@ export const IconoConfiguracion: React.FC<{ size?: number }> = ({ size }) => (
   </Icono>
 );
 
-export const IconoCheck: React.FC<{ size?: number }> = ({ size }) => (
-  <Icono size={size}>
+export const IconoCheck: React.FC<{ size?: number; className?: string; style?: React.CSSProperties }> = ({
+  size,
+  className,
+  style,
+}) => (
+  <Icono size={size} className={className} style={style}>
     <polyline points="20 6 9 17 4 12" />
   </Icono>
 );
@@ -307,6 +316,30 @@ export const IconoCopiar: React.FC<{ size?: number }> = ({ size }) => (
   <Icono size={size}>
     <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+  </Icono>
+);
+
+export const IconoPronosticos: React.FC<{ size?: number; className?: string }> = ({
+  size,
+  className,
+}) => (
+  <Icono size={size} className={className}>
+    <circle cx="12" cy="12" r="10" />
+    <circle cx="12" cy="12" r="6" />
+    <circle cx="12" cy="12" r="2" />
+  </Icono>
+);
+
+export const IconoPodio: React.FC<{ size?: number; className?: string; style?: React.CSSProperties }> = ({
+  size,
+  className,
+  style,
+}) => (
+  <Icono size={size} className={className} style={style}>
+    <path d="M4 19h16" />
+    <path d="M4 19V11h4v8" />
+    <path d="M8 19V7h8v12" />
+    <path d="M16 19v-5h4v5" />
   </Icono>
 );
 

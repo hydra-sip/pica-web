@@ -18,6 +18,7 @@ import {
   IconoRefrescar,
   IconoDocumento,
   IconoCalendario,
+  IconoPronosticos,
 } from '../../shared/ui/Iconos';
 import './TorneoDetallePage.css';
 
@@ -654,7 +655,24 @@ export const TorneoDetallePage: React.FC = () => {
         />
       </div>
 
-      {torneo.estado !== 'INSCRIPCION_ABIERTA' && <BracketDelTorneo torneoId={torneo.id} />}
+      {torneo.estado !== 'INSCRIPCION_ABIERTA' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--color-text)' }}>
+              Cuadro del Torneo
+            </span>
+            <Link
+              to="/pronosticos"
+              className="btn btn-secondary btn-sm"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+              <IconoPronosticos size={16} />
+              <span>Pronosticar Cruces</span>
+            </Link>
+          </div>
+          <BracketDelTorneo torneoId={torneo.id} />
+        </div>
+      )}
     </div>
   );
 };
