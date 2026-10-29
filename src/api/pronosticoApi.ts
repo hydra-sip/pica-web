@@ -45,11 +45,24 @@ export interface FilaRanking {
   posicion: number;
   usuarioId: number;
   username: string;
-  nombreCompleto: string;
+  nombre: string;
   puntos: number;
   aciertos: number;
   pronosticosTotales: number;
-  efectividadPct?: number;
+  primerPronosticoEn: string;
+}
+
+export interface MiPosicionRanking {
+  posicion: number | null;
+  puntos: number | null;
+  aciertos: number | null;
+  mensaje: string | null;
+}
+
+export interface RankingResponse {
+  torneoId: number | null;
+  posiciones: FilaRanking[];
+  miPosicion: MiPosicionRanking | null;
 }
 
 export interface ListarPartidosParams {
@@ -77,12 +90,12 @@ export const pronosticoApi = {
   },
 
   /** Tabla de posiciones / ranking de pronósticos (general o por torneo). */
-  ranking: async (torneoId?: number): Promise<FilaRanking[]> => {
+  ranking: async (torneoId?: number): Promise<RankingResponse> => {
     const searchParams = new URLSearchParams();
     if (torneoId != null) {
       searchParams.set('torneoId', String(torneoId));
     }
     const query = searchParams.toString();
-    return httpClient.get<FilaRanking[]>(`/pronosticos/ranking${query ? `?${query}` : ''}`);
+    return httpClient.get<RankingResponse>(`/pronosticos/ranking${query ? `?${query}` : ''}`);
   },
 };
