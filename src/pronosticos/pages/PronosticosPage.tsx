@@ -39,7 +39,7 @@ export const PronosticosPage: React.FC = () => {
         pronosticoApi.ranking(torneoId),
       ]);
       setPartidos(listaPartidos);
-      setRanking(listaRanking);
+      setRanking(listaRanking.posiciones);
     } catch (err) {
       setError(mensajeDeError(err, 'No se pudieron cargar los pronósticos y ranking.'));
     } finally {

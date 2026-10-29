@@ -39,10 +39,10 @@ export const TablaRanking: React.FC<TablaRankingProps> = ({ ranking, usuarioActu
               <div className="podio-tarjeta">
                 <span className="podio-medalla">2°</span>
                 <div className="podio-avatar">
-                  {getIniciales(segundoPuesto.nombreCompleto, segundoPuesto.username)}
+                  {getIniciales(segundoPuesto.nombre, segundoPuesto.username)}
                 </div>
-                <span className="podio-nombre" title={segundoPuesto.nombreCompleto || segundoPuesto.username}>
-                  {segundoPuesto.nombreCompleto || segundoPuesto.username}
+                <span className="podio-nombre" title={segundoPuesto.nombre || segundoPuesto.username}>
+                  {segundoPuesto.nombre || segundoPuesto.username}
                 </span>
                 <span className="podio-puntos">{segundoPuesto.puntos} pts</span>
                 <span className="podio-aciertos">{segundoPuesto.aciertos} aciertos</span>
@@ -54,10 +54,10 @@ export const TablaRanking: React.FC<TablaRankingProps> = ({ ranking, usuarioActu
             <div className="podio-tarjeta">
               <span className="podio-medalla">1°</span>
               <div className="podio-avatar">
-                {getIniciales(primerPuesto.nombreCompleto, primerPuesto.username)}
+                {getIniciales(primerPuesto.nombre, primerPuesto.username)}
               </div>
-              <span className="podio-nombre" title={primerPuesto.nombreCompleto || primerPuesto.username}>
-                {primerPuesto.nombreCompleto || primerPuesto.username}
+              <span className="podio-nombre" title={primerPuesto.nombre || primerPuesto.username}>
+                {primerPuesto.nombre || primerPuesto.username}
               </span>
               <span className="podio-puntos">{primerPuesto.puntos} pts</span>
               <span className="podio-aciertos">{primerPuesto.aciertos} aciertos</span>
@@ -69,10 +69,10 @@ export const TablaRanking: React.FC<TablaRankingProps> = ({ ranking, usuarioActu
               <div className="podio-tarjeta">
                 <span className="podio-medalla">3°</span>
                 <div className="podio-avatar">
-                  {getIniciales(tercerPuesto.nombreCompleto, tercerPuesto.username)}
+                  {getIniciales(tercerPuesto.nombre, tercerPuesto.username)}
                 </div>
-                <span className="podio-nombre" title={tercerPuesto.nombreCompleto || tercerPuesto.username}>
-                  {tercerPuesto.nombreCompleto || tercerPuesto.username}
+                <span className="podio-nombre" title={tercerPuesto.nombre || tercerPuesto.username}>
+                  {tercerPuesto.nombre || tercerPuesto.username}
                 </span>
                 <span className="podio-puntos">{tercerPuesto.puntos} pts</span>
                 <span className="podio-aciertos">{tercerPuesto.aciertos} aciertos</span>
@@ -99,11 +99,7 @@ export const TablaRanking: React.FC<TablaRankingProps> = ({ ranking, usuarioActu
               const esYo =
                 usuarioActualId != null && String(fila.usuarioId) === String(usuarioActualId);
               const efectividad =
-                fila.efectividadPct != null
-                  ? fila.efectividadPct
-                  : fila.pronosticosTotales > 0
-                  ? Math.round((fila.aciertos / fila.pronosticosTotales) * 100)
-                  : 0;
+                fila.pronosticosTotales > 0 ? Math.round((fila.aciertos / fila.pronosticosTotales) * 100) : 0;
 
               return (
                 <tr
@@ -129,11 +125,11 @@ export const TablaRanking: React.FC<TablaRankingProps> = ({ ranking, usuarioActu
                   <td>
                     <div className="pronosticos-usuario-celda">
                       <div className="pronosticos-usuario-avatar" aria-hidden="true">
-                        {getIniciales(fila.nombreCompleto, fila.username)}
+                        {getIniciales(fila.nombre, fila.username)}
                       </div>
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span>{fila.nombreCompleto || fila.username}</span>
+                          <span>{fila.nombre || fila.username}</span>
                           {esYo && (
                             <span
                               className="badge badge-borde"

@@ -188,51 +188,51 @@ export const RANKING_PRONOSTICOS_MOCK: FilaRanking[] = [
     posicion: 1,
     usuarioId: 10,
     username: 'martin_palermo',
-    nombreCompleto: 'Martín Palermo',
+    nombre: 'Martín Palermo',
     puntos: 27,
     aciertos: 9,
     pronosticosTotales: 10,
-    efectividadPct: 90,
+    primerPronosticoEn: '2026-10-20T15:00:00Z',
   },
   {
     posicion: 2,
     usuarioId: 2,
     username: 'usuario',
-    nombreCompleto: 'Usuario PICA',
+    nombre: 'Usuario PICA',
     puntos: 21,
     aciertos: 7,
     pronosticosTotales: 9,
-    efectividadPct: 78,
+    primerPronosticoEn: '2026-10-20T15:00:00Z',
   },
   {
     posicion: 3,
     usuarioId: 12,
     username: 'lucas_g',
-    nombreCompleto: 'Lucas Gómez',
+    nombre: 'Lucas Gómez',
     puntos: 18,
     aciertos: 6,
     pronosticosTotales: 10,
-    efectividadPct: 60,
+    primerPronosticoEn: '2026-10-20T15:00:00Z',
   },
   {
     posicion: 4,
     usuarioId: 15,
     username: 'franco_c',
-    nombreCompleto: 'Franco Colapinto',
+    nombre: 'Franco Colapinto',
     puntos: 15,
     aciertos: 5,
     pronosticosTotales: 8,
-    efectividadPct: 63,
+    primerPronosticoEn: '2026-10-20T15:00:00Z',
   },
   {
     posicion: 5,
     usuarioId: 20,
     username: 'camila_s',
-    nombreCompleto: 'Camila Suárez',
+    nombre: 'Camila Suárez',
     puntos: 9,
     aciertos: 3,
     pronosticosTotales: 7,
-    efectividadPct: 43,
+    primerPronosticoEn: '2026-10-20T15:00:00Z',
   },
 ];
 
@@ -348,6 +348,10 @@ export const pronosticoHandlers = [
       }));
     }
 
-    return HttpResponse.json(ranking);
+    return HttpResponse.json({
+      torneoId: torneoIdParam ? Number(torneoIdParam) : null,
+      posiciones: ranking,
+      miPosicion: null,
+    });
   }),
 ];
