@@ -13,9 +13,6 @@ import {
   MIN_FECHA_NACIMIENTO,
 } from '../../shared/validators';
 import {
-  IconoConfiguracion,
-  IconoTrofeo,
-  IconoMedalla,
   IconoCheck,
   IconoAlerta,
 } from '../../shared/ui/Iconos';
@@ -207,25 +204,10 @@ export const ProfilePage: React.FC = () => {
           <h1 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
             Mi Perfil
           </h1>
-          <button
-            type="button"
-            aria-label="Configuración"
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'var(--text-secondary)',
-              display: 'flex',
-              alignItems: 'center',
-              padding: '4px',
-            }}
-          >
-            <IconoConfiguracion size={20} />
-          </button>
         </div>
 
         {/* User Identity Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
           <div
             style={{
               width: '68px',
@@ -266,101 +248,7 @@ export const ProfilePage: React.FC = () => {
             <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
               @{user?.username || 'usuario'} • {user?.email}
             </div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
-              Miembro de PICA desde 2026
-            </div>
           </div>
-        </div>
-
-        {/* Competitive Performance Dashboard */}
-        <div
-          style={{
-            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-            borderRadius: 'var(--radius-lg)',
-            padding: '1.25rem',
-            color: '#ffffff',
-            marginBottom: '1.5rem',
-            boxShadow: '0 4px 14px rgba(15, 23, 42, 0.15)',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-            <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#94a3b8', fontWeight: 700 }}>
-              Rendimiento en Competencia
-            </span>
-            <span style={{ fontSize: '0.72rem', backgroundColor: 'rgba(255,255,255,0.1)', padding: '0.15rem 0.5rem', borderRadius: '4px' }}>
-              Rango Platino
-            </span>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', textAlign: 'center' }}>
-            <div style={{ padding: '0.5rem', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-md)' }}>
-              <div style={{ fontSize: '1.35rem', fontWeight: 900 }}>12</div>
-              <div style={{ fontSize: '0.72rem', opacity: 0.85, fontWeight: 500 }}>Torneos</div>
-            </div>
-            <div style={{ padding: '0.5rem', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-md)' }}>
-              <div style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--color-emerald)' }}>8</div>
-              <div style={{ fontSize: '0.72rem', opacity: 0.85, fontWeight: 500 }}>Victorias</div>
-            </div>
-            <div style={{ padding: '0.5rem', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-md)' }}>
-              <div style={{ fontSize: '1.35rem', fontWeight: 900 }}>4</div>
-              <div style={{ fontSize: '0.72rem', opacity: 0.85, fontWeight: 500 }}>Derrotas</div>
-            </div>
-            <div style={{ padding: '0.5rem', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 'var(--radius-md)' }}>
-              <div style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--color-gold)' }}>67%</div>
-              <div style={{ fontSize: '0.72rem', opacity: 0.85, fontWeight: 500 }}>Win Rate</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Insignias Obtenidas */}
-        <div style={{ marginBottom: '1.5rem' }}>
-          <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.65rem' }}>
-            Insignias Obtenidas
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-surface)' }}>
-              <div style={{ color: 'var(--color-gold-dark)', display: 'flex', alignItems: 'center' }}>
-                <IconoTrofeo size={20} />
-              </div>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>Campeón Torneo Clausura</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Fútbol 5 • Diciembre 2025</div>
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-surface)' }}>
-              <div style={{ color: 'var(--color-emerald-dark)', display: 'flex', alignItems: 'center' }}>
-                <IconoMedalla size={20} />
-              </div>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>Fair Play Destacado</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>0 sanciones en más de 20 partidos</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Datos Bancarios & KYC Card */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '1rem 1.25rem',
-            borderRadius: 'var(--radius-md)',
-            border: '1.5px solid var(--brand-black)',
-            backgroundColor: 'var(--bg-surface)',
-            cursor: 'pointer',
-          }}
-        >
-          <div>
-            <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--text-primary)' }}>
-              Datos Bancarios & KYC
-            </div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-              CBU configurado para cobro de premios
-            </div>
-          </div>
-          <span style={{ fontSize: '1.1rem', fontWeight: 800 }}>→</span>
         </div>
       </div>
 
