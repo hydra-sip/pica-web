@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { CompraRifa, ReservaRifa } from '../../api/rifaApi';
 import { fechaHora, pesos } from '../../shared/formato';
 import { Button, Modal } from '../../shared/ui';
@@ -51,7 +52,17 @@ export const PagoRifa: React.FC<PagoRifaProps> = ({
         isOpen
         title="¡Compra confirmada!"
         onClose={onCerrar}
-        footer={<Button onClick={onCerrar}>Listo</Button>}
+        footer={
+          <>
+            <Button variant="secondary" onClick={onCerrar}>
+              Listo
+            </Button>
+            {/* HU-404: el ticket digital con la numeración y el comprobante */}
+            <Link to={`/tickets/${compra.ticketId}`} className="btn btn-primary">
+              Ver mi ticket
+            </Link>
+          </>
+        }
       >
         <dl className="rifas-resumen">
           <div>

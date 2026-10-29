@@ -19,6 +19,7 @@ export const IncompleteProfileBanner: React.FC = () => {
 
   return (
     <div
+      className="aviso-perfil-incompleto"
       style={{
         backgroundColor: 'var(--color-warning-bg)',
         borderBottom: '1px solid var(--color-warning-border)',

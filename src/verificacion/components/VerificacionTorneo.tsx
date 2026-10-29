@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { TorneoVerificacionData } from '../../api/verificacionApi';
 import {
   IconoAlerta,
-  IconoCandado,
   IconoCheck,
   IconoCopiar,
   IconoCruz,
@@ -21,9 +20,12 @@ import {
 
 interface Props {
   datos: TorneoVerificacionData;
+  nombre: string;
+  disciplina: string | null;
 }
 
-export const VerificacionTorneo: React.FC<Props> = ({ datos }) => {
+/** El bracket no tiene compromiso ni firma: lo que lo sella es el hash de la nómina, cerrado antes del sorteo. */
+export const VerificacionTorneo: React.FC<Props> = ({ datos, nombre, disciplina }) => {
   // Datos editables para simulación
   const [semillaActual, setSemillaActual] = useState(datos.semilla);
   const [inscriptosActuales, setInscriptosActuales] = useState<InscriptoEntrada[]>(datos.inscriptos);
@@ -110,10 +112,15 @@ export const VerificacionTorneo: React.FC<Props> = ({ datos }) => {
         <div>
           <h2 className="verificacion-card-titulo">
             <IconoTrofeo size={22} />
-            <span>{datos.nombre}</span>
+            <span>{nombre}</span>
           </h2>
           <div className="verificacion-card-subtitulo">
-            Disciplina: <strong>{datos.disciplina}</strong> | Participantes:{' '}
+            {disciplina && (
+              <>
+                Disciplina: <strong>{disciplina}</strong> |{' '}
+              </>
+            )}
+            Participantes:{' '}
             <strong>{datos.inscriptos.length}</strong> | Rondas:{' '}
             <strong>{datos.resultadoOficial.rondas}</strong>
           </div>
@@ -193,34 +200,6 @@ export const VerificacionTorneo: React.FC<Props> = ({ datos }) => {
 
       {/* Criptografía del sorteo */}
       <div className="verificacion-crypto-grid">
-        {/* Hash de compromiso previo */}
-        <div className="verificacion-campo-card">
-          <div className="verificacion-campo-header">
-            <span className="verificacion-campo-label">
-              <IconoCandado size={14} />
-              Hash de Compromiso
-            </span>
-            <span className="verificacion-campo-badge">SHA-256</span>
-          </div>
-          <div className="verificacion-mono-box">
-            <span data-testid="compromiso-hash">{datos.compromisoHash}</span>
-            <button
-              type="button"
-              className="verificacion-btn-copiar"
-              onClick={() => copiarAlPortapapeles(datos.compromisoHash, 'compromiso')}
-              title="Copiar hash de compromiso"
-            >
-              <IconoCopiar size={14} />
-            </button>
-          </div>
-          {copiadoCampo === 'compromiso' && (
-            <span className="verificacion-copiado-aviso">Copiado al portapapeles</span>
-          )}
-          <p className="verificacion-campo-explicacion">
-            Sello criptográfico fijado antes del sorteo para impedir alteraciones posteriores.
-          </p>
-        </div>
-
         {/* Semilla utilizada */}
         <div className="verificacion-campo-card">
           <div className="verificacion-campo-header">
@@ -249,34 +228,6 @@ export const VerificacionTorneo: React.FC<Props> = ({ datos }) => {
           </p>
         </div>
 
-        {/* Firma digital de la semilla */}
-        <div className="verificacion-campo-card">
-          <div className="verificacion-campo-header">
-            <span className="verificacion-campo-label">
-              <IconoEscudoCheck size={14} />
-              Firma Digital de la Semilla
-            </span>
-            <span className="verificacion-campo-badge">Ed25519 / RSA</span>
-          </div>
-          <div className="verificacion-mono-box">
-            <span data-testid="semilla-firma">{datos.semillaFirma}</span>
-            <button
-              type="button"
-              className="verificacion-btn-copiar"
-              onClick={() => copiarAlPortapapeles(datos.semillaFirma, 'firma')}
-              title="Copiar firma"
-            >
-              <IconoCopiar size={14} />
-            </button>
-          </div>
-          {copiadoCampo === 'firma' && (
-            <span className="verificacion-copiado-aviso">Copiada al portapapeles</span>
-          )}
-          <p className="verificacion-campo-explicacion">
-            Garantiza el no repudio y certifica el origen inalterado de la semilla.
-          </p>
-        </div>
-
         {/* Hash de la lista de inscriptos */}
         <div className="verificacion-campo-card">
           <div className="verificacion-campo-header">
@@ -287,15 +238,17 @@ export const VerificacionTorneo: React.FC<Props> = ({ datos }) => {
             <span className="verificacion-campo-badge">SHA-256</span>
           </div>
           <div className="verificacion-mono-box">
-            <span data-testid="lista-hash">{datos.listaHash}</span>
-            <button
-              type="button"
-              className="verificacion-btn-copiar"
-              onClick={() => copiarAlPortapapeles(datos.listaHash, 'lista')}
-              title="Copiar hash de lista"
-            >
-              <IconoCopiar size={14} />
-            </button>
+            <span data-testid="lista-hash">{datos.listaHash ?? 'Sin sellar'}</span>
+            {datos.listaHash && (
+              <button
+                type="button"
+                className="verificacion-btn-copiar"
+                onClick={() => copiarAlPortapapeles(datos.listaHash!, 'lista')}
+                title="Copiar hash de lista"
+              >
+                <IconoCopiar size={14} />
+              </button>
+            )}
           </div>
           {copiadoCampo === 'lista' && (
             <span className="verificacion-copiado-aviso">Copiado al portapapeles</span>
