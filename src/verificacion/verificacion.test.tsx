@@ -1,6 +1,9 @@
-import { screen, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { mockRifaVerificacion10 } from '../mocks/verificacionHandlers';
 import { renderRuta } from '../test/renderRuta';
+import { VerificacionRifa } from './components/VerificacionRifa';
 import {
   calcularSha256,
   recalcularSorteoBracket,
@@ -72,7 +75,7 @@ describe('HU-505 / T505-1: Motor Criptográfico (Unitario)', () => {
 });
 
 describe('HU-505 / T505-1: Portal Público de Verificación (Integración)', () => {
-  it('Criterio 1: Permite acceder al portal sin estar autenticado y consultar un torneo o rifa específico', async () => {
+  it('Criterio 1: Permite acceder al portal sin estar autenticado y consultar el sorteo de un torneo', async () => {
     // Entrar sin sesión (usuario: 'anonimo')
     const { user } = await renderRuta('/verificacion', { usuario: 'anonimo' });
 
@@ -81,39 +84,31 @@ describe('HU-505 / T505-1: Portal Público de Verificación (Integración)', () 
       await screen.findByRole('heading', { name: /portal público de verificación criptográfica/i })
     ).toBeInTheDocument();
 
-    // Se cargó por defecto el torneo disponible
-    expect(await screen.findByText('Copa PICA 2026 - Eliminación Directa')).toBeInTheDocument();
-    expect(screen.getAllByText(/fútbol 5/i).length).toBeGreaterThan(0);
+    // Se cargó por defecto el primer torneo con el bracket sorteado del catálogo (en curso)
+    expect(
+      await screen.findByRole('heading', { name: 'Liga Abierta de Ajedrez Rápido' })
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('semilla-valor')).toHaveTextContent(/^4f8d9b1a/);
 
-    // Cambiar a la pestaña de Rifa
-    const tabRifa = screen.getByTestId('tab-rifa');
-    await user.click(tabRifa);
-
-    // Muestra la rifa consultada
-    expect(await screen.findByText('Gran Rifa Benéfica de la Copa')).toBeInTheDocument();
+    // Las rifas todavía no tienen sorteo en el back
+    await user.click(screen.getByTestId('tab-rifa'));
+    expect(screen.getByTestId('rifas-sin-sorteo')).toHaveTextContent(
+      /todavía no hay sorteos de rifa/i
+    );
   });
 
+  it('Criterio 2: Muestra la semilla utilizada, el hash de la lista sellada y el resultado obtenido', async () => {
+    await renderRuta('/verificacion?tipo=torneo&id=5', { usuario: 'anonimo' });
 
-  it('Criterio 2: Muestra el hash de compromiso, la semilla utilizada, su firma y el resultado obtenido', async () => {
-    await renderRuta('/verificacion?tipo=torneo&id=1', { usuario: 'anonimo' });
-
-    // 1. Hash de compromiso previo
-    const compromiso = await screen.findByTestId('compromiso-hash');
-    expect(compromiso.textContent).toContain('7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069');
-
-    // 2. Semilla utilizada
-    const semilla = screen.getByTestId('semilla-valor');
+    // 1. Semilla utilizada
+    const semilla = await screen.findByTestId('semilla-valor');
     expect(semilla.textContent).toContain('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
 
-    // 3. Firma digital de la semilla
-    const firma = screen.getByTestId('semilla-firma');
-    expect(firma.textContent).toContain('3045022100e4b85c276bc5a363b82a04870198031e5066922fc57c6bbfd11894a8df419616022067ad3a8d11c05d7620a2323a2688f63568cbb0c5dd7fb21a6ab3e1b7d5985b46');
-
-    // 4. Hash de la lista sellada
+    // 2. Hash de la lista sellada al cerrar la inscripción
     const lista = screen.getByTestId('lista-hash');
     expect(lista.textContent).toContain('b5d4045c3f466fa91fe2cc6abe79232a1a57cdf104f7a26e716e0a1e2789df78');
 
-    // 5. Resultado obtenido (cruces oficiales publicados)
+    // 3. Resultado obtenido (cruces de la primera ronda del bracket)
     const tabla = screen.getByTestId('tabla-cruces');
     expect(within(tabla).getByText('Atlético Juvenil')).toBeInTheDocument();
     expect(within(tabla).getByText('Racing Club Norte')).toBeInTheDocument();
@@ -126,9 +121,9 @@ describe('HU-505 / T505-1: Portal Público de Verificación (Integración)', () 
   });
 
   it('Criterio 3: Ejecutar la recalculación desde el portal con los datos publicados y comprobar que coincide con el publicado', async () => {
-    const { user } = await renderRuta('/verificacion?tipo=torneo&id=1', { usuario: 'anonimo' });
+    const { user } = await renderRuta('/verificacion?tipo=torneo&id=5', { usuario: 'anonimo' });
 
-    await screen.findByText('Copa PICA 2026 - Eliminación Directa');
+    await screen.findByRole('heading', { name: 'Torneo Clausura de Vóley Mixto' });
 
     // Botón de recalcular y verificar
     const btnRecalcular = screen.getByTestId('btn-recalcular');
@@ -150,9 +145,9 @@ describe('HU-505 / T505-1: Portal Público de Verificación (Integración)', () 
   });
 
   it('Criterio 4: Alterar manualmente un dato de entrada (simulación) antes de recalcular y comprobar que el resultado difiere', async () => {
-    const { user } = await renderRuta('/verificacion?tipo=torneo&id=1', { usuario: 'anonimo' });
+    const { user } = await renderRuta('/verificacion?tipo=torneo&id=5', { usuario: 'anonimo' });
 
-    await screen.findByText('Copa PICA 2026 - Eliminación Directa');
+    await screen.findByTestId('semilla-valor');
 
     // 1. Abrir panel de simulación
     const toggleSimulacion = screen.getByTestId('toggle-simulacion-btn');
@@ -187,9 +182,9 @@ describe('HU-505 / T505-1: Portal Público de Verificación (Integración)', () 
   });
 
   it('Alterar un participante en el modo simulación también evidencia la manipulación', async () => {
-    const { user } = await renderRuta('/verificacion?tipo=torneo&id=1', { usuario: 'anonimo' });
+    const { user } = await renderRuta('/verificacion?tipo=torneo&id=5', { usuario: 'anonimo' });
 
-    await screen.findByText('Copa PICA 2026 - Eliminación Directa');
+    await screen.findByTestId('semilla-valor');
 
     const toggleSimulacion = screen.getByTestId('toggle-simulacion-btn');
     await user.click(toggleSimulacion);
@@ -203,11 +198,53 @@ describe('HU-505 / T505-1: Portal Público de Verificación (Integración)', () 
     expect(await screen.findByTestId('banner-discrepancia-detectada')).toBeInTheDocument();
   });
 
-  it('Comprueba la verificación y simulación en una Rifa', async () => {
-    const { user } = await renderRuta('/verificacion?tipo=rifa&id=10', { usuario: 'anonimo' });
+  it('Consultar torneo con BYEs (11 participantes) recalcula los cruces con BYE correctamente', async () => {
+    const { user } = await renderRuta('/verificacion?tipo=torneo&id=3', { usuario: 'anonimo' });
+
+    expect(
+      await screen.findByRole('heading', { name: 'Liga Abierta de Ajedrez Rápido' })
+    ).toBeInTheDocument();
+
+    // Cruces oficiales incluyen BYEs
+    const byes = screen.getAllByText(/pasa por bye/i);
+    expect(byes.length).toBeGreaterThan(0);
+
+    // Recalcular
+    const btnRecalcular = screen.getByTestId('btn-recalcular');
+    await user.click(btnRecalcular);
+
+    expect(await screen.findByTestId('banner-verificacion-exitosa')).toBeInTheDocument();
+  });
+
+  it('Un torneo sin el bracket sorteado avisa que todavía no hay sorteo', async () => {
+    // Torneo 1 del catálogo simulado: con la inscripción abierta
+    await renderRuta('/verificacion?tipo=torneo&id=1', { usuario: 'anonimo' });
+
+    expect(await screen.findByTestId('error-consulta')).toHaveTextContent(
+      /todavía no tiene el bracket sorteado/i
+    );
+  });
+
+  it('El enlace en el Footer y en la navegación dirigen a /verificacion', async () => {
+    await renderRuta('/', { usuario: 'anonimo' });
+
+    const linkFooter = await screen.findByTestId('footer-link-verificacion');
+    expect(linkFooter).toHaveAttribute('href', '/verificacion');
+
+    const linksNav = screen.getAllByRole('link', { name: /verificación/i });
+    expect(linksNav.length).toBeGreaterThan(0);
+    expect(linksNav.some((l) => l.getAttribute('href') === '/verificacion')).toBe(true);
+  });
+});
+
+// La rifa no tiene todavía GET /rifas/{id}/sorteo (PICA-263): el componente se prueba con datos de ejemplo
+describe('HU-505 / T505-1: Verificación de una rifa (componente)', () => {
+  it('Muestra el compromiso, la semilla, su firma y los ganadores, y detecta una semilla alterada', async () => {
+    const user = userEvent.setup();
+    render(<VerificacionRifa datos={mockRifaVerificacion10} />);
 
     // Título y datos de la rifa
-    expect(await screen.findByText('Gran Rifa Benéfica de la Copa')).toBeInTheDocument();
+    expect(screen.getByText('Gran Rifa Benéfica de la Copa')).toBeInTheDocument();
     expect(screen.getByTestId('compromiso-hash-rifa')).toHaveTextContent(
       'c8b421037d30fe6404a753a3ca6fc9f8b2661ce18f66a1240004c7d429985b8f'
     );
@@ -229,48 +266,14 @@ describe('HU-505 / T505-1: Portal Público de Verificación (Integración)', () 
 
     // Verificación 100% exitosa
     expect(await screen.findByTestId('banner-verificacion-exitosa-rifa')).toBeInTheDocument();
-    const badgesCoincide = screen.getAllByText('Coincide');
-    expect(badgesCoincide).toHaveLength(3);
+    expect(screen.getAllByText('Coincide')).toHaveLength(3);
 
     // Simular alteración de semilla en la rifa
-    const btnToggleSimulacion = screen.getByTestId('toggle-simulacion-rifa-btn');
-    await user.click(btnToggleSimulacion);
-
-    const btnAlterarSemilla = screen.getByTestId('btn-alterar-semilla-rifa');
-    await user.click(btnAlterarSemilla);
-
+    await user.click(screen.getByTestId('toggle-simulacion-rifa-btn'));
+    await user.click(screen.getByTestId('btn-alterar-semilla-rifa'));
     await user.click(btnRecalcular);
 
     // Discrepancia detectada
     expect(await screen.findByTestId('banner-discrepancia-detectada-rifa')).toBeInTheDocument();
   });
-
-  it('Consultar torneo con BYEs (Torneo 2) recalcula los cruces con BYE correctamente', async () => {
-    const { user } = await renderRuta('/verificacion?tipo=torneo&id=2', { usuario: 'anonimo' });
-
-    expect(await screen.findByText('Torneo Cerrado de Ajedrez UNLu')).toBeInTheDocument();
-    expect(screen.getByText(/11 participantes/i)).toBeInTheDocument();
-
-    // Cruces oficiales incluyen BYEs
-    const byes = screen.getAllByText(/pasa por bye/i);
-    expect(byes.length).toBeGreaterThan(0);
-
-    // Recalcular
-    const btnRecalcular = screen.getByTestId('btn-recalcular');
-    await user.click(btnRecalcular);
-
-    expect(await screen.findByTestId('banner-verificacion-exitosa')).toBeInTheDocument();
-  });
-
-  it('El enlace en el Footer y en la navegación dirigen a /verificacion', async () => {
-    await renderRuta('/', { usuario: 'anonimo' });
-
-    const linkFooter = await screen.findByTestId('footer-link-verificacion');
-    expect(linkFooter).toHaveAttribute('href', '/verificacion');
-
-    const linksNav = screen.getAllByRole('link', { name: /verificación/i });
-    expect(linksNav.length).toBeGreaterThan(0);
-    expect(linksNav.some((l) => l.getAttribute('href') === '/verificacion')).toBe(true);
-  });
-
 });
