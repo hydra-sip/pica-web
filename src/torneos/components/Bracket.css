@@ -106,6 +106,19 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Un partido cerrado por ausencia (HU-309): la marca va donde iría el marcador */
+.bracket-marca {
+  flex-shrink: 0;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.bracket-lado-descalificado {
+  color: var(--color-disabled-text);
+}
+
 .bracket-bye {
   flex-shrink: 0;
   padding: 0 var(--space-2);
