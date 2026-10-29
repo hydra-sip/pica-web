@@ -46,15 +46,18 @@ const individualPendienteDePago = (slug: string) => async () => {
 };
 
 describe('paso 2: confirmar y pagar', () => {
-  it('muestra el torneo, el equipo, una sola línea de cuota y el total a pagar', async () => {
+  it('muestra el torneo, el equipo, la cuota, los gastos administrativos y el total a pagar', async () => {
     await renderRuta(RUTA_PAGO, { prepara: pendienteDePago('torneo-apertura-f5') });
 
     expect(await screen.findByText(/Torneo Apertura F5/)).toBeInTheDocument();
     expect(screen.getByText(/Los Galácticos/)).toBeInTheDocument();
     expect(screen.getByText('Cuota de inscripción')).toBeInTheDocument();
-    expect(screen.getAllByText('$ 20.000,00')).toHaveLength(2); // la cuota y el total
+    expect(screen.getByText('$ 20.000,00')).toBeInTheDocument();
+    expect(screen.getByText('Gastos administrativos')).toBeInTheDocument();
+    expect(screen.getByText('$ 2.000,00')).toBeInTheDocument();
     expect(screen.getByText('Total a pagar')).toBeInTheDocument();
-    expect(botonPagar('20.000')).toBeEnabled();
+    expect(screen.getByText('$ 22.000,00')).toBeInTheDocument();
+    expect(botonPagar('22.000')).toBeEnabled();
     expect(screen.queryByText(/tasa de servicio/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/método de pago/i)).not.toBeInTheDocument();
   });
@@ -65,7 +68,7 @@ describe('paso 2: confirmar y pagar', () => {
     });
     await screen.findByText('Cuota de inscripción');
 
-    await user.click(botonPagar('20.000'));
+    await user.click(botonPagar('22.000'));
 
     expect(await screen.findByRole('heading', { name: '¡Inscripción confirmada!' })).toBeInTheDocument();
     expect(screen.getByText(/Los Galácticos/)).toBeInTheDocument();
@@ -124,7 +127,7 @@ describe('paso 2: confirmar y pagar', () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2031-01-02T12:00:00Z'));
 
-    await user.click(botonPagar('20.000'));
+    await user.click(botonPagar('22.000'));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'La inscripción a este torneo no está abierta o ya cerró'
@@ -144,10 +147,10 @@ describe('paso 2: confirmar y pagar', () => {
       )
     );
 
-    await user.click(botonPagar('20.000'));
+    await user.click(botonPagar('22.000'));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('La cuenta está bloqueada');
-    expect(botonPagar('20.000')).toBeEnabled();
+    expect(botonPagar('22.000')).toBeEnabled();
     expect((await inscripcionApi.obtener(ID)).estado).toBe('PENDIENTE_PAGO');
   });
 
@@ -162,12 +165,12 @@ describe('paso 2: confirmar y pagar', () => {
       )
     );
 
-    await user.click(botonPagar('20.000'));
+    await user.click(botonPagar('22.000'));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'El usuario no está activo (cuenta bloqueada o sin verificar), así que no se puede continuar.'
     );
-    expect(botonPagar('20.000')).toBeEnabled();
+    expect(botonPagar('22.000')).toBeEnabled();
     expect((await inscripcionApi.obtener(ID)).estado).toBe('PENDIENTE_PAGO');
   });
 
@@ -189,7 +192,7 @@ describe('paso 2: confirmar y pagar', () => {
       })
     );
 
-    await user.dblClick(botonPagar('20.000'));
+    await user.dblClick(botonPagar('22.000'));
 
     expect(screen.getByRole('button', { name: 'Confirmando el pago...' })).toBeDisabled();
     soltar();

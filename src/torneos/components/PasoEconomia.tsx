@@ -1,7 +1,7 @@
 import React from 'react';
 import { GastoDetalle } from '../../api/torneoApi';
 import { Button, Field, Input } from '../../shared/ui';
-import { calcular, ErroresEconomia, FormEconomia, sumaPremios, sumaReparto } from '../economia';
+import { calcular, ErroresEconomia, FormEconomia, sumaPremios } from '../economia';
 import { pesosArs } from '../formato';
 import { GastosPrevistos } from './GastosPrevistos';
 
@@ -15,7 +15,8 @@ interface PasoEconomiaProps {
   cupo: number | null;
   /** "equipos" o "jugadores". */
   quienes: string;
-  comisionMaxima: number;
+  /** El % sellado al publicar o, en borrador, el vigente de la plataforma. */
+  pctGastosAdministrativos: number;
   gastos: GastoDetalle[];
   onGastos: (gastos: GastoDetalle[]) => void;
 }
@@ -40,8 +41,9 @@ const Linea: React.FC<{ etiqueta: string; monto: number | null; destacada?: bool
 
 /**
  * Paso 3, "Esquema económico y premios" (wireframe "Wizard Creacion de Torneo - Paso 3", HU-601): valor de la
- * inscripción, reparto de la bolsa en competidores, rifa y comisión, gastos previstos y premios por puesto. Las
- * cuentas se recalculan mientras se escribe, con las mismas fórmulas que el back.
+ * inscripción, que va entera al pozo; gastos previstos y premios por puesto. Los gastos administrativos de la
+ * plataforma los paga aparte quien se inscribe. Las cuentas se recalculan mientras se escribe, con las mismas
+ * fórmulas que el back.
  */
 export const PasoEconomia: React.FC<PasoEconomiaProps> = ({
   torneoId,
@@ -51,11 +53,11 @@ export const PasoEconomia: React.FC<PasoEconomiaProps> = ({
   habilitado,
   cupo,
   quienes,
-  comisionMaxima,
+  pctGastosAdministrativos,
   gastos,
   onGastos,
 }) => {
-  const cuentas = calcular(form, cupo, gastos);
+  const cuentas = calcular(form, cupo, gastos, pctGastosAdministrativos);
   const valor = Number(form.valorInscripcion);
 
   const campo = (nombre: keyof Omit<FormEconomia, 'premios'>) => ({
@@ -104,34 +106,18 @@ export const PasoEconomia: React.FC<PasoEconomiaProps> = ({
       </section>
 
       <section className="torneos-seccion">
-        <h3>2. Reparto de la bolsa y gastos</h3>
+        <h3>2. Gastos administrativos y gastos previstos</h3>
         <p className="torneos-celda-secundaria">
-          Lo recaudado se reparte en pozo de competidores, premio de la rifa del torneo y comisión
-          de la plataforma (como máximo {comisionMaxima} %). Los tres tienen que sumar 100 %.
+          La inscripción va entera al pozo de competidores. Quien se inscribe paga aparte un{' '}
+          {pctGastosAdministrativos} % de gastos administrativos de la plataforma.
         </p>
-        <div className="torneos-grilla">
-          <Field label="Pozo de competidores (%)" required error={errores.pctPozoCompetidores}>
-            <Input type="number" min={0} max={100} step="0.01" {...campo('pctPozoCompetidores')} />
-          </Field>
-          <Field label="Premio de la rifa (%)" required error={errores.pctPremioRifa}>
-            <Input type="number" min={0} max={100} step="0.01" {...campo('pctPremioRifa')} />
-          </Field>
-          <Field
-            label="Comisión de la plataforma (%)"
-            required
-            hint={`Máximo ${comisionMaxima} %.`}
-            error={errores.pctComision}
-          >
-            <Input
-              type="number"
-              min={0}
-              max={comisionMaxima}
-              step="0.01"
-              {...campo('pctComision')}
-            />
-          </Field>
+        <div className="torneos-cuentas">
+          <Linea
+            etiqueta={`Gastos administrativos por inscripción (${pctGastosAdministrativos} %)`}
+            monto={cuentas.gastosAdministrativos}
+          />
+          <Linea etiqueta="Total que paga cada participante" monto={cuentas.totalAPagar} />
         </div>
-        <Suma valor={sumaReparto(form)} objetivo="El reparto suma" />
 
         <h4 className="torneos-subtitulo-seccion">Gastos previstos</h4>
         <GastosPrevistos
@@ -142,18 +128,7 @@ export const PasoEconomia: React.FC<PasoEconomiaProps> = ({
         />
 
         <div className="torneos-cuentas">
-          <Linea
-            etiqueta={`Comisión de la plataforma (${form.pctComision || 0} %)`}
-            monto={cuentas.comision}
-          />
-          <Linea
-            etiqueta={`Premio de la rifa (${form.pctPremioRifa || 0} %)`}
-            monto={cuentas.premioRifa}
-          />
-          <Linea
-            etiqueta={`Pozo de competidores (${form.pctPozoCompetidores || 0} %)`}
-            monto={cuentas.pozoCompetidores}
-          />
+          <Linea etiqueta="Pozo de competidores" monto={cuentas.recaudacion} />
           <Linea etiqueta="Gastos previstos" monto={cuentas.gastos === 0 ? 0 : -cuentas.gastos} />
           <Linea etiqueta="Pozo neto a repartir en premios" monto={cuentas.pozoNeto} destacada />
         </div>

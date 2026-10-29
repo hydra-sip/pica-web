@@ -3,6 +3,8 @@ import { adminHandlers } from './adminHandlers';
 import { crearInscripcionesHandlers } from './inscripcionesHandlers';
 import { pronosticoHandlers } from './pronosticoHandlers';
 import { torneoHandlers } from './torneoHandlers';
+import { verificacionHandlers } from './verificacionHandlers';
+import { ticketHandlers } from './ticketHandlers';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
@@ -85,6 +87,12 @@ export const handlers = [
 
   // Pronósticos y Ranking (HU-306 / T306-2)
   ...pronosticoHandlers,
+
+  // Verificación pública de sorteos (HU-505 / T505-1)
+  ...verificacionHandlers,
+
+  // Tickets de rifa y reclamos (HU-506 / T506-2)
+  ...ticketHandlers,
 
   // Auth: Registro Endpoint (POST /auth/registro) -> 201 { id }
   http.post(`${API_URL}/auth/registro`, async ({ request }) => {

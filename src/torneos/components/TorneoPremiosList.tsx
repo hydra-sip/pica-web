@@ -5,11 +5,8 @@ import { IconoMedalla, IconoTrofeo } from '../../shared/ui/Iconos';
 
 interface TorneoPremiosListProps {
   premios: PremioDetalle[];
-  /** Pozo neto a repartir en premios (competidores menos gastos), como lo calcula el back. */
+  /** Pozo neto a repartir en premios (inscripciones menos gastos previstos), como lo calcula el back. */
   pozoEstimado: number;
-  pctPozoCompetidores: number;
-  pctPremioRifa: number;
-  premioRifaEstimado?: number | null;
   moneda?: string;
 }
 
@@ -29,9 +26,6 @@ const getMedalColor = (puesto: number): { bg: string; color: string; border: str
 export const TorneoPremiosList: React.FC<TorneoPremiosListProps> = ({
   premios,
   pozoEstimado,
-  pctPozoCompetidores,
-  pctPremioRifa,
-  premioRifaEstimado = null,
 }) => {
   // Ordenar puestos ascendente (1, 2, 3...)
   const premiosOrdenados = [...premios].sort((a, b) => a.puesto - b.puesto);
@@ -42,7 +36,7 @@ export const TorneoPremiosList: React.FC<TorneoPremiosListProps> = ({
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: pctPremioRifa > 0 ? 'repeat(auto-fit, minmax(240px, 1fr))' : '1fr',
+          gridTemplateColumns: '1fr',
           gap: 'var(--space-3)',
         }}
       >
@@ -63,7 +57,7 @@ export const TorneoPremiosList: React.FC<TorneoPremiosListProps> = ({
               letterSpacing: '0.04em',
             }}
           >
-            Pozo neto para competidores ({pctPozoCompetidores}% menos gastos)
+            Pozo neto para competidores (inscripciones menos gastos)
           </div>
           <div
             style={{
@@ -77,38 +71,6 @@ export const TorneoPremiosList: React.FC<TorneoPremiosListProps> = ({
           </div>
         </div>
 
-        {pctPremioRifa > 0 && (
-          <div
-            style={{
-              backgroundColor: 'var(--color-surface)',
-              border: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-md)',
-              padding: 'var(--space-3) var(--space-4)',
-            }}
-          >
-            <div
-              style={{
-                fontSize: 'var(--text-xs)',
-                color: 'var(--color-text-secondary)',
-                textTransform: 'uppercase',
-                fontWeight: 700,
-                letterSpacing: '0.04em',
-              }}
-            >
-              Premio Rifa / Espectadores ({pctPremioRifa}%)
-            </div>
-            <div
-              style={{
-                fontSize: 'var(--text-xl)',
-                fontWeight: 800,
-                color: 'var(--color-text)',
-                marginTop: '0.25rem',
-              }}
-            >
-              {pesos(premioRifaEstimado)}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Lista de puestos y premios */}
