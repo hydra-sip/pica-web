@@ -1,5 +1,10 @@
 import React, { useState } from 'react';
-import { CheckinTorneoPayload, torneoApi, TorneoInformacion } from '../../api/torneoApi';
+import {
+  CheckinTorneoPayload,
+  CriterioSinPresentes,
+  torneoApi,
+  TorneoInformacion,
+} from '../../api/torneoApi';
 import { erroresPorCampo, mensajeDeError } from '../../shared/mensajesError';
 import { Button, Field, Input } from '../../shared/ui';
 
@@ -9,6 +14,21 @@ const PROPIOS = {
   VENTANA_INVALIDA:
     'No puede durar más que los minutos de anticipación: tiene que cerrar antes del partido.',
 };
+
+/** Las dos opciones si no se presenta ninguno de los dos (HU-309), con lo que hace cada una. */
+const CRITERIOS: { valor: CriterioSinPresentes; titulo: string; detalle: string }[] = [
+  {
+    valor: 'REPROGRAMAR',
+    titulo: 'Reprogramar',
+    detalle: 'El partido queda sin fecha y le ponés una nueva.',
+  },
+  {
+    valor: 'DESCALIFICAR_AMBOS',
+    titulo: 'Descalificar a los dos',
+    detalle:
+      'Ninguno pasa y el rival de la ronda siguiente avanza sin jugar. En la final, o si el otro cruce ya quedó vacante, se reprograma.',
+  },
+];
 
 const dos = (n: number): string => String(n).padStart(2, '0');
 
@@ -33,12 +53,14 @@ interface CheckinTorneoProps {
 
 /**
  * La ventana de check-in del torneo (HU-308), una para todos sus partidos: cuántos minutos antes del cruce abre y
- * cuánto dura. Con el torneo terminado o cancelado se ve, pero ya no se cambia.
+ * cuánto dura, y qué pasa si al vencer no se presentó ninguno de los dos (HU-309). Con el torneo terminado o
+ * cancelado se ve, pero ya no se cambia.
  */
 export const CheckinTorneo: React.FC<CheckinTorneoProps> = ({ torneo, onGuardado }) => {
   const [form, setForm] = useState<CheckinTorneoPayload>({
     minAntes: torneo.checkinMinAntes,
     duracion: torneo.checkinDuracion,
+    sinPresentes: torneo.checkinSinPresentes,
   });
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [mensaje, setMensaje] = useState<{ tipo: 'exito' | 'error'; texto: string } | null>(null);
@@ -53,7 +75,9 @@ export const CheckinTorneo: React.FC<CheckinTorneoProps> = ({ torneo, onGuardado
     setErrores({});
     setMensaje(null);
     try {
-      onGuardado(await torneoApi.configurarCheckin(torneo.id, form));
+      const guardado = await torneoApi.configurarCheckin(torneo.id, form);
+      setForm({ ...form, sinPresentes: guardado.checkinSinPresentes });
+      onGuardado(guardado);
       setMensaje({ tipo: 'exito', texto: 'Check-in guardado.' });
     } catch (err) {
       const deCampo = erroresPorCampo(err, PROPIOS);
@@ -97,6 +121,29 @@ export const CheckinTorneo: React.FC<CheckinTorneoProps> = ({ torneo, onGuardado
         </Field>
       </div>
       {linea && <p className="torneos-subtitulo">{linea}</p>}
+      <fieldset className="torneos-opciones">
+        <legend>Si no se presenta ninguno de los dos</legend>
+        <div className="torneos-opciones-grilla">
+          {CRITERIOS.map((c) => (
+            <button
+              key={c.valor}
+              type="button"
+              className="torneos-opcion"
+              aria-pressed={form.sinPresentes === c.valor}
+              disabled={!editable}
+              onClick={() => setForm({ ...form, sinPresentes: c.valor })}
+            >
+              <span className="torneos-opcion-titulo">{c.titulo}</span>
+              <span className="torneos-opcion-detalle">{c.detalle}</span>
+            </button>
+          ))}
+        </div>
+        {errores.sinPresentes && (
+          <p className="torneos-opciones-error" role="alert">
+            {errores.sinPresentes}
+          </p>
+        )}
+      </fieldset>
       {mensaje && (
         <div
           className={`alerta ${mensaje.tipo === 'exito' ? 'alerta-exito' : 'alerta-peligro'}`}
