@@ -28,24 +28,31 @@ const Fila: React.FC<{
     <div className="bracket-lado bracket-lado-vacio">{vacio}</div>
   );
 
-/** El que pasa sin jugar, en su lugar, y el lugar vacante, como en un BYE. */
-const PaseDirecto: React.FC<{ partido: PartidoBracket }> = ({ partido }) => {
-  const pasa = (
+/**
+ * Un lado que avanza sin jugar, en su lugar, y el otro vacío: el BYE del sorteo y el pase directo (HU-309), que puede
+ * llegar por el local o por el visitante.
+ */
+const SinRival: React.FC<{ partido: PartidoBracket; chip: string; vacio: string }> = ({
+  partido,
+  chip,
+  vacio,
+}) => {
+  const avanza = (
     <div className="bracket-lado bracket-lado-ganador">
       <span className="bracket-nombre">{(partido.local ?? partido.visitante)?.nombre}</span>
-      <span className="bracket-bye">Pase directo →</span>
+      <span className="bracket-bye">{chip}</span>
     </div>
   );
-  const vacante = <div className="bracket-lado bracket-lado-vacio">Vacante (sin presentes)</div>;
+  const vacante = <div className="bracket-lado bracket-lado-vacio">{vacio}</div>;
   return partido.local ? (
     <>
-      {pasa}
+      {avanza}
       {vacante}
     </>
   ) : (
     <>
       {vacante}
-      {pasa}
+      {avanza}
     </>
   );
 };
@@ -77,24 +84,15 @@ const PorAusencia: React.FC<{ partido: PartidoBracket; descalificados: boolean }
 
 const Partido: React.FC<{ partido: PartidoBracket }> = ({ partido }) => {
   const cierre = cierrePorAusencia(partido);
-  if (cierre === 'PASE_DIRECTO') return <PaseDirecto partido={partido} />;
+  if (partido.bye) return <SinRival partido={partido} chip="BYE →" vacio="Sin rival (avanza)" />;
+  if (cierre === 'PASE_DIRECTO') {
+    return <SinRival partido={partido} chip="Pase directo →" vacio="Vacante (sin presentes)" />;
+  }
   if (cierre) return <PorAusencia partido={partido} descalificados={cierre === 'DESCALIFICADOS'} />;
   return (
     <>
-      {partido.bye ? (
-        <>
-          <div className="bracket-lado bracket-lado-ganador">
-            <span className="bracket-nombre">{partido.local?.nombre}</span>
-            <span className="bracket-bye">BYE →</span>
-          </div>
-          <div className="bracket-lado bracket-lado-vacio">Sin rival (avanza)</div>
-        </>
-      ) : (
-        <>
-          <Fila lado={partido.local} vacio="A definir" />
-          <Fila lado={partido.visitante} vacio="A definir" />
-        </>
-      )}
+      <Fila lado={partido.local} vacio="A definir" />
+      <Fila lado={partido.visitante} vacio="A definir" />
     </>
   );
 };
