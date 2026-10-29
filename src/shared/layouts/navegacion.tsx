@@ -38,20 +38,42 @@ export const NAVEGACION: Record<Seccion, ItemNavegacion[]> = {
     { ruta: '/', texto: 'Explorar', icono: <IconoExplorar />, exacta: true },
     // HU-306 / T306-2: Pronósticos y ranking de torneos
     { ruta: '/pronosticos', texto: 'Pronósticos', icono: <IconoPronosticos /> },
+    // PICA-221: las rifas en venta, para cualquiera
+    { ruta: '/rifas', texto: 'Rifas', icono: <IconoRifas />, exacta: true },
     // HU-505 / T505-1: Portal público de verificación de sorteos
     { ruta: '/verificacion', texto: 'Verificación', icono: <IconoEscudoCheck /> },
     // PICA-202: TORNEO_GESTIONAR lo tienen ORGANIZADOR y ADMINISTRADOR
-    { ruta: '/mis-torneos', texto: 'Mis torneos', icono: <IconoTorneos />, permisos: ['TORNEO_GESTIONAR'] },
+    {
+      ruta: '/mis-torneos',
+      texto: 'Mis torneos',
+      icono: <IconoTorneos />,
+      permisos: ['TORNEO_GESTIONAR'],
+    },
     // PICA-227: RIFA_GESTIONAR lo tienen ORGANIZADOR y ADMINISTRADOR
     { ruta: '/mis-rifas', texto: 'Mis rifas', icono: <IconoRifas />, permisos: ['RIFA_GESTIONAR'] },
     { ruta: '/mi-perfil', texto: 'Perfil', icono: <IconoPerfil />, soloConSesion: true },
-    { ruta: '/admin', texto: 'Backoffice', icono: <IconoBackoffice />, permisos: PERMISOS_BACKOFFICE },
+    {
+      ruta: '/admin',
+      texto: 'Backoffice',
+      icono: <IconoBackoffice />,
+      permisos: PERMISOS_BACKOFFICE,
+    },
     { ruta: '/auth/login', texto: 'Ingresar', icono: <IconoIngresar />, soloSinSesion: true },
   ],
   admin: [
     { ruta: '/admin', texto: 'Panel', icono: <IconoPanel />, exacta: true },
-    { ruta: '/admin/usuarios', texto: 'Usuarios', icono: <IconoUsuarios />, permisos: ['USUARIO_VER'] },
+    {
+      ruta: '/admin/usuarios',
+      texto: 'Usuarios',
+      icono: <IconoUsuarios />,
+      permisos: ['USUARIO_VER'],
+    },
     { ruta: '/admin/roles', texto: 'Roles', icono: <IconoRoles />, permisos: ['ROL_VER'] },
-    { ruta: '/admin/personas', texto: 'Personas', icono: <IconoPersonas />, permisos: ['PERSONA_VER'] },
+    {
+      ruta: '/admin/personas',
+      texto: 'Personas',
+      icono: <IconoPersonas />,
+      permisos: ['PERSONA_VER'],
+    },
   ],
 };

@@ -19,8 +19,8 @@ const FALTANTES: Record<
   { texto: (suma: number, conTorneo: boolean) => string; paso: number }
 > = {
   VENTANA: { texto: () => 'Cargá las fechas de inicio y fin de la venta.', paso: 0 },
-  VENTA_YA_EMPEZO: {
-    texto: () => 'Las fechas de venta quedaron en el pasado: actualizalas.',
+  VENTA_TERMINADA: {
+    texto: () => 'El fin de la venta ya pasó: actualizalo.',
     paso: 0,
   },
   FECHA_SORTEO: { texto: () => 'Cargá la fecha del sorteo.', paso: 0 },
@@ -49,8 +49,9 @@ const faltantesDe = (rifa: RifaDetalle): FaltantePublicacion[] => {
   const faltantes: FaltantePublicacion[] = [];
   if (!rifa.ventaDesde || !rifa.ventaHasta) {
     faltantes.push('VENTANA');
-  } else if (new Date(rifa.ventaDesde).getTime() < Date.now()) {
-    faltantes.push('VENTA_YA_EMPEZO');
+  } else if (new Date(rifa.ventaHasta).getTime() <= Date.now()) {
+    // Un inicio pasado sí se acepta: la venta arranca al publicar
+    faltantes.push('VENTA_TERMINADA');
   }
   if (!rifa.fechaSorteo) {
     faltantes.push('FECHA_SORTEO');

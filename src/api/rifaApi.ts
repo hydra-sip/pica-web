@@ -40,6 +40,8 @@ export interface RifaDetalle extends RifaResumen {
   terminosAceptadosEn: string | null;
   loteriaDeclaradaEn: string | null;
   premios: PremioRifa[];
+  /** Mientras sea 0, la rifa publicada se puede volver a borrador o eliminar. */
+  numerosVendidos: number;
   modificadoEn: string | null;
 }
 
@@ -68,12 +70,56 @@ export interface PremioPayload {
 /** Lo que le falta a una rifa para publicarse (`faltantes` del 409 RIFA_INCOMPLETA). */
 export type FaltantePublicacion =
   | 'VENTANA'
-  | 'VENTA_YA_EMPEZO'
+  | 'VENTA_TERMINADA'
   | 'FECHA_SORTEO'
   | 'SIN_PREMIOS'
   | 'PREMIOS_NO_SUMAN_100'
   | 'TORNEO_NO_PUBLICADO'
   | 'VENTANA_FUERA_DEL_TORNEO';
+
+export type EstadoReclamo = 'PENDIENTE' | 'ACEPTADO' | 'RECHAZADO';
+
+export interface ReclamoRifa {
+  id: number;
+  rifaId: number;
+  usuarioId: number;
+  usuarioNombre?: string;
+  ticketId?: number | null;
+  motivo: string;
+  estado: EstadoReclamo;
+  resolucion?: string | null;
+  resueltoEn?: string | null;
+  resueltoPor?: string | null;
+  creadoEn: string;
+}
+
+export interface ReclamoPayload {
+  motivo: string;
+  ticketId?: number;
+}
+
+export interface TicketDetalle {
+  id: number;
+  codigo: string;
+  rifaId: number;
+  rifaTitulo: string;
+  torneoId?: number | null;
+  torneoNombre?: string | null;
+  compradorId: number;
+  compradorNombre: string;
+  compradorUsername?: string;
+  numeros: number[];
+  monto: number;
+  comision: number;
+  moneda: string;
+  creadoEn: string;
+  rifaEstado: EstadoRifa;
+  sorteadaEn: string | null;
+  reclamo?: ReclamoRifa | null;
+  esComprador: boolean;
+  ventanaReclamoAbierta: boolean;
+  horasRestantesParaReclamar?: number | null;
+}
 
 // PICA-226, PICA-227, PICA-219, PICA-218: todas exigen RIFA_GESTIONAR y cada organizador ve solo las suyas.
 export const rifaApi = {
@@ -106,5 +152,145 @@ export const rifaApi = {
       aceptaTerminos: true,
       declaraAutorizacionLoteria: true,
     });
+  },
+
+  /** EN_VENTA sin compras vuelve a BORRADOR para modificarla (PICA-287). */
+  volverABorrador: async (id: number): Promise<RifaDetalle> => {
+    return httpClient.post<RifaDetalle>(`/rifas/${id}/volver-a-borrador`);
+  },
+
+  /** Baja lógica, en BORRADOR o EN_VENTA sin compras (PICA-287). */
+  eliminar: async (id: number): Promise<void> => {
+    await httpClient.delete(`/rifas/${id}`);
+  },
+
+  /** HU-506 (PICA-268 / PICA-269): Reclamar resultado del sorteo de una rifa. */
+  reclamar: async (rifaId: number, payload: ReclamoPayload): Promise<ReclamoRifa> => {
+    return httpClient.post<ReclamoRifa>(`/rifas/${rifaId}/reclamos`, payload);
+  },
+
+  /** Obtener el detalle de un ticket de rifa. */
+  obtenerTicket: async (ticketId: number | string): Promise<TicketDetalle> => {
+    return httpClient.get<TicketDetalle>(`/tickets/${ticketId}`);
+  },
+
+  /** Obtener los reclamos asociados a una rifa. */
+  obtenerReclamos: async (rifaId: number): Promise<ReclamoRifa[]> => {
+    return httpClient.get<ReclamoRifa[]>(`/rifas/${rifaId}/reclamos`);
+  },
+
+  /** Listar los tickets del usuario logueado. */
+  misTickets: async (): Promise<TicketDetalle[]> => {
+    return httpClient.get<TicketDetalle[]>('/tickets/mis-tickets');
+  },
+};
+
+// --- Para quien compra (HU-403, PICA-221): públicas, sin login ------------------------------------
+
+/** Fila de GET /rifas/publicas: en venta y con la venta sin terminar. */
+export interface RifaPublicaResumen {
+  id: number;
+  titulo: string;
+  torneoNombre: string | null;
+  numeroDesde: number;
+  numeroHasta: number;
+  precioNumero: number;
+  moneda: string;
+  /** Si es futura, la venta todavía no empezó. */
+  ventaDesde: string;
+  ventaHasta: string;
+  fechaSorteo: string;
+}
+
+/** GET /rifas/publicas/{id}: sin datos del organizador ni de los compradores. */
+export interface RifaPublicaDetalle {
+  id: number;
+  titulo: string;
+  descripcion: string | null;
+  estado: EstadoRifa;
+  /** El slug lleva a la ficha pública del torneo; null sin torneo. */
+  torneo: { id: number; nombre: string; slug: string | null } | null;
+  pctDestinadoTorneo: number;
+  numeroDesde: number;
+  numeroHasta: number;
+  precioNumero: number;
+  /** Lo que paga aparte el comprador, fijado al publicar. */
+  pctGastosAdministrativos: number | null;
+  moneda: string;
+  ventaDesde: string;
+  ventaHasta: string;
+  fechaSorteo: string;
+  premios: PremioRifa[];
+}
+
+export type EstadoNumero = 'VENDIDO' | 'RESERVADO' | 'REINTEGRADO';
+
+/** Un número de la grilla que no se puede elegir; los demás del rango están libres. */
+export interface NumeroOcupado {
+  numero: number;
+  estado: EstadoNumero;
+}
+
+export const rifaPublicaApi = {
+  enVenta: async (params?: {
+    page?: number;
+    size?: number;
+  }): Promise<PageResponse<RifaPublicaResumen>> => {
+    return httpClient.get<PageResponse<RifaPublicaResumen>>('/rifas/publicas', { params });
+  },
+
+  obtener: async (id: number): Promise<RifaPublicaDetalle> => {
+    return httpClient.get<RifaPublicaDetalle>(`/rifas/publicas/${id}`);
+  },
+
+  numerosOcupados: async (id: number): Promise<NumeroOcupado[]> => {
+    return httpClient.get<NumeroOcupado[]>(`/rifas/publicas/${id}/numeros`);
+  },
+};
+
+// --- La compra (HU-403, PICA-222): con sesión ------------------------------------------------------
+
+/** POST /rifas/{id}/reservas: los números quedan del comprador hasta `venceEn` mientras paga. */
+export interface ReservaRifa {
+  rifaId: number;
+  numeros: number[];
+  precioNumero: number;
+  /** El precio de los números; va al pozo de la rifa. */
+  monto: number;
+  pctGastosAdministrativos: number | null;
+  gastosAdministrativos: number;
+  total: number;
+  venceEn: string;
+}
+
+/** El comprobante de POST /rifas/{id}/comprar. */
+export interface CompraRifa {
+  ticketId: number;
+  ticketCodigo: string;
+  numeros: number[];
+  monto: number;
+  gastosAdministrativos: number;
+  total: number;
+  compradoEn: string;
+  pozoRifa: number;
+  pozoTorneo: number | null;
+}
+
+export const ventaRifaApi = {
+  reservar: async (rifaId: number, numeros: number[]): Promise<ReservaRifa> => {
+    return httpClient.post<ReservaRifa>(`/rifas/${rifaId}/reservas`, { numeros });
+  },
+
+  cancelarReserva: async (rifaId: number): Promise<void> => {
+    await httpClient.delete(`/rifas/${rifaId}/reservas`);
+  },
+
+  /** Con la misma `clave` devuelve el mismo comprobante sin volver a cobrar. */
+  comprar: async (rifaId: number, numeros: number[], clave: string): Promise<CompraRifa> => {
+    return httpClient.post<CompraRifa>(
+      `/rifas/${rifaId}/comprar`,
+      { numeros },
+      { headers: { 'Idempotency-Key': clave } }
+    );
   },
 };

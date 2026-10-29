@@ -49,6 +49,13 @@ const POR_CODIGO: Record<string, string> = {
   RIFA_INCOMPLETA: 'A la rifa le falta completar datos para publicarse.',
   TORNEO_CON_RIFA: 'Ese torneo ya tiene una rifa.',
   TORNEO_NO_ADMITE_RIFA: 'Ese torneo ya empezó o terminó: no se le puede asociar una rifa.',
+  NUMERO_NO_DISPONIBLE: 'Alguno de los números ya no está disponible: elegí otros.',
+  VENTA_CERRADA: 'La venta de esta rifa no está abierta.',
+  RESERVA_VENCIDA: 'Se terminó el tiempo de la reserva: volvé a elegir tus números.',
+  RIFA_PROPIA: 'No podés comprar números de tu propia rifa.',
+  CLAVE_IDEMPOTENCIA_USADA: 'No se pudo completar la compra: volvé a intentarlo.',
+  RIFA_CON_VENTAS: 'La rifa ya tiene números vendidos: no se puede modificar ni eliminar.',
+  RIFA_CON_RESERVAS: 'Alguien está pagando números de esta rifa: probá de nuevo en unos minutos.',
   TORNEO_NO_EDITABLE: 'El torneo ya no se puede modificar desde acá.',
   CAMPOS_BLOQUEADOS:
     'Algunos datos ya no se pueden cambiar porque hay inscripciones pagas: recargá la página.',
@@ -99,7 +106,18 @@ const POR_CODIGO: Record<string, string> = {
   PRONOSTICO_FUERA_DE_VENTANA:
     'La ventana para cargar o modificar el pronóstico ya cerró o el partido ya finalizó.',
   PRONOSTICO_INVALIDO: 'El pronóstico indicado no es válido.',
+  // HU-506 / T506-2: Reclamos de resultado de rifa
+  RECLAMO_FUERA_DE_VENTANA:
+    'La ventana de 48 horas para reclamar el resultado de la rifa ya cerró.',
+  PLAZO_RECLAMO_VENCIDO:
+    'La ventana de 48 horas para reclamar el resultado de la rifa ya cerró.',
+  NO_ES_COMPRADOR: 'No podés reclamar: no tenés un ticket comprado para esta rifa.',
+  USUARIO_NO_COMPRO_TICKET:
+    'No podés reclamar: no tenés un ticket comprado para esta rifa.',
+  RECLAMO_DUPLICADO: 'Ya tenés un reclamo registrado para esta rifa.',
+  RIFA_NO_SORTEADA: 'La rifa todavía no fue sorteada.',
 };
+
 
 const POR_CODIGO_DE_CAMPO: Record<string, string> = {
   REQUERIDO: 'Es obligatorio.',

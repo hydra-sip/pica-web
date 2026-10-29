@@ -31,7 +31,11 @@ import { InscripcionPagoPage } from '../inscripciones/pages/InscripcionPagoPage'
 import { PartidoPage } from '../partidos/pages/PartidoPage';
 import { ObjecionesTorneoPage } from '../partidos/pages/ObjecionesTorneoPage';
 import { PronosticosPage } from '../pronosticos/pages/PronosticosPage';
+import { RifasEnVentaPage } from '../rifas/pages/RifasEnVentaPage';
+import { RifaPublicaPage } from '../rifas/pages/RifaPublicaPage';
 import { PortalVerificacionPage } from '../verificacion/pages/PortalVerificacionPage';
+import { TicketPage } from '../rifas/pages/TicketPage';
+import { MisTicketsPage } from '../rifas/pages/MisTicketsPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -43,8 +47,14 @@ export const AppRoutes: React.FC = () => {
         <Route path="torneos/:slug" element={<TorneoDetallePage />} />
         {/* HU-306 / T306-2: Pronósticos y ranking */}
         <Route path="pronosticos" element={<PronosticosPage />} />
+        {/* Rifas para quien compra (PICA-221): públicas, sin login */}
+        <Route path="rifas" element={<RifasEnVentaPage />} />
+        <Route path="rifas/:id" element={<RifaPublicaPage />} />
         {/* HU-505 / T505-1: Portal público de verificación criptográfica */}
         <Route path="verificacion" element={<PortalVerificacionPage />} />
+        {/* HU-506 / T506-2: Comprobante y reclamo de ticket de rifa */}
+        <Route path="tickets/:ticketId" element={<TicketPage />} />
+        <Route path="rifas/:rifaId/tickets/:ticketId" element={<TicketPage />} />
         <Route path="auth/login" element={<LoginPage />} />
         <Route path="auth/register" element={<RegisterPage />} />
         <Route path="auth/check-email" element={<CheckEmailPage />} />
@@ -55,6 +65,7 @@ export const AppRoutes: React.FC = () => {
         {/* Rutas Autenticadas Públicas / Perfil */}
         <Route element={<RequireAuth />}>
           <Route path="mi-perfil" element={<ProfilePage />} />
+          <Route path="mis-tickets" element={<MisTicketsPage />} />
 
           {/* Cargar y aceptar el resultado (PICA-243): lo decide el back según el lado del que es capitán */}
           <Route path="partidos/:id" element={<PartidoPage />} />

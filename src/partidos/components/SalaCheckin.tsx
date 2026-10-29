@@ -61,6 +61,8 @@ export const SalaCheckin: React.FC<{ partidoId: number; onConfirmado: () => void
   const fase: Fase = ahora < abre ? 'ANTES' : ahora <= cierra ? 'ABIERTA' : 'CERRADA';
   const mio = checkin.miLado === 'LOCAL' ? checkin.local : checkin.visitante;
   const pendiente = checkin.miLado !== null && !mio?.checkinEn;
+  const confirmados = [checkin.local, checkin.visitante].filter((l) => l?.checkinEn).length;
+  const conRivales = Boolean(checkin.local && checkin.visitante);
 
   const confirmar = async () => {
     setEnviando(true);
@@ -87,6 +89,18 @@ export const SalaCheckin: React.FC<{ partidoId: number; onConfirmado: () => void
         {fase === 'ABIERTA' && `Cierra en ${tiempoHasta(cierra - ahora)}`}
         {fase === 'CERRADA' && 'La ventana de check-in cerró.'}
       </p>
+      {/* lo que hace el back al vencer la ventana, con la tolerancia (HU-309) */}
+      {fase === 'CERRADA' && conRivales && confirmados === 1 && (
+        <p className="partido-ayuda">
+          Si el rival no confirmó, en unos minutos se le da el partido a quien sí lo hizo.
+        </p>
+      )}
+      {fase === 'CERRADA' && conRivales && confirmados === 0 && (
+        <p className="partido-ayuda">
+          Si nadie confirmó, se aplica lo que eligió el organizador: reprogramar o descalificar a
+          los dos.
+        </p>
+      )}
       <ul className="partido-checkin-lados">
         <FilaLado lado={checkin.local} />
         <FilaLado lado={checkin.visitante} />

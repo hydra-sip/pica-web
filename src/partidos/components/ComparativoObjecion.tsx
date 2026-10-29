@@ -12,12 +12,22 @@ const ACCION: Record<EventoPartido['evento'], string> = {
   OBJETADO: 'objetó el resultado',
   CONFIRMADO_POR_PLAZO: 'confirmó el resultado al vencer el plazo',
   LAUDO: 'laudó',
+  WALKOVER: 'dio el partido por ganado por ausencia',
+  // con descalificar a los dos el partido queda cerrado y nunca llega a un comparativo
+  SIN_PRESENTES: 'reprogramó el partido: no se presentó ninguno',
+  PASE_DIRECTO: 'dio el pase directo',
 };
+
+/** Los del sistema que nombran al equipo en la acción, en lugar de entre paréntesis. */
+const NOMBRA_AL_EQUIPO: EventoPartido['evento'][] = ['WALKOVER', 'PASE_DIRECTO'];
 
 const accion = (e: EventoPartido): string => {
   if (e.evento === 'PROGRAMADO' && e.fechaProgramada) {
     return `programó el partido para el ${formatFecha(e.fechaProgramada)}`;
   }
+  // en WALKOVER, `equipo` es el ausente; en PASE_DIRECTO, el que pasa
+  if (e.evento === 'WALKOVER' && e.equipo) return `${ACCION.WALKOVER} de ${e.equipo}`;
+  if (e.evento === 'PASE_DIRECTO' && e.equipo) return `${ACCION.PASE_DIRECTO} a ${e.equipo}`;
   if (e.evento !== 'LAUDO') return ACCION[e.evento];
   return e.decision === 'CORREGIDO'
     ? 'laudó: corrigió el resultado'
@@ -84,7 +94,11 @@ export const ComparativoObjecion: React.FC<ComparativoObjecionProps> = ({
               <span className="partido-ayuda">{formatFecha(e.fecha)}</span>
               <span>
                 {e.usuario ?? 'El sistema'}
-                {e.equipo && e.equipo !== e.usuario && ` (${e.equipo})`} {accion(e)}
+                {e.equipo &&
+                  e.equipo !== e.usuario &&
+                  !NOMBRA_AL_EQUIPO.includes(e.evento) &&
+                  ` (${e.equipo})`}{' '}
+                {accion(e)}
               </span>
             </li>
           ))}
