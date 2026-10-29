@@ -139,7 +139,11 @@ export interface EventoPartido {
     | 'ACEPTADO'
     | 'OBJETADO'
     | 'CONFIRMADO_POR_PLAZO'
-    | 'LAUDO';
+    | 'LAUDO'
+    // HU-309, los hace el sistema
+    | 'WALKOVER'
+    | 'SIN_PRESENTES'
+    | 'PASE_DIRECTO';
   /** Nombre y apellido; null si lo hizo el sistema. */
   usuario: string | null;
   lado: Lado | null;
