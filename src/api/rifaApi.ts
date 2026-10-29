@@ -79,23 +79,21 @@ export type FaltantePublicacion =
 
 export type EstadoReclamo = 'PENDIENTE' | 'ACEPTADO' | 'RECHAZADO';
 
+/** ReclamoRifaDetalle del contrato (HU-506). */
 export interface ReclamoRifa {
   id: number;
   rifaId: number;
   usuarioId: number;
-  usuarioNombre?: string;
-  ticketId?: number | null;
   motivo: string;
   estado: EstadoReclamo;
-  resolucion?: string | null;
-  resueltoEn?: string | null;
-  resueltoPor?: string | null;
+  resolucion: string | null;
+  resueltoEn: string | null;
+  resueltoPor: string | null;
   creadoEn: string;
 }
 
 export interface ReclamoPayload {
   motivo: string;
-  ticketId?: number;
 }
 
 export interface TicketDetalle {
@@ -114,11 +112,12 @@ export interface TicketDetalle {
   moneda: string;
   creadoEn: string;
   rifaEstado: EstadoRifa;
+  /** La fecha programada del sorteo. */
   sorteadaEn: string | null;
-  reclamo?: ReclamoRifa | null;
+  /** False si lo mira un administrador. */
   esComprador: boolean;
+  /** La rifa sorteada (o en revisión) y dentro de las 48 h: se puede reclamar. */
   ventanaReclamoAbierta: boolean;
-  horasRestantesParaReclamar?: number | null;
 }
 
 // PICA-226, PICA-227, PICA-219, PICA-218: todas exigen RIFA_GESTIONAR y cada organizador ve solo las suyas.
@@ -174,7 +173,7 @@ export const rifaApi = {
     return httpClient.get<TicketDetalle>(`/tickets/${ticketId}`);
   },
 
-  /** Obtener los reclamos asociados a una rifa. */
+  /** Los reclamos de la rifa: el organizador ve todos; cualquier otro, solo los suyos. */
   obtenerReclamos: async (rifaId: number): Promise<ReclamoRifa[]> => {
     return httpClient.get<ReclamoRifa[]>(`/rifas/${rifaId}/reclamos`);
   },

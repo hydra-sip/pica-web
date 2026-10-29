@@ -6,6 +6,12 @@ import { IconoAlerta, IconoListo, IconoRefrescar } from '../../shared/ui/Iconos'
 import { mensajeDeError } from '../../shared/mensajesError';
 import '../rifas.css';
 
+/** El reclamo más reciente del comprador, o null. */
+const ultimoPropio = (reclamos: ReclamoRifa[], compradorId: number): ReclamoRifa | null =>
+  reclamos
+    .filter((r) => r.usuarioId === compradorId)
+    .reduce<ReclamoRifa | null>((ultimo, r) => (!ultimo || r.id > ultimo.id ? r : ultimo), null);
+
 export const TicketPage: React.FC = () => {
   const { ticketId, id } = useParams<{ ticketId?: string; id?: string }>();
   const idABuscar = ticketId || id;
@@ -14,6 +20,7 @@ export const TicketPage: React.FC = () => {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
+  const [reclamo, setReclamo] = useState<ReclamoRifa | null>(null);
 
   useEffect(() => {
     if (!idABuscar) {
@@ -29,8 +36,19 @@ export const TicketPage: React.FC = () => {
     rifaApi
       .obtenerTicket(idABuscar)
       .then((datos) => {
-        if (montado) {
-          setTicket(datos);
+        if (!montado) return;
+        setTicket(datos);
+        // El ticket no trae el reclamo: el comprador ve los suyos en GET /rifas/{id}/reclamos
+        const sorteada = datos.rifaEstado === 'SORTEADA' || datos.rifaEstado === 'EN_REVISION';
+        if (datos.esComprador && sorteada) {
+          rifaApi
+            .obtenerReclamos(datos.rifaId)
+            .then((reclamos) => {
+              if (montado) setReclamo(ultimoPropio(reclamos, datos.compradorId));
+            })
+            .catch(() => {
+              // sin la lista, el botón sigue y el back responde RECLAMO_DUPLICADO si ya hay uno
+            });
         }
       })
       .catch((err: unknown) => {
@@ -50,14 +68,8 @@ export const TicketPage: React.FC = () => {
   }, [idABuscar]);
 
   const handleReclamoExitoso = (nuevoReclamo: ReclamoRifa) => {
-    setTicket((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        rifaEstado: 'EN_REVISION',
-        reclamo: nuevoReclamo,
-      };
-    });
+    setTicket((prev) => (prev ? { ...prev, rifaEstado: 'EN_REVISION' } : prev));
+    setReclamo(nuevoReclamo);
     setMensajeExito(
       'Reclamo registrado con éxito. El organizador fue notificado y la rifa pasó a estado "En revisión".'
     );
@@ -96,7 +108,7 @@ export const TicketPage: React.FC = () => {
       )}
 
       {!cargando && ticket && (
-        <TicketCard ticket={ticket} onReclamoExitoso={handleReclamoExitoso} />
+        <TicketCard ticket={ticket} reclamo={reclamo} onReclamoExitoso={handleReclamoExitoso} />
       )}
     </div>
   );

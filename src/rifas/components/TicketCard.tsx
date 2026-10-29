@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { TicketDetalle, ReclamoRifa } from '../../api/rifaApi';
-import { Badge, Card } from '../../shared/ui';
+import { EstadoReclamo, TicketDetalle, ReclamoRifa } from '../../api/rifaApi';
+import { Badge, BadgeTone, Card } from '../../shared/ui';
 import {
   IconoTicket,
   IconoAlerta,
@@ -16,16 +16,24 @@ import { BotonReclamarTicket } from './BotonReclamarTicket';
 
 export interface TicketCardProps {
   ticket: TicketDetalle;
+  /** El último reclamo propio en la rifa, si hay. */
+  reclamo?: ReclamoRifa | null;
   onReclamoExitoso?: (nuevoReclamo: ReclamoRifa) => void;
   className?: string;
 }
 
+const RECLAMO_UI: Record<EstadoReclamo, { texto: string; tono: BadgeTone }> = {
+  PENDIENTE: { texto: 'En revisión', tono: 'aviso' },
+  ACEPTADO: { texto: 'Aceptado', tono: 'exito' },
+  RECHAZADO: { texto: 'Rechazado', tono: 'peligro' },
+};
+
 export const TicketCard: React.FC<TicketCardProps> = ({
   ticket,
+  reclamo,
   onReclamoExitoso,
   className = '',
 }) => {
-  const tieneReclamo = !!ticket.reclamo || ticket.rifaEstado === 'EN_REVISION';
   const esRifaFinalizada = ticket.rifaEstado === 'SORTEADA' || ticket.rifaEstado === 'EN_REVISION';
 
   return (
@@ -43,7 +51,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
           <Badge tone={TONO_ESTADO_RIFA[ticket.rifaEstado]}>
             {ESTADO_RIFA_UI[ticket.rifaEstado]}
           </Badge>
-          {ticket.reclamo && (
+          {reclamo?.estado === 'PENDIENTE' && (
             <Badge tone="aviso" data-testid="badge-reclamo-tramite">
               Reclamo en trámite
             </Badge>
@@ -121,13 +129,6 @@ export const TicketCard: React.FC<TicketCardProps> = ({
                 <div>
                   <strong>Ventana de reclamo abierta:</strong> Tenés hasta 48 horas posteriores al
                   sorteo para disputar el resultado ante cualquier irregularidad.
-                  {ticket.horasRestantesParaReclamar !== undefined &&
-                    ticket.horasRestantesParaReclamar !== null && (
-                      <span className="ticket-horas-restantes">
-                        {' '}
-                        (Quedan aprox. {ticket.horasRestantesParaReclamar} horas).
-                      </span>
-                    )}
                 </div>
               </>
             ) : (
@@ -143,38 +144,46 @@ export const TicketCard: React.FC<TicketCardProps> = ({
         )}
 
         {/* Detalle del reclamo activo */}
-        {tieneReclamo && ticket.reclamo && (
+        {reclamo && (
           <div className="ticket-reclamo-box" data-testid="seccion-reclamo-activo">
             <div className="ticket-reclamo-cabecera">
               <div className="ticket-reclamo-titulo-box">
                 <IconoAlerta size={18} />
                 <h3>Reclamo Registrado en Disputa</h3>
               </div>
-              <Badge tone="aviso">En revisión</Badge>
+              <Badge tone={RECLAMO_UI[reclamo.estado].tono}>{RECLAMO_UI[reclamo.estado].texto}</Badge>
             </div>
             <p className="ticket-reclamo-motivo">
-              <strong>Motivo:</strong> {ticket.reclamo.motivo}
+              <strong>Motivo:</strong> {reclamo.motivo}
             </p>
             <div className="ticket-reclamo-meta">
-              <span>Registrado el {fechaHora(ticket.reclamo.creadoEn)}</span>
-              <span>Por {ticket.reclamo.usuarioNombre}</span>
+              <span>Registrado el {fechaHora(reclamo.creadoEn)}</span>
             </div>
-            <div className="ticket-reclamo-aviso-organizador">
-              <IconoListo size={16} />
-              <span>
-                El reclamo fue notificado al organizador. El estado de la rifa permanece en revisión
-                mientras se evalúa la disputa.
-              </span>
-            </div>
+            {reclamo.estado === 'PENDIENTE' ? (
+              <div className="ticket-reclamo-aviso-organizador">
+                <IconoListo size={16} />
+                <span>
+                  El reclamo fue notificado al organizador. El estado de la rifa permanece en
+                  revisión mientras se evalúa la disputa.
+                </span>
+              </div>
+            ) : (
+              reclamo.resolucion && (
+                <p className="ticket-reclamo-motivo">
+                  <strong>Resolución:</strong> {reclamo.resolucion}
+                </p>
+              )
+            )}
           </div>
         )}
       </div>
 
       <div className="ticket-pie">
         <div className="ticket-acciones">
-          {esRifaFinalizada && (
+          {esRifaFinalizada && ticket.esComprador && (
             <BotonReclamarTicket
               ticket={ticket}
+              reclamo={reclamo}
               onReclamoExitoso={onReclamoExitoso}
             />
           )}

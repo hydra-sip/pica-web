@@ -742,10 +742,6 @@ button.grilla-celda:hover {
   margin-top: 0.1rem;
 }
 
-.ticket-horas-restantes {
-  font-weight: 600;
-}
-
 /* Detalle del reclamo registrado */
 .ticket-reclamo-box {
   background: rgba(245, 158, 11, 0.08);

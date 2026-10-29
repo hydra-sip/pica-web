@@ -1,66 +1,50 @@
 import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { http } from 'msw';
+import { problema } from '../mocks/adminHandlers';
+import { server } from '../mocks/server';
 import { renderRuta } from '../test/renderRuta';
 
 describe('HU-506 / T506-2: Reclamo de resultado de rifa en el ticket', () => {
-  it('Criterio 1: Intentar reclamar el resultado de una rifa pasadas las 48 horas de finalizada y comprobar que se indica error', async () => {
-    // Ticket 1002: rifa sorteada hace 72 horas (fuera de las 48 horas reglamentarias)
-    const { user } = await renderRuta('/tickets/1002');
+  it('Criterio 1: Pasadas las 48 horas de finalizada, el ticket indica que el plazo venció y no deja reclamar', async () => {
+    // Ticket 1002: rifa sorteada hace 72 horas; el back manda ventanaReclamoAbierta en false
+    await renderRuta('/tickets/1002');
 
-    // 1. Comprobar que carga el ticket con la ventana vencida
     await screen.findByText('Rifa con Ventana Vencida');
     expect(screen.getByText('T-VENCIDO')).toBeInTheDocument();
 
     const avisoVentana = screen.getByTestId('aviso-ventana-reclamo');
     expect(avisoVentana).toHaveTextContent(/ventana de reclamo cerrada/i);
     expect(avisoVentana).toHaveTextContent(/plazo reglamentario de 48 horas/i);
+    expect(screen.getByRole('button', { name: /reclamar resultado/i })).toBeDisabled();
+  });
 
-    // 2. Intentar reclamar
-    const btnReclamar = screen.getByRole('button', { name: /reclamar resultado/i });
-    await user.click(btnReclamar);
+  it('Criterio 1: Si el back rechaza por plazo vencido, se muestra el error', async () => {
+    // Ticket 1001 con la ventana abierta al cargar, pero vencida al enviar
+    server.use(
+      http.post('*/rifas/:id/reclamos', () =>
+        problema(409, 'PLAZO_RECLAMO_VENCIDO', 'Venció el plazo de 48 horas')
+      )
+    );
+    const { user } = await renderRuta('/tickets/1001');
+    await screen.findByText('Gran Rifa Benéfica de la Copa');
 
-    // 3. Modal de reclamo abierto
-    expect(screen.getByText('Reclamar resultado del sorteo')).toBeInTheDocument();
-    const textarea = screen.getByLabelText(/motivo del reclamo/i);
-    await user.type(textarea, 'Disputo el sorteo porque hubo una inconsistencia');
+    await user.click(screen.getByRole('button', { name: /reclamar resultado/i }));
+    await user.type(screen.getByLabelText(/motivo del reclamo/i), 'Hubo una inconsistencia');
+    await user.click(screen.getByRole('button', { name: /confirmar reclamo/i }));
 
-    // 4. Enviar reclamo fuera de ventana
-    const btnConfirmar = screen.getByRole('button', { name: /confirmar reclamo/i });
-    await user.click(btnConfirmar);
-
-    // 5. Comprobar que se indica error de ventana de 48h vencida
-    const alertaError = await screen.findByRole('alert');
-    expect(alertaError).toBeInTheDocument();
-    expect(alertaError).toHaveTextContent(
+    expect(await screen.findByRole('alert')).toHaveTextContent(
       'La ventana de 48 horas para reclamar el resultado de la rifa ya cerró.'
     );
   });
 
-  it('Criterio 2: Intentar reclamar sin haber comprado un ticket de esa rifa y comprobar que se indica error', async () => {
-    // Ticket 1003: pertenece a otro comprador (compradorId 999, rifaId 30)
-    const { user } = await renderRuta('/tickets/1003');
+  it('Criterio 2: Quien no compró el ticket no tiene el botón para reclamar', async () => {
+    // Ticket 1003: de otro comprador, como lo ve un administrador (esComprador en false)
+    await renderRuta('/tickets/1003');
 
     await screen.findByText('Rifa de Otro Usuario');
     expect(screen.getByText('T-AJENO')).toBeInTheDocument();
-
-    // 1. Abrir modal de reclamo
-    const btnReclamar = screen.getByRole('button', { name: /reclamar resultado/i });
-    await user.click(btnReclamar);
-
-    // 2. Ingresar motivo
-    const textarea = screen.getByLabelText(/motivo del reclamo/i);
-    await user.type(textarea, 'Intento reclamar esta rifa sin poseer ticket válido');
-
-    // 3. Confirmar envío
-    const btnConfirmar = screen.getByRole('button', { name: /confirmar reclamo/i });
-    await user.click(btnConfirmar);
-
-    // 4. Comprobar que se indica error de no comprador
-    const alertaError = await screen.findByRole('alert');
-    expect(alertaError).toBeInTheDocument();
-    expect(alertaError).toHaveTextContent(
-      'No podés reclamar: no tenés un ticket comprado para esta rifa.'
-    );
+    expect(screen.queryByRole('button', { name: /reclamar resultado/i })).not.toBeInTheDocument();
   });
 
   it('Criterio 3: Reclamar dentro de la ventana de 48 horas y comprobar que el reclamo queda registrado y notificado al organizador', async () => {
@@ -115,8 +99,10 @@ describe('HU-506 / T506-2: Reclamo de resultado de rifa en el ticket', () => {
     const badgesEnRevision = screen.getAllByText('En revisión');
     expect(badgesEnRevision.length).toBeGreaterThanOrEqual(1);
 
-    // 2. Badge de reclamo en trámite
-    expect(screen.getByTestId('badge-reclamo-tramite')).toHaveTextContent(/reclamo en trámite/i);
+    // 2. Badge de reclamo en trámite: el reclamo propio sale de GET /rifas/{id}/reclamos
+    expect(await screen.findByTestId('badge-reclamo-tramite')).toHaveTextContent(
+      /reclamo en trámite/i
+    );
 
     // 3. Sección con el detalle del reclamo pendiente
     const seccionReclamo = screen.getByTestId('seccion-reclamo-activo');
