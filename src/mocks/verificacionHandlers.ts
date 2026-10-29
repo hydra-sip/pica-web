@@ -1,21 +1,12 @@
 import { http, HttpResponse } from 'msw';
-import {
-  RifaVerificacionData,
-  SorteoItemResumen,
-  TorneoVerificacionData,
-} from '../api/verificacionApi';
+import { BracketTorneo, LadoBracket } from '../api/torneoApi';
+import { RifaVerificacionData, TorneoVerificacionData } from '../api/verificacionApi';
 
-export const mockTorneoVerificacion1: TorneoVerificacionData = {
-  id: 1,
-  slug: 'dev-copa-abierta',
-  nombre: 'Copa PICA 2026 - Eliminación Directa',
-  disciplina: 'Fútbol 5',
-  fechaSorteo: '2026-10-24T18:00:00Z',
-  compromisoHash: '7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069',
+// Torneo 5 del catálogo simulado (finalizado): 8 equipos, sin BYE
+const sorteoTorneo5: TorneoVerificacionData = {
+  id: 5,
   listaHash: 'b5d4045c3f466fa91fe2cc6abe79232a1a57cdf104f7a26e716e0a1e2789df78',
   semilla: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-  semillaFirma:
-    '3045022100e4b85c276bc5a363b82a04870198031e5066922fc57c6bbfd11894a8df419616022067ad3a8d11c05d7620a2323a2688f63568cbb0c5dd7fb21a6ab3e1b7d5985b46',
   inscriptos: [
     { id: 101, nombre: 'Los Halcones' },
     { id: 102, nombre: 'Deportivo PICA' },
@@ -65,17 +56,11 @@ export const mockTorneoVerificacion1: TorneoVerificacionData = {
   },
 };
 
-export const mockTorneoVerificacion2: TorneoVerificacionData = {
-  id: 2,
-  slug: 'dev-torneo-cerrado',
-  nombre: 'Torneo Cerrado de Ajedrez UNLu',
-  disciplina: 'Ajedrez',
-  fechaSorteo: '2026-10-25T14:30:00Z',
-  compromisoHash: '1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f809',
+// Torneo 3 del catálogo simulado (en curso): 11 participantes, 5 BYE
+const sorteoTorneo3: TorneoVerificacionData = {
+  id: 3,
   listaHash: '8f7e6d5c4b3a291807f6e5d4c3b2a1098f7e6d5c4b3a291807f6e5d4c3b2a109',
   semilla: '4f8d9b1a2c3e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcd',
-  semillaFirma:
-    '3046022100f1c39056a0c5bd3c591244e45d8b51d8b671a539bdf5c1b6b559d2ba96a09cb402210080bc4f7831f41da0b6e1476e3d0d8fb8ab81e5cd8e3df917300c3b313efbd261',
   inscriptos: [
     { id: 201, nombre: 'Ajedrez UNLu' },
     { id: 202, nombre: 'Club Jaque Mate' },
@@ -160,6 +145,7 @@ export const mockTorneoVerificacion2: TorneoVerificacionData = {
   },
 };
 
+// La rifa todavía no tiene GET /rifas/{id}/sorteo (PICA-263): solo la usa el test de VerificacionRifa
 export const mockRifaVerificacion10: RifaVerificacionData = {
   id: 10,
   titulo: 'Gran Rifa Benéfica de la Copa',
@@ -215,76 +201,57 @@ export const mockRifaVerificacion10: RifaVerificacionData = {
   },
 };
 
-const mockSorteosLista: SorteoItemResumen[] = [
-  {
-    id: 1,
-    tipo: 'TORNEO',
-    titulo: 'Copa PICA 2026 - Eliminación Directa',
-    slug: 'dev-copa-abierta',
-    disciplinaOInfo: 'Fútbol 5 (8 equipos)',
-    fechaSorteo: '2026-10-24T18:00:00Z',
-    compromisoHash: mockTorneoVerificacion1.compromisoHash,
-    semilla: mockTorneoVerificacion1.semilla,
-  },
-  {
-    id: 2,
-    tipo: 'TORNEO',
-    titulo: 'Torneo Cerrado de Ajedrez UNLu',
-    slug: 'dev-torneo-cerrado',
-    disciplinaOInfo: 'Ajedrez (11 participantes, 5 BYEs)',
-    fechaSorteo: '2026-10-25T14:30:00Z',
-    compromisoHash: mockTorneoVerificacion2.compromisoHash,
-    semilla: mockTorneoVerificacion2.semilla,
-  },
-  {
-    id: 10,
-    tipo: 'RIFA',
-    titulo: 'Gran Rifa Benéfica de la Copa',
-    disciplinaOInfo: '10 números vendidos, 3 premios',
-    fechaSorteo: '2026-10-26T21:00:00Z',
-    compromisoHash: mockRifaVerificacion10.compromisoHash,
-    semilla: mockRifaVerificacion10.semilla,
-  },
-];
-
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
+const lado = (inscripcionId: number, nombre: string): LadoBracket => ({
+  inscripcionId,
+  nombre,
+  puntaje: null,
+  penales: null,
+  ganador: null,
+});
+
+/** El bracket recién sorteado, como lo devuelve GET /torneos/{id}/bracket. */
+const bracketDe = (sorteo: TorneoVerificacionData): BracketTorneo => {
+  const { rondas, cruces } = sorteo.resultadoOficial;
+  return {
+    torneoId: sorteo.id,
+    semilla: sorteo.semilla,
+    listaHash: sorteo.listaHash,
+    rondas: Array.from({ length: rondas }, (_, i) => ({
+      numero: i + 1,
+      nombre: `Ronda ${i + 1}`,
+      partidos: Array.from({ length: cruces.length >> i }, (_, j) => {
+        const cruce = i === 0 ? cruces[j] : null;
+        return {
+          id: sorteo.id * 1000 + (i + 1) * 100 + j + 1,
+          ronda: i + 1,
+          posicion: j + 1,
+          estado: 'PROGRAMADO' as const,
+          bye: cruce?.bye ?? false,
+          local: cruce ? lado(cruce.localId, cruce.localNombre) : null,
+          visitante:
+            cruce && cruce.visitanteId !== null
+              ? lado(cruce.visitanteId, cruce.visitanteNombre ?? '')
+              : null,
+          cancha: null,
+          fechaProgramada: null,
+          arbitro: null,
+        };
+      }),
+    })),
+  };
+};
+
+const sorteos: Record<number, TorneoVerificacionData> = { 3: sorteoTorneo3, 5: sorteoTorneo5 };
+
 export const verificacionHandlers = [
-  http.get(`${API_URL}/verificacion/sorteos`, () => {
-    return HttpResponse.json(mockSorteosLista);
-  }),
-  http.get('/verificacion/sorteos', () => {
-    return HttpResponse.json(mockSorteosLista);
-  }),
-
-  http.get(`${API_URL}/verificacion/torneo/:id`, ({ params }) => {
-    const id = Number(params.id);
-    if (id === 2 || params.id === 'dev-torneo-cerrado') {
-      return HttpResponse.json(mockTorneoVerificacion2);
+  // GET /torneos/{id}/bracket (público); los demás torneos del catálogo simulado no tienen bracket
+  http.get(`${API_URL}/torneos/:id/bracket`, ({ params }) => {
+    const sorteo = sorteos[Number(params.id)];
+    if (!sorteo) {
+      return HttpResponse.json({ torneoId: Number(params.id), semilla: null, listaHash: null, rondas: [] });
     }
-    return HttpResponse.json(mockTorneoVerificacion1);
-  }),
-  http.get('/verificacion/torneo/:id', ({ params }) => {
-    const id = Number(params.id);
-    if (id === 2 || params.id === 'dev-torneo-cerrado') {
-      return HttpResponse.json(mockTorneoVerificacion2);
-    }
-    return HttpResponse.json(mockTorneoVerificacion1);
-  }),
-
-  http.get(`${API_URL}/verificacion/rifa/:id`, ({ params }) => {
-    const id = Number(params.id);
-    return HttpResponse.json({
-      ...mockRifaVerificacion10,
-      id: id || 10,
-    });
-  }),
-  http.get('/verificacion/rifa/:id', ({ params }) => {
-    const id = Number(params.id);
-    return HttpResponse.json({
-      ...mockRifaVerificacion10,
-      id: id || 10,
-    });
+    return HttpResponse.json(bracketDe(sorteo));
   }),
 ];
-
