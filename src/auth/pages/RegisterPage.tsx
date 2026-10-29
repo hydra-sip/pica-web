@@ -14,6 +14,7 @@ import {
   MIN_FECHA_NACIMIENTO,
 } from '../../shared/validators';
 import { IconoAlerta } from '../../shared/ui/Iconos';
+import '../auth.css';
 
 export const RegisterPage: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -255,7 +256,7 @@ export const RegisterPage: React.FC = () => {
 
         <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {/* Nombres y Apellidos */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+          <div className="auth-fila">
             <div>
               <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                 Nombre/s <span style={{ color: '#ef4444' }}>*</span>
@@ -269,7 +270,8 @@ export const RegisterPage: React.FC = () => {
                   setNombres(e.target.value);
                   if (fieldErrors.nombres) setFieldErrors((prev) => ({ ...prev, nombres: undefined }));
                 }}
-                style={{ borderColor: fieldErrors.nombres ? '#ef4444' : undefined }}
+                className="input"
+                aria-invalid={!!fieldErrors.nombres}
               />
               {fieldErrors.nombres && (
                 <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
@@ -291,7 +293,8 @@ export const RegisterPage: React.FC = () => {
                   setApellidos(e.target.value);
                   if (fieldErrors.apellidos) setFieldErrors((prev) => ({ ...prev, apellidos: undefined }));
                 }}
-                style={{ borderColor: fieldErrors.apellidos ? '#ef4444' : undefined }}
+                className="input"
+                aria-invalid={!!fieldErrors.apellidos}
               />
               {fieldErrors.apellidos && (
                 <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
@@ -315,7 +318,8 @@ export const RegisterPage: React.FC = () => {
                 setUsername(e.target.value);
                 if (fieldErrors.username) setFieldErrors((prev) => ({ ...prev, username: undefined }));
               }}
-              style={{ borderColor: fieldErrors.username ? '#ef4444' : undefined }}
+              className="input"
+              aria-invalid={!!fieldErrors.username}
             />
             {fieldErrors.username && (
               <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
@@ -338,7 +342,8 @@ export const RegisterPage: React.FC = () => {
                 setEmail(e.target.value);
                 if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: undefined }));
               }}
-              style={{ borderColor: fieldErrors.email ? '#ef4444' : undefined }}
+              className="input"
+              aria-invalid={!!fieldErrors.email}
             />
             {fieldErrors.email && (
               <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
@@ -348,7 +353,7 @@ export const RegisterPage: React.FC = () => {
           </div>
 
           {/* Tipo Doc, Nro Doc y Fecha Nac */}
-          <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '0.75rem' }}>
+          <div className="auth-fila auth-fila-doc">
             <div>
               <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                 Tipo
@@ -356,7 +361,7 @@ export const RegisterPage: React.FC = () => {
               <select
                 value={tipoDoc}
                 onChange={(e) => setTipoDoc(e.target.value)}
-                style={{ padding: '0.7rem 0.5rem' }}
+                className="input"
               >
                 {TIPOS_DOC_VALIDOS.map((td) => (
                   <option key={td.value} value={td.value}>{td.label}</option>
@@ -377,7 +382,8 @@ export const RegisterPage: React.FC = () => {
                   setNroDoc(e.target.value);
                   if (fieldErrors.nroDoc) setFieldErrors((prev) => ({ ...prev, nroDoc: undefined }));
                 }}
-                style={{ borderColor: fieldErrors.nroDoc ? '#ef4444' : undefined }}
+                className="input"
+                aria-invalid={!!fieldErrors.nroDoc}
               />
               {fieldErrors.nroDoc && (
                 <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
@@ -401,7 +407,8 @@ export const RegisterPage: React.FC = () => {
                 setFechaNacimiento(e.target.value);
                 if (fieldErrors.fechaNacimiento) setFieldErrors((prev) => ({ ...prev, fechaNacimiento: undefined }));
               }}
-              style={{ borderColor: fieldErrors.fechaNacimiento ? '#ef4444' : undefined }}
+              className="input"
+              aria-invalid={!!fieldErrors.fechaNacimiento}
             />
             {fieldErrors.fechaNacimiento && (
               <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
@@ -424,7 +431,8 @@ export const RegisterPage: React.FC = () => {
                 setPassword(e.target.value);
                 if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: undefined }));
               }}
-              style={{ borderColor: fieldErrors.password ? '#ef4444' : undefined }}
+              className="input"
+              aria-invalid={!!fieldErrors.password}
             />
             <PasswordRequirements password={password} />
             {fieldErrors.password && (
@@ -447,7 +455,8 @@ export const RegisterPage: React.FC = () => {
                 setConfirmPassword(e.target.value);
                 if (fieldErrors.confirmPassword) setFieldErrors((prev) => ({ ...prev, confirmPassword: undefined }));
               }}
-              style={{ borderColor: fieldErrors.confirmPassword ? '#ef4444' : undefined }}
+              className="input"
+              aria-invalid={!!fieldErrors.confirmPassword}
             />
             {fieldErrors.confirmPassword && (
               <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>

@@ -19,6 +19,7 @@ import {
   IconoCheck,
   IconoAlerta,
 } from '../../shared/ui/Iconos';
+import '../auth.css';
 
 export const ProfilePage: React.FC = () => {
   const { user, updateUser } = useAuth();
@@ -187,16 +188,6 @@ export const ProfilePage: React.FC = () => {
       setChangingPassword(false);
     }
   };
-
-  const inputStyle = (hasError?: boolean): React.CSSProperties => ({
-    borderRadius: 'var(--radius-md)',
-    padding: '0.75rem 0.9rem',
-    border: `1px solid ${hasError ? '#ef4444' : 'var(--border-color)'}`,
-    width: '100%',
-    backgroundColor: 'var(--bg-surface)',
-    color: 'var(--text-primary)',
-    fontSize: '0.9rem',
-  });
 
   const userInitials =
     user?.name
@@ -397,7 +388,7 @@ export const ProfilePage: React.FC = () => {
         )}
 
         <form onSubmit={handleUpdateProfile} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+          <div className="auth-fila">
             <div>
               <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                 Nombres <span style={{ color: '#ef4444' }}>*</span>
@@ -407,7 +398,8 @@ export const ProfilePage: React.FC = () => {
                 required
                 value={nombres}
                 onChange={(e) => setNombres(e.target.value)}
-                style={inputStyle(!!profileFieldErrors.nombres)}
+                className="input"
+                aria-invalid={!!profileFieldErrors.nombres}
               />
               {profileFieldErrors.nombres && (
                 <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
@@ -425,7 +417,8 @@ export const ProfilePage: React.FC = () => {
                 required
                 value={apellidos}
                 onChange={(e) => setApellidos(e.target.value)}
-                style={inputStyle(!!profileFieldErrors.apellidos)}
+                className="input"
+                aria-invalid={!!profileFieldErrors.apellidos}
               />
               {profileFieldErrors.apellidos && (
                 <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
@@ -443,11 +436,11 @@ export const ProfilePage: React.FC = () => {
               type="email"
               disabled
               value={email}
-              style={{ ...inputStyle(), backgroundColor: 'var(--bg-subtle)', color: 'var(--text-secondary)', cursor: 'not-allowed' }}
+              className="input"
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '0.75rem' }}>
+          <div className="auth-fila auth-fila-doc">
             <div>
               <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                 Tipo
@@ -455,7 +448,7 @@ export const ProfilePage: React.FC = () => {
               <select
                 value={tipoDoc}
                 onChange={(e) => setTipoDoc(e.target.value)}
-                style={{ padding: '0.75rem 0.5rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-surface)' }}
+                className="input"
               >
                 {TIPOS_DOC_VALIDOS.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -471,7 +464,8 @@ export const ProfilePage: React.FC = () => {
                 type="text"
                 value={nroDoc}
                 onChange={(e) => setNroDoc(e.target.value)}
-                style={inputStyle(!!profileFieldErrors.nroDoc)}
+                className="input"
+                aria-invalid={!!profileFieldErrors.nroDoc}
               />
               {profileFieldErrors.nroDoc && (
                 <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
@@ -481,7 +475,7 @@ export const ProfilePage: React.FC = () => {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+          <div className="auth-fila">
             <div>
               <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                 Fecha de Nacimiento
@@ -492,7 +486,8 @@ export const ProfilePage: React.FC = () => {
                 max={getTodayDateString()}
                 value={fechaNacimiento}
                 onChange={(e) => setFechaNacimiento(e.target.value)}
-                style={inputStyle(!!profileFieldErrors.fechaNacimiento)}
+                className="input"
+                aria-invalid={!!profileFieldErrors.fechaNacimiento}
               />
               {profileFieldErrors.fechaNacimiento && (
                 <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
@@ -510,7 +505,7 @@ export const ProfilePage: React.FC = () => {
                 placeholder="ej: +54 11 4455-6677"
                 value={telefono}
                 onChange={(e) => setTelefono(e.target.value)}
-                style={inputStyle()}
+                className="input"
               />
             </div>
           </div>
@@ -557,7 +552,8 @@ export const ProfilePage: React.FC = () => {
               placeholder="••••••••••••"
               value={passwordActual}
               onChange={(e) => setPasswordActual(e.target.value)}
-              style={inputStyle(!!passwordFieldErrors.passwordActual)}
+              className="input"
+              aria-invalid={!!passwordFieldErrors.passwordActual}
             />
             {passwordFieldErrors.passwordActual && (
               <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
@@ -577,7 +573,8 @@ export const ProfilePage: React.FC = () => {
                 placeholder="Mínimo 8 caracteres"
                 value={passwordNueva}
                 onChange={(e) => setPasswordNueva(e.target.value)}
-                style={inputStyle(!!passwordFieldErrors.passwordNueva)}
+                className="input"
+                aria-invalid={!!passwordFieldErrors.passwordNueva}
               />
               <PasswordRequirements password={passwordNueva} />
               {passwordFieldErrors.passwordNueva && (
@@ -597,7 +594,8 @@ export const ProfilePage: React.FC = () => {
                 placeholder="••••••••••••"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                style={inputStyle(!!passwordFieldErrors.confirmPassword)}
+                className="input"
+                aria-invalid={!!passwordFieldErrors.confirmPassword}
               />
               {passwordFieldErrors.confirmPassword && (
                 <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
