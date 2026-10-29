@@ -194,6 +194,7 @@ const torneoInformacionMock: TorneoInformacion = {
   camposBloqueados: [],
   checkinMinAntes: null,
   checkinDuracion: null,
+  checkinSinPresentes: 'REPROGRAMAR',
   economia: {
     valorInscripcion: 5000,
     moneda: 'ARS',

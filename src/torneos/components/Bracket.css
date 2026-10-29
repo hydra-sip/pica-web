@@ -54,6 +54,12 @@
   color: var(--color-text-secondary);
 }
 
+/* Un partido para jugar sin fecha con el torneo en curso (HU-309) */
+.bracket-sin-fecha {
+  font-weight: 600;
+  color: var(--color-warning);
+}
+
 .bracket-programacion-editando {
   flex-direction: column;
   align-items: stretch;
@@ -104,6 +110,19 @@
 
 .bracket-puntaje {
   font-variant-numeric: tabular-nums;
+}
+
+/* Un partido cerrado por ausencia (HU-309): la marca va donde iría el marcador */
+.bracket-marca {
+  flex-shrink: 0;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.bracket-lado-descalificado {
+  color: var(--color-disabled-text);
 }
 
 .bracket-bye {

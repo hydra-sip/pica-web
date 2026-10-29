@@ -4,6 +4,7 @@ import { PartidoDetalle } from '../../api/partidoApi';
 import { BracketTorneo, EstadoTorneo, torneoApi, TorneoInformacion } from '../../api/torneoApi';
 import { useTorneoRealtime } from '../../realtime/useTorneoRealtime';
 import { ObjecionesTorneo } from '../../partidos/components/ObjecionesTorneo';
+import { sinFechaParaJugar } from '../../partidos/formato';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { Badge, Button, Card } from '../../shared/ui';
 import { Bracket } from '../components/Bracket';
@@ -115,6 +116,10 @@ export const TorneoConsolaPage: React.FC = () => {
     !conResultados(bracket);
 
   const programable = torneo.estado === 'INSCRIPCION_CERRADA' || torneo.estado === 'EN_CURSO';
+  const enCurso = torneo.estado === 'EN_CURSO';
+  const sinFecha = enCurso
+    ? bracket.rondas.flatMap((r) => r.partidos).filter(sinFechaParaJugar).length
+    : 0;
 
   const programado = (partido: PartidoDetalle) =>
     setBracket({
@@ -278,12 +283,24 @@ export const TorneoConsolaPage: React.FC = () => {
           <h2>Estructura del bracket</h2>
           {torneo.slug && <Link to={`/torneos/${torneo.slug}`}>Ver la ficha pública</Link>}
         </div>
+        {sinFecha > 0 && (
+          <div className="alerta alerta-aviso" role="status">
+            {sinFecha === 1
+              ? 'Hay 1 partido sin fecha: ponéle una para que se juegue.'
+              : `Hay ${sinFecha} partidos sin fecha: ponéles una para que se jueguen.`}
+          </div>
+        )}
         {generado ? (
           <Bracket
             bracket={bracket}
             conEnlaces
             pie={(p) => (
-              <ProgramacionPartido partido={p} editable={programable} onProgramado={programado} />
+              <ProgramacionPartido
+                partido={p}
+                editable={programable}
+                resaltarSinFecha={enCurso}
+                onProgramado={programado}
+              />
             )}
           />
         ) : (

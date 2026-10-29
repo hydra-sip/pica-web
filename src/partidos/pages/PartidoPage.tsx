@@ -7,7 +7,8 @@ import {
   PartidoDetalle,
   partidoApi,
 } from '../../api/partidoApi';
-import { LadoBracket } from '../../api/torneoApi';
+import { LadoBracket, torneoApi } from '../../api/torneoApi';
+import { useTorneoRealtime } from '../../realtime/useTorneoRealtime';
 import { erroresPorCampo, mensajeDeError } from '../../shared/mensajesError';
 import { Badge, Button, Card } from '../../shared/ui';
 import { CamposMarcador } from '../components/CamposMarcador';
@@ -20,9 +21,12 @@ import { abreviarHash } from '../../torneos/formato';
 import { formatFecha } from '../../torneos/utils/formatters';
 import {
   CERRADOS,
+  CierrePorAusencia,
+  cierrePorAusencia,
   EN_JUEGO,
   ESTADO_PARTIDO_UI,
   TONO_ESTADO_PARTIDO,
+  sinFechaParaJugar,
   tiempoRestante,
 } from '../formato';
 import { MARCADOR_VACIO, Marcador, erroresDelMarcador, payloadDelMarcador } from '../marcador';
@@ -37,6 +41,33 @@ const propuesta = (o: ObjecionDetalle): string =>
   o.penalesLocal == null
     ? `${o.puntajeLocal} - ${o.puntajeVisitante}`
     : `${o.puntajeLocal} (${o.penalesLocal}) - ${o.puntajeVisitante} (${o.penalesVisitante})`;
+
+/** Cómo se cerró el partido, si fue por ausencia (HU-309). */
+const ComoSeCerro: React.FC<{ partido: PartidoDetalle; cierre: CierrePorAusencia }> = ({
+  partido,
+  cierre,
+}) => {
+  const { local, visitante } = partido;
+  const ganador = local?.ganador ? local : visitante;
+  const ausente = local?.ganador ? visitante : local;
+  return (
+    <p className="partido-cierre" role="status">
+      {cierre === 'WALKOVER' && (
+        <>
+          <strong>{ganador?.nombre}</strong> ganó por ausencia de <strong>{ausente?.nombre}</strong>
+          : no hizo check-in a tiempo.
+        </>
+      )}
+      {cierre === 'DESCALIFICADOS' && 'No se presentó ninguno de los dos: quedaron descalificados.'}
+      {cierre === 'PASE_DIRECTO' && (
+        <>
+          <strong>{(local ?? visitante)?.nombre}</strong> pasó de ronda sin jugar: su rival quedó
+          vacante porque descalificaron a los dos del otro cruce.
+        </>
+      )}
+    </p>
+  );
+};
 
 /** Cuánto falta para `hasta`, actualizado cada segundo; null sin fecha. */
 const useCuentaRegresiva = (hasta: string | null): number | null => {
@@ -66,9 +97,40 @@ export const PartidoPage: React.FC = () => {
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [mensaje, setMensaje] = useState<{ tipo: 'exito' | 'error'; texto: string } | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [soyOrganizador, setSoyOrganizador] = useState(false);
+  const paraProgramar = partido !== null && sinFechaParaJugar(partido);
+  const torneoId = partido?.torneoId;
   const restante = useCuentaRegresiva(
     partido?.estado === 'RESULTADO_CARGADO' ? partido.objecionVenceEn : null
   );
+
+  // Al organizador de un partido sin fecha (el mail del partido sin presentes lleva acá) se le muestra adónde ir a
+  // programarlo. GET /torneos/{id} solo le responde al organizador: a los demás, 404.
+  useEffect(() => {
+    if (!paraProgramar || !torneoId) {
+      setSoyOrganizador(false);
+      return undefined;
+    }
+    let vigente = true;
+    torneoApi
+      .obtener(torneoId)
+      .then(() => vigente && setSoyOrganizador(true))
+      .catch(() => vigente && setSoyOrganizador(false));
+    return () => {
+      vigente = false;
+    };
+  }, [paraProgramar, torneoId]);
+
+  // La ausencia la declara el back al vencer la ventana (HU-309): con cada novedad del torneo se vuelve a pedir el
+  // partido, sin filtrar por id, porque el pase directo llega con el id del partido de los descalificados.
+  useTorneoRealtime(torneoId, {
+    onActualizar: () => {
+      partidoApi
+        .obtener(Number(id))
+        .then(setPartido)
+        .catch(() => undefined);
+    },
+  });
 
   useEffect(() => {
     let vigente = true;
@@ -122,6 +184,7 @@ export const PartidoPage: React.FC = () => {
   const rival = partido.miLado === 'LOCAL' ? partido.visitante : partido.local;
   const objetor = partido.objecion?.lado === 'LOCAL' ? partido.local : partido.visitante;
   const conEvidenciaPropia = evidencias.some((e) => e.lado === partido.miLado);
+  const cierre = cierrePorAusencia(partido);
 
   const enviar = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -181,6 +244,7 @@ export const PartidoPage: React.FC = () => {
           </Badge>
         </div>
         <p className="partido-ayuda">{detalle}</p>
+        {cierre && <ComoSeCerro partido={partido} cierre={cierre} />}
         {comparada && (
           <Link to={`/torneos/${partido.torneoId}/objeciones`} className="partido-volver">
             Ver todas las objeciones del torneo →
@@ -197,8 +261,17 @@ export const PartidoPage: React.FC = () => {
         </div>
       )}
 
+      {soyOrganizador && paraProgramar && (
+        <div className="alerta alerta-aviso" role="status">
+          Este partido no tiene fecha.{' '}
+          <Link to={`/torneos/${partido.torneoId}/consola`}>Programalo desde la consola</Link>.
+        </div>
+      )}
+
       {EN_JUEGO.includes(partido.estado) && (
         <SalaCheckin
+          // reprogramado, el partido queda sin fecha y la sala se vuelve a pedir
+          key={partido.fechaProgramada ?? 'sin-fecha'}
           partidoId={partido.id}
           // el check-in cambia el estado del partido: CHECK_IN con el primero, EN_JUEGO con los dos
           onConfirmado={() => void partidoApi.obtener(partido.id).then(setPartido)}
