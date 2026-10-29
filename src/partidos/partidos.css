@@ -127,6 +127,12 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Cómo se cerró el partido por ausencia (HU-309), debajo del estado */
+.partido-cierre {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+}
+
 .partido-evidencias {
   display: flex;
   flex-direction: column;

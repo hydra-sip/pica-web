@@ -1,5 +1,5 @@
 import { Decision, VersionResultado } from '../api/partidoApi';
-import { EstadoPartido } from '../api/torneoApi';
+import { EstadoPartido, PartidoBracket } from '../api/torneoApi';
 import { BadgeTone } from '../shared/ui';
 
 export const ESTADO_PARTIDO_UI: Record<EstadoPartido, string> = {
@@ -29,6 +29,39 @@ export const EN_JUEGO: EstadoPartido[] = ['PROGRAMADO', 'CHECK_IN', 'EN_JUEGO'];
 
 /** Ya no cambian: el ganador pasó a la ronda siguiente. */
 export const CERRADOS: EstadoPartido[] = ['CONFIRMADO', 'CORREGIDO', 'WALKOVER'];
+
+/**
+ * Cómo se cerró un partido por ausencia (HU-309), si se cerró así:
+ * - WALKOVER: se presentó un solo lado y ganó;
+ * - DESCALIFICADOS: no se presentó ninguno y quedaron fuera los dos;
+ * - PASE_DIRECTO: el rival quedó vacante por unos descalificados y el que llegó pasó sin jugar. En la ronda 1 eso
+ *   es un BYE del sorteo.
+ */
+export type CierrePorAusencia = 'WALKOVER' | 'DESCALIFICADOS' | 'PASE_DIRECTO';
+
+export const cierrePorAusencia = (
+  partido: Pick<PartidoBracket, 'estado' | 'ronda' | 'local' | 'visitante'>
+): CierrePorAusencia | null => {
+  const { estado, ronda, local, visitante } = partido;
+  if (estado === 'WALKOVER') {
+    return local?.ganador || visitante?.ganador ? 'WALKOVER' : 'DESCALIFICADOS';
+  }
+  if (estado === 'CONFIRMADO' && ronda > 1 && (local === null) !== (visitante === null)) {
+    return 'PASE_DIRECTO';
+  }
+  return null;
+};
+
+/**
+ * Con los dos lados y sin fecha: hay que programarlo para que se juegue. Puede venir de un partido sin presentes
+ * que se reprogramó (HU-309) o no haber tenido fecha nunca.
+ */
+export const sinFechaParaJugar = (
+  partido: Pick<PartidoBracket, 'estado' | 'local' | 'visitante' | 'fechaProgramada'>
+): boolean =>
+  partido.estado === 'PROGRAMADO' &&
+  Boolean(partido.local && partido.visitante) &&
+  !partido.fechaProgramada;
 
 /** `11 min 45 seg`; vencido, `0 seg`. */
 export const tiempoRestante = (milisegundos: number): string => {

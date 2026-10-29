@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { partidoApi, PartidoDetalle } from '../../api/partidoApi';
 import { PartidoBracket } from '../../api/torneoApi';
+import { sinFechaParaJugar } from '../../partidos/formato';
 import { erroresPorCampo, mensajeDeError } from '../../shared/mensajesError';
 import { fechaHora, inputLocalAIso, isoAInputLocal } from '../../shared/formato';
 import { Button, Input } from '../../shared/ui';
@@ -14,6 +15,8 @@ interface ProgramacionPartidoProps {
   partido: PartidoBracket;
   /** Con el torneo con la inscripción cerrada o en curso: antes no hay bracket y después ya no se programa. */
   editable: boolean;
+  /** Con el torneo en curso, un partido para jugar sin fecha se resalta (HU-309). */
+  resaltarSinFecha?: boolean;
   onProgramado: (partido: PartidoDetalle) => void;
 }
 
@@ -25,6 +28,7 @@ interface ProgramacionPartidoProps {
 export const ProgramacionPartido: React.FC<ProgramacionPartidoProps> = ({
   partido,
   editable,
+  resaltarSinFecha = false,
   onProgramado,
 }) => {
   const [valor, setValor] = useState<string | null>(null);
@@ -60,7 +64,13 @@ export const ProgramacionPartido: React.FC<ProgramacionPartidoProps> = ({
   if (valor === null) {
     return (
       <div className="bracket-programacion">
-        <span>{fecha}</span>
+        <span
+          className={
+            resaltarSinFecha && sinFechaParaJugar(partido) ? 'bracket-sin-fecha' : undefined
+          }
+        >
+          {fecha}
+        </span>
         {programable && (
           <Button
             variant="ghost"

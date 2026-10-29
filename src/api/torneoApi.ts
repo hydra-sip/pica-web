@@ -75,12 +75,21 @@ export interface TorneoInformacion extends Omit<
   checkinMinAntes: number | null;
   /** Cuántos minutos dura la ventana de check-in. */
   checkinDuracion: number | null;
+  /** Qué pasa si no se presenta ninguno de los dos al vencer la ventana (HU-309). */
+  checkinSinPresentes: CriterioSinPresentes;
 }
 
-/** PUT /torneos/{id}/checkin: `duracion` no más que `minAntes`, así la ventana cierra antes del cruce. */
+/** REPROGRAMAR deja el partido sin fecha; DESCALIFICAR_AMBOS lo cierra sin ganador y el rival siguiente pasa directo. */
+export type CriterioSinPresentes = 'REPROGRAMAR' | 'DESCALIFICAR_AMBOS';
+
+/**
+ * PUT /torneos/{id}/checkin: `duracion` no más que `minAntes`, así la ventana cierra antes del cruce. Sin
+ * `sinPresentes` queda el criterio vigente.
+ */
 export interface CheckinTorneoPayload {
   minAntes: number | null;
   duracion: number | null;
+  sinPresentes?: CriterioSinPresentes;
 }
 
 /** Un campo de PUT /torneos/{id}/informacion. */
