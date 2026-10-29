@@ -387,11 +387,6 @@
   margin-top: auto;
 }
 
-.rifa-descripcion {
-  margin: 0 0 var(--space-4);
-  white-space: pre-line;
-}
-
 .grilla-numeros {
   display: flex;
   flex-direction: column;

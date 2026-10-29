@@ -15,6 +15,7 @@ import { fechaHora, pesos } from '../../shared/formato';
 import { Badge, BadgeTone, Button, Card } from '../../shared/ui';
 import { GrillaNumeros } from '../components/GrillaNumeros';
 import { PagoRifa } from '../components/PagoRifa';
+import { RecaudadoRifa } from '../components/RecaudadoRifa';
 import '../rifas.css';
 
 const estadoDeLaVenta = (
@@ -60,10 +61,15 @@ export const RifaPublicaPage: React.FC = () => {
   const [errorPago, setErrorPago] = useState<string | null>(null);
   const [compra, setCompra] = useState<CompraRifa | null>(null);
 
+  // con cada venta cambian la grilla y el monto acumulado (HU-405)
   const recargarNumeros = useCallback(() => {
     rifaPublicaApi
       .numerosOcupados(rifaId)
       .then(setOcupados)
+      .catch(() => undefined);
+    rifaPublicaApi
+      .obtener(rifaId)
+      .then(setRifa)
       .catch(() => undefined);
   }, [rifaId]);
 
@@ -220,8 +226,16 @@ export const RifaPublicaPage: React.FC = () => {
         )}
       </header>
 
+      {/* HU-405: lo recaudado hasta ahora y cómo se reparte */}
+      <RecaudadoRifa
+        titulo="Monto acumulado"
+        reparto={rifa.reparto}
+        torneoNombre={rifa.torneo?.nombre ?? null}
+        pctDestinadoTorneo={rifa.pctDestinadoTorneo}
+      />
+
       <Card>
-        {rifa.descripcion && <p className="rifa-descripcion">{rifa.descripcion}</p>}
+        <h2 className="rifas-subtitulo-seccion">Información</h2>
         <dl className="rifas-resumen">
           <div>
             <dt>Precio por número</dt>
