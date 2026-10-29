@@ -225,6 +225,7 @@ const rifaMock: RifaDetalle = {
   terminosAceptadosEn: null,
   loteriaDeclaradaEn: null,
   premios: [{ puesto: 1, pct: 100, descripcion: 'Smart TV', numeroGanador: null }],
+  numerosVendidos: 0,
   creadoEn: '2026-10-15T10:00:00Z',
   modificadoEn: null,
 };

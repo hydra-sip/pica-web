@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { rifaApi, RifaDetalle } from '../../api/rifaApi';
 import { useRifaRealtime } from '../../realtime/useRifaRealtime';
 import { mensajeDeError } from '../../shared/mensajesError';
-import { Badge, Card } from '../../shared/ui';
+import { Badge, Button, Card, Modal } from '../../shared/ui';
 import { PasosAsistente } from '../../shared/components/PasosAsistente';
 import { DatosGeneralesForm } from '../components/DatosGeneralesForm';
 import { PremiosForm } from '../components/PremiosForm';
@@ -21,7 +21,8 @@ const SIN_BORRADOR = 'Se habilita al guardar el borrador';
  * Alta, edición y publicación de una rifa, con o sin torneo (PICA-227, T402-4, PICA-220), como asistente
  * en tres pasos con el formato de "Crear Nueva Competencia". Los dos primeros se guardan por separado,
  * también al cambiar de paso (si tienen errores no se cambia); el tercero la publica. Fuera de BORRADOR
- * todo es de solo lectura. Desde Mis torneos se llega con ?torneo= y el torneo ya elegido.
+ * todo es de solo lectura; publicada y sin compras, se puede volver a borrador o eliminar (PICA-288).
+ * Desde Mis torneos se llega con ?torneo= y el torneo ya elegido.
  */
 export const RifaFormPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -33,6 +34,9 @@ export const RifaFormPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [recienPublicada, setRecienPublicada] = useState(false);
   const [cambiando, setCambiando] = useState(false);
+  const [confirmar, setConfirmar] = useState<'borrador' | 'eliminar' | null>(null);
+  const [accionando, setAccionando] = useState(false);
+  const [errorAccion, setErrorAccion] = useState<string | null>(null);
   const datosRef = useRef<PasoGuardable>(null);
   const premiosRef = useRef<PasoGuardable>(null);
 
@@ -122,6 +126,30 @@ export const RifaFormPage: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Volver a borrador o eliminar (PICA-288): solo mientras nadie compró; el back también lo controla
+  const sinCompras = rifa?.estado === 'EN_VENTA' && rifa.numerosVendidos === 0;
+
+  const confirmarAccion = async () => {
+    if (!rifa || !confirmar) return;
+    setAccionando(true);
+    setErrorAccion(null);
+    try {
+      if (confirmar === 'eliminar') {
+        await rifaApi.eliminar(rifa.id);
+        navigate('/mis-rifas', { replace: true });
+        return;
+      }
+      setRifa(await rifaApi.volverABorrador(rifa.id));
+      setRecienPublicada(false);
+      setConfirmar(null);
+      setSearchParams({}, { replace: true });
+    } catch (err) {
+      setErrorAccion(mensajeDeError(err, 'No se pudo completar la acción.'));
+    } finally {
+      setAccionando(false);
+    }
+  };
+
   const volver = (
     <Link to="/mis-rifas" className="rifas-volver">
       ← Volver a mis rifas
@@ -160,23 +188,75 @@ export const RifaFormPage: React.FC = () => {
         {rifa && (
           <p className="rifas-subtitulo">
             {rifa.torneoNombre
-              ? `Recauda para el torneo ${rifa.torneoNombre}: el ${rifa.pctDestinadoTorneo}% va a su pozo y el resto a los premios.`
+              ? `Rifa asociada al torneo ${rifa.torneoNombre}`
               : 'Rifa sin torneo asociado: el pozo se reparte entre sus premios.'}
           </p>
         )}
       </header>
 
-      {recienPublicada ? (
+      {recienPublicada && (
         <div className="alerta alerta-exito" role="status">
           ¡Listo! La rifa quedó publicada y en venta.
         </div>
+      )}
+      {sinCompras ? (
+        <div className="rifas-acciones">
+          <Button variant="secondary" onClick={() => setConfirmar('borrador')}>
+            Volver a borrador
+          </Button>
+          <Button variant="danger" onClick={() => setConfirmar('eliminar')}>
+            Eliminar rifa
+          </Button>
+        </div>
       ) : (
+        rifa &&
         !editable && (
           <div className="alerta alerta-info" role="status">
-            La rifa ya está publicada, no se pueden realizar cambios.
+            {rifa.numerosVendidos > 0
+              ? `La rifa ya tiene ${rifa.numerosVendidos} ${rifa.numerosVendidos === 1 ? 'número vendido' : 'números vendidos'}: no se pueden realizar cambios.`
+              : 'La rifa ya está publicada, no se pueden realizar cambios.'}
           </div>
         )
       )}
+      {rifa && editable && (
+        <div className="rifas-acciones">
+          <Button variant="ghost" onClick={() => setConfirmar('eliminar')}>
+            Eliminar rifa
+          </Button>
+        </div>
+      )}
+
+      <Modal
+        isOpen={confirmar !== null}
+        title={confirmar === 'eliminar' ? 'Eliminar la rifa' : 'Volver a borrador'}
+        onClose={() => setConfirmar(null)}
+        closeDisabled={accionando}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setConfirmar(null)} disabled={accionando}>
+              Cancelar
+            </Button>
+            <Button
+              variant={confirmar === 'eliminar' ? 'danger' : 'primary'}
+              loading={accionando}
+              onClick={() => void confirmarAccion()}
+            >
+              {confirmar === 'eliminar' ? 'Eliminar' : 'Volver a borrador'}
+            </Button>
+          </>
+        }
+      >
+        {errorAccion && (
+          <div className="alerta alerta-peligro" role="alert">
+            {errorAccion}
+          </div>
+        )}
+        <p>
+          {confirmar === 'eliminar'
+            ? 'La rifa deja de aparecer en tus rifas y en las rifas en venta. No se puede deshacer.'
+            : 'La rifa deja de estar en venta hasta que la vuelvas a publicar, y vas a tener que aceptar de nuevo los términos.'}
+        </p>
+      </Modal>
 
       <PasosAsistente
         actual={paso}

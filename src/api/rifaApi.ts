@@ -40,6 +40,8 @@ export interface RifaDetalle extends RifaResumen {
   terminosAceptadosEn: string | null;
   loteriaDeclaradaEn: string | null;
   premios: PremioRifa[];
+  /** Mientras sea 0, la rifa publicada se puede volver a borrador o eliminar. */
+  numerosVendidos: number;
   modificadoEn: string | null;
 }
 
@@ -68,7 +70,7 @@ export interface PremioPayload {
 /** Lo que le falta a una rifa para publicarse (`faltantes` del 409 RIFA_INCOMPLETA). */
 export type FaltantePublicacion =
   | 'VENTANA'
-  | 'VENTA_YA_EMPEZO'
+  | 'VENTA_TERMINADA'
   | 'FECHA_SORTEO'
   | 'SIN_PREMIOS'
   | 'PREMIOS_NO_SUMAN_100'
@@ -106,6 +108,16 @@ export const rifaApi = {
       aceptaTerminos: true,
       declaraAutorizacionLoteria: true,
     });
+  },
+
+  /** EN_VENTA sin compras vuelve a BORRADOR para modificarla (PICA-287). */
+  volverABorrador: async (id: number): Promise<RifaDetalle> => {
+    return httpClient.post<RifaDetalle>(`/rifas/${id}/volver-a-borrador`);
+  },
+
+  /** Baja lógica, en BORRADOR o EN_VENTA sin compras (PICA-287). */
+  eliminar: async (id: number): Promise<void> => {
+    await httpClient.delete(`/rifas/${id}`);
   },
 };
 
