@@ -7,15 +7,16 @@ import { fechaHora } from '../../shared/formato';
 
 export interface BotonReclamarTicketProps {
   ticket: TicketDetalle;
+  /** El último reclamo propio en la rifa, de GET /rifas/{id}/reclamos. */
+  reclamo?: ReclamoRifa | null;
   onReclamoExitoso?: (nuevoReclamo: ReclamoRifa) => void;
-  disabled?: boolean;
   className?: string;
 }
 
 export const BotonReclamarTicket: React.FC<BotonReclamarTicketProps> = ({
   ticket,
+  reclamo,
   onReclamoExitoso,
-  disabled = false,
   className = '',
 }) => {
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -24,8 +25,8 @@ export const BotonReclamarTicket: React.FC<BotonReclamarTicketProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [exito, setExito] = useState<string | null>(null);
 
-  const tieneReclamoPendiente =
-    ticket.reclamo?.estado === 'PENDIENTE' || ticket.rifaEstado === 'EN_REVISION';
+  // Si la rifa está en revisión por el reclamo de otro comprador, este todavía puede reclamar
+  const tieneReclamoPendiente = reclamo?.estado === 'PENDIENTE';
 
   const abrirModal = () => {
     setError(null);
@@ -53,10 +54,7 @@ export const BotonReclamarTicket: React.FC<BotonReclamarTicketProps> = ({
     setError(null);
 
     try {
-      const nuevoReclamo = await rifaApi.reclamar(ticket.rifaId, {
-        ticketId: ticket.id,
-        motivo: motivo.trim(),
-      });
+      const nuevoReclamo = await rifaApi.reclamar(ticket.rifaId, { motivo: motivo.trim() });
 
       setExito('Reclamo registrado con éxito. Se notificó al organizador y el estado de la rifa ahora está en revisión.');
       onReclamoExitoso?.(nuevoReclamo);
@@ -89,7 +87,7 @@ export const BotonReclamarTicket: React.FC<BotonReclamarTicketProps> = ({
         type="button"
         variant="danger"
         onClick={abrirModal}
-        disabled={disabled}
+        disabled={!ticket.ventanaReclamoAbierta}
         className={className}
         aria-label="Reclamar resultado del sorteo"
       >
@@ -123,15 +121,6 @@ export const BotonReclamarTicket: React.FC<BotonReclamarTicketProps> = ({
                   {fechaHora(ticket.sorteadaEn)}
                 </div>
               )}
-              {ticket.horasRestantesParaReclamar !== undefined &&
-                ticket.horasRestantesParaReclamar !== null && (
-                  <div>
-                    <span className="ticket-modal-label">Plazo de reclamo:</span>{' '}
-                    {ticket.horasRestantesParaReclamar > 0
-                      ? `Quedan aprox. ${ticket.horasRestantesParaReclamar} horas`
-                      : 'Plazo de 48 horas vencido'}
-                  </div>
-                )}
             </div>
           </div>
 

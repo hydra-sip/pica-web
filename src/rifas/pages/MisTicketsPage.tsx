@@ -84,7 +84,6 @@ export const MisTicketsPage: React.FC = () => {
                   <Badge tone={TONO_ESTADO_RIFA[t.rifaEstado]}>
                     {ESTADO_RIFA_UI[t.rifaEstado]}
                   </Badge>
-                  {t.reclamo && <Badge tone="aviso">Reclamo en trámite</Badge>}
                 </div>
               </div>
 
@@ -110,7 +109,7 @@ export const MisTicketsPage: React.FC = () => {
                   <span>Comprado: {fechaHora(t.creadoEn)}</span>
                 </div>
 
-                {t.sorteadaEn && (
+                {(t.rifaEstado === 'SORTEADA' || t.rifaEstado === 'EN_REVISION') && (
                   <div className="mis-tickets-ventana-status">
                     {t.ventanaReclamoAbierta ? (
                       <span className="badge badge-info">
