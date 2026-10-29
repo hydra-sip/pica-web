@@ -54,6 +54,8 @@ const POR_CODIGO: Record<string, string> = {
   RESERVA_VENCIDA: 'Se terminó el tiempo de la reserva: volvé a elegir tus números.',
   RIFA_PROPIA: 'No podés comprar números de tu propia rifa.',
   CLAVE_IDEMPOTENCIA_USADA: 'No se pudo completar la compra: volvé a intentarlo.',
+  RIFA_CON_VENTAS: 'La rifa ya tiene números vendidos: no se puede modificar ni eliminar.',
+  RIFA_CON_RESERVAS: 'Alguien está pagando números de esta rifa: probá de nuevo en unos minutos.',
   TORNEO_NO_EDITABLE: 'El torneo ya no se puede modificar desde acá.',
   CAMPOS_BLOQUEADOS:
     'Algunos datos ya no se pueden cambiar porque hay inscripciones pagas: recargá la página.',

@@ -136,9 +136,8 @@ export const PremiosForm = forwardRef<PasoGuardable, PremiosFormProps>(function 
       <div className="alerta alerta-info">
         {rifa.torneoNombre ? (
           <>
-            El {destinado}% de lo recaudado va al pozo del torneo {rifa.torneoNombre} (se cambia en
-            el paso 1). Cada premio es un porcentaje de lo recaudado y, con lo del torneo, tienen
-            que sumar 100% para poder publicarla.
+            Se destina el {destinado}% del pozo a los premios del torneo. Reparte el porcentaje
+            restante entre los premios de la rifa.
           </>
         ) : (
           <>

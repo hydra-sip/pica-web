@@ -239,9 +239,12 @@ export const DatosGeneralesForm = forwardRef<PasoGuardable, DatosGeneralesFormPr
 
         <div className="rifas-grilla">
           <Field
-            label="Torneo"
+            label={
+              <>
+                Torneo <span className="field-ayuda">(opcional)</span>
+              </>
+            }
             error={errores.torneoId}
-            hint="Opcional. La venta tiene que terminar antes de que finalice el torneo."
           >
             <Select value={form.torneoId} onChange={elegirTorneo} disabled={bloqueado}>
               <option value="">Sin torneo</option>
@@ -289,11 +292,7 @@ export const DatosGeneralesForm = forwardRef<PasoGuardable, DatosGeneralesFormPr
         <div className="rifas-grilla">
           {fecha('ventaDesde', 'Inicio de la venta')}
           {fecha('ventaHasta', 'Fin de la venta')}
-          {fecha(
-            'fechaSorteo',
-            'Fecha del sorteo',
-            'Después del fin de la venta. El sorteo se hace solo en esa fecha.'
-          )}
+          {fecha('fechaSorteo', 'Fecha del sorteo')}
         </div>
 
         <div className="rifas-pie">
