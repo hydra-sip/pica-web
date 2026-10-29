@@ -570,7 +570,381 @@ button.grilla-celda:hover {
   margin-bottom: var(--space-4);
 }
 
-.pago-simulado {
-  margin-bottom: var(--space-4);
+/* --- Tickets de Rifa y Reclamos (HU-506 / T506-2) ----------------------------- */
+
+.ticket-page-contenedor {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.ticket-card {
+  border-top: 4px solid var(--color-primary);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  position: relative;
+}
+
+.ticket-encabezado {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px dashed var(--color-border);
+}
+
+.ticket-codigo-box {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.ticket-icono {
+  color: var(--color-primary);
+}
+
+.ticket-etiqueta {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+  display: block;
+}
+
+.ticket-codigo {
+  margin: 0;
+  font-family: monospace;
+  font-size: var(--text-xl);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.ticket-badges-box {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.ticket-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ticket-info-principal {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3);
+}
+
+.ticket-dato-titulo {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  font-weight: 600;
+  display: block;
+}
+
+.ticket-dato-valor {
+  font-size: var(--text-base);
+  font-weight: 500;
+  margin-top: 0.2rem;
+  color: var(--color-text);
+}
+
+.ticket-rifa-titulo {
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.ticket-username {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
+.ticket-seccion-numeros {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.ticket-numeros-grilla {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.ticket-numero-chip {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.2rem 0.6rem;
+  font-family: monospace;
+  font-weight: 700;
+  font-size: var(--text-sm);
+  color: var(--color-primary);
+}
+
+.ticket-datos-pago {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  background: var(--color-card);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.ticket-dato-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.ticket-monto-valor {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-top: 0.2rem;
+}
+
+.ticket-ventana-aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.ticket-ventana-aviso.ventana-abierta {
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  color: var(--color-text);
+}
+
+.ticket-ventana-aviso.ventana-cerrada {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: var(--color-text);
+}
+
+.ticket-icono-ventana {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.ticket-horas-restantes {
+  font-weight: 600;
+}
+
+/* Detalle del reclamo registrado */
+.ticket-reclamo-box {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.ticket-reclamo-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.ticket-reclamo-titulo-box {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text);
+}
+
+.ticket-reclamo-titulo-box h3 {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+
+.ticket-reclamo-motivo {
+  margin: var(--space-1) 0;
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  line-height: 1.5;
+  background: var(--color-card);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+}
+
+.ticket-reclamo-meta {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.ticket-reclamo-aviso-organizador {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  margin-top: var(--space-1);
+}
+
+.ticket-pie {
+  border-top: 1px dashed var(--color-border);
+  padding-top: var(--space-4);
+}
+
+.ticket-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.ticket-btn-verificar {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Modal de Reclamo */
+.ticket-modal-reclamo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ticket-modal-info {
+  background: var(--color-card);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.ticket-modal-info p {
+  margin: 0;
+}
+
+.ticket-modal-datos {
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.ticket-modal-label {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.ticket-reclamo-en-curso {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Mis Tickets Page */
+.mis-tickets-contenedor {
+  width: 100%;
+}
+
+.mis-tickets-grilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-4);
+}
+
+.mis-tickets-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.mis-tickets-item-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.mis-tickets-codigo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: monospace;
+  font-weight: 700;
+  font-size: var(--text-base);
+}
+
+.mis-tickets-item-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.mis-tickets-rifa-titulo {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+
+.mis-tickets-torneo-nombre {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.mis-tickets-numeros {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.mis-tickets-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-2);
+}
+
+.mis-tickets-ventana-status {
+  margin-top: var(--space-1);
+}
+
+.mis-tickets-item-pie {
+  margin-top: var(--space-2);
+}
+
+.ticket-cargando {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8);
+  gap: var(--space-3);
+  color: var(--color-text-secondary);
 }
 

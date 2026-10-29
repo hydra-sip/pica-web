@@ -81,34 +81,10 @@ export const DatosGeneralesForm = forwardRef<PasoGuardable, DatosGeneralesFormPr
       };
     }, [editable]);
 
-    const completarPorcentaje = async (torneoId: number) => {
-      try {
-        const torneo = await torneoApi.obtener(torneoId);
-        // El torneo lo guarda con decimales; la rifa usa enteros
-        const pct = String(Math.floor(torneo.economia.pctPremioRifa ?? 0));
-        setForm((prev) =>
-          prev.torneoId === String(torneoId) ? { ...prev, pctDestinadoTorneo: pct } : prev
-        );
-      } catch {
-        // Queda el porcentaje que estaba
-      }
-    };
-
-    // Alta desde un torneo: el porcentaje sale del torneo
-    useEffect(() => {
-      if (!rifa && torneoInicial) {
-        void completarPorcentaje(torneoInicial);
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
     const elegirTorneo = (e: React.ChangeEvent<HTMLSelectElement>) => {
       const valor = e.target.value;
       setForm((prev) => ({ ...prev, torneoId: valor, pctDestinadoTorneo: '0' }));
       setErrores((prev) => ({ ...prev, torneoId: undefined, pctDestinadoTorneo: undefined }));
-      if (valor) {
-        void completarPorcentaje(Number(valor));
-      }
     };
 
     // La rifa puede tener un torneo que ya no está en la lista (por ejemplo, porque empezó)

@@ -140,10 +140,10 @@ const torneoDetalleMock: TorneoDetalle = {
   tamanioEquipo: 5,
   valorInscripcion: 5000,
   moneda: 'ARS',
-  pctPozoCompetidores: 70,
-  pctPremioRifa: 20,
+  pctGastosAdministrativos: 10,
+  gastosAdministrativos: 500,
+  totalAPagar: 5500,
   pozoEstimado: 48000,
-  premioRifaEstimado: 12000,
   premios: [
     { puesto: 1, pct: 70, monto: 33600 },
     { puesto: 2, pct: 30, monto: 14400 },
@@ -197,9 +197,9 @@ const torneoInformacionMock: TorneoInformacion = {
   economia: {
     valorInscripcion: 5000,
     moneda: 'ARS',
-    pctPozoCompetidores: 70,
-    pctPremioRifa: 20,
-    pctComision: 10,
+    pctGastosAdministrativos: 10,
+    gastosAdministrativos: 500,
+    totalAPagar: 5500,
     premios: [
       { puesto: 1, pct: 70 },
       { puesto: 2, pct: 30 },

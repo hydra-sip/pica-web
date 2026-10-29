@@ -236,7 +236,7 @@ export async function customFetch<T = unknown>(
     try {
       const data = await response.json();
       if (data && typeof data === 'object') {
-        // Se queda con todo el cuerpo: algunos códigos traen campos propios (faltantes, comisionMaxima...).
+        // Se queda con todo el cuerpo: algunos códigos traen campos propios (faltantes, sumaPremios...).
         const problema: ProblemDetail = {
           ...data,
           status: data.status || response.status,

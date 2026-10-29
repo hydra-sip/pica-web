@@ -1,5 +1,6 @@
 import {
   IconoBackoffice,
+  IconoEscudoCheck,
   IconoExplorar,
   IconoIngresar,
   IconoPanel,
@@ -39,6 +40,8 @@ export const NAVEGACION: Record<Seccion, ItemNavegacion[]> = {
     { ruta: '/pronosticos', texto: 'Pronósticos', icono: <IconoPronosticos /> },
     // PICA-221: las rifas en venta, para cualquiera
     { ruta: '/rifas', texto: 'Rifas', icono: <IconoRifas />, exacta: true },
+    // HU-505 / T505-1: Portal público de verificación de sorteos
+    { ruta: '/verificacion', texto: 'Verificación', icono: <IconoEscudoCheck /> },
     // PICA-202: TORNEO_GESTIONAR lo tienen ORGANIZADOR y ADMINISTRADOR
     {
       ruta: '/mis-torneos',

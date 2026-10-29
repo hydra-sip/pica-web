@@ -37,6 +37,8 @@ export interface TorneoResumen {
   cupoDisponible: number;
   valorInscripcion: number;
   moneda: string;
+  /** Lo que se paga aparte por inscribirse. */
+  gastosAdministrativos: number;
   pozoEstimado: number;
   cierreInscripcionEn: string | null;
   fechaInicio: string | null;
@@ -60,12 +62,14 @@ export interface TorneoDetalle {
   tamanioEquipo: number | null;
   valorInscripcion: number;
   moneda: string;
-  pctPozoCompetidores: number;
-  pctPremioRifa: number;
+  /** Sellado al publicar; null en los publicados antes de que existiera (sin gastos). */
+  pctGastosAdministrativos: number | null;
+  /** Lo que se paga aparte por inscribirse. */
+  gastosAdministrativos: number;
+  /** Valor de la inscripción más gastos administrativos. */
+  totalAPagar: number;
   /** Pozo neto a repartir en premios, con el cupo completo y menos los gastos (como el paso 3). */
   pozoEstimado: number;
-  /** La parte de la bolsa que va al premio de la rifa del torneo. */
-  premioRifaEstimado: number | null;
   premios: PremioDetalle[];
   cierreInscripcionEn: string | null;
   fechaInicio: string | null;

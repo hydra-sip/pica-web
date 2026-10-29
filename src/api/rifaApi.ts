@@ -77,6 +77,50 @@ export type FaltantePublicacion =
   | 'TORNEO_NO_PUBLICADO'
   | 'VENTANA_FUERA_DEL_TORNEO';
 
+export type EstadoReclamo = 'PENDIENTE' | 'ACEPTADO' | 'RECHAZADO';
+
+export interface ReclamoRifa {
+  id: number;
+  rifaId: number;
+  usuarioId: number;
+  usuarioNombre?: string;
+  ticketId?: number | null;
+  motivo: string;
+  estado: EstadoReclamo;
+  resolucion?: string | null;
+  resueltoEn?: string | null;
+  resueltoPor?: string | null;
+  creadoEn: string;
+}
+
+export interface ReclamoPayload {
+  motivo: string;
+  ticketId?: number;
+}
+
+export interface TicketDetalle {
+  id: number;
+  codigo: string;
+  rifaId: number;
+  rifaTitulo: string;
+  torneoId?: number | null;
+  torneoNombre?: string | null;
+  compradorId: number;
+  compradorNombre: string;
+  compradorUsername?: string;
+  numeros: number[];
+  monto: number;
+  comision: number;
+  moneda: string;
+  creadoEn: string;
+  rifaEstado: EstadoRifa;
+  sorteadaEn: string | null;
+  reclamo?: ReclamoRifa | null;
+  esComprador: boolean;
+  ventanaReclamoAbierta: boolean;
+  horasRestantesParaReclamar?: number | null;
+}
+
 // PICA-226, PICA-227, PICA-219, PICA-218: todas exigen RIFA_GESTIONAR y cada organizador ve solo las suyas.
 export const rifaApi = {
   listarMias: async (params?: {
@@ -118,6 +162,26 @@ export const rifaApi = {
   /** Baja lógica, en BORRADOR o EN_VENTA sin compras (PICA-287). */
   eliminar: async (id: number): Promise<void> => {
     await httpClient.delete(`/rifas/${id}`);
+  },
+
+  /** HU-506 (PICA-268 / PICA-269): Reclamar resultado del sorteo de una rifa. */
+  reclamar: async (rifaId: number, payload: ReclamoPayload): Promise<ReclamoRifa> => {
+    return httpClient.post<ReclamoRifa>(`/rifas/${rifaId}/reclamos`, payload);
+  },
+
+  /** Obtener el detalle de un ticket de rifa. */
+  obtenerTicket: async (ticketId: number | string): Promise<TicketDetalle> => {
+    return httpClient.get<TicketDetalle>(`/tickets/${ticketId}`);
+  },
+
+  /** Obtener los reclamos asociados a una rifa. */
+  obtenerReclamos: async (rifaId: number): Promise<ReclamoRifa[]> => {
+    return httpClient.get<ReclamoRifa[]>(`/rifas/${rifaId}/reclamos`);
+  },
+
+  /** Listar los tickets del usuario logueado. */
+  misTickets: async (): Promise<TicketDetalle[]> => {
+    return httpClient.get<TicketDetalle[]>('/tickets/mis-tickets');
   },
 };
 

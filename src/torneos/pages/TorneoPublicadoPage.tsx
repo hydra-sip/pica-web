@@ -120,13 +120,15 @@ export const TorneoPublicadoPage: React.FC = () => {
             <div className="torneos-dato">
               <span>Inscripción por participante</span>
               <strong>{pesosArs(torneo.economia.valorInscripcion)}</strong>
+              <small>
+                + {pesosArs(torneo.economia.gastosAdministrativos)} de gastos administrativos (
+                {torneo.economia.pctGastosAdministrativos} %)
+              </small>
             </div>
             <div className="torneos-dato">
               <span>Pozo neto estimado</span>
               <strong>{pesosArs(resumen.pozoNeto)}</strong>
-              <small>
-                Con el cupo completo · comisión de la plataforma {torneo.economia.pctComision} %
-              </small>
+              <small>Con el cupo completo, menos los gastos previstos</small>
             </div>
           </div>
 

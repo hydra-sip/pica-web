@@ -126,12 +126,18 @@ const CIERRE_PASADO = '2026-01-15T23:59:00Z';
 const FECHA_INICIO = '2031-01-10T15:00:00Z';
 const HACE_UN_RATO = '2026-10-20T15:00:00Z';
 
+/** Los gastos administrativos salen del valor y el % del torneo, como en el back. */
+const conGastos = (t: TorneoMock): TorneoMock => {
+  const gastos = (t.valorInscripcion * (t.pctGastosAdministrativos ?? 0)) / 100;
+  return { ...t, gastosAdministrativos: gastos, totalAPagar: t.valorInscripcion + gastos };
+};
+
 const torneo = (
   id: number,
   slug: string,
   nombre: string,
   extra: Partial<TorneoMock>
-): TorneoMock => ({
+): TorneoMock => conGastos({
   id,
   slug,
   nombre,
@@ -148,10 +154,10 @@ const torneo = (
   nominaMaxima: 4,
   valorInscripcion: 15000,
   moneda: 'ARS',
-  pctPozoCompetidores: 70,
-  pctPremioRifa: 20,
+  pctGastosAdministrativos: null,
+  gastosAdministrativos: 0,
+  totalAPagar: 0,
   pozoEstimado: 0,
-  premioRifaEstimado: null,
   premios: [],
   cierreInscripcionEn: CIERRE_ABIERTO,
   fechaInicio: FECHA_INICIO,
@@ -177,6 +183,7 @@ const TORNEOS: TorneoMock[] = [
     tamanioEquipo: 5,
     nominaMaxima: 7,
     valorInscripcion: 20000,
+    pctGastosAdministrativos: 10,
     ocupadasAparte: 5,
   }),
   torneo(2, 'individual-pago', 'Desafío Individual de Ping Pong', {
@@ -932,6 +939,9 @@ export const crearInscripcionesHandlers = (sesion: () => SesionMock) => {
         participante: i.usuarioId === null ? null : usuarioPublico(s, i.usuarioId),
         equipo: equipoInscripto(i.equipoId),
         monto: t.valorInscripcion,
+        // como el back: el % que el torneo selló al publicar, sobre el valor
+        gastosAdministrativos: (t.valorInscripcion * (t.pctGastosAdministrativos ?? 0)) / 100,
+        total: t.valorInscripcion * (1 + (t.pctGastosAdministrativos ?? 0) / 100),
         moneda: t.moneda,
         cupoMaximo: t.cupoMaximo,
         cupoDisponible: cupoDisponible(t),

@@ -92,25 +92,24 @@ export interface PremioPuesto {
 }
 
 /**
- * Paso 3. La bolsa se reparte en pozo de competidores, premio de la rifa y comisión, que suman 100; los premios
- * reparten el pozo de competidores menos los gastos.
+ * Paso 3. La inscripción va entera al pozo de competidores y los premios lo reparten, menos los gastos previstos.
+ * Quien se inscribe paga aparte los gastos administrativos de la plataforma.
  */
 export interface EconomiaTorneo {
   valorInscripcion: number | null;
   moneda: string;
-  pctPozoCompetidores: number | null;
-  pctPremioRifa: number | null;
-  /** El resto hasta 100; null sin los otros dos. */
-  pctComision: number | null;
+  /** El sellado al publicar; en borrador, el vigente de la plataforma. */
+  pctGastosAdministrativos: number;
+  /** Lo que se paga de gastos por cada inscripción; null sin valor. */
+  gastosAdministrativos: number | null;
+  /** Valor de la inscripción más gastos administrativos; null sin valor. */
+  totalAPagar: number | null;
   premios: PremioPuesto[];
 }
 
 /** PUT /torneos/{id}/economia: los premios, en orden de puesto. */
 export interface EconomiaTorneoPayload {
   valorInscripcion: number;
-  pctPozoCompetidores: number;
-  pctPremioRifa: number;
-  pctComision: number;
   premios: number[];
 }
 
@@ -130,10 +129,11 @@ export interface ResumenEconomico {
   participantes: number | null;
   valorInscripcion: number | null;
   moneda: string;
+  pctGastosAdministrativos: number;
+  /** Por inscripción, aparte del valor. */
+  gastosAdministrativos: number | null;
+  totalAPagar: number | null;
   recaudacion: number | null;
-  comision: number | null;
-  premioRifa: number | null;
-  pozoCompetidores: number | null;
   gastos: number;
   pozoNeto: number | null;
   premios: { puesto: number; pct: number; monto: number | null }[];
@@ -172,8 +172,8 @@ export interface OpcionesTorneo {
   modalidades: Modalidad[];
   /** Máximo de participantes que admite la plataforma. */
   cupoMaximo: number;
-  /** Tope del % de comisión de la plataforma en el paso 3. */
-  comisionMaxima: number;
+  /** % vigente de gastos administrativos que paga aparte quien se inscribe; al publicar queda fijo. */
+  pctGastosAdministrativos: number;
   /** Las que ya existen en la sede pedida. */
   canchas: string[];
 }
