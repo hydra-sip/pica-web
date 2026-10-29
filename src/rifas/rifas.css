@@ -710,6 +710,11 @@ button.grilla-celda:hover {
   margin-top: 0.2rem;
 }
 
+.ticket-dato-detalle {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
 .ticket-ventana-aviso {
   display: flex;
   align-items: flex-start;
@@ -946,4 +951,18 @@ button.grilla-celda:hover {
   padding: var(--space-8);
   gap: var(--space-3);
   color: var(--color-text-secondary);
+}
+
+/* HU-404: "Descargar comprobante" imprime solo el ticket, para guardarlo como PDF */
+@media print {
+  .app-sidebar,
+  .app-barra-celular,
+  .app-barra-inferior,
+  .footer,
+  .aviso-perfil-incompleto,
+  .ticket-page-contenedor .rifas-encabezado,
+  .ticket-page-contenedor .alerta,
+  .ticket-pie {
+    display: none !important;
+  }
 }

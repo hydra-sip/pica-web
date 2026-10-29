@@ -64,9 +64,9 @@ export const MisTicketsPage: React.FC = () => {
         <Card className="rifas-vacio">
           <IconoTicket size={36} />
           <h2>No tenés tickets comprados</h2>
-          <p>Los tickets que compres en rifas de torneos aparecerán listados acá.</p>
-          <Link to="/torneos" className="btn btn-primario" style={{ marginTop: 'var(--space-4)' }}>
-            Explorar torneos
+          <p>Los tickets que compres en rifas aparecerán listados acá.</p>
+          <Link to="/rifas" className="btn btn-primary" style={{ marginTop: 'var(--space-4)' }}>
+            Ver rifas en venta
           </Link>
         </Card>
       )}
@@ -106,7 +106,7 @@ export const MisTicketsPage: React.FC = () => {
                 </div>
 
                 <div className="mis-tickets-meta">
-                  <span>Monto: {pesos(t.monto)}</span>
+                  <span>Pagaste: {pesos(t.monto + t.comision)}</span>
                   <span>Comprado: {fechaHora(t.creadoEn)}</span>
                 </div>
 
@@ -127,7 +127,7 @@ export const MisTicketsPage: React.FC = () => {
               </div>
 
               <div className="mis-tickets-item-pie">
-                <Link to={`/tickets/${t.id}`} className="btn btn-secundario" style={{ width: '100%' }}>
+                <Link to={`/tickets/${t.id}`} className="btn btn-secondary" style={{ width: '100%' }}>
                   Ver comprobante y acciones
                 </Link>
               </div>

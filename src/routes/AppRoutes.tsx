@@ -52,9 +52,6 @@ export const AppRoutes: React.FC = () => {
         <Route path="rifas/:id" element={<RifaPublicaPage />} />
         {/* HU-505 / T505-1: Portal público de verificación criptográfica */}
         <Route path="verificacion" element={<PortalVerificacionPage />} />
-        {/* HU-506 / T506-2: Comprobante y reclamo de ticket de rifa */}
-        <Route path="tickets/:ticketId" element={<TicketPage />} />
-        <Route path="rifas/:rifaId/tickets/:ticketId" element={<TicketPage />} />
         <Route path="auth/login" element={<LoginPage />} />
         <Route path="auth/register" element={<RegisterPage />} />
         <Route path="auth/check-email" element={<CheckEmailPage />} />
@@ -66,6 +63,9 @@ export const AppRoutes: React.FC = () => {
         <Route element={<RequireAuth />}>
           <Route path="mi-perfil" element={<ProfilePage />} />
           <Route path="mis-tickets" element={<MisTicketsPage />} />
+          {/* HU-404 y HU-506 / T506-2: el ticket con el comprobante y el reclamo; el back pide sesión */}
+          <Route path="tickets/:ticketId" element={<TicketPage />} />
+          <Route path="rifas/:rifaId/tickets/:ticketId" element={<TicketPage />} />
 
           {/* Cargar y aceptar el resultado (PICA-243): lo decide el back según el lado del que es capitán */}
           <Route path="partidos/:id" element={<PartidoPage />} />

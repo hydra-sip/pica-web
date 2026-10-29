@@ -116,6 +116,8 @@ const POR_CODIGO: Record<string, string> = {
     'No podés reclamar: no tenés un ticket comprado para esta rifa.',
   RECLAMO_DUPLICADO: 'Ya tenés un reclamo registrado para esta rifa.',
   RIFA_NO_SORTEADA: 'La rifa todavía no fue sorteada.',
+  // HU-404: también si la venta no se confirmó o el ticket es de otro
+  TICKET_NO_ENCONTRADO: 'El ticket no existe o no es tuyo.',
 };
 
 

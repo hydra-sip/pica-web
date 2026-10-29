@@ -67,8 +67,8 @@ export const TicketPage: React.FC = () => {
     <div className="rifas-page ticket-page-contenedor">
       <div className="rifas-encabezado">
         <div>
-          <Link to="/torneos" className="rifas-volver">
-            &larr; Volver a torneos
+          <Link to="/mis-tickets" className="rifas-volver">
+            &larr; Mis tickets
           </Link>
           <h1 className="ticket-page-titulo">Detalle de Ticket de Rifa</h1>
         </div>
