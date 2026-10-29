@@ -245,7 +245,8 @@ export const PremiosForm = forwardRef<PasoGuardable, PremiosFormProps>(function 
           <Button
             variant="secondary"
             onClick={agregar}
-            disabled={guardando || premios.length >= cantidadNumeros}
+            // Con el 100% repartido, otro premio quedaría sin porcentaje
+            disabled={guardando || suma >= 100 || premios.length >= cantidadNumeros}
           >
             + Agregar premio
           </Button>

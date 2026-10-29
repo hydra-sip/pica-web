@@ -497,3 +497,79 @@
   outline: 2px solid var(--color-focus);
   outline-offset: 1px;
 }
+
+/* --- Compra de números (PICA-223) ------------------------------------------ */
+
+button.grilla-celda {
+  width: 100%;
+  font: inherit;
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+button.grilla-celda:hover {
+  border-color: var(--color-primary);
+}
+
+.grilla-muestra.elegido,
+.grilla-celda.elegido {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.compra-aviso {
+  margin-top: var(--space-4);
+}
+
+.compra-pie {
+  margin-top: var(--space-4);
+}
+
+.pago-reloj {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.pago-reloj.vencida {
+  color: var(--color-danger);
+}
+
+.pago-detalle {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.pago-detalle th,
+.pago-detalle td {
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+  font-weight: 400;
+  text-align: left;
+}
+
+.pago-detalle td {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.pago-total th,
+.pago-total td {
+  font-weight: 700;
+  border-bottom: none;
+}
+
+.pago-codigo {
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.pago-simulado {
+  margin-bottom: var(--space-4);
+}
+
+.pago-simulado {
+  margin-bottom: var(--space-4);
+}

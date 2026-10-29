@@ -6,6 +6,10 @@ interface GrillaNumerosProps {
   numeroDesde: number;
   numeroHasta: number;
   ocupados: NumeroOcupado[];
+  /** Con la venta abierta los libres se pueden elegir; si no, la grilla es solo para ver. */
+  seleccionable: boolean;
+  seleccion: Set<number>;
+  onAlternar: (numero: number) => void;
 }
 
 // Una rifa puede tener miles de números: se muestran de a 100
@@ -18,13 +22,16 @@ const TEXTO_ESTADO: Record<EstadoNumero, string> = {
 };
 
 /**
- * La grilla de números de una rifa (PICA-221). El back devuelve solo los ocupados: el resto del rango está libre.
- * Se recorre de a 100 y se puede saltar al bloque de un número.
+ * La grilla de números de una rifa (PICA-221, PICA-223). El back devuelve solo los ocupados: el resto del rango está
+ * libre y, con la venta abierta, se elige con un clic. Se recorre de a 100 y se puede saltar al bloque de un número.
  */
 export const GrillaNumeros: React.FC<GrillaNumerosProps> = ({
   numeroDesde,
   numeroHasta,
   ocupados,
+  seleccionable,
+  seleccion,
+  onAlternar,
 }) => {
   const [bloque, setBloque] = useState(0);
   const [buscado, setBuscado] = useState('');
@@ -51,13 +58,19 @@ export const GrillaNumeros: React.FC<GrillaNumerosProps> = ({
     <section aria-labelledby="rifa-grilla-titulo" className="grilla-numeros">
       <div className="grilla-encabezado">
         <h2 id="rifa-grilla-titulo" className="rifas-subtitulo-seccion">
-          Números
+          {seleccionable ? 'Elegí tus números' : 'Números'}
         </h2>
         <ul className="grilla-leyenda">
           <li>
             <span className="grilla-muestra libre" aria-hidden="true" /> Disponibles (
             {total - ocupados.length})
           </li>
+          {seleccionable && (
+            <li>
+              <span className="grilla-muestra elegido" aria-hidden="true" /> Elegidos (
+              {seleccion.size})
+            </li>
+          )}
           <li>
             <span className="grilla-muestra vendido" aria-hidden="true" /> Vendidos ({vendidos})
           </li>
@@ -107,15 +120,27 @@ export const GrillaNumeros: React.FC<GrillaNumerosProps> = ({
       <ol className="grilla" aria-label={`Números del ${desde} al ${hasta}`}>
         {numeros.map((numero) => {
           const estado = estadoDe.get(numero);
+          const elegido = seleccion.has(numero);
+          const clase = `grilla-celda ${estado ? estado.toLowerCase() : elegido ? 'elegido' : 'libre'}${
+            String(numero) === buscado ? ' buscado' : ''
+          }`;
           return (
-            <li
-              key={numero}
-              className={`grilla-celda ${estado ? estado.toLowerCase() : 'libre'}${
-                String(numero) === buscado ? ' buscado' : ''
-              }`}
-              aria-label={`${numero}: ${estado ? TEXTO_ESTADO[estado] : 'disponible'}`}
-            >
-              {numero}
+            <li key={numero} className={estado || !seleccionable ? clase : undefined}>
+              {estado || !seleccionable ? (
+                <span aria-label={`${numero}: ${estado ? TEXTO_ESTADO[estado] : 'disponible'}`}>
+                  {numero}
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  className={clase}
+                  aria-pressed={elegido}
+                  aria-label={`${numero}: ${elegido ? 'elegido' : 'disponible'}`}
+                  onClick={() => onAlternar(numero)}
+                >
+                  {numero}
+                </button>
+              )}
             </li>
           );
         })}

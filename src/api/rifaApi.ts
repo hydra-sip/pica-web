@@ -138,6 +138,8 @@ export interface RifaPublicaDetalle {
   numeroDesde: number;
   numeroHasta: number;
   precioNumero: number;
+  /** Lo que paga aparte el comprador, fijado al publicar. */
+  pctGastosAdministrativos: number | null;
   moneda: string;
   ventaDesde: string;
   ventaHasta: string;
@@ -167,5 +169,52 @@ export const rifaPublicaApi = {
 
   numerosOcupados: async (id: number): Promise<NumeroOcupado[]> => {
     return httpClient.get<NumeroOcupado[]>(`/rifas/publicas/${id}/numeros`);
+  },
+};
+
+// --- La compra (HU-403, PICA-222): con sesión ------------------------------------------------------
+
+/** POST /rifas/{id}/reservas: los números quedan del comprador hasta `venceEn` mientras paga. */
+export interface ReservaRifa {
+  rifaId: number;
+  numeros: number[];
+  precioNumero: number;
+  /** El precio de los números; va al pozo de la rifa. */
+  monto: number;
+  pctGastosAdministrativos: number | null;
+  gastosAdministrativos: number;
+  total: number;
+  venceEn: string;
+}
+
+/** El comprobante de POST /rifas/{id}/comprar. */
+export interface CompraRifa {
+  ticketId: number;
+  ticketCodigo: string;
+  numeros: number[];
+  monto: number;
+  gastosAdministrativos: number;
+  total: number;
+  compradoEn: string;
+  pozoRifa: number;
+  pozoTorneo: number | null;
+}
+
+export const ventaRifaApi = {
+  reservar: async (rifaId: number, numeros: number[]): Promise<ReservaRifa> => {
+    return httpClient.post<ReservaRifa>(`/rifas/${rifaId}/reservas`, { numeros });
+  },
+
+  cancelarReserva: async (rifaId: number): Promise<void> => {
+    await httpClient.delete(`/rifas/${rifaId}/reservas`);
+  },
+
+  /** Con la misma `clave` devuelve el mismo comprobante sin volver a cobrar. */
+  comprar: async (rifaId: number, numeros: number[], clave: string): Promise<CompraRifa> => {
+    return httpClient.post<CompraRifa>(
+      `/rifas/${rifaId}/comprar`,
+      { numeros },
+      { headers: { 'Idempotency-Key': clave } }
+    );
   },
 };

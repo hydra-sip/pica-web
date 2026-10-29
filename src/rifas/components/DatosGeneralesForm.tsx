@@ -180,7 +180,13 @@ export const DatosGeneralesForm = forwardRef<PasoGuardable, DatosGeneralesFormPr
           delBack.ventaDesde = 'No puede empezar antes de que se publique el torneo.';
         }
         if (form.torneoId && delBack.ventaHasta) {
-          delBack.ventaHasta = 'Tiene que terminar antes de que empiece el torneo.';
+          // El back dice contra qué fecha: la finalización del torneo o, si no la tiene, su inicio
+          const limite = (
+            err as { problemDetail?: { errores?: { campo: string; mensaje: string }[] } }
+          ).problemDetail?.errores?.find((e) => e.campo === 'ventaHasta')?.mensaje;
+          delBack.ventaHasta = limite
+            ? `${limite}.`
+            : 'La fecha debe ser anterior a la finalización del torneo.';
         }
         setErrores(delBack);
         setMensaje({ tipo: 'error', texto: mensajeDeError(err, 'No se pudo guardar la rifa.') });
@@ -259,7 +265,7 @@ export const DatosGeneralesForm = forwardRef<PasoGuardable, DatosGeneralesFormPr
           <Field
             label="Torneo"
             error={errores.torneoId}
-            hint="Opcional. La venta tiene que terminar antes de que empiece el torneo."
+            hint="Opcional. La venta tiene que terminar antes de que finalice el torneo."
           >
             <Select value={form.torneoId} onChange={elegirTorneo} disabled={bloqueado}>
               <option value="">Sin torneo</option>
@@ -305,11 +311,7 @@ export const DatosGeneralesForm = forwardRef<PasoGuardable, DatosGeneralesFormPr
         </div>
 
         <div className="rifas-grilla">
-          {fecha(
-            'ventaDesde',
-            'Inicio de la venta',
-            'Podés dejarla para después; hace falta para publicar.'
-          )}
+          {fecha('ventaDesde', 'Inicio de la venta')}
           {fecha('ventaHasta', 'Fin de la venta')}
           {fecha(
             'fechaSorteo',
