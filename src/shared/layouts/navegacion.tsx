@@ -41,6 +41,8 @@ export const NAVEGACION: Record<Seccion, ItemNavegacion[]> = {
     { ruta: '/pronosticos', texto: 'Pronósticos', icono: <IconoPronosticos /> },
     // PICA-221: las rifas en venta, para cualquiera
     { ruta: '/rifas', texto: 'Rifas', icono: <IconoRifas />, exacta: true },
+    // HU-404: los tickets que compró el usuario
+    { ruta: '/mis-tickets', texto: 'Mis tickets', icono: <IconoTicket />, soloConSesion: true },
     // HU-505 / T505-1: Portal público de verificación de sorteos
     { ruta: '/verificacion', texto: 'Verificación', icono: <IconoEscudoCheck /> },
     // PICA-202: TORNEO_GESTIONAR lo tienen ORGANIZADOR y ADMINISTRADOR
@@ -52,8 +54,6 @@ export const NAVEGACION: Record<Seccion, ItemNavegacion[]> = {
     },
     // PICA-227: RIFA_GESTIONAR lo tienen ORGANIZADOR y ADMINISTRADOR
     { ruta: '/mis-rifas', texto: 'Mis rifas', icono: <IconoRifas />, permisos: ['RIFA_GESTIONAR'] },
-    // HU-404: los tickets que compró el usuario
-    { ruta: '/mis-tickets', texto: 'Mis tickets', icono: <IconoTicket />, soloConSesion: true },
     { ruta: '/mi-perfil', texto: 'Perfil', icono: <IconoPerfil />, soloConSesion: true },
     {
       ruta: '/admin',

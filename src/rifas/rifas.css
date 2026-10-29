@@ -959,9 +959,10 @@ button.grilla-celda:hover {
   .app-barra-celular,
   .app-barra-inferior,
   .footer,
+  .aviso-perfil-incompleto,
   .ticket-page-contenedor .rifas-encabezado,
   .ticket-page-contenedor .alerta,
   .ticket-pie {
-    display: none;
+    display: none !important;
   }
 }
