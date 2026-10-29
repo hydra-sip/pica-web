@@ -14,7 +14,7 @@ const ACCION: Record<EventoPartido['evento'], string> = {
   LAUDO: 'laudó',
   WALKOVER: 'dio el partido por ganado por ausencia',
   // con descalificar a los dos el partido queda cerrado y nunca llega a un comparativo
-  SIN_PRESENTES: 'no se presentó ninguno: el partido se reprogramó',
+  SIN_PRESENTES: 'reprogramó el partido: no se presentó ninguno',
   PASE_DIRECTO: 'dio el pase directo',
 };
 
