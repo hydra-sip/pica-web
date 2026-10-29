@@ -52,6 +52,17 @@ export const cierrePorAusencia = (
   return null;
 };
 
+/**
+ * Con los dos lados y sin fecha: hay que programarlo para que se juegue. Puede venir de un partido sin presentes
+ * que se reprogramó (HU-309) o no haber tenido fecha nunca.
+ */
+export const sinFechaParaJugar = (
+  partido: Pick<PartidoBracket, 'estado' | 'local' | 'visitante' | 'fechaProgramada'>
+): boolean =>
+  partido.estado === 'PROGRAMADO' &&
+  Boolean(partido.local && partido.visitante) &&
+  !partido.fechaProgramada;
+
 /** `11 min 45 seg`; vencido, `0 seg`. */
 export const tiempoRestante = (milisegundos: number): string => {
   const segundos = Math.max(0, Math.floor(milisegundos / 1000));

@@ -7,7 +7,7 @@ import {
   PartidoDetalle,
   partidoApi,
 } from '../../api/partidoApi';
-import { LadoBracket } from '../../api/torneoApi';
+import { LadoBracket, torneoApi } from '../../api/torneoApi';
 import { useTorneoRealtime } from '../../realtime/useTorneoRealtime';
 import { erroresPorCampo, mensajeDeError } from '../../shared/mensajesError';
 import { Badge, Button, Card } from '../../shared/ui';
@@ -26,6 +26,7 @@ import {
   EN_JUEGO,
   ESTADO_PARTIDO_UI,
   TONO_ESTADO_PARTIDO,
+  sinFechaParaJugar,
   tiempoRestante,
 } from '../formato';
 import { MARCADOR_VACIO, Marcador, erroresDelMarcador, payloadDelMarcador } from '../marcador';
@@ -96,13 +97,33 @@ export const PartidoPage: React.FC = () => {
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [mensaje, setMensaje] = useState<{ tipo: 'exito' | 'error'; texto: string } | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [soyOrganizador, setSoyOrganizador] = useState(false);
+  const paraProgramar = partido !== null && sinFechaParaJugar(partido);
+  const torneoId = partido?.torneoId;
   const restante = useCuentaRegresiva(
     partido?.estado === 'RESULTADO_CARGADO' ? partido.objecionVenceEn : null
   );
 
+  // Al organizador de un partido sin fecha (el mail del partido sin presentes lleva acá) se le muestra adónde ir a
+  // programarlo. GET /torneos/{id} solo le responde al organizador: a los demás, 404.
+  useEffect(() => {
+    if (!paraProgramar || !torneoId) {
+      setSoyOrganizador(false);
+      return undefined;
+    }
+    let vigente = true;
+    torneoApi
+      .obtener(torneoId)
+      .then(() => vigente && setSoyOrganizador(true))
+      .catch(() => vigente && setSoyOrganizador(false));
+    return () => {
+      vigente = false;
+    };
+  }, [paraProgramar, torneoId]);
+
   // La ausencia la declara el back al vencer la ventana (HU-309): con cada novedad del torneo se vuelve a pedir el
   // partido, sin filtrar por id, porque el pase directo llega con el id del partido de los descalificados.
-  useTorneoRealtime(partido?.torneoId, {
+  useTorneoRealtime(torneoId, {
     onActualizar: () => {
       partidoApi
         .obtener(Number(id))
@@ -237,6 +258,13 @@ export const PartidoPage: React.FC = () => {
           role={mensaje.tipo === 'exito' ? 'status' : 'alert'}
         >
           {mensaje.texto}
+        </div>
+      )}
+
+      {soyOrganizador && paraProgramar && (
+        <div className="alerta alerta-aviso" role="status">
+          Este partido no tiene fecha.{' '}
+          <Link to={`/torneos/${partido.torneoId}/consola`}>Programalo desde la consola</Link>.
         </div>
       )}
 

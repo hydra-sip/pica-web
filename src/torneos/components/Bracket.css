@@ -54,6 +54,12 @@
   color: var(--color-text-secondary);
 }
 
+/* Un partido para jugar sin fecha con el torneo en curso (HU-309) */
+.bracket-sin-fecha {
+  font-weight: 600;
+  color: var(--color-warning);
+}
+
 .bracket-programacion-editando {
   flex-direction: column;
   align-items: stretch;
