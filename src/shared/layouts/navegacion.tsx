@@ -9,6 +9,7 @@ import {
   IconoPronosticos,
   IconoRifas,
   IconoRoles,
+  IconoTicket,
   IconoTorneos,
   IconoUsuarios,
 } from '../ui/Iconos';
@@ -51,6 +52,8 @@ export const NAVEGACION: Record<Seccion, ItemNavegacion[]> = {
     },
     // PICA-227: RIFA_GESTIONAR lo tienen ORGANIZADOR y ADMINISTRADOR
     { ruta: '/mis-rifas', texto: 'Mis rifas', icono: <IconoRifas />, permisos: ['RIFA_GESTIONAR'] },
+    // HU-404: los tickets que compró el usuario
+    { ruta: '/mis-tickets', texto: 'Mis tickets', icono: <IconoTicket />, soloConSesion: true },
     { ruta: '/mi-perfil', texto: 'Perfil', icono: <IconoPerfil />, soloConSesion: true },
     {
       ruta: '/admin',

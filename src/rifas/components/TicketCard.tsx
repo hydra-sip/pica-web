@@ -5,6 +5,7 @@ import { Badge, Card } from '../../shared/ui';
 import {
   IconoTicket,
   IconoAlerta,
+  IconoDescargar,
   IconoEspera,
   IconoListo,
   IconoHash,
@@ -86,8 +87,13 @@ export const TicketCard: React.FC<TicketCardProps> = ({
 
         <div className="ticket-datos-pago">
           <div className="ticket-dato-item">
-            <span className="ticket-dato-titulo">Monto Pagado</span>
-            <span className="ticket-monto-valor">{pesos(ticket.monto)}</span>
+            <span className="ticket-dato-titulo">Pagaste</span>
+            <span className="ticket-monto-valor" data-testid="ticket-total">
+              {pesos(ticket.monto + ticket.comision)}
+            </span>
+            <span className="ticket-dato-detalle">
+              {pesos(ticket.monto)} de números + {pesos(ticket.comision)} de gastos administrativos
+            </span>
           </div>
           <div className="ticket-dato-item">
             <span className="ticket-dato-titulo">Fecha de Compra</span>
@@ -173,7 +179,13 @@ export const TicketCard: React.FC<TicketCardProps> = ({
             />
           )}
 
-          <Link to="/verificacion" className="btn btn-secundario ticket-btn-verificar">
+          {/* HU-404: se guarda como PDF desde la impresión del navegador */}
+          <button type="button" className="btn btn-primary" onClick={() => window.print()}>
+            <IconoDescargar size={16} />
+            <span>Descargar comprobante</span>
+          </button>
+
+          <Link to="/verificacion" className="btn btn-secondary ticket-btn-verificar">
             <IconoHash size={16} />
             <span>Verificar sorteo en portal público</span>
           </Link>
