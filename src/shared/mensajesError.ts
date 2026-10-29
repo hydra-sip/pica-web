@@ -49,6 +49,11 @@ const POR_CODIGO: Record<string, string> = {
   RIFA_INCOMPLETA: 'A la rifa le falta completar datos para publicarse.',
   TORNEO_CON_RIFA: 'Ese torneo ya tiene una rifa.',
   TORNEO_NO_ADMITE_RIFA: 'Ese torneo ya empezó o terminó: no se le puede asociar una rifa.',
+  NUMERO_NO_DISPONIBLE: 'Alguno de los números ya no está disponible: elegí otros.',
+  VENTA_CERRADA: 'La venta de esta rifa no está abierta.',
+  RESERVA_VENCIDA: 'Se terminó el tiempo de la reserva: volvé a elegir tus números.',
+  RIFA_PROPIA: 'No podés comprar números de tu propia rifa.',
+  CLAVE_IDEMPOTENCIA_USADA: 'No se pudo completar la compra: volvé a intentarlo.',
   TORNEO_NO_EDITABLE: 'El torneo ya no se puede modificar desde acá.',
   CAMPOS_BLOQUEADOS:
     'Algunos datos ya no se pueden cambiar porque hay inscripciones pagas: recargá la página.',
