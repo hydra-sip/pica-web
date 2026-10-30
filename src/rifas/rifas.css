@@ -343,10 +343,16 @@
 
 /* HU-407: el hash de la lista sellada, completo y en una sola pieza seleccionable */
 .rifas-hash {
+  display: block;
   font-family: var(--font-mono);
   font-size: var(--text-sm);
   word-break: break-all;
   user-select: all;
+}
+
+/* HU-407: "Ver desglose" chico, debajo del hash */
+.rifas-hash + .btn {
+  margin-top: var(--space-1);
 }
 
 .rifas-resumen-premios {
