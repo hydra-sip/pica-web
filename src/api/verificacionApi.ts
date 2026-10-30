@@ -1,8 +1,9 @@
+import { rifaPublicaApi, SorteoRifa } from './rifaApi';
 import { BracketTorneo, torneoApi } from './torneoApi';
 
 export type TipoSorteo = 'TORNEO' | 'RIFA';
 
-/** Un torneo con el bracket sorteado, para elegirlo en el portal. */
+/** Un torneo con el bracket sorteado o una rifa sorteada, para elegirlo en el portal. */
 export interface SorteoItemResumen {
   id: number;
   tipo: TipoSorteo;
@@ -40,29 +41,8 @@ export interface TorneoVerificacionData {
   };
 }
 
-// La rifa espera GET /rifas/{id}/sorteo (PICA-263): VerificacionRifa ya está armada para esos datos.
-export interface PremioRifaOficial {
-  puesto: number;
-  descripcion: string;
-  pct: number;
-  numeroGanador: number;
-}
-
-export interface RifaVerificacionData {
-  id: number;
-  titulo: string;
-  torneoNombre: string | null;
-  fechaSorteo: string;
-  compromisoHash: string;
-  listaHash: string;
-  semilla: string;
-  semillaFirma: string;
-  numerosVendidos: number[];
-  premios: PremioRifaOficial[];
-  resultadoOficial: {
-    ganadores: PremioRifaOficial[];
-  };
-}
+/** Lo que se verifica de una rifa: GET /rifas/publicas/{id}/sorteo tal cual (HU-504). */
+export type RifaVerificacionData = SorteoRifa;
 
 /** Los cruces de la primera ronda del bracket; sin sortear, error. */
 export function torneoDesdeBracket(bracket: BracketTorneo): TorneoVerificacionData {
@@ -107,17 +87,30 @@ export const verificacionApi = {
     );
     return paginas
       .flatMap((p) => p.content)
-      .map(
-        (t): SorteoItemResumen => ({
-          id: t.id,
-          tipo: 'TORNEO',
-          titulo: t.nombre,
-          disciplinaOInfo: t.disciplina,
-        })
-      );
+      .map((t): SorteoItemResumen => ({
+        id: t.id,
+        tipo: 'TORNEO',
+        titulo: t.nombre,
+        disciplinaOInfo: t.disciplina,
+      }));
   },
 
   obtenerTorneo: async (id: number | string): Promise<TorneoVerificacionData> => {
     return torneoDesdeBracket(await torneoApi.bracket(Number(id)));
+  },
+
+  /** Las rifas sorteadas, la más reciente primero; en lugar de la disciplina va el torneo. */
+  listarRifas: async (): Promise<SorteoItemResumen[]> => {
+    const pagina = await rifaPublicaApi.sorteadas({ size: 50 });
+    return pagina.content.map((r): SorteoItemResumen => ({
+      id: r.id,
+      tipo: 'RIFA',
+      titulo: r.titulo,
+      disciplinaOInfo: r.torneoNombre ?? 'Sin torneo',
+    }));
+  },
+
+  obtenerRifa: async (id: number | string): Promise<RifaVerificacionData> => {
+    return rifaPublicaApi.sorteo(Number(id));
   },
 };

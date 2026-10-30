@@ -13,10 +13,7 @@ import {
   IconoRifas,
   IconoSimulacion,
 } from '../../shared/ui/Iconos';
-import {
-  recalcularSorteoRifa,
-  RecalculoRifaResultado,
-} from '../crypto/recalcularSorteo';
+import { recalcularSorteoRifa, RecalculoRifaResultado } from '../crypto/recalcularSorteo';
 
 interface Props {
   datos: RifaVerificacionData;
@@ -25,7 +22,7 @@ interface Props {
 export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
   // Datos editables para simulación
   const [semillaActual, setSemillaActual] = useState(datos.semilla);
-  const [numerosActuales, setNumerosActuales] = useState<number[]>(datos.numerosVendidos);
+  const [listaActual, setListaActual] = useState(datos.lista);
   const [modoSimulacion, setModoSimulacion] = useState(false);
 
   // Estado del recálculo
@@ -49,8 +46,8 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
     try {
       const res = await recalcularSorteoRifa(
         semillaActual,
-        datos.compromisoHash,
-        numerosActuales,
+        listaActual,
+        datos.fechaSorteo,
         datos.premios
       );
       setResultadoRecalculo(res);
@@ -63,14 +60,17 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
     }
   };
 
-  const ganadoresOficiales = datos.resultadoOficial.ganadores;
+  const ganadoresOficiales = [...datos.premios].sort((a, b) => a.puesto - b.puesto);
   const ganadoresRecalculados = resultadoRecalculo?.ganadores || [];
 
-  const compromisoCoincide = resultadoRecalculo?.compromisoCoincide ?? null;
+  // la lista se recalcula del desglose y el compromiso, de esa lista y la fecha del sorteo
+  const listaCoincide = resultadoRecalculo?.listaHashCalculado === datos.listaHash;
+  const compromisoCoincide = resultadoRecalculo?.compromisoCalculado === datos.compromisoHash;
 
   const todosCoinciden =
     resultadoRecalculo !== null &&
-    compromisoCoincide === true &&
+    listaCoincide &&
+    compromisoCoincide &&
     ganadoresOficiales.length === ganadoresRecalculados.length &&
     ganadoresOficiales.every((oficial) => {
       const rec = ganadoresRecalculados.find((g) => g.puesto === oficial.puesto);
@@ -88,16 +88,16 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
   };
 
   const alterarNumeros = () => {
-    if (numerosActuales.length === 0) return;
-    const copia = [...numerosActuales];
-    copia[0] = copia[0] + 9999;
-    setNumerosActuales(copia);
+    if (listaActual.length === 0) return;
+    const copia = [...listaActual];
+    copia[0] = { ...copia[0], numero: copia[0].numero + 9999 };
+    setListaActual(copia);
     setModoSimulacion(true);
   };
 
   const restablecerDatos = () => {
     setSemillaActual(datos.semilla);
-    setNumerosActuales(datos.numerosVendidos);
+    setListaActual(datos.lista);
     setModoSimulacion(false);
     setResultadoRecalculo(null);
     setErrorRecalculo(null);
@@ -117,7 +117,7 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
                 Torneo Asociado: <strong>{datos.torneoNombre}</strong> |{' '}
               </>
             )}
-            Números Vendidos: <strong>{datos.numerosVendidos.length}</strong> | Premios:{' '}
+            Números Vendidos: <strong>{datos.lista.length}</strong> | Premios:{' '}
             <strong>{datos.premios.length}</strong>
           </div>
         </div>
@@ -172,7 +172,8 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
           </div>
           <p className="verificacion-simulacion-nota">
             Modifica la semilla o altera la lista de números vendidos para comprobar que el hash de
-            compromiso o los números ganadores difieren inmediatamente, evidenciando manipulación.
+            la lista, el compromiso o los números ganadores difieren inmediatamente, evidenciando
+            manipulación.
           </p>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.75rem' }}>
@@ -219,7 +220,8 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
             <span className="verificacion-copiado-aviso">Copiado al portapapeles</span>
           )}
           <p className="verificacion-campo-explicacion">
-            Sello publicado con antelación que debe coincidir con SHA-256(Semilla).
+            Publicado al cerrar la venta, antes de la semilla: SHA-256(hash de la lista +
+            &quot;:&quot; + fecha del sorteo). Fecha del sorteo: <code>{datos.fechaSorteo}</code>.
           </p>
         </div>
 
@@ -228,9 +230,9 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
           <div className="verificacion-campo-header">
             <span className="verificacion-campo-label">
               <IconoHash size={14} />
-              Semilla de la Lotería / Oráculo
+              Semilla del Sorteo
             </span>
-            <span className="verificacion-campo-badge">TEXTO / HEX</span>
+            <span className="verificacion-campo-badge">HEX</span>
           </div>
           <div className="verificacion-mono-box">
             <span data-testid="semilla-valor-rifa">{semillaActual}</span>
@@ -247,44 +249,46 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
             <span className="verificacion-copiado-aviso">Copiada al portapapeles</span>
           )}
           <p className="verificacion-campo-explicacion">
-            Resultado oficial externo provisto por la lotería o entidad oráculo certificada.
+            Generada por la plataforma al sortear, después de publicado el compromiso.
           </p>
         </div>
 
-        {/* Firma digital de la semilla */}
-        <div className="verificacion-campo-card">
-          <div className="verificacion-campo-header">
-            <span className="verificacion-campo-label">
-              <IconoEscudoCheck size={14} />
-              Firma Digital de la Semilla
-            </span>
-            <span className="verificacion-campo-badge">Ed25519 / RSA</span>
+        {/* Firma digital de la semilla: solo con semilla externa (PICA-299) */}
+        {datos.semillaFirma && (
+          <div className="verificacion-campo-card">
+            <div className="verificacion-campo-header">
+              <span className="verificacion-campo-label">
+                <IconoEscudoCheck size={14} />
+                Firma Digital de la Semilla
+              </span>
+              <span className="verificacion-campo-badge">Ed25519 / RSA</span>
+            </div>
+            <div className="verificacion-mono-box">
+              <span data-testid="semilla-firma-rifa">{datos.semillaFirma}</span>
+              <button
+                type="button"
+                className="verificacion-btn-copiar"
+                onClick={() => copiarAlPortapapeles(datos.semillaFirma!, 'firma')}
+                title="Copiar firma"
+              >
+                <IconoCopiar size={14} />
+              </button>
+            </div>
+            {copiadoCampo === 'firma' && (
+              <span className="verificacion-copiado-aviso">Copiada al portapapeles</span>
+            )}
+            <p className="verificacion-campo-explicacion">
+              Certificación criptográfica de autenticidad e inalterabilidad de la semilla externa.
+            </p>
           </div>
-          <div className="verificacion-mono-box">
-            <span data-testid="semilla-firma-rifa">{datos.semillaFirma}</span>
-            <button
-              type="button"
-              className="verificacion-btn-copiar"
-              onClick={() => copiarAlPortapapeles(datos.semillaFirma, 'firma')}
-              title="Copiar firma"
-            >
-              <IconoCopiar size={14} />
-            </button>
-          </div>
-          {copiadoCampo === 'firma' && (
-            <span className="verificacion-copiado-aviso">Copiada al portapapeles</span>
-          )}
-          <p className="verificacion-campo-explicacion">
-            Certificación criptográfica de autenticidad e inalterabilidad de la semilla externa.
-          </p>
-        </div>
+        )}
 
         {/* Hash de lista de números vendidos */}
         <div className="verificacion-campo-card">
           <div className="verificacion-campo-header">
             <span className="verificacion-campo-label">
               <IconoDocumento size={14} />
-              Hash de Números Vendidos
+              Hash de la Lista Sellada
             </span>
             <span className="verificacion-campo-badge">SHA-256</span>
           </div>
@@ -303,7 +307,8 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
             <span className="verificacion-copiado-aviso">Copiado al portapapeles</span>
           )}
           <p className="verificacion-campo-explicacion">
-            Sello de todos los boletos y tickets vendidos al momento del cierre de ventas.
+            SHA-256 de una línea &quot;número;ticket&quot; por cada número vendido, de menor a
+            mayor, fijado al cerrar la venta.
           </p>
         </div>
       </div>
@@ -348,8 +353,8 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
               <span>Rifa 100% Verificada Criptográficamente</span>
             </h4>
             <p className="verificacion-banner-desc">
-              La comprobación de compromiso SHA-256(Semilla) es exacta y los números ganadores
-              recalculados en tu navegador coinciden plenamente con los publicados por la plataforma.
+              La lista sellada, el compromiso y los números ganadores recalculados en tu navegador
+              coinciden plenamente con los publicados por la plataforma.
             </p>
           </div>
         </div>
@@ -368,11 +373,14 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
               <span>Discrepancia Detectada (Manipulación Evidenciada)</span>
             </h4>
             <p className="verificacion-banner-desc">
-              {!compromisoCoincide ? (
+              {!listaCoincide ? (
                 <>
-                  El hash de la semilla actual (<code>{resultadoRecalculo.hashSemillaCalculado.slice(0, 16)}...</code>)
-                  no coincide con el compromiso publicado. La semilla fue modificada.
+                  El hash de la lista recalculada (
+                  <code>{resultadoRecalculo.listaHashCalculado.slice(0, 16)}...</code>) no coincide
+                  con el publicado. La lista de números vendidos fue modificada.
                 </>
+              ) : !compromisoCoincide ? (
+                <>El compromiso recalculado no coincide con el publicado antes del sorteo.</>
               ) : (
                 <>
                   Los números ganadores recalculados difieren de los publicados por la plataforma.
@@ -404,7 +412,8 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
             <tr>
               <th>Puesto</th>
               <th>Premio</th>
-              <th>Ganador Publicado (Oficial)</th>
+              <th>Nº Ganador</th>
+              <th>Ganador</th>
               {resultadoRecalculo && <th>Ganador Recalculado</th>}
               {resultadoRecalculo && <th>Estado</th>}
             </tr>
@@ -432,8 +441,13 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
                     </div>
                   </td>
                   <td>
-                    <strong>Número {oficial.numeroGanador}</strong>
+                    {oficial.numeroGanador !== null ? (
+                      <strong>Número {oficial.numeroGanador}</strong>
+                    ) : (
+                      <span>Sin ganador</span>
+                    )}
                   </td>
+                  <td>{oficial.ganador ?? '-'}</td>
 
                   {resultadoRecalculo && (
                     <td>
