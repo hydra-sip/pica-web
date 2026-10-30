@@ -236,7 +236,12 @@ export const RifaPublicaPage: React.FC = () => {
       />
 
       {rifa.listaHash && rifa.listaSelladaEn && (
-        <ListaSellada listaHash={rifa.listaHash} listaSelladaEn={rifa.listaSelladaEn} />
+        <ListaSellada
+          listaHash={rifa.listaHash}
+          listaSelladaEn={rifa.listaSelladaEn}
+          compromisoHash={rifa.compromisoHash}
+          compromisoPublicadoEn={rifa.compromisoPublicadoEn}
+        />
       )}
 
       <Card>

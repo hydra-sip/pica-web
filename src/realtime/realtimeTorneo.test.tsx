@@ -230,6 +230,8 @@ const rifaMock: RifaDetalle = {
   reparto: { recaudado: 0, alPozoTorneo: 0, aPremios: 0 },
   listaHash: null,
   listaSelladaEn: null,
+  compromisoHash: null,
+  compromisoPublicadoEn: null,
   creadoEn: '2026-10-15T10:00:00Z',
   modificadoEn: null,
 };

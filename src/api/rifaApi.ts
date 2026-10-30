@@ -46,6 +46,9 @@ export interface RifaDetalle extends RifaResumen {
   /** SHA-256 de la lista de vendidos, fijado al cerrar la venta (HU-407); null antes. */
   listaHash: string | null;
   listaSelladaEn: string | null;
+  /** Compromiso del sorteo (HU-502): SHA-256 de `listaHash:fechaSorteo`, publicado con el sello; null antes. */
+  compromisoHash: string | null;
+  compromisoPublicadoEn: string | null;
   modificadoEn: string | null;
 }
 
@@ -244,6 +247,9 @@ export interface RifaPublicaDetalle {
   /** SHA-256 de la lista de vendidos, fijado al cerrar la venta (HU-407); null antes. */
   listaHash: string | null;
   listaSelladaEn: string | null;
+  /** Compromiso del sorteo (HU-502): SHA-256 de `listaHash:fechaSorteo`, publicado con el sello; null antes. */
+  compromisoHash: string | null;
+  compromisoPublicadoEn: string | null;
 }
 
 export type EstadoNumero = 'VENDIDO' | 'RESERVADO' | 'REINTEGRADO';
