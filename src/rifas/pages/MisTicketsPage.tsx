@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { TicketDetalle, rifaApi } from '../../api/rifaApi';
 import { Badge, Card } from '../../shared/ui';
 import { IconoTicket, IconoAlerta, IconoRefrescar, IconoEspera } from '../../shared/ui/Iconos';
-import { ESTADO_RIFA_UI, TONO_ESTADO_RIFA } from '../formato';
+import { ESTADO_RIFA_UI, resultadoDelTicket, TONO_ESTADO_RIFA } from '../formato';
 import { fechaHora, pesos } from '../../shared/formato';
 import { mensajeDeError } from '../../shared/mensajesError';
 import '../rifas.css';
@@ -41,7 +41,8 @@ export const MisTicketsPage: React.FC = () => {
         <div>
           <h1 className="ticket-page-titulo">Mis Tickets de Rifa</h1>
           <p className="rifas-subtitulo">
-            Consultá los tickets que compraste, el estado de los sorteos y disputá resultados si detectás irregularidades.
+            Consultá los tickets que compraste, el estado de los sorteos y disputá resultados si
+            detectás irregularidades.
           </p>
         </div>
       </div>
@@ -84,14 +85,14 @@ export const MisTicketsPage: React.FC = () => {
                   <Badge tone={TONO_ESTADO_RIFA[t.rifaEstado]}>
                     {ESTADO_RIFA_UI[t.rifaEstado]}
                   </Badge>
+                  {/* HU-504: si alguno de sus números ganó un premio */}
+                  {resultadoDelTicket(t)?.gano && <Badge tone="exito">Ganaste</Badge>}
                 </div>
               </div>
 
               <div className="mis-tickets-item-cuerpo">
                 <h3 className="mis-tickets-rifa-titulo">{t.rifaTitulo}</h3>
-                {t.torneoNombre && (
-                  <p className="mis-tickets-torneo-nombre">{t.torneoNombre}</p>
-                )}
+                {t.torneoNombre && <p className="mis-tickets-torneo-nombre">{t.torneoNombre}</p>}
 
                 <div className="mis-tickets-numeros">
                   <span>Números:</span>
@@ -103,6 +104,10 @@ export const MisTicketsPage: React.FC = () => {
                     ))}
                   </div>
                 </div>
+
+                {resultadoDelTicket(t) && (
+                  <p className="mis-tickets-resultado">{resultadoDelTicket(t)!.texto}</p>
+                )}
 
                 <div className="mis-tickets-meta">
                   <span>Pagaste: {pesos(t.monto + t.comision)}</span>
@@ -126,7 +131,11 @@ export const MisTicketsPage: React.FC = () => {
               </div>
 
               <div className="mis-tickets-item-pie">
-                <Link to={`/tickets/${t.id}`} className="btn btn-secondary" style={{ width: '100%' }}>
+                <Link
+                  to={`/tickets/${t.id}`}
+                  className="btn btn-secondary"
+                  style={{ width: '100%' }}
+                >
                   Ver comprobante y acciones
                 </Link>
               </div>

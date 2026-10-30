@@ -10,6 +10,7 @@ import { PremiosForm } from '../components/PremiosForm';
 import { PublicarForm } from '../components/PublicarForm';
 import { ListaSellada } from '../components/ListaSellada';
 import { RecaudadoRifa } from '../components/RecaudadoRifa';
+import { ResultadoSorteo } from '../components/ResultadoSorteo';
 import { PasoGuardable } from '../components/pasoGuardable';
 import { ESTADO_RIFA_UI, TONO_ESTADO_RIFA } from '../formato';
 import '../rifas.css';
@@ -19,7 +20,8 @@ const PASOS_URL = ['', 'premios', 'publicar'];
 
 const SIN_BORRADOR = 'Se habilita al guardar el borrador';
 
-// Lo que pide confirmación antes de hacerse: volver a borrador y eliminar (PICA-288), cerrar la venta (HU-407)
+// Lo que pide confirmación antes de hacerse: volver a borrador y eliminar (PICA-288), cerrar la venta (HU-407) y
+// sortear (HU-504)
 const ACCIONES = {
   borrador: {
     titulo: 'Volver a borrador',
@@ -40,6 +42,13 @@ const ACCIONES = {
     variante: 'primary',
     texto:
       'Nadie más va a poder comprar números y la lista de vendidos queda sellada para el sorteo. No se puede deshacer.',
+  },
+  sortear: {
+    titulo: 'Sortear la rifa',
+    boton: 'Sortear',
+    variante: 'primary',
+    texto:
+      'Se obtiene la semilla y cada premio queda con su número ganador. El resultado es definitivo y cualquiera lo puede verificar en el portal público.',
   },
 } as const;
 
@@ -104,9 +113,10 @@ export const RifaFormPage: React.FC = () => {
     onActualizar: (data) => {
       if (data.rifa) {
         setRifa(data.rifa);
-      } else if (data.estado) {
+      } else if (data.estado && data.estado !== 'SORTEADA') {
         setRifa((prev) => (prev ? { ...prev, estado: data.estado! } : prev));
       } else {
+        // Sorteada (HU-504): el aviso no trae los ganadores, se vuelve a pedir la rifa
         recargarRifa();
       }
     },
@@ -168,7 +178,9 @@ export const RifaFormPage: React.FC = () => {
       setRifa(
         confirmar === 'cerrar'
           ? await rifaApi.cerrarVenta(rifa.id)
-          : await rifaApi.volverABorrador(rifa.id)
+          : confirmar === 'sortear'
+            ? await rifaApi.sortear(rifa.id)
+            : await rifaApi.volverABorrador(rifa.id)
       );
       setRecienPublicada(false);
       setConfirmar(null);
@@ -231,11 +243,13 @@ export const RifaFormPage: React.FC = () => {
       )}
       {rifa && !editable && !sinCompras && (
         <div className="alerta alerta-info" role="status">
-          {rifa.listaSelladaEn
-            ? 'La venta está cerrada y la lista de números vendidos quedó sellada.'
-            : rifa.numerosVendidos > 0
-              ? `La rifa ya tiene ${rifa.numerosVendidos} ${rifa.numerosVendidos === 1 ? 'número vendido' : 'números vendidos'}: no se pueden realizar cambios.`
-              : 'La rifa ya está publicada, no se pueden realizar cambios.'}
+          {rifa.estado !== 'CERRADA' && rifa.listaSelladaEn
+            ? 'La rifa ya se sorteó: cada premio tiene su número ganador.'
+            : rifa.listaSelladaEn
+              ? 'La venta está cerrada y la lista de números vendidos quedó sellada.'
+              : rifa.numerosVendidos > 0
+                ? `La rifa ya tiene ${rifa.numerosVendidos} ${rifa.numerosVendidos === 1 ? 'número vendido' : 'números vendidos'}: no se pueden realizar cambios.`
+                : 'La rifa ya está publicada, no se pueden realizar cambios.'}
         </div>
       )}
       {rifa?.estado === 'EN_VENTA' && (
@@ -254,6 +268,12 @@ export const RifaFormPage: React.FC = () => {
           <Button variant="secondary" onClick={() => setConfirmar('cerrar')}>
             Cerrar venta
           </Button>
+        </div>
+      )}
+      {/* HU-504: desde la fecha del sorteo; al llegar la sortea sola el back */}
+      {rifa?.estado === 'CERRADA' && (
+        <div className="rifas-acciones">
+          <Button onClick={() => setConfirmar('sortear')}>Sortear</Button>
         </div>
       )}
       {rifa && editable && (
@@ -291,6 +311,10 @@ export const RifaFormPage: React.FC = () => {
         )}
         <p>{confirmar && ACCIONES[confirmar].texto}</p>
       </Modal>
+
+      {rifa && rifa.premios.some((p) => p.numeroGanador !== null) && (
+        <ResultadoSorteo rifaId={rifa.id} premios={rifa.premios} />
+      )}
 
       {/* HU-405: desde que se publica, lo vendido y cómo se reparte */}
       {rifa && rifa.estado !== 'BORRADOR' && (

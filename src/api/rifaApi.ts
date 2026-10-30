@@ -135,6 +135,8 @@ export interface TicketDetalle {
   esComprador: boolean;
   /** La rifa sorteada (o en revisión) y dentro de las 48 h: se puede reclamar. */
   ventanaReclamoAbierta: boolean;
+  /** HU-504: los premios que ganó alguno de sus números; vacío antes del sorteo o si no ganó. */
+  premiosGanados: PremioRifa[];
 }
 
 // PICA-226, PICA-227, PICA-219, PICA-218: todas exigen RIFA_GESTIONAR y cada organizador ve solo las suyas.
@@ -183,6 +185,11 @@ export const rifaApi = {
   /** HU-407: cierra la venta antes de la fecha y sella la lista de vendidos; es definitivo. */
   cerrarVenta: async (id: number): Promise<RifaDetalle> => {
     return httpClient.post<RifaDetalle>(`/rifas/${id}/cerrar-venta`);
+  },
+
+  /** HU-504: sortea la rifa cerrada; los premios quedan con su número ganador. */
+  sortear: async (id: number): Promise<RifaDetalle> => {
+    return httpClient.post<RifaDetalle>(`/rifas/${id}/sorteo`);
   },
 
   /** HU-506 (PICA-268 / PICA-269): Reclamar resultado del sorteo de una rifa. */
@@ -266,6 +273,40 @@ export interface LineaListaSellada {
   ticketCodigo: string;
 }
 
+/** Fila de GET /rifas/publicas/sorteadas; `semillaObtenidaEn` es cuándo se sorteó. */
+export interface RifaSorteadaResumen {
+  id: number;
+  titulo: string;
+  torneoNombre: string | null;
+  semillaObtenidaEn: string;
+}
+
+/**
+ * GET /rifas/publicas/{id}/sorteo (HU-504): la lista sellada con su desglose, el compromiso
+ * (SHA-256 de `listaHash:fechaSorteo`), la semilla y los premios con su ganador. `semillaFirma` es
+ * null mientras la semilla la genere la plataforma (PICA-299).
+ */
+export interface SorteoRifa {
+  id: number;
+  titulo: string;
+  torneoNombre: string | null;
+  fechaSorteo: string;
+  listaHash: string;
+  listaSelladaEn: string;
+  lista: LineaListaSellada[];
+  compromisoHash: string;
+  compromisoPublicadoEn: string;
+  semilla: string;
+  semillaFirma: string | null;
+  semillaObtenidaEn: string;
+  premios: GanadorRifa[];
+}
+
+/** Un premio sorteado con el username de quien compró el número ganador; null si quedó sin ganador. */
+export interface GanadorRifa extends PremioRifa {
+  ganador: string | null;
+}
+
 export const rifaPublicaApi = {
   enVenta: async (params?: {
     page?: number;
@@ -285,6 +326,21 @@ export const rifaPublicaApi = {
   /** El desglose de la lista sellada al cerrar la venta, de menor a mayor. */
   listaSellada: async (id: number): Promise<LineaListaSellada[]> => {
     return httpClient.get<LineaListaSellada[]>(`/rifas/publicas/${id}/lista-sellada`);
+  },
+
+  /** Las rifas ya sorteadas, la más reciente primero (HU-504), para el portal de verificación. */
+  sorteadas: async (params?: {
+    page?: number;
+    size?: number;
+  }): Promise<PageResponse<RifaSorteadaResumen>> => {
+    return httpClient.get<PageResponse<RifaSorteadaResumen>>('/rifas/publicas/sorteadas', {
+      params,
+    });
+  },
+
+  /** Lo necesario para recalcular el sorteo; 409 RIFA_NO_SORTEADA antes de sortear. */
+  sorteo: async (id: number): Promise<SorteoRifa> => {
+    return httpClient.get<SorteoRifa>(`/rifas/publicas/${id}/sorteo`);
   },
 };
 
