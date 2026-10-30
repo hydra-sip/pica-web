@@ -18,9 +18,9 @@ describe('HU-505 / T505-1: Motor Criptográfico (Unitario)', () => {
   });
 
   it('recalcularSorteoBracket rechaza con menos de 2 participantes', async () => {
-    await expect(
-      recalcularSorteoBracket('semilla', [{ id: 1, nombre: 'Solo' }])
-    ).rejects.toThrow(/al menos dos inscripciones/i);
+    await expect(recalcularSorteoBracket('semilla', [{ id: 1, nombre: 'Solo' }])).rejects.toThrow(
+      /al menos dos inscripciones/i
+    );
   });
 
   it('recalcularSorteoBracket con 8 participantes genera 3 rondas y 4 cruces sin BYE', async () => {
@@ -56,21 +56,27 @@ describe('HU-505 / T505-1: Motor Criptográfico (Unitario)', () => {
     expect(conBye.map((c) => c.posicion)).toEqual([1, 2, 3, 5, 7]);
   });
 
-  it('recalcularSorteoRifa comprueba el hash de compromiso y asigna los ganadores en orden', async () => {
-    const semilla = 'semilla-rifa-test';
-    const compromiso = await calcularSha256(semilla);
-    const numeros = [10, 20, 30, 40, 50];
+  it('recalcularSorteoRifa recalcula la lista, el compromiso y los ganadores como el back', async () => {
+    const { semilla, lista, fechaSorteo, premios, listaHash, compromisoHash } =
+      mockRifaVerificacion10;
+
+    const res = await recalcularSorteoRifa(semilla, lista, fechaSorteo, premios);
+
+    expect(res.listaHashCalculado).toBe(listaHash);
+    expect(res.compromisoCalculado).toBe(compromisoHash);
+    expect(res.ganadores.map((g) => g.numeroGanador)).toEqual([14, 88, 7]);
+  });
+
+  it('recalcularSorteoRifa deja sin ganador los premios que superan a los vendidos', async () => {
+    const lista = [{ numero: 3, ticketCodigo: 'R1-AAAAAA' }];
     const premios = [
-      { puesto: 1, descripcion: 'Premio 1', pct: 70 },
-      { puesto: 2, descripcion: 'Premio 2', pct: 30 },
+      { puesto: 1, pct: 70 },
+      { puesto: 2, pct: 30 },
     ];
 
-    const res = await recalcularSorteoRifa(semilla, compromiso, numeros, premios);
-    expect(res.compromisoCoincide).toBe(true);
-    expect(res.ganadores).toHaveLength(2);
-    expect(res.ganadores[0].numeroGanador).not.toBeNull();
-    expect(res.ganadores[1].numeroGanador).not.toBeNull();
-    expect(res.ganadores[0].numeroGanador).not.toBe(res.ganadores[1].numeroGanador);
+    const res = await recalcularSorteoRifa('abc', lista, '2026-10-31T15:00:00Z', premios);
+
+    expect(res.ganadores.map((g) => g.numeroGanador)).toEqual([3, null]);
   });
 });
 
@@ -90,11 +96,9 @@ describe('HU-505 / T505-1: Portal Público de Verificación (Integración)', () 
     ).toBeInTheDocument();
     expect(screen.getByTestId('semilla-valor')).toHaveTextContent(/^4f8d9b1a/);
 
-    // Las rifas todavía no tienen sorteo en el back
+    // En la pestaña de rifas se carga la última rifa sorteada
     await user.click(screen.getByTestId('tab-rifa'));
-    expect(screen.getByTestId('rifas-sin-sorteo')).toHaveTextContent(
-      /todavía no hay sorteos de rifa/i
-    );
+    expect(await screen.findByText('Gran Rifa Benéfica de la Copa')).toBeInTheDocument();
   });
 
   it('Criterio 2: Muestra la semilla utilizada, el hash de la lista sellada y el resultado obtenido', async () => {
@@ -102,11 +106,15 @@ describe('HU-505 / T505-1: Portal Público de Verificación (Integración)', () 
 
     // 1. Semilla utilizada
     const semilla = await screen.findByTestId('semilla-valor');
-    expect(semilla.textContent).toContain('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
+    expect(semilla.textContent).toContain(
+      'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+    );
 
     // 2. Hash de la lista sellada al cerrar la inscripción
     const lista = screen.getByTestId('lista-hash');
-    expect(lista.textContent).toContain('b5d4045c3f466fa91fe2cc6abe79232a1a57cdf104f7a26e716e0a1e2789df78');
+    expect(lista.textContent).toContain(
+      'b5d4045c3f466fa91fe2cc6abe79232a1a57cdf104f7a26e716e0a1e2789df78'
+    );
 
     // 3. Resultado obtenido (cruces de la primera ronda del bracket)
     const tabla = screen.getByTestId('tabla-cruces');
@@ -237,43 +245,59 @@ describe('HU-505 / T505-1: Portal Público de Verificación (Integración)', () 
   });
 });
 
-// La rifa no tiene todavía GET /rifas/{id}/sorteo (PICA-263): el componente se prueba con datos de ejemplo
-describe('HU-505 / T505-1: Verificación de una rifa (componente)', () => {
-  it('Muestra el compromiso, la semilla, su firma y los ganadores, y detecta una semilla alterada', async () => {
+describe('HU-504 / T504-3: Verificación de una rifa', () => {
+  it('El link del resultado abre la rifa sorteada en el portal', async () => {
+    await renderRuta('/verificacion?tipo=RIFA&id=10', { usuario: 'anonimo' });
+
+    expect(await screen.findByText('Gran Rifa Benéfica de la Copa')).toBeInTheDocument();
+    // el torneo asociado, en el encabezado de la rifa
+    expect(
+      screen.getByText('Copa PICA 2026 - Eliminación Directa', { selector: 'strong' })
+    ).toBeInTheDocument();
+  });
+
+  it('Una rifa sin sortear avisa que todavía no se sorteó', async () => {
+    await renderRuta('/verificacion?tipo=RIFA&id=99', { usuario: 'anonimo' });
+
+    expect(await screen.findByTestId('error-consulta')).toBeInTheDocument();
+  });
+
+  it('Muestra la lista, el compromiso y la semilla, verifica los ganadores y detecta una alteración', async () => {
     const user = userEvent.setup();
     render(<VerificacionRifa datos={mockRifaVerificacion10} />);
 
-    // Título y datos de la rifa
     expect(screen.getByText('Gran Rifa Benéfica de la Copa')).toBeInTheDocument();
     expect(screen.getByTestId('compromiso-hash-rifa')).toHaveTextContent(
-      'c8b421037d30fe6404a753a3ca6fc9f8b2661ce18f66a1240004c7d429985b8f'
+      mockRifaVerificacion10.compromisoHash
     );
     expect(screen.getByTestId('semilla-valor-rifa')).toHaveTextContent(
-      'loteria-nacional-jugada-48921-sorteo-matutino-2026'
+      mockRifaVerificacion10.semilla
     );
-    expect(screen.getByTestId('semilla-firma-rifa')).toHaveTextContent(/^3044/);
-    expect(screen.getByTestId('lista-hash-rifa')).toHaveTextContent(/^5e88/);
+    expect(screen.getByTestId('lista-hash-rifa')).toHaveTextContent(/^059f/);
+    // la semilla la genera la plataforma: todavía no hay firma (PICA-299)
+    expect(screen.queryByTestId('semilla-firma-rifa')).not.toBeInTheDocument();
 
-    // Tabla con los ganadores oficiales
     const tabla = screen.getByTestId('tabla-ganadores-rifa');
     expect(within(tabla).getByText(/número 14/i)).toBeInTheDocument();
-    expect(within(tabla).getByText(/número 59/i)).toBeInTheDocument();
-    expect(within(tabla).getByText(/número 35/i)).toBeInTheDocument();
+    expect(within(tabla).getByText(/número 88/i)).toBeInTheDocument();
+    expect(within(tabla).getByText(/número 7$/i)).toBeInTheDocument();
+    // y quién compró cada número ganador
+    expect(within(tabla).getAllByText('mati_rios')).toHaveLength(2);
+    expect(within(tabla).getByText('lucia.fer')).toBeInTheDocument();
 
-    // Recalcular con datos oficiales publicados
     const btnRecalcular = screen.getByTestId('btn-recalcular-rifa');
     await user.click(btnRecalcular);
 
-    // Verificación 100% exitosa
     expect(await screen.findByTestId('banner-verificacion-exitosa-rifa')).toBeInTheDocument();
     expect(screen.getAllByText('Coincide')).toHaveLength(3);
 
-    // Simular alteración de semilla en la rifa
+    // Alterar la lista de vendidos cambia el hash de la lista
     await user.click(screen.getByTestId('toggle-simulacion-rifa-btn'));
-    await user.click(screen.getByTestId('btn-alterar-semilla-rifa'));
+    await user.click(screen.getByTestId('btn-alterar-numeros-rifa'));
     await user.click(btnRecalcular);
 
-    // Discrepancia detectada
-    expect(await screen.findByTestId('banner-discrepancia-detectada-rifa')).toBeInTheDocument();
+    expect(await screen.findByTestId('banner-discrepancia-detectada-rifa')).toHaveTextContent(
+      /la lista de números vendidos fue modificada/i
+    );
   });
 });

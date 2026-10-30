@@ -17,12 +17,16 @@ import { GrillaNumeros } from '../components/GrillaNumeros';
 import { PagoRifa } from '../components/PagoRifa';
 import { ListaSellada } from '../components/ListaSellada';
 import { RecaudadoRifa } from '../components/RecaudadoRifa';
+import { ResultadoSorteo } from '../components/ResultadoSorteo';
 import '../rifas.css';
 
 const estadoDeLaVenta = (
   rifa: RifaPublicaDetalle
 ): { texto: string; tono: BadgeTone; abierta: boolean } => {
   const ahora = Date.now();
+  if (rifa.premios.some((p) => p.numeroGanador !== null)) {
+    return { texto: 'Sorteada', tono: 'info', abierta: false };
+  }
   if (rifa.estado !== 'EN_VENTA' || new Date(rifa.ventaHasta).getTime() <= ahora) {
     return { texto: 'Venta cerrada', tono: 'neutral', abierta: false };
   }
@@ -226,6 +230,8 @@ export const RifaPublicaPage: React.FC = () => {
           </p>
         )}
       </header>
+
+      {venta.texto === 'Sorteada' && <ResultadoSorteo rifaId={rifa.id} premios={rifa.premios} />}
 
       {/* HU-405: lo recaudado hasta ahora y cómo se reparte */}
       <RecaudadoRifa
