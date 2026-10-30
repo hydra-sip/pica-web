@@ -42,7 +42,18 @@ export interface RifaDetalle extends RifaResumen {
   premios: PremioRifa[];
   /** Mientras sea 0, la rifa publicada se puede volver a borrador o eliminar. */
   numerosVendidos: number;
+  reparto: RepartoRifa;
   modificadoEn: string | null;
+}
+
+/**
+ * Cómo se reparte lo vendido (HU-405): el % destinado al torneo va a su pozo y el resto a los premios;
+ * `alPozoTorneo` + `aPremios` = `recaudado`. Los gastos administrativos no entran.
+ */
+export interface RepartoRifa {
+  recaudado: number;
+  alPozoTorneo: number;
+  aPremios: number;
 }
 
 /** Datos generales (paso 1). Las fechas van en ISO-8601 UTC o null. */
@@ -220,6 +231,8 @@ export interface RifaPublicaDetalle {
   ventaHasta: string;
   fechaSorteo: string;
   premios: PremioRifa[];
+  /** Lo recaudado hasta ahora y cómo se reparte (HU-405). */
+  reparto: RepartoRifa;
 }
 
 export type EstadoNumero = 'VENDIDO' | 'RESERVADO' | 'REINTEGRADO';

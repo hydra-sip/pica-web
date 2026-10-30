@@ -8,6 +8,7 @@ import { PasosAsistente } from '../../shared/components/PasosAsistente';
 import { DatosGeneralesForm } from '../components/DatosGeneralesForm';
 import { PremiosForm } from '../components/PremiosForm';
 import { PublicarForm } from '../components/PublicarForm';
+import { RecaudadoRifa } from '../components/RecaudadoRifa';
 import { PasoGuardable } from '../components/pasoGuardable';
 import { ESTADO_RIFA_UI, TONO_ESTADO_RIFA } from '../formato';
 import '../rifas.css';
@@ -257,6 +258,17 @@ export const RifaFormPage: React.FC = () => {
             : 'La rifa deja de estar en venta hasta que la vuelvas a publicar, y vas a tener que aceptar de nuevo los términos.'}
         </p>
       </Modal>
+
+      {/* HU-405: desde que se publica, lo vendido y cómo se reparte */}
+      {rifa && rifa.estado !== 'BORRADOR' && (
+        <RecaudadoRifa
+          titulo="Lo recaudado"
+          reparto={rifa.reparto}
+          torneoNombre={rifa.torneoNombre}
+          pctDestinadoTorneo={rifa.pctDestinadoTorneo}
+          vendidos={`${rifa.numerosVendidos} de ${rifa.numeroHasta - rifa.numeroDesde + 1}`}
+        />
+      )}
 
       <PasosAsistente
         actual={paso}
