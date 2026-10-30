@@ -2,9 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CompraRifa, ReservaRifa } from '../../api/rifaApi';
 import { fechaHora, pesos } from '../../shared/formato';
-import { Button, Modal } from '../../shared/ui';
+import { Button, Card, Modal } from '../../shared/ui';
+import '../../inscripciones/inscripciones.css';
 
 interface PagoRifaProps {
+  /** Para el resumen de la compra. */
+  rifaTitulo: string;
   /** null con el popup cerrado. */
   reserva: ReservaRifa | null;
   /** El comprobante, después de pagar. */
@@ -30,11 +33,31 @@ const useSegundosHasta = (hasta: string | null): number => {
 const reloj = (segundos: number): string =>
   `${Math.floor(segundos / 60)}:${String(segundos % 60).padStart(2, '0')}`;
 
+/** La garantía de custodia, con el mismo formato que en la inscripción al torneo. */
+const Custodia: React.FC = () => (
+  <section className="custodia">
+    <span className="custodia-icono" aria-hidden="true">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3Z" />
+      </svg>
+    </span>
+    <div>
+      <h2>Garantía de fondos en custodia</h2>
+      <p>
+        El dinero queda retenido de forma segura en la plataforma hasta el sorteo, o se reintegra si
+        la rifa se cancela.
+      </p>
+    </div>
+  </section>
+);
+
 /**
  * El pago simulado de la compra (PICA-223): con los números ya reservados muestra lo que se cobra y cuánto queda de
- * la reserva. "Aceptar" hace el cobro, como lo hará la pasarela; después muestra el comprobante.
+ * la reserva, con los estilos de "Confirmar y pagar" de la inscripción (HU-406). Confirmar hace el cobro, como lo
+ * hará la pasarela; después muestra el comprobante.
  */
 export const PagoRifa: React.FC<PagoRifaProps> = ({
+  rifaTitulo,
   reserva,
   compra,
   pagando,
@@ -64,27 +87,31 @@ export const PagoRifa: React.FC<PagoRifaProps> = ({
           </>
         }
       >
-        <dl className="rifas-resumen">
-          <div>
-            <dt>Comprobante</dt>
-            <dd className="pago-codigo">{compra.ticketCodigo}</dd>
-          </div>
-          <div>
-            <dt>Fecha</dt>
-            <dd>{fechaHora(compra.compradoEn)}</dd>
-          </div>
-          <div className="rifas-resumen-ancho">
-            <dt>Tus números</dt>
-            <dd>{compra.numeros.join(', ')}</dd>
-          </div>
-          <div className="rifas-resumen-ancho">
-            <dt>Pagaste</dt>
-            <dd>
-              {pesos(compra.total)} ({pesos(compra.monto)} de números +{' '}
-              {pesos(compra.gastosAdministrativos)} de gastos administrativos)
-            </dd>
-          </div>
-        </dl>
+        <Card className="resumen-pago">
+          <h2>Comprobante</h2>
+          <p className="resumen-pago-detalle">
+            {rifaTitulo} • <span className="pago-codigo">{compra.ticketCodigo}</span>
+          </p>
+          <dl className="resumen-pago-lineas">
+            <div>
+              <dt>Tus números</dt>
+              <dd>{compra.numeros.join(', ')}</dd>
+            </div>
+            <div>
+              <dt>Números</dt>
+              <dd>{pesos(compra.monto)}</dd>
+            </div>
+            <div>
+              <dt>Gastos administrativos</dt>
+              <dd>{pesos(compra.gastosAdministrativos)}</dd>
+            </div>
+            <div className="resumen-pago-total">
+              <dt>Pagaste</dt>
+              <dd>{pesos(compra.total)}</dd>
+            </div>
+          </dl>
+          <p className="resumen-pago-extra">Fecha: {fechaHora(compra.compradoEn)}</p>
+        </Card>
       </Modal>
     );
   }
@@ -94,62 +121,60 @@ export const PagoRifa: React.FC<PagoRifaProps> = ({
   }
 
   return (
-    <Modal
-      isOpen
-      title="Pagar la compra"
-      onClose={onCancelar}
-      closeDisabled={pagando}
-      footer={
-        <>
-          <Button variant="ghost" onClick={onCancelar} disabled={pagando}>
+    <Modal isOpen title="Confirmar y pagar" onClose={onCancelar} closeDisabled={pagando}>
+      <div className="pago-rifa">
+        <div className="alerta alerta-info">
+          <strong>Pago simulado.</strong> Esta pantalla es temporal: más adelante, al confirmar, se
+          va a redirigir a la plataforma de pago.
+        </div>
+
+        <Card className="resumen-pago">
+          <h2>Resumen de compra</h2>
+          <p className="resumen-pago-detalle">
+            {rifaTitulo} • Números: {reserva.numeros.join(', ')}
+          </p>
+          <dl className="resumen-pago-lineas">
+            <div>
+              <dt>
+                {reserva.numeros.length} × {pesos(reserva.precioNumero)}
+              </dt>
+              <dd>{pesos(reserva.monto)}</dd>
+            </div>
+            {reserva.gastosAdministrativos > 0 && (
+              <div>
+                <dt>Gastos administrativos</dt>
+                <dd>{pesos(reserva.gastosAdministrativos)}</dd>
+              </div>
+            )}
+            <div className="resumen-pago-total">
+              <dt>Total a pagar</dt>
+              <dd>{pesos(reserva.total)}</dd>
+            </div>
+          </dl>
+          <p className={`resumen-pago-extra pago-reloj${vencida ? ' vencida' : ''}`} role="status">
+            {vencida
+              ? 'Se terminó el tiempo de la reserva: los números volvieron a estar disponibles.'
+              : `Tus números quedan reservados ${reloj(segundos)} mientras pagás.`}
+          </p>
+        </Card>
+
+        <Custodia />
+
+        {error && (
+          <div className="alerta alerta-peligro" role="alert">
+            {error}
+          </div>
+        )}
+
+        <div className="inscripcion-acciones">
+          <Button block onClick={onPagar} loading={pagando} disabled={vencida}>
+            {pagando ? 'Confirmando el pago...' : `Confirmar pago de ${pesos(reserva.total)}`}
+          </Button>
+          <Button variant="secondary" block onClick={onCancelar} disabled={pagando}>
             Cancelar
           </Button>
-          <Button onClick={onPagar} loading={pagando} disabled={vencida}>
-            Aceptar
-          </Button>
-        </>
-      }
-    >
-      <div className="alerta alerta-info pago-simulado">
-        <strong>Pago simulado.</strong> Esta pantalla es temporal: más adelante, al aceptar, se va a
-        redirigir a la plataforma de pago.
-      </div>
-      {error && (
-        <div className="alerta alerta-peligro" role="alert">
-          {error}
         </div>
-      )}
-      <p className={`pago-reloj${vencida ? ' vencida' : ''}`} role="status">
-        {vencida
-          ? 'Se terminó el tiempo de la reserva: los números volvieron a estar disponibles.'
-          : `Tus números quedan reservados ${reloj(segundos)} mientras pagás.`}
-      </p>
-      <table className="pago-detalle">
-        <tbody>
-          <tr>
-            <th scope="row">Números</th>
-            <td>{reserva.numeros.join(', ')}</td>
-          </tr>
-          <tr>
-            <th scope="row">
-              {reserva.numeros.length} × {pesos(reserva.precioNumero)}
-            </th>
-            <td>{pesos(reserva.monto)}</td>
-          </tr>
-          <tr>
-            <th scope="row">
-              Gastos administrativos
-              {reserva.pctGastosAdministrativos != null &&
-                ` (${reserva.pctGastosAdministrativos}%)`}
-            </th>
-            <td>{pesos(reserva.gastosAdministrativos)}</td>
-          </tr>
-          <tr className="pago-total">
-            <th scope="row">Total</th>
-            <td>{pesos(reserva.total)}</td>
-          </tr>
-        </tbody>
-      </table>
+      </div>
     </Modal>
   );
 };

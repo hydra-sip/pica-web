@@ -15,6 +15,7 @@ describe('HU-404 / T404-2: Ticket digital', () => {
     render(
       <MemoryRouter>
         <PagoRifa
+          rifaTitulo="Rifa de la Copa"
           reserva={null}
           compra={{
             ticketId: 5,
