@@ -28,7 +28,7 @@ export const ListaSellada: React.FC<ListaSelladaProps> = ({
         <dd>{fechaHora(listaSelladaEn)}</dd>
       </div>
       <div className="rifas-resumen-ancho">
-        <dt>Hash SHA-256</dt>
+        <dt>Hash de la lista</dt>
         <dd>
           <code className="rifas-hash">{listaHash}</code>
         </dd>
