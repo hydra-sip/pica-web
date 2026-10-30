@@ -8,6 +8,7 @@ import { PasosAsistente } from '../../shared/components/PasosAsistente';
 import { DatosGeneralesForm } from '../components/DatosGeneralesForm';
 import { PremiosForm } from '../components/PremiosForm';
 import { PublicarForm } from '../components/PublicarForm';
+import { ListaSellada } from '../components/ListaSellada';
 import { RecaudadoRifa } from '../components/RecaudadoRifa';
 import { PasoGuardable } from '../components/pasoGuardable';
 import { ESTADO_RIFA_UI, TONO_ESTADO_RIFA } from '../formato';
@@ -17,6 +18,30 @@ import '../rifas.css';
 const PASOS_URL = ['', 'premios', 'publicar'];
 
 const SIN_BORRADOR = 'Se habilita al guardar el borrador';
+
+// Lo que pide confirmación antes de hacerse: volver a borrador y eliminar (PICA-288), cerrar la venta (HU-407)
+const ACCIONES = {
+  borrador: {
+    titulo: 'Volver a borrador',
+    boton: 'Volver a borrador',
+    variante: 'primary',
+    texto:
+      'La rifa deja de estar en venta hasta que la vuelvas a publicar, y vas a tener que aceptar de nuevo los términos.',
+  },
+  eliminar: {
+    titulo: 'Eliminar la rifa',
+    boton: 'Eliminar',
+    variante: 'danger',
+    texto: 'La rifa deja de aparecer en tus rifas y en las rifas en venta. No se puede deshacer.',
+  },
+  cerrar: {
+    titulo: 'Cerrar la venta',
+    boton: 'Cerrar venta',
+    variante: 'primary',
+    texto:
+      'Nadie más va a poder comprar números y la lista de vendidos queda sellada para el sorteo. No se puede deshacer.',
+  },
+} as const;
 
 /**
  * Alta, edición y publicación de una rifa, con o sin torneo (PICA-227, T402-4, PICA-220), como asistente
@@ -35,7 +60,7 @@ export const RifaFormPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [recienPublicada, setRecienPublicada] = useState(false);
   const [cambiando, setCambiando] = useState(false);
-  const [confirmar, setConfirmar] = useState<'borrador' | 'eliminar' | null>(null);
+  const [confirmar, setConfirmar] = useState<keyof typeof ACCIONES | null>(null);
   const [accionando, setAccionando] = useState(false);
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
   const datosRef = useRef<PasoGuardable>(null);
@@ -140,7 +165,11 @@ export const RifaFormPage: React.FC = () => {
         navigate('/mis-rifas', { replace: true });
         return;
       }
-      setRifa(await rifaApi.volverABorrador(rifa.id));
+      setRifa(
+        confirmar === 'cerrar'
+          ? await rifaApi.cerrarVenta(rifa.id)
+          : await rifaApi.volverABorrador(rifa.id)
+      );
       setRecienPublicada(false);
       setConfirmar(null);
       setSearchParams({}, { replace: true });
@@ -200,24 +229,32 @@ export const RifaFormPage: React.FC = () => {
           ¡Listo! La rifa quedó publicada y en venta.
         </div>
       )}
-      {sinCompras ? (
-        <div className="rifas-acciones">
-          <Button variant="secondary" onClick={() => setConfirmar('borrador')}>
-            Volver a borrador
-          </Button>
-          <Button variant="danger" onClick={() => setConfirmar('eliminar')}>
-            Eliminar rifa
-          </Button>
-        </div>
-      ) : (
-        rifa &&
-        !editable && (
-          <div className="alerta alerta-info" role="status">
-            {rifa.numerosVendidos > 0
+      {rifa && !editable && !sinCompras && (
+        <div className="alerta alerta-info" role="status">
+          {rifa.listaSelladaEn
+            ? 'La venta está cerrada y la lista de números vendidos quedó sellada.'
+            : rifa.numerosVendidos > 0
               ? `La rifa ya tiene ${rifa.numerosVendidos} ${rifa.numerosVendidos === 1 ? 'número vendido' : 'números vendidos'}: no se pueden realizar cambios.`
               : 'La rifa ya está publicada, no se pueden realizar cambios.'}
-          </div>
-        )
+        </div>
+      )}
+      {rifa?.estado === 'EN_VENTA' && (
+        <div className="rifas-acciones">
+          {sinCompras && (
+            <>
+              <Button variant="secondary" onClick={() => setConfirmar('borrador')}>
+                Volver a borrador
+              </Button>
+              <Button variant="danger" onClick={() => setConfirmar('eliminar')}>
+                Eliminar rifa
+              </Button>
+            </>
+          )}
+          {/* HU-407: antes de la fecha; al llegar ventaHasta la cierra sola el back */}
+          <Button variant="secondary" onClick={() => setConfirmar('cerrar')}>
+            Cerrar venta
+          </Button>
+        </div>
       )}
       {rifa && editable && (
         <div className="rifas-acciones">
@@ -229,7 +266,7 @@ export const RifaFormPage: React.FC = () => {
 
       <Modal
         isOpen={confirmar !== null}
-        title={confirmar === 'eliminar' ? 'Eliminar la rifa' : 'Volver a borrador'}
+        title={confirmar ? ACCIONES[confirmar].titulo : ''}
         onClose={() => setConfirmar(null)}
         closeDisabled={accionando}
         footer={
@@ -238,11 +275,11 @@ export const RifaFormPage: React.FC = () => {
               Cancelar
             </Button>
             <Button
-              variant={confirmar === 'eliminar' ? 'danger' : 'primary'}
+              variant={confirmar ? ACCIONES[confirmar].variante : 'primary'}
               loading={accionando}
               onClick={() => void confirmarAccion()}
             >
-              {confirmar === 'eliminar' ? 'Eliminar' : 'Volver a borrador'}
+              {confirmar && ACCIONES[confirmar].boton}
             </Button>
           </>
         }
@@ -252,11 +289,7 @@ export const RifaFormPage: React.FC = () => {
             {errorAccion}
           </div>
         )}
-        <p>
-          {confirmar === 'eliminar'
-            ? 'La rifa deja de aparecer en tus rifas y en las rifas en venta. No se puede deshacer.'
-            : 'La rifa deja de estar en venta hasta que la vuelvas a publicar, y vas a tener que aceptar de nuevo los términos.'}
-        </p>
+        <p>{confirmar && ACCIONES[confirmar].texto}</p>
       </Modal>
 
       {/* HU-405: desde que se publica, lo vendido y cómo se reparte */}
@@ -268,6 +301,9 @@ export const RifaFormPage: React.FC = () => {
           pctDestinadoTorneo={rifa.pctDestinadoTorneo}
           vendidos={`${rifa.numerosVendidos} de ${rifa.numeroHasta - rifa.numeroDesde + 1}`}
         />
+      )}
+      {rifa?.listaHash && rifa.listaSelladaEn && (
+        <ListaSellada listaHash={rifa.listaHash} listaSelladaEn={rifa.listaSelladaEn} />
       )}
 
       <PasosAsistente

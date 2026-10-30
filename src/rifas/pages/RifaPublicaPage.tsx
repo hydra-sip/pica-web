@@ -15,6 +15,7 @@ import { fechaHora, pesos } from '../../shared/formato';
 import { Badge, BadgeTone, Button, Card } from '../../shared/ui';
 import { GrillaNumeros } from '../components/GrillaNumeros';
 import { PagoRifa } from '../components/PagoRifa';
+import { ListaSellada } from '../components/ListaSellada';
 import { RecaudadoRifa } from '../components/RecaudadoRifa';
 import '../rifas.css';
 
@@ -233,6 +234,10 @@ export const RifaPublicaPage: React.FC = () => {
         torneoNombre={rifa.torneo?.nombre ?? null}
         pctDestinadoTorneo={rifa.pctDestinadoTorneo}
       />
+
+      {rifa.listaHash && rifa.listaSelladaEn && (
+        <ListaSellada listaHash={rifa.listaHash} listaSelladaEn={rifa.listaSelladaEn} />
+      )}
 
       <Card>
         <h2 className="rifas-subtitulo-seccion">Información</h2>

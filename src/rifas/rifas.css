@@ -341,6 +341,14 @@
   grid-column: 1 / -1;
 }
 
+/* HU-407: el hash de la lista sellada, completo y en una sola pieza seleccionable */
+.rifas-hash {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  word-break: break-all;
+  user-select: all;
+}
+
 .rifas-resumen-premios {
   margin: 0;
   padding: 0;
