@@ -1,5 +1,7 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { describe, expect, it, vi } from 'vitest';
+import { rifaPublicaApi } from '../api/rifaApi';
 import { ListaSellada } from './components/ListaSellada';
 
 const HASH = 'a3f1c9e07b5d4e2f8a6b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f';
@@ -9,6 +11,7 @@ describe('HU-407 / T407-2: Rifa cerrada con su hash', () => {
   it('Muestra la fecha del sellado y el hash completo de la lista', () => {
     render(
       <ListaSellada
+        rifaId={7}
         listaHash={HASH}
         listaSelladaEn="2026-10-30T15:30:00Z"
         compromisoHash={null}
@@ -21,12 +24,35 @@ describe('HU-407 / T407-2: Rifa cerrada con su hash', () => {
     expect(screen.getByText('Fecha del sellado').nextSibling).toHaveTextContent('30/10/2026');
     expect(screen.queryByText('Hash de compromiso')).not.toBeInTheDocument();
   });
+
+  it('"Ver desglose" abre la lista de números vendidos con su ticket', async () => {
+    const listaSellada = vi.spyOn(rifaPublicaApi, 'listaSellada').mockResolvedValue([
+      { numero: 5, ticketCodigo: 'R7-4F2K9Q' },
+      { numero: 12, ticketCodigo: 'R7-8HX2LM' },
+    ]);
+    render(
+      <ListaSellada
+        rifaId={7}
+        listaHash={HASH}
+        listaSelladaEn="2026-10-30T15:30:00Z"
+        compromisoHash={null}
+        compromisoPublicadoEn={null}
+      />
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Ver desglose' }));
+
+    expect(await screen.findByText('R7-4F2K9Q')).toBeInTheDocument();
+    expect(screen.getByText('R7-8HX2LM')).toBeInTheDocument();
+    expect(listaSellada).toHaveBeenCalledWith(7);
+  });
 });
 
 describe('HU-502 / T502-2: Compromiso con su fecha en la rifa', () => {
   it('Muestra el hash de compromiso y cuándo se publicó', () => {
     render(
       <ListaSellada
+        rifaId={7}
         listaHash={HASH}
         listaSelladaEn="2026-10-30T15:30:00Z"
         compromisoHash={COMPROMISO}

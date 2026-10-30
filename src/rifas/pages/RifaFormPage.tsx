@@ -304,6 +304,7 @@ export const RifaFormPage: React.FC = () => {
       )}
       {rifa?.listaHash && rifa.listaSelladaEn && (
         <ListaSellada
+          rifaId={rifa.id}
           listaHash={rifa.listaHash}
           listaSelladaEn={rifa.listaSelladaEn}
           compromisoHash={rifa.compromisoHash}

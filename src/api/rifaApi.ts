@@ -260,6 +260,12 @@ export interface NumeroOcupado {
   estado: EstadoNumero;
 }
 
+/** Un vendido de la lista sellada: con una línea `numero;ticketCodigo` por cada uno se arma `listaHash`. */
+export interface LineaListaSellada {
+  numero: number;
+  ticketCodigo: string;
+}
+
 export const rifaPublicaApi = {
   enVenta: async (params?: {
     page?: number;
@@ -274,6 +280,11 @@ export const rifaPublicaApi = {
 
   numerosOcupados: async (id: number): Promise<NumeroOcupado[]> => {
     return httpClient.get<NumeroOcupado[]>(`/rifas/publicas/${id}/numeros`);
+  },
+
+  /** El desglose de la lista sellada al cerrar la venta, de menor a mayor. */
+  listaSellada: async (id: number): Promise<LineaListaSellada[]> => {
+    return httpClient.get<LineaListaSellada[]>(`/rifas/publicas/${id}/lista-sellada`);
   },
 };
 
