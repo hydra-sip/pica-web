@@ -43,6 +43,9 @@ export interface RifaDetalle extends RifaResumen {
   /** Mientras sea 0, la rifa publicada se puede volver a borrador o eliminar. */
   numerosVendidos: number;
   reparto: RepartoRifa;
+  /** SHA-256 de la lista de vendidos, fijado al cerrar la venta (HU-407); null antes. */
+  listaHash: string | null;
+  listaSelladaEn: string | null;
   modificadoEn: string | null;
 }
 
@@ -174,6 +177,11 @@ export const rifaApi = {
     await httpClient.delete(`/rifas/${id}`);
   },
 
+  /** HU-407: cierra la venta antes de la fecha y sella la lista de vendidos; es definitivo. */
+  cerrarVenta: async (id: number): Promise<RifaDetalle> => {
+    return httpClient.post<RifaDetalle>(`/rifas/${id}/cerrar-venta`);
+  },
+
   /** HU-506 (PICA-268 / PICA-269): Reclamar resultado del sorteo de una rifa. */
   reclamar: async (rifaId: number, payload: ReclamoPayload): Promise<ReclamoRifa> => {
     return httpClient.post<ReclamoRifa>(`/rifas/${rifaId}/reclamos`, payload);
@@ -233,6 +241,9 @@ export interface RifaPublicaDetalle {
   premios: PremioRifa[];
   /** Lo recaudado hasta ahora y cómo se reparte (HU-405). */
   reparto: RepartoRifa;
+  /** SHA-256 de la lista de vendidos, fijado al cerrar la venta (HU-407); null antes. */
+  listaHash: string | null;
+  listaSelladaEn: string | null;
 }
 
 export type EstadoNumero = 'VENDIDO' | 'RESERVADO' | 'REINTEGRADO';
