@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
+  RifaVerificacionData,
   SorteoItemResumen,
   TipoSorteo,
   TorneoVerificacionData,
@@ -15,6 +16,7 @@ import {
   IconoRifas,
   IconoTrofeo,
 } from '../../shared/ui/Iconos';
+import { VerificacionRifa } from '../components/VerificacionRifa';
 import { VerificacionTorneo } from '../components/VerificacionTorneo';
 import '../verificacion.css';
 
@@ -26,7 +28,7 @@ export const PortalVerificacionPage: React.FC = () => {
   const tipoInicial: TipoSorteo = tipoParam?.toUpperCase() === 'RIFA' ? 'RIFA' : 'TORNEO';
   const [tipoSeleccionado, setTipoSeleccionado] = useState<TipoSorteo>(tipoInicial);
 
-  // Torneos con el bracket sorteado, del catálogo público
+  // Torneos con el bracket sorteado o rifas sorteadas, según la pestaña
   const [sorteosDisponibles, setSorteosDisponibles] = useState<SorteoItemResumen[]>([]);
   const [cargandoLista, setCargandoLista] = useState(false);
 
@@ -35,17 +37,17 @@ export const PortalVerificacionPage: React.FC = () => {
 
   // Datos del sorteo consultado
   const [datosTorneo, setDatosTorneo] = useState<TorneoVerificacionData | null>(null);
+  const [datosRifa, setDatosRifa] = useState<RifaVerificacionData | null>(null);
   const [cargandoSorteo, setCargandoSorteo] = useState(false);
   const [errorConsulta, setErrorConsulta] = useState<string | null>(null);
   // Consultar cambia la URL y la URL vuelve a disparar el efecto: así no se pide dos veces
   const ultimoConsultado = useRef<string | null>(null);
 
-  // Cargar lista disponible
+  // Cargar la lista de la pestaña elegida
   useEffect(() => {
     let vigente = true;
     setCargandoLista(true);
-    verificacionApi
-      .listarTorneos()
+    (tipoSeleccionado === 'RIFA' ? verificacionApi.listarRifas() : verificacionApi.listarTorneos())
       .then((items) => {
         if (!vigente) return;
         setSorteosDisponibles(items);
@@ -62,23 +64,34 @@ export const PortalVerificacionPage: React.FC = () => {
     return () => {
       vigente = false;
     };
-  }, []);
+  }, [tipoSeleccionado]);
 
-  const consultarTorneo = useCallback(
-    async (id: string | number) => {
+  // Mientras llega la lista nueva queda la de la otra pestaña: se filtra por tipo
+  const disponibles = useMemo(
+    () => sorteosDisponibles.filter((s) => s.tipo === tipoSeleccionado),
+    [sorteosDisponibles, tipoSeleccionado]
+  );
+
+  const consultar = useCallback(
+    async (tipo: TipoSorteo, id: string | number) => {
       if (!id) return;
-      ultimoConsultado.current = String(id);
+      ultimoConsultado.current = `${tipo}-${id}`;
       setCargandoSorteo(true);
       setErrorConsulta(null);
 
       // Sincronizar query params
-      setSearchParams({ tipo: 'torneo', id: String(id) });
+      setSearchParams({ tipo: tipo.toLowerCase(), id: String(id) });
 
       try {
-        setDatosTorneo(await verificacionApi.obtenerTorneo(id));
+        if (tipo === 'RIFA') {
+          setDatosRifa(await verificacionApi.obtenerRifa(id));
+        } else {
+          setDatosTorneo(await verificacionApi.obtenerTorneo(id));
+        }
       } catch (err: unknown) {
         setErrorConsulta(mensajeDeError(err, 'No se pudo cargar el sorteo especificado.'));
         setDatosTorneo(null);
+        setDatosRifa(null);
       } finally {
         setCargandoSorteo(false);
       }
@@ -86,45 +99,37 @@ export const PortalVerificacionPage: React.FC = () => {
     [setSearchParams]
   );
 
-  // Consultar en el montaje si viene un id en searchParams o seleccionar el primero disponible
+  // Consultar si viene un id en searchParams o seleccionar el primero disponible
   useEffect(() => {
-    if (searchParams.get('tipo')?.toUpperCase() === 'RIFA') {
-      setTipoSeleccionado('RIFA');
-      return;
-    }
     const idUrl = searchParams.get('id');
     if (idUrl) {
-      if (idUrl === ultimoConsultado.current) return;
+      const tipoUrl: TipoSorteo =
+        searchParams.get('tipo')?.toUpperCase() === 'RIFA' ? 'RIFA' : 'TORNEO';
+      if (`${tipoUrl}-${idUrl}` === ultimoConsultado.current) return;
       setIdConsultado(idUrl);
-      setTipoSeleccionado('TORNEO');
-      consultarTorneo(idUrl);
-    } else if (sorteosDisponibles.length > 0) {
-      const sugerido = sorteosDisponibles[0];
-      setIdConsultado(String(sugerido.id));
-      setTipoSeleccionado('TORNEO');
-      consultarTorneo(sugerido.id);
+      setTipoSeleccionado(tipoUrl);
+      consultar(tipoUrl, idUrl);
+    } else if (disponibles.length > 0) {
+      setIdConsultado(String(disponibles[0].id));
+      consultar(tipoSeleccionado, disponibles[0].id);
     }
-  }, [sorteosDisponibles, searchParams, consultarTorneo]);
+  }, [disponibles, tipoSeleccionado, searchParams, consultar]);
 
   const cambiarTipo = (nuevoTipo: TipoSorteo) => {
     setTipoSeleccionado(nuevoTipo);
     setErrorConsulta(null);
     setDatosTorneo(null);
+    setDatosRifa(null);
     setIdConsultado('');
-    if (nuevoTipo === 'RIFA') {
-      setSearchParams({ tipo: 'rifa' });
-    } else if (sorteosDisponibles.length > 0) {
-      setIdConsultado(String(sorteosDisponibles[0].id));
-      consultarTorneo(sorteosDisponibles[0].id);
-    } else {
-      setSearchParams({ tipo: 'torneo' });
-    }
+    ultimoConsultado.current = null;
+    // sin id: cuando llega la lista de la pestaña se consulta el primero
+    setSearchParams({ tipo: nuevoTipo.toLowerCase() });
   };
 
   const manejarEnvioConsulta = (e: React.FormEvent) => {
     e.preventDefault();
     if (idConsultado.trim()) {
-      consultarTorneo(idConsultado.trim());
+      consultar(tipoSeleccionado, idConsultado.trim());
     }
   };
 
@@ -132,11 +137,11 @@ export const PortalVerificacionPage: React.FC = () => {
     const valor = e.target.value;
     if (valor) {
       setIdConsultado(valor);
-      consultarTorneo(valor);
+      consultar(tipoSeleccionado, valor);
     }
   };
 
-  const torneoConsultado = sorteosDisponibles.find((s) => s.id === datosTorneo?.id);
+  const torneoConsultado = disponibles.find((s) => s.id === datosTorneo?.id);
 
   return (
     <div className="verificacion-container">
@@ -148,8 +153,9 @@ export const PortalVerificacionPage: React.FC = () => {
         </div>
         <p className="verificacion-hero-desc">
           Auditoría abierta y reproducible en el navegador. Comprueba de forma independiente que los
-          sorteos de llaves de torneos y rifas son matemáticamente determinísticos y no fueron manipulados.
-          Puedes consultar cualquier sorteo realizado, revisar su compromiso previo y recalcular el resultado.
+          sorteos de llaves de torneos y rifas son matemáticamente determinísticos y no fueron
+          manipulados. Puedes consultar cualquier sorteo realizado, revisar su compromiso previo y
+          recalcular el resultado.
         </p>
       </section>
 
@@ -176,9 +182,8 @@ export const PortalVerificacionPage: React.FC = () => {
           </button>
         </div>
 
-        {tipoSeleccionado === 'TORNEO' && (
         <form onSubmit={manejarEnvioConsulta} className="verificacion-busqueda-row">
-          {sorteosDisponibles.length > 0 && (
+          {disponibles.length > 0 && (
             <div className="verificacion-input-grupo">
               <label htmlFor="selector-sorteos-disponibles" className="verificacion-label">
                 Sorteos realizados recientemente
@@ -193,7 +198,7 @@ export const PortalVerificacionPage: React.FC = () => {
                 <option value="">
                   {cargandoLista ? 'Cargando sorteos...' : 'Selecciona un sorteo...'}
                 </option>
-                {sorteosDisponibles.map((item) => (
+                {disponibles.map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.titulo} ({item.disciplinaOInfo})
                   </option>
@@ -204,7 +209,7 @@ export const PortalVerificacionPage: React.FC = () => {
 
           <div className="verificacion-input-grupo" style={{ maxWidth: '200px' }}>
             <label htmlFor="input-id-sorteo" className="verificacion-label">
-              O ingresar ID de Torneo
+              O ingresar ID de {tipoSeleccionado === 'RIFA' ? 'Rifa' : 'Torneo'}
             </label>
             <input
               id="input-id-sorteo"
@@ -228,7 +233,6 @@ export const PortalVerificacionPage: React.FC = () => {
             <span>Consultar</span>
           </button>
         </form>
-        )}
       </section>
 
       {/* Estados de carga o error */}
@@ -263,47 +267,61 @@ export const PortalVerificacionPage: React.FC = () => {
         />
       )}
 
-      {/* El sorteo de rifas (PICA-265) todavía no existe en el back */}
-      {tipoSeleccionado === 'RIFA' && (
-        <div
-          data-testid="rifas-sin-sorteo"
-          style={{
-            textAlign: 'center',
-            padding: '3rem 1rem',
-            background: 'var(--bg-superficie)',
-            borderRadius: '12px',
-            border: '1px dashed var(--border-color)',
-          }}
-        >
-          <IconoRifas size={40} />
-          <h3 style={{ marginTop: '1rem', marginBottom: '0.25rem' }}>
-            Todavía no hay sorteos de rifa para verificar
-          </h3>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-            Cuando la plataforma sortee la primera rifa, vas a poder revisar acá su compromiso, la
-            semilla y los ganadores.
-          </p>
-        </div>
+      {!cargandoSorteo && !errorConsulta && tipoSeleccionado === 'RIFA' && datosRifa && (
+        <VerificacionRifa key={datosRifa.id} datos={datosRifa} />
       )}
 
-      {tipoSeleccionado === 'TORNEO' && !cargandoSorteo && !errorConsulta && !datosTorneo && (
-        <div
-          style={{
-            textAlign: 'center',
-            padding: '3rem 1rem',
-            background: 'var(--bg-superficie)',
-            borderRadius: '12px',
-            border: '1px dashed var(--border-color)',
-          }}
-        >
-          <IconoEscudoCheck size={40} />
-          <h3 style={{ marginTop: '1rem', marginBottom: '0.25rem' }}>Ningún sorteo seleccionado</h3>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-            Selecciona un sorteo de la lista o ingresa un identificador para auditar los hashes y
-            recalcular los resultados.
-          </p>
-        </div>
-      )}
+      {/* Todavía no se sorteó ninguna rifa */}
+      {tipoSeleccionado === 'RIFA' &&
+        !cargandoLista &&
+        !cargandoSorteo &&
+        !errorConsulta &&
+        !datosRifa &&
+        disponibles.length === 0 && (
+          <div
+            data-testid="rifas-sin-sorteo"
+            style={{
+              textAlign: 'center',
+              padding: '3rem 1rem',
+              background: 'var(--bg-superficie)',
+              borderRadius: '12px',
+              border: '1px dashed var(--border-color)',
+            }}
+          >
+            <IconoRifas size={40} />
+            <h3 style={{ marginTop: '1rem', marginBottom: '0.25rem' }}>
+              Todavía no hay sorteos de rifa para verificar
+            </h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+              Cuando la plataforma sortee la primera rifa, vas a poder revisar acá su compromiso, la
+              semilla y los ganadores.
+            </p>
+          </div>
+        )}
+
+      {!cargandoSorteo &&
+        !errorConsulta &&
+        !(tipoSeleccionado === 'TORNEO' ? datosTorneo : datosRifa) &&
+        (tipoSeleccionado === 'TORNEO' || disponibles.length > 0) && (
+          <div
+            style={{
+              textAlign: 'center',
+              padding: '3rem 1rem',
+              background: 'var(--bg-superficie)',
+              borderRadius: '12px',
+              border: '1px dashed var(--border-color)',
+            }}
+          >
+            <IconoEscudoCheck size={40} />
+            <h3 style={{ marginTop: '1rem', marginBottom: '0.25rem' }}>
+              Ningún sorteo seleccionado
+            </h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+              Selecciona un sorteo de la lista o ingresa un identificador para auditar los hashes y
+              recalcular los resultados.
+            </p>
+          </div>
+        )}
     </div>
   );
 };

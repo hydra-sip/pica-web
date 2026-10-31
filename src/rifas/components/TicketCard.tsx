@@ -10,7 +10,7 @@ import {
   IconoListo,
   IconoHash,
 } from '../../shared/ui/Iconos';
-import { ESTADO_RIFA_UI, TONO_ESTADO_RIFA } from '../formato';
+import { ESTADO_RIFA_UI, resultadoDelTicket, TONO_ESTADO_RIFA } from '../formato';
 import { fechaHora, pesos } from '../../shared/formato';
 import { BotonReclamarTicket } from './BotonReclamarTicket';
 
@@ -35,6 +35,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({
   className = '',
 }) => {
   const esRifaFinalizada = ticket.rifaEstado === 'SORTEADA' || ticket.rifaEstado === 'EN_REVISION';
+  const resultado = resultadoDelTicket(ticket);
 
   return (
     <Card className={`ticket-card ${className}`} data-testid="ticket-card">
@@ -92,6 +93,15 @@ export const TicketCard: React.FC<TicketCardProps> = ({
             ))}
           </div>
         </div>
+
+        {resultado && (
+          <div
+            className={`alerta ${resultado.gano ? 'alerta-exito' : 'alerta-info'}`}
+            data-testid="ticket-resultado-sorteo"
+          >
+            {resultado.texto}
+          </div>
+        )}
 
         <div className="ticket-datos-pago">
           <div className="ticket-dato-item">
@@ -151,7 +161,9 @@ export const TicketCard: React.FC<TicketCardProps> = ({
                 <IconoAlerta size={18} />
                 <h3>Reclamo Registrado en Disputa</h3>
               </div>
-              <Badge tone={RECLAMO_UI[reclamo.estado].tono}>{RECLAMO_UI[reclamo.estado].texto}</Badge>
+              <Badge tone={RECLAMO_UI[reclamo.estado].tono}>
+                {RECLAMO_UI[reclamo.estado].texto}
+              </Badge>
             </div>
             <p className="ticket-reclamo-motivo">
               <strong>Motivo:</strong> {reclamo.motivo}

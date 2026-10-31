@@ -51,6 +51,7 @@ const POR_CODIGO: Record<string, string> = {
   TORNEO_NO_ADMITE_RIFA: 'Ese torneo ya empezó o terminó: no se le puede asociar una rifa.',
   NUMERO_NO_DISPONIBLE: 'Alguno de los números ya no está disponible: elegí otros.',
   VENTA_CERRADA: 'La venta de esta rifa no está abierta.',
+  LISTA_SELLADA: 'La venta de esta rifa ya se cerró y la lista de números vendidos está sellada.',
   RESERVA_VENCIDA: 'Se terminó el tiempo de la reserva: volvé a elegir tus números.',
   RIFA_PROPIA: 'No podés comprar números de tu propia rifa.',
   CLAVE_IDEMPOTENCIA_USADA: 'No se pudo completar la compra: volvé a intentarlo.',
@@ -107,15 +108,16 @@ const POR_CODIGO: Record<string, string> = {
     'La ventana para cargar o modificar el pronóstico ya cerró o el partido ya finalizó.',
   PRONOSTICO_INVALIDO: 'El pronóstico indicado no es válido.',
   // HU-506 / T506-2: Reclamos de resultado de rifa
-  PLAZO_RECLAMO_VENCIDO:
-    'La ventana de 48 horas para reclamar el resultado de la rifa ya cerró.',
+  PLAZO_RECLAMO_VENCIDO: 'La ventana de 48 horas para reclamar el resultado de la rifa ya cerró.',
   NO_ES_COMPRADOR: 'No podés reclamar: no tenés un ticket comprado para esta rifa.',
   RECLAMO_DUPLICADO: 'Ya tenés un reclamo registrado para esta rifa.',
   RIFA_NO_SORTEADA: 'La rifa todavía no fue sorteada.',
+  // HU-504 / T504-2: Sorteo de la rifa
+  SORTEO_ANTICIPADO:
+    'Todavía no llegó la fecha del sorteo: la rifa se sortea en la fecha comprometida.',
   // HU-404: también si la venta no se confirmó o el ticket es de otro
   TICKET_NO_ENCONTRADO: 'El ticket no existe o no es tuyo.',
 };
-
 
 const POR_CODIGO_DE_CAMPO: Record<string, string> = {
   REQUERIDO: 'Es obligatorio.',

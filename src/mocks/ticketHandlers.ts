@@ -28,6 +28,7 @@ export const crearTicketsIniciales = (): Record<number, TicketDetalle> => ({
     sorteadaEn: haceHoras(5),
     esComprador: true,
     ventanaReclamoAbierta: true,
+    premiosGanados: [],
   },
 
   // Ticket 1002: Rifa 20 sorteada hace 72 horas (fuera de las 48h)
@@ -50,6 +51,7 @@ export const crearTicketsIniciales = (): Record<number, TicketDetalle> => ({
     sorteadaEn: haceHoras(72),
     esComprador: true,
     ventanaReclamoAbierta: false,
+    premiosGanados: [],
   },
 
   // Ticket 1003: Rifa 30 de otro comprador, como lo ve un administrador (esComprador en false)
@@ -72,6 +74,7 @@ export const crearTicketsIniciales = (): Record<number, TicketDetalle> => ({
     sorteadaEn: haceHoras(10),
     esComprador: false,
     ventanaReclamoAbierta: true,
+    premiosGanados: [],
   },
 
   // Ticket 1004: Rifa 40 ya en revisión con reclamo pendiente
@@ -94,6 +97,7 @@ export const crearTicketsIniciales = (): Record<number, TicketDetalle> => ({
     sorteadaEn: haceHoras(12),
     esComprador: true,
     ventanaReclamoAbierta: true,
+    premiosGanados: [],
   },
 });
 

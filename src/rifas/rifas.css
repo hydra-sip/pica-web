@@ -296,6 +296,15 @@
   font-size: var(--text-md);
 }
 
+/* Título de lo recaudado con una acción al costado (HU-406: "Ver rifa" en la consola del torneo) */
+.rifas-recaudado-titulo {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
 /* Términos con alto fijo y scroll propio */
 .rifas-terminos {
   max-height: 14rem;
@@ -339,6 +348,50 @@
 /* Premios del resumen: ocupan todas las columnas del recuadro */
 .rifas-resumen-ancho {
   grid-column: 1 / -1;
+}
+
+/* HU-407: el hash de la lista sellada, completo y en una sola pieza seleccionable */
+.rifas-hash {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  word-break: break-all;
+  user-select: all;
+}
+
+/* HU-407: "Ver desglose" chico, debajo del hash */
+.rifas-hash + .btn {
+  margin-top: var(--space-1);
+}
+
+/* HU-504: el número que ganó cada premio */
+.rifas-ganadores {
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  list-style: none;
+}
+
+.rifas-ganadores li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.rifas-ganador-puesto {
+  min-width: 2rem;
+  color: var(--color-text-secondary);
+}
+
+.rifas-ganador-numero {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.rifas-verificar {
+  font-size: var(--text-sm);
 }
 
 .rifas-resumen-premios {
@@ -385,11 +438,6 @@
 
 .rifa-tarjeta .btn {
   margin-top: auto;
-}
-
-.rifa-descripcion {
-  margin: 0 0 var(--space-4);
-  white-space: pre-line;
 }
 
 .grilla-numeros {
@@ -527,47 +575,20 @@ button.grilla-celda:hover {
   margin-top: var(--space-4);
 }
 
-.pago-reloj {
-  margin: 0 0 var(--space-4);
-  font-size: var(--text-sm);
-  color: var(--color-text-secondary);
+/* Pago de la compra: los estilos de "Confirmar y pagar" de la inscripción (inscripciones.css, HU-406) */
+.pago-rifa {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
 }
 
 .pago-reloj.vencida {
   color: var(--color-danger);
 }
 
-.pago-detalle {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.pago-detalle th,
-.pago-detalle td {
-  padding: var(--space-2) 0;
-  border-bottom: 1px solid var(--color-border);
-  font-weight: 400;
-  text-align: left;
-}
-
-.pago-detalle td {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.pago-total th,
-.pago-total td {
-  font-weight: 700;
-  border-bottom: none;
-}
-
 .pago-codigo {
   font-weight: 700;
   letter-spacing: 0.05em;
-}
-
-.pago-simulado {
-  margin-bottom: var(--space-4);
 }
 
 /* --- Tickets de Rifa y Reclamos (HU-506 / T506-2) ----------------------------- */
@@ -961,4 +982,10 @@ button.grilla-celda:hover {
   .ticket-pie {
     display: none !important;
   }
+}
+
+/* HU-504: qué le tocó al ticket en el sorteo */
+.mis-tickets-resultado {
+  margin: var(--space-2) 0;
+  font-weight: 600;
 }

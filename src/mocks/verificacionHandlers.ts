@@ -145,60 +145,55 @@ const sorteoTorneo3: TorneoVerificacionData = {
   },
 };
 
-// La rifa todavía no tiene GET /rifas/{id}/sorteo (PICA-263): solo la usa el test de VerificacionRifa
+// Rifa 10 sorteada, como la devuelve GET /rifas/publicas/{id}/sorteo: los hashes y los ganadores
+// son los que da el algoritmo real, así el portal la verifica de punta a punta
 export const mockRifaVerificacion10: RifaVerificacionData = {
   id: 10,
   titulo: 'Gran Rifa Benéfica de la Copa',
   torneoNombre: 'Copa PICA 2026 - Eliminación Directa',
   fechaSorteo: '2026-10-26T21:00:00Z',
-  compromisoHash: 'c8b421037d30fe6404a753a3ca6fc9f8b2661ce18f66a1240004c7d429985b8f',
-  listaHash: '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8',
-  semilla: 'loteria-nacional-jugada-48921-sorteo-matutino-2026',
-  semillaFirma:
-    '304402206d2c47a329d93568d27f12e5d0bb412e803154868b1a8d05ee0c96c561b36531022026a27e029cbb0702d3ef1ecf7e1b525d8869c8a9bc697ffef8171092fb2b8a71',
-  numerosVendidos: [7, 14, 21, 35, 42, 59, 73, 88, 92, 105],
+  listaHash: '059f191ae46c2ce332ebaf49f125bcb3fc89308049e1700a98d7a87b3d36a07d',
+  listaSelladaEn: '2026-10-25T21:00:00Z',
+  lista: [
+    { numero: 7, ticketCodigo: 'R10-K7MPQ2' },
+    { numero: 14, ticketCodigo: 'R10-K7MPQ2' },
+    { numero: 21, ticketCodigo: 'R10-T4XWZ9' },
+    { numero: 35, ticketCodigo: 'R10-B8HNR3' },
+    { numero: 42, ticketCodigo: 'R10-B8HNR3' },
+    { numero: 59, ticketCodigo: 'R10-B8HNR3' },
+    { numero: 73, ticketCodigo: 'R10-M2DCV6' },
+    { numero: 88, ticketCodigo: 'R10-Q9JFL5' },
+    { numero: 92, ticketCodigo: 'R10-Q9JFL5' },
+    { numero: 105, ticketCodigo: 'R10-W3GYT8' },
+  ],
+  compromisoHash: '124775535e5e5a4b8201471ea119df6391dab54ed8e97614f8265b80c60dd5dc',
+  compromisoPublicadoEn: '2026-10-25T21:00:00Z',
+  semilla: '9f2c6e1d4b8a7f3e0c5d2a9b6e1f4c7d8a3b0e5f2c9d6a1b4e7f0c3d8a5b2e9f',
+  semillaFirma: null,
+  semillaObtenidaEn: '2026-10-26T21:00:05Z',
   premios: [
     {
       puesto: 1,
       descripcion: 'Camiseta Oficial Autografiada',
       pct: 60,
       numeroGanador: 14,
+      ganador: 'mati_rios',
     },
     {
       puesto: 2,
       descripcion: 'Kit Deportivo Profesional',
       pct: 30,
-      numeroGanador: 59,
+      numeroGanador: 88,
+      ganador: 'lucia.fer',
     },
     {
       puesto: 3,
       descripcion: 'Entradas VIP para la Final',
       pct: 10,
-      numeroGanador: 35,
+      numeroGanador: 7,
+      ganador: 'mati_rios',
     },
   ],
-  resultadoOficial: {
-    ganadores: [
-      {
-        puesto: 1,
-        descripcion: 'Camiseta Oficial Autografiada',
-        pct: 60,
-        numeroGanador: 14,
-      },
-      {
-        puesto: 2,
-        descripcion: 'Kit Deportivo Profesional',
-        pct: 30,
-        numeroGanador: 59,
-      },
-      {
-        puesto: 3,
-        descripcion: 'Entradas VIP para la Final',
-        pct: 10,
-        numeroGanador: 35,
-      },
-    ],
-  },
 };
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
@@ -246,11 +241,35 @@ const bracketDe = (sorteo: TorneoVerificacionData): BracketTorneo => {
 const sorteos: Record<number, TorneoVerificacionData> = { 3: sorteoTorneo3, 5: sorteoTorneo5 };
 
 export const verificacionHandlers = [
+  // GET /rifas/publicas/sorteadas y /rifas/publicas/{id}/sorteo: solo la rifa 10 está sorteada
+  http.get(`${API_URL}/rifas/publicas/sorteadas`, () => {
+    const { id, titulo, torneoNombre, semillaObtenidaEn } = mockRifaVerificacion10;
+    return HttpResponse.json({
+      content: [{ id, titulo, torneoNombre, semillaObtenidaEn }],
+      page: { size: 50, number: 0, totalElements: 1, totalPages: 1 },
+    });
+  }),
+
+  http.get(`${API_URL}/rifas/publicas/:id/sorteo`, ({ params }) => {
+    if (Number(params.id) !== mockRifaVerificacion10.id) {
+      return HttpResponse.json(
+        { status: 409, codigo: 'RIFA_NO_SORTEADA', detail: 'La rifa todavía no se sorteó.' },
+        { status: 409, headers: { 'Content-Type': 'application/problem+json' } }
+      );
+    }
+    return HttpResponse.json(mockRifaVerificacion10);
+  }),
+
   // GET /torneos/{id}/bracket (público); los demás torneos del catálogo simulado no tienen bracket
   http.get(`${API_URL}/torneos/:id/bracket`, ({ params }) => {
     const sorteo = sorteos[Number(params.id)];
     if (!sorteo) {
-      return HttpResponse.json({ torneoId: Number(params.id), semilla: null, listaHash: null, rondas: [] });
+      return HttpResponse.json({
+        torneoId: Number(params.id),
+        semilla: null,
+        listaHash: null,
+        rondas: [],
+      });
     }
     return HttpResponse.json(bracketDe(sorteo));
   }),

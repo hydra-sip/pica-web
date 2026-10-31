@@ -151,6 +151,12 @@ export interface PremioEntrada {
   pct: number;
 }
 
+/** Una línea de la lista sellada: el número vendido y el código de su ticket. */
+export interface LineaEntrada {
+  numero: number;
+  ticketCodigo: string;
+}
+
 export interface NumeroConHash {
   numero: number;
   hash: string;
@@ -167,45 +173,45 @@ export interface GanadorRecalculado {
 
 export interface RecalculoRifaResultado {
   semilla: string;
-  hashSemillaCalculado: string;
-  compromisoHashEsperado: string;
-  compromisoCoincide: boolean;
+  listaHashCalculado: string;
+  compromisoCalculado: string;
   numerosTotal: number;
   orden: NumeroConHash[];
   ganadores: GanadorRecalculado[];
 }
 
 /**
- * Recalcula el sorteo de una rifa:
- * 1. Comprueba que SHA-256(semilla) coincida con el compromiso_hash publicado con anterioridad.
- * 2. Ordena los números vendidos mediante SHA-256(semilla + ":" + numero) de menor a mayor.
- * 3. Asigna los números ganadores en orden de posición a los premios establecidos.
+ * Recalcula el sorteo de una rifa igual que SelloRifa.java y SorteoRifa.java (HU-504):
+ * 1. El hash de la lista: SHA-256 de una línea "numero;ticketCodigo" por vendido, de menor a mayor,
+ *    separadas con "\n" y sin salto al final.
+ * 2. El compromiso: SHA-256(listaHash + ":" + fechaSorteo), con la fecha como la devuelve la API.
+ * 3. Ordena los vendidos por SHA-256(semilla + ":" + numero) de menor a mayor (desempate por número)
+ *    y asigna los ganadores en ese orden a los premios por puesto; los que sobran quedan sin ganador.
  */
 export async function recalcularSorteoRifa(
   semilla: string,
-  compromisoHash: string,
-  numerosVendidos: number[],
+  lista: LineaEntrada[],
+  fechaSorteo: string,
   premios: PremioEntrada[]
 ): Promise<RecalculoRifaResultado> {
-  const hashSemillaCalculado = await calcularSha256(semilla);
-  const compromisoCoincide =
-    hashSemillaCalculado.toLowerCase() === compromisoHash.trim().toLowerCase();
+  const texto = [...lista]
+    .sort((a, b) => a.numero - b.numero)
+    .map((l) => `${l.numero};${l.ticketCodigo}`)
+    .join('\n');
+  const listaHashCalculado = await calcularSha256(texto);
+  const compromisoCalculado = await calcularSha256(`${listaHashCalculado}:${fechaSorteo}`);
 
-  // Calcular el hash de cada número vendido
   const conHashes = await Promise.all(
-    numerosVendidos.map(async (num) => {
-      const hash = await calcularSha256(`${semilla}:${num}`);
-      return {
-        numero: num,
-        hash,
-        posicionOrden: 0,
-      };
-    })
+    lista.map(async (l) => ({
+      numero: l.numero,
+      hash: await calcularSha256(`${semilla}:${l.numero}`),
+      posicionOrden: 0,
+    }))
   );
 
+  // como String.compareTo de Java: el hash en hexadecimal, sin reglas de idioma
   conHashes.sort((a, b) => {
-    const cmp = a.hash.localeCompare(b.hash);
-    if (cmp !== 0) return cmp;
+    if (a.hash !== b.hash) return a.hash < b.hash ? -1 : 1;
     return a.numero - b.numero;
   });
 
@@ -229,10 +235,9 @@ export async function recalcularSorteoRifa(
 
   return {
     semilla,
-    hashSemillaCalculado,
-    compromisoHashEsperado: compromisoHash,
-    compromisoCoincide,
-    numerosTotal: numerosVendidos.length,
+    listaHashCalculado,
+    compromisoCalculado,
+    numerosTotal: lista.length,
     orden,
     ganadores,
   };
