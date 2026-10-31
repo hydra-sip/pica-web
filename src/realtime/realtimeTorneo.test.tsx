@@ -524,6 +524,13 @@ describe('HU-305: Actualización en tiempo real de bracket, pozo y estado', () =
       }),
       http.get(`${API_URL}/partidos/torneo/100/objeciones`, () => {
         return HttpResponse.json([]);
+      }),
+      // HU-406: sin rifa, la consola no muestra su card
+      http.get(`${API_URL}/rifas/mis-rifas`, () => {
+        return HttpResponse.json({
+          content: [],
+          page: { size: 100, number: 0, totalElements: 0, totalPages: 0 },
+        });
       })
     );
 

@@ -343,6 +343,7 @@ export const RifaPublicaPage: React.FC = () => {
       </Card>
 
       <PagoRifa
+        rifaTitulo={rifa.titulo}
         reserva={reserva}
         compra={compra}
         pagando={pagando}
