@@ -16,6 +16,8 @@ const POR_CODIGO: Record<string, string> = {
   ERROR_INTERNO: 'Algo falló en el servidor. Probá de nuevo en un rato.',
   DESIGNACION_NO_ENCONTRADA: 'Ya no figurás como árbitro de ese torneo.',
   DESIGNACION_YA_RESPONDIDA: 'Esa designación ya la respondiste.',
+  COMPROMISO_NO_ACEPTADO:
+    'Para aceptar la designación tenés que aceptar el código de imparcialidad.',
   ALMACENAMIENTO_NO_DISPONIBLE:
     'No se pudo guardar ni leer el archivo: el almacenamiento no respondió. Probá de nuevo en un rato.',
   USUARIO_NO_ENCONTRADO: 'El usuario no existe o está dado de baja.',

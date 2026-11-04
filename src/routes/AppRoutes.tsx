@@ -30,6 +30,7 @@ import { MiInscripcionPage } from '../inscripciones/pages/MiInscripcionPage';
 import { InscripcionPagoPage } from '../inscripciones/pages/InscripcionPagoPage';
 import { PartidoPage } from '../partidos/pages/PartidoPage';
 import { ObjecionesTorneoPage } from '../partidos/pages/ObjecionesTorneoPage';
+import { DesignacionPage } from '../torneos/pages/DesignacionPage';
 import { MisDesignacionesPage } from '../torneos/pages/MisDesignacionesPage';
 import { PronosticosPage } from '../pronosticos/pages/PronosticosPage';
 import { RifasEnVentaPage } from '../rifas/pages/RifasEnVentaPage';
@@ -73,6 +74,7 @@ export const AppRoutes: React.FC = () => {
 
           {/* HU-807 / PICA-315: el árbitro acepta o rechaza sus designaciones; el back responde solo las suyas */}
           <Route path="mis-designaciones" element={<MisDesignacionesPage />} />
+          <Route path="mis-designaciones/:torneoId" element={<DesignacionPage />} />
 
           {/* Objeciones del torneo (PICA-247): el organizador o un árbitro con permiso; si no, el back responde 403 */}
           <Route path="torneos/:id/objeciones" element={<ObjecionesTorneoPage />} />

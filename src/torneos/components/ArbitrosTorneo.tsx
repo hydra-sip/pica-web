@@ -147,6 +147,9 @@ export const ArbitrosTorneo: React.FC<ArbitrosTorneoProps> = ({ torneoId, habili
                       .join(' · ')}
                   </span>
                   <Badge tone={ESTADO[a.estado].tono}>{ESTADO[a.estado].texto}</Badge>
+                  {a.estado === 'RECHAZADO' && a.motivoRechazo && (
+                    <span className="torneos-arbitro-motivo">Motivo: {a.motivoRechazo}</span>
+                  )}
                   {habilitado && (
                     <Button
                       type="button"

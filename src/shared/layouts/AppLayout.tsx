@@ -4,7 +4,7 @@ import { torneoApi } from '../../api/torneoApi';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { Footer } from '../components/Footer';
 import { IncompleteProfileBanner } from '../components/IncompleteProfileBanner';
-import { IconoSalir, IconoSitio } from '../ui/Iconos';
+import { IconoCampana, IconoSalir, IconoSitio } from '../ui/Iconos';
 import { LogoPica } from '../ui/LogoPica';
 import { ItemNavegacion, NAVEGACION, Seccion } from './navegacion';
 import './AppLayout.css';
@@ -131,6 +131,18 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ seccion }) => {
             {seccion === 'admin' && (
               <Link to="/" className="app-boton-icono" aria-label="Volver al sitio" title="Volver al sitio">
                 <IconoSitio />
+              </Link>
+            )}
+            {designaciones.total > 0 && (
+              // En el celular la barra de abajo no llega a "Designaciones": el aviso va en la campana (wireframe 48)
+              <Link
+                to="/mis-designaciones"
+                className="app-boton-icono app-campana"
+                aria-label={`Designaciones: ${designaciones.pendientes} sin responder`}
+                title="Designaciones"
+              >
+                <IconoCampana />
+                {designaciones.pendientes > 0 && <span className="app-contador">{designaciones.pendientes}</span>}
               </Link>
             )}
             {isAuthenticated && (

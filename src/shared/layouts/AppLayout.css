@@ -249,3 +249,14 @@
   line-height: 1.25rem;
   text-align: center;
 }
+
+.app-campana {
+  position: relative;
+}
+
+.app-campana .app-contador {
+  position: absolute;
+  top: 0;
+  right: 0;
+  transform: translate(35%, -35%);
+}
