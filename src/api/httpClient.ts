@@ -1,7 +1,11 @@
 import { ProblemDetail, RefreshResponse } from '../auth/types';
 
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
-const REFRESH_TOKEN_KEY = 'pica_refresh_token';
+export const REFRESH_TOKEN_KEY = 'pica_refresh_token';
+/** El id del usuario de la sesión guardada: lo comparten las pestañas, como el refresh token (CE4-6). */
+export const SESION_USUARIO_KEY = 'pica_sesion_usuario';
+/** Web Lock para que dos pestañas no renueven a la vez con el mismo refresh token. */
+const LOCK_REFRESH = 'pica-refresh';
 
 // Access Token strictly in memory
 let inMemoryAccessToken: string | null = null;
@@ -56,25 +60,46 @@ export const setRefreshToken = (token: string | null) => {
   }
 };
 
+export const getSesionUsuario = (): string | null => localStorage.getItem(SESION_USUARIO_KEY);
+
+export const setSesionUsuario = (id: number | string) => {
+  localStorage.setItem(SESION_USUARIO_KEY, String(id));
+};
+
 export const clearSessionTokens = () => {
   inMemoryAccessToken = null;
   localStorage.removeItem(REFRESH_TOKEN_KEY);
+  localStorage.removeItem(SESION_USUARIO_KEY);
 };
+
+/**
+ * Corre `fn` con el lock de la renovación tomado: si otra pestaña está renovando, espera a que termine. Sin
+ * Web Locks (navegadores viejos) corre directo, como antes.
+ */
+const conLockDeRenovacion = <T>(fn: () => Promise<T>): Promise<T> =>
+  typeof navigator !== 'undefined' && navigator.locks
+    ? navigator.locks.request(LOCK_REFRESH, fn)
+    : fn();
 
 export const performRefreshToken = async (): Promise<RefreshResponse> => {
   if (activeRefreshPromise) {
     return activeRefreshPromise;
   }
 
-  const refreshToken = getRefreshToken();
-  if (!refreshToken) {
+  if (!getRefreshToken()) {
     clearSessionTokens();
     notifyUnauthorized();
     throw new ApiError('No existe refresh token guardado', 401);
   }
 
-  activeRefreshPromise = (async () => {
+  activeRefreshPromise = conLockDeRenovacion(async () => {
     try {
+      // Se lee recién con el lock tomado: si otra pestaña lo acaba de rotar, se usa el nuevo y no el que ya
+      // se gastó (el back lo tomaría como robo, REFRESH_REUTILIZADO, y cerraría todas las sesiones).
+      const refreshToken = getRefreshToken();
+      if (!refreshToken) {
+        throw new ApiError('No existe refresh token guardado', 401);
+      }
       const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -104,7 +129,7 @@ export const performRefreshToken = async (): Promise<RefreshResponse> => {
     } finally {
       activeRefreshPromise = null;
     }
-  })();
+  });
 
   return activeRefreshPromise;
 };

@@ -77,6 +77,9 @@ export interface AuthContextType extends AuthState {
   logout: () => Promise<void>;
   hasPermission: (permiso: string | string[]) => boolean;
   hasRole: (role: RoleName | RoleName[]) => boolean;
+  /** Aviso de lo que pasó con la sesión en otra pestaña (otra cuenta, sesión cerrada); null si no hay. */
+  avisoSesion: string | null;
+  descartarAvisoSesion: () => void;
 }
 
 export interface LoginResponse {
