@@ -14,6 +14,8 @@ const POR_CODIGO: Record<string, string> = {
   REFRESH_REUTILIZADO: SESION_VENCIDA,
   SIN_PERMISO: 'No tenés permiso para hacer esto.',
   ERROR_INTERNO: 'Algo falló en el servidor. Probá de nuevo en un rato.',
+  ALMACENAMIENTO_NO_DISPONIBLE:
+    'No se pudo guardar ni leer el archivo: el almacenamiento no respondió. Probá de nuevo en un rato.',
   USUARIO_NO_ENCONTRADO: 'El usuario no existe o está dado de baja.',
   PERSONA_NO_ENCONTRADA: 'La persona no existe o está dada de baja.',
   ROL_NO_ENCONTRADO: 'El rol no existe o está dado de baja.',
