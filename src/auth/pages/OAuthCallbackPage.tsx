@@ -27,9 +27,7 @@ export const OAuthCallbackPage: React.FC = () => {
   useEffect(() => {
     if (oauthError) {
       setLoading(false);
-      setErrorMsg(
-        ERRORES_GOOGLE[oauthError] ?? 'No se pudo completar el inicio de sesión con Google.'
-      );
+      setErrorMsg(ERRORES_GOOGLE[oauthError] ?? 'No se pudo completar el inicio de sesión con Google.');
       return;
     }
 

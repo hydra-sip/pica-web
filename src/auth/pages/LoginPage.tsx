@@ -46,9 +46,7 @@ export const LoginPage: React.FC = () => {
       const loggedUser = await login(identificador, password);
       setSuccessMsg(`¡Bienvenido ${loggedUser.name}! Iniciando sesión...`);
 
-      const userRoleNames = loggedUser.roles
-        ? loggedUser.roles.map((r) => r.nombre)
-        : [loggedUser.role || ''];
+      const userRoleNames = loggedUser.roles ? loggedUser.roles.map((r) => r.nombre) : [loggedUser.role || ''];
       const isAdmin =
         userRoleNames.includes('ADMINISTRADOR') ||
         userRoleNames.includes('SUPER_USUARIO') ||
@@ -63,16 +61,11 @@ export const LoginPage: React.FC = () => {
     } catch (err) {
       const codigo = codigoDeError(err);
       setErrorType(
-        codigo === 'EMAIL_NO_VERIFICADO'
-          ? 'unverified'
-          : codigo === 'USUARIO_BLOQUEADO'
-            ? 'locked'
-            : 'invalid'
+        codigo === 'EMAIL_NO_VERIFICADO' ? 'unverified' : codigo === 'USUARIO_BLOQUEADO' ? 'locked' : 'invalid'
       );
       setErrorMessage(
         mensajeDeError(err, 'No se pudo iniciar sesión.', {
-          EMAIL_NO_VERIFICADO:
-            'Tu cuenta todavía no está verificada. Revisá tu correo para activarla.',
+          EMAIL_NO_VERIFICADO: 'Tu cuenta todavía no está verificada. Revisá tu correo para activarla.',
         })
       );
     } finally {
@@ -83,10 +76,7 @@ export const LoginPage: React.FC = () => {
   return (
     <AuthTarjeta>
       {errorMessage && (
-        <div
-          className={`alerta ${errorType === 'unverified' ? 'alerta-aviso' : 'alerta-peligro'}`}
-          role="alert"
-        >
+        <div className={`alerta ${errorType === 'unverified' ? 'alerta-aviso' : 'alerta-peligro'}`} role="alert">
           {errorMessage}
           {errorType === 'unverified' && (
             <>

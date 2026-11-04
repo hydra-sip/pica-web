@@ -12,7 +12,10 @@ import {
   getTodayDateString,
   MIN_FECHA_NACIMIENTO,
 } from '../../shared/validators';
-import { IconoCheck, IconoAlerta } from '../../shared/ui/Iconos';
+import {
+  IconoCheck,
+  IconoAlerta,
+} from '../../shared/ui/Iconos';
 import '../auth.css';
 
 export const ProfilePage: React.FC = () => {
@@ -165,9 +168,7 @@ export const ProfilePage: React.FC = () => {
         if (pd.codigo === 'PASSWORD_INCORRECTA') {
           setPasswordFieldErrors({ passwordActual: 'La contraseña actual no es correcta.' });
         } else if (pd.codigo === 'PASSWORD_INVALIDA') {
-          setPasswordFieldErrors({
-            passwordNueva: pd.detail || 'La nueva contraseña no cumple con los requisitos mínimos.',
-          });
+          setPasswordFieldErrors({ passwordNueva: pd.detail || 'La nueva contraseña no cumple con los requisitos mínimos.' });
         } else if (pd.errores && Array.isArray(pd.errores)) {
           const errs: Record<string, string> = {};
           pd.errores.forEach((item) => {
@@ -196,28 +197,11 @@ export const ProfilePage: React.FC = () => {
   const userRole = user?.roles?.[0]?.nombre || user?.role || 'JUGADOR';
 
   return (
-    <div
-      style={{
-        maxWidth: '640px',
-        margin: '0 auto',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '1.5rem',
-      }}
-    >
+    <div style={{ maxWidth: '640px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {/* Mi Perfil Card */}
       <div className="pica-card hydra-card" style={{ padding: '1.75rem' }}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
-            marginBottom: '1rem',
-          }}
-        >
-          <h1
-            style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}
-          >
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1rem' }}>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
             Mi Perfil
           </h1>
         </div>
@@ -261,9 +245,7 @@ export const ProfilePage: React.FC = () => {
                 {userRole}
               </span>
             </div>
-            <div
-              style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}
-            >
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
               @{user?.username || 'usuario'} • {user?.email}
             </div>
           </div>
@@ -272,14 +254,7 @@ export const ProfilePage: React.FC = () => {
 
       {/* Profile Form: Datos Personales */}
       <div className="pica-card hydra-card" style={{ padding: '1.75rem' }}>
-        <h2
-          style={{
-            fontSize: '1.15rem',
-            fontWeight: 800,
-            marginBottom: '0.35rem',
-            color: 'var(--text-primary)',
-          }}
-        >
+        <h2 style={{ fontSize: '1.15rem', fontWeight: 800, marginBottom: '0.35rem', color: 'var(--text-primary)' }}>
           Editar Información Personal
         </h2>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
@@ -287,60 +262,23 @@ export const ProfilePage: React.FC = () => {
         </p>
 
         {profileSuccessMsg && (
-          <div
-            style={{
-              background: '#f0fdf4',
-              border: '1px solid #bbf7d0',
-              color: '#166534',
-              padding: '0.75rem',
-              borderRadius: 'var(--radius-md)',
-              marginBottom: '1.25rem',
-              fontSize: '0.85rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.45rem',
-            }}
-          >
+          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
             <IconoCheck size={16} />
             <span>{profileSuccessMsg}</span>
           </div>
         )}
 
         {profileErrorMsg && (
-          <div
-            style={{
-              background: '#fef2f2',
-              border: '1px solid #fecaca',
-              color: '#991b1b',
-              padding: '0.75rem',
-              borderRadius: 'var(--radius-md)',
-              marginBottom: '1.25rem',
-              fontSize: '0.85rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.45rem',
-            }}
-          >
+          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
             <IconoAlerta size={16} />
             <span>{profileErrorMsg}</span>
           </div>
         )}
 
-        <form
-          onSubmit={handleUpdateProfile}
-          noValidate
-          style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
-        >
+        <form onSubmit={handleUpdateProfile} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div className="auth-fila">
             <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  marginBottom: '0.35rem',
-                }}
-              >
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                 Nombres <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <input
@@ -352,30 +290,14 @@ export const ProfilePage: React.FC = () => {
                 aria-invalid={!!profileFieldErrors.nombres}
               />
               {profileFieldErrors.nombres && (
-                <span
-                  style={{
-                    color: '#ef4444',
-                    fontSize: '0.75rem',
-                    marginTop: '0.2rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.3rem',
-                  }}
-                >
+                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                   <IconoAlerta size={13} /> {profileFieldErrors.nombres}
                 </span>
               )}
             </div>
 
             <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  marginBottom: '0.35rem',
-                }}
-              >
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                 Apellidos <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <input
@@ -387,16 +309,7 @@ export const ProfilePage: React.FC = () => {
                 aria-invalid={!!profileFieldErrors.apellidos}
               />
               {profileFieldErrors.apellidos && (
-                <span
-                  style={{
-                    color: '#ef4444',
-                    fontSize: '0.75rem',
-                    marginTop: '0.2rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.3rem',
-                  }}
-                >
+                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                   <IconoAlerta size={13} /> {profileFieldErrors.apellidos}
                 </span>
               )}
@@ -404,29 +317,20 @@ export const ProfilePage: React.FC = () => {
           </div>
 
           <div>
-            <label
-              style={{
-                display: 'block',
-                fontSize: '0.82rem',
-                fontWeight: 600,
-                marginBottom: '0.35rem',
-              }}
-            >
+            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
               Correo Electrónico (No editable)
             </label>
-            <input type="email" disabled value={email} className="input" />
+            <input
+              type="email"
+              disabled
+              value={email}
+              className="input"
+            />
           </div>
 
           <div className="auth-fila auth-fila-doc">
             <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  marginBottom: '0.35rem',
-                }}
-              >
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                 Tipo
               </label>
               <select
@@ -435,22 +339,13 @@ export const ProfilePage: React.FC = () => {
                 className="input"
               >
                 {TIPOS_DOC_VALIDOS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  marginBottom: '0.35rem',
-                }}
-              >
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                 Nro Documento
               </label>
               <input
@@ -461,16 +356,7 @@ export const ProfilePage: React.FC = () => {
                 aria-invalid={!!profileFieldErrors.nroDoc}
               />
               {profileFieldErrors.nroDoc && (
-                <span
-                  style={{
-                    color: '#ef4444',
-                    fontSize: '0.75rem',
-                    marginTop: '0.2rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.3rem',
-                  }}
-                >
+                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                   <IconoAlerta size={13} /> {profileFieldErrors.nroDoc}
                 </span>
               )}
@@ -479,14 +365,7 @@ export const ProfilePage: React.FC = () => {
 
           <div className="auth-fila">
             <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  marginBottom: '0.35rem',
-                }}
-              >
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                 Fecha de Nacimiento
               </label>
               <input
@@ -499,30 +378,14 @@ export const ProfilePage: React.FC = () => {
                 aria-invalid={!!profileFieldErrors.fechaNacimiento}
               />
               {profileFieldErrors.fechaNacimiento && (
-                <span
-                  style={{
-                    color: '#ef4444',
-                    fontSize: '0.75rem',
-                    marginTop: '0.2rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.3rem',
-                  }}
-                >
+                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                   <IconoAlerta size={13} /> {profileFieldErrors.fechaNacimiento}
                 </span>
               )}
             </div>
 
             <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  marginBottom: '0.35rem',
-                }}
-              >
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                 Teléfono de Contacto
               </label>
               <input
@@ -545,14 +408,7 @@ export const ProfilePage: React.FC = () => {
 
       {/* Profile Form: Seguridad / Contraseña */}
       <div className="pica-card hydra-card" style={{ padding: '1.75rem' }}>
-        <h2
-          style={{
-            fontSize: '1.15rem',
-            fontWeight: 800,
-            marginBottom: '0.35rem',
-            color: 'var(--text-primary)',
-          }}
-        >
+        <h2 style={{ fontSize: '1.15rem', fontWeight: 800, marginBottom: '0.35rem', color: 'var(--text-primary)' }}>
           Seguridad y Contraseña
         </h2>
         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
@@ -560,59 +416,22 @@ export const ProfilePage: React.FC = () => {
         </p>
 
         {passwordSuccessMsg && (
-          <div
-            style={{
-              background: '#f0fdf4',
-              border: '1px solid #bbf7d0',
-              color: '#166534',
-              padding: '0.75rem',
-              borderRadius: 'var(--radius-md)',
-              marginBottom: '1.25rem',
-              fontSize: '0.85rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.45rem',
-            }}
-          >
+          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
             <IconoCheck size={16} />
             <span>{passwordSuccessMsg}</span>
           </div>
         )}
 
         {passwordErrorMsg && (
-          <div
-            style={{
-              background: '#fef2f2',
-              border: '1px solid #fecaca',
-              color: '#991b1b',
-              padding: '0.75rem',
-              borderRadius: 'var(--radius-md)',
-              marginBottom: '1.25rem',
-              fontSize: '0.85rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.45rem',
-            }}
-          >
+          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', padding: '0.75rem', borderRadius: 'var(--radius-md)', marginBottom: '1.25rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
             <IconoAlerta size={16} />
             <span>{passwordErrorMsg}</span>
           </div>
         )}
 
-        <form
-          onSubmit={handleChangePassword}
-          noValidate
-          style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
-        >
+        <form onSubmit={handleChangePassword} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
-            <label
-              style={{
-                display: 'block',
-                fontSize: '0.82rem',
-                fontWeight: 600,
-                marginBottom: '0.35rem',
-              }}
-            >
+            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
               Contraseña Actual <span style={{ color: '#ef4444' }}>*</span>
             </label>
             <input
@@ -625,37 +444,15 @@ export const ProfilePage: React.FC = () => {
               aria-invalid={!!passwordFieldErrors.passwordActual}
             />
             {passwordFieldErrors.passwordActual && (
-              <span
-                style={{
-                  color: '#ef4444',
-                  fontSize: '0.75rem',
-                  marginTop: '0.2rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.3rem',
-                }}
-              >
+              <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                 <IconoAlerta size={13} /> {passwordFieldErrors.passwordActual}
               </span>
             )}
           </div>
 
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-              gap: '0.75rem',
-            }}
-          >
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '0.75rem' }}>
             <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  marginBottom: '0.35rem',
-                }}
-              >
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                 Nueva Contraseña <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <input
@@ -669,30 +466,14 @@ export const ProfilePage: React.FC = () => {
               />
               <PasswordRequirements password={passwordNueva} />
               {passwordFieldErrors.passwordNueva && (
-                <span
-                  style={{
-                    color: '#ef4444',
-                    fontSize: '0.75rem',
-                    marginTop: '0.2rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.3rem',
-                  }}
-                >
+                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                   <IconoAlerta size={13} /> {passwordFieldErrors.passwordNueva}
                 </span>
               )}
             </div>
 
             <div>
-              <label
-                style={{
-                  display: 'block',
-                  fontSize: '0.82rem',
-                  fontWeight: 600,
-                  marginBottom: '0.35rem',
-                }}
-              >
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
                 Confirmar Nueva Contraseña <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <input
@@ -705,16 +486,7 @@ export const ProfilePage: React.FC = () => {
                 aria-invalid={!!passwordFieldErrors.confirmPassword}
               />
               {passwordFieldErrors.confirmPassword && (
-                <span
-                  style={{
-                    color: '#ef4444',
-                    fontSize: '0.75rem',
-                    marginTop: '0.2rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.3rem',
-                  }}
-                >
+                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                   <IconoAlerta size={13} /> {passwordFieldErrors.confirmPassword}
                 </span>
               )}
