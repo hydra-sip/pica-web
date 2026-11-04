@@ -80,6 +80,11 @@ export interface CuentasEconomia {
   recaudacion: number | null;
   gastos: number;
   pozoNeto: number | null;
+  /**
+   * El pozo neto si se inscribe solo el cupo mínimo: es la cuenta que hace el back al publicar
+   * (POZO_NETO_NO_POSITIVO si da cero o menos).
+   */
+  pozoNetoMinimo: number | null;
   /** Monto de cada puesto, en el orden de los premios. */
   porPuesto: (number | null)[];
   /** Lo que paga aparte cada inscripción. */
@@ -94,23 +99,27 @@ const porcentaje = (monto: number | null, pct: number | null): number | null =>
 /**
  * Las cuentas de GET /torneos/{id}/resumen-economico con lo que hay escrito, para verlas mientras se edita:
  * recaudación con el cupo completo, que va entera al pozo; el pozo neto (menos los gastos previstos) repartido por
- * puesto, y lo que paga cada uno con los gastos administrativos.
+ * puesto, el pozo neto con el cupo mínimo, y lo que paga cada uno con los gastos administrativos.
  */
 export const calcular = (
   f: FormEconomia,
   cupo: number | null,
   gastos: GastoDetalle[],
-  pctGastosAdministrativos: number
+  pctGastosAdministrativos: number,
+  cupoMinimo: number | null = null
 ): CuentasEconomia => {
   const valor = numero(f.valorInscripcion);
   const recaudacion = valor === null || cupo === null ? null : valor * cupo;
   const totalGastos = sumar(gastos.map((g) => g.monto));
   const pozoNeto = recaudacion === null ? null : recaudacion - totalGastos;
+  const pozoNetoMinimo =
+    valor === null || cupoMinimo === null ? null : valor * cupoMinimo - totalGastos;
   const gastosAdministrativos = porcentaje(valor, pctGastosAdministrativos);
   return {
     recaudacion,
     gastos: totalGastos,
     pozoNeto,
+    pozoNetoMinimo,
     porPuesto: f.premios.map((p) => porcentaje(pozoNeto, numero(p))),
     gastosAdministrativos,
     totalAPagar:

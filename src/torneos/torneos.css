@@ -454,6 +454,10 @@
   color: var(--color-warning);
 }
 
+.torneos-suma.error {
+  color: var(--color-danger);
+}
+
 /* Gastos: descripción, monto y acciones en una fila; en el celular, uno abajo del otro */
 .torneos-gastos {
   display: flex;

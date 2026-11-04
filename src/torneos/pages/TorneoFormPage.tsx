@@ -92,6 +92,7 @@ export const TorneoFormPage: React.FC = () => {
   const bloqueados = torneo?.camposBloqueados ?? [];
   const estado = torneo?.estado ?? 'BORRADOR';
   const cupoTope = opciones?.cupoMaximo ?? 64;
+  const limites = { cupoTope, margenCierreInicioMin: opciones?.margenCierreInicioMin ?? 0 };
 
   useEffect(() => {
     let vigente = true;
@@ -196,8 +197,8 @@ export const TorneoFormPage: React.FC = () => {
   const guardar = async (seguir: boolean) => {
     setMensaje(null);
     const encontrados = seguir
-      ? validarPaso(paso === 1 ? 1 : 2, form, cupoTope, Boolean(torneo?.reglamentoUrl))
-      : validarBorrador(form, cupoTope, publicado && torneo ? desdeTorneo(torneo) : undefined);
+      ? validarPaso(paso === 1 ? 1 : 2, form, limites, Boolean(torneo?.reglamentoUrl))
+      : validarBorrador(form, limites, publicado && torneo ? desdeTorneo(torneo) : undefined);
     setErrores(encontrados);
     if (Object.keys(encontrados).length > 0) {
       setMensaje({ tipo: 'error', texto: 'Revisá los campos marcados.' });
@@ -459,6 +460,7 @@ export const TorneoFormPage: React.FC = () => {
               errores={erroresEco}
               habilitado={habilitado}
               cupo={torneo.cupoMaximo}
+              cupoMinimo={torneo.cupoMinimo}
               quienes={participantes(torneo.tipoParticipante)}
               pctGastosAdministrativos={torneo.economia.pctGastosAdministrativos}
               gastos={gastos}
