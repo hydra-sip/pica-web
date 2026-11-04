@@ -225,6 +225,20 @@ export interface ArbitroDetalle {
   designadoEn: string;
 }
 
+/** GET /designaciones/mias: una designación como la ve el árbitro (HU-807). */
+export interface MiDesignacion {
+  torneoId: number;
+  torneo: string;
+  /** null mientras el torneo está en BORRADOR. */
+  slug: string | null;
+  estadoTorneo: EstadoTorneo;
+  fechaInicio: string | null;
+  organizador: string;
+  estado: EstadoDesignacion;
+  permisos: PermisoArbitro[];
+  designadoEn: string;
+}
+
 /** Un resultado del buscador de árbitros (GET /arbitros). */
 export interface ArbitroOpcion {
   id: number;
@@ -420,6 +434,18 @@ export const torneoApi = {
     permisos: PermisoArbitro[]
   ): Promise<ArbitroDetalle> => {
     return httpClient.post<ArbitroDetalle>(`/torneos/${id}/arbitros`, { usuarioId, permisos });
+  },
+
+  misDesignaciones: async (): Promise<MiDesignacion[]> => {
+    return httpClient.get<MiDesignacion[]>('/designaciones/mias');
+  },
+
+  aceptarDesignacion: async (torneoId: number): Promise<MiDesignacion> => {
+    return httpClient.post<MiDesignacion>(`/designaciones/${torneoId}/aceptar`);
+  },
+
+  rechazarDesignacion: async (torneoId: number): Promise<MiDesignacion> => {
+    return httpClient.post<MiDesignacion>(`/designaciones/${torneoId}/rechazar`);
   },
 
   quitarArbitro: async (id: number, usuarioId: number): Promise<void> => {

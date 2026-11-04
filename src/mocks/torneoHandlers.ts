@@ -239,6 +239,9 @@ export const mockTorneosDetalle: (TorneoDetalle & { esBorrador?: boolean })[] = 
 );
 
 export const torneoHandlers = [
+  // HU-807: en los mocks nadie tiene designaciones de árbitro
+  http.get(`${API_URL}/designaciones/mias`, () => HttpResponse.json([])),
+
   // GET /torneos/resumen (Público, sin sesión)
   http.get(`${API_URL}/torneos/resumen`, ({ request }) => {
     const url = new URL(request.url);

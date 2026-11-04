@@ -1,5 +1,6 @@
-import React from 'react';
-import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { torneoApi } from '../../api/torneoApi';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { Footer } from '../components/Footer';
 import { IncompleteProfileBanner } from '../components/IncompleteProfileBanner';
@@ -18,13 +19,44 @@ interface AppLayoutProps {
  * Layout de toda la app, como en el Figma: sidebar de 240 px en escritorio y barra inferior en el
  * celular (desde 768 px cambia). Los ítems salen de NAVEGACION según la sesión y los permisos.
  */
+/**
+ * Cuántas designaciones de árbitro tiene el usuario y cuántas esperan respuesta (HU-807): es el aviso en la
+ * plataforma. Se vuelve a pedir al cambiar de pantalla, así el número baja después de responder.
+ */
+const useDesignaciones = (conSesion: boolean, pathname: string) => {
+  const [cuenta, setCuenta] = useState({ total: 0, pendientes: 0 });
+  useEffect(() => {
+    if (!conSesion) {
+      setCuenta({ total: 0, pendientes: 0 });
+      return;
+    }
+    let vigente = true;
+    torneoApi
+      .misDesignaciones()
+      .then((d) => {
+        if (!vigente) return;
+        setCuenta({ total: d.length, pendientes: d.filter((x) => x.estado === 'PENDIENTE').length });
+      })
+      .catch(() => {
+        // Sin el número el menú sigue andando: no hace falta avisar.
+      });
+    return () => {
+      vigente = false;
+    };
+  }, [conSesion, pathname]);
+  return cuenta;
+};
+
 export const AppLayout: React.FC<AppLayoutProps> = ({ seccion }) => {
   const { user, isAuthenticated, logout, hasPermission } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const designaciones = useDesignaciones(isAuthenticated, pathname);
 
   const visible = (item: ItemNavegacion) =>
     (!item.soloConSesion || isAuthenticated) &&
     (!item.soloSinSesion || !isAuthenticated) &&
+    (!item.soloConDesignaciones || designaciones.total > 0) &&
     (!item.permisos || hasPermission(item.permisos));
   const items = NAVEGACION[seccion].filter(visible);
 
@@ -46,6 +78,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ seccion }) => {
     <NavLink key={item.ruta} to={item.ruta} end={item.exacta} className={({ isActive }) => `${clase}${isActive ? ' activo' : ''}`}>
       {item.icono}
       <span>{item.texto}</span>
+      {item.soloConDesignaciones && designaciones.pendientes > 0 && (
+        <span className="app-contador" aria-label={`${designaciones.pendientes} sin responder`}>
+          {designaciones.pendientes}
+        </span>
+      )}
     </NavLink>
   );
 
