@@ -1,13 +1,30 @@
-import React, { createContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useState, useEffect, useCallback, useRef } from 'react';
 import { User, RoleName, AuthContextType } from '../types';
 import { authApi } from '../../api/authApi';
-import { getRefreshToken, onUnauthorized, clearSessionTokens } from '../../api/httpClient';
+import {
+  getRefreshToken,
+  onUnauthorized,
+  clearSessionTokens,
+  setAccessToken,
+  setSesionUsuario,
+  SESION_USUARIO_KEY,
+} from '../../api/httpClient';
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  /** Lo que pasó en otra pestaña con la sesión compartida (CE4-6). */
+  const [avisoSesion, setAvisoSesion] = useState<string | null>(null);
+  const userRef = useRef<User | null>(null);
+  userRef.current = user;
+
+  /** El usuario de esta pestaña, también para las demás. */
+  const entrar = useCallback((u: User) => {
+    setSesionUsuario(u.id);
+    setUser(u);
+  }, []);
 
   // Auto-restore session on app launch/reload if refreshToken exists in localStorage
   const initAuth = useCallback(async () => {
@@ -23,17 +40,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await authApi.refreshToken();
       const userData = await authApi.getMe();
-      setUser(userData);
+      entrar(userData);
     } catch {
       clearSessionTokens();
       setUser(null);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [entrar]);
 
   useEffect(() => {
     initAuth();
+  }, [initAuth]);
+
+  // Las pestañas comparten el refresh token: si otra cierra la sesión o entra con otra cuenta, esta se pone al día
+  // en lugar de seguir mostrando a un usuario mientras el back atiende a otro.
+  useEffect(() => {
+    const alCambiar = (e: StorageEvent) => {
+      if (e.key !== SESION_USUARIO_KEY && e.key !== null) return;
+      const actual = userRef.current;
+      if (e.newValue === null) {
+        if (!actual) return;
+        setAccessToken(null);
+        setUser(null);
+        setAvisoSesion('Cerraste la sesión en otra pestaña.');
+      } else if (!actual || String(actual.id) !== e.newValue) {
+        setAccessToken(null);
+        setAvisoSesion(
+          actual
+            ? 'Iniciaste sesión con otra cuenta en otra pestaña: esta se actualizó con esa cuenta.'
+            : null
+        );
+        initAuth();
+      }
+    };
+    window.addEventListener('storage', alCambiar);
+    return () => window.removeEventListener('storage', alCambiar);
   }, [initAuth]);
 
   // Subscribe to HTTP client unauthorized events
@@ -48,7 +90,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       const loggedUser = await authApi.login(identificador, password);
-      setUser(loggedUser);
+      entrar(loggedUser);
+      setAvisoSesion(null);
       return loggedUser;
     } finally {
       setIsLoading(false);
@@ -57,11 +100,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Canjea el código del login con Google (guarda los tokens) y carga el usuario, como login.
   // Memoizada porque el callback la tiene en las deps de su effect.
-  const loginWithOAuthCode = useCallback(async (code: string): Promise<User> => {
-    const loggedUser = await authApi.exchangeOAuthCode(code);
-    setUser(loggedUser);
-    return loggedUser;
-  }, []);
+  const loginWithOAuthCode = useCallback(
+    async (code: string): Promise<User> => {
+      const loggedUser = await authApi.exchangeOAuthCode(code);
+      entrar(loggedUser);
+      setAvisoSesion(null);
+      return loggedUser;
+    },
+    [entrar]
+  );
 
   const updateUser = (updatedFields: Partial<User>) => {
     setUser((prev) => (prev ? { ...prev, ...updatedFields } : null));
@@ -103,6 +150,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout,
     hasPermission,
     hasRole,
+    avisoSesion,
+    descartarAvisoSesion: () => setAvisoSesion(null),
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

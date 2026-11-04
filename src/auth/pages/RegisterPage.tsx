@@ -169,23 +169,54 @@ export const RegisterPage: React.FC = () => {
     <div style={{ maxWidth: '480px', margin: '2rem auto', padding: '0 0.5rem' }}>
       <div className="pica-card hydra-card" style={{ padding: '2.25rem 2rem' }}>
         {/* Logo and Brand Header */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.75rem' }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            marginBottom: '1.75rem',
+          }}
+        >
           <div
             className="pica-logo-badge hydra-logo-badge"
-            style={{ width: '52px', height: '52px', fontSize: '1.65rem', borderRadius: '14px', marginBottom: '0.85rem' }}
+            style={{
+              width: '52px',
+              height: '52px',
+              fontSize: '1.65rem',
+              borderRadius: '14px',
+              marginBottom: '0.85rem',
+            }}
           >
             P
           </div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '0.04em', margin: 0, color: 'var(--text-primary)' }}>
+          <h1
+            style={{
+              fontSize: '1.5rem',
+              fontWeight: 800,
+              letterSpacing: '0.04em',
+              margin: 0,
+              color: 'var(--text-primary)',
+            }}
+          >
             PICA
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.25rem', textAlign: 'center' }}>
+          <p
+            style={{
+              color: 'var(--text-secondary)',
+              fontSize: '0.85rem',
+              marginTop: '0.25rem',
+              textAlign: 'center',
+            }}
+          >
             Plataforma Integral de Competencia Amateur
           </p>
         </div>
 
         {/* Segmented Control: Iniciar Sesión / Registrarse */}
-        <div className="pica-segmented-control hydra-segmented-control" style={{ marginBottom: '1.5rem' }}>
+        <div
+          className="pica-segmented-control hydra-segmented-control"
+          style={{ marginBottom: '1.5rem' }}
+        >
           <Link to="/auth/login" className="pica-segmented-tab hydra-segmented-tab">
             Iniciar Sesión
           </Link>
@@ -219,10 +250,22 @@ export const RegisterPage: React.FC = () => {
           onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
         >
           <svg width="18" height="18" viewBox="0 0 24 24">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+            <path
+              fill="#4285F4"
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+            />
+            <path
+              fill="#34A853"
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+            />
+            <path
+              fill="#FBBC05"
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+            />
+            <path
+              fill="#EA4335"
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+            />
           </svg>
           Continuar con Google
         </button>
@@ -254,11 +297,22 @@ export const RegisterPage: React.FC = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <form
+          onSubmit={handleSubmit}
+          noValidate
+          style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
+        >
           {/* Nombres y Apellidos */}
           <div className="auth-fila">
             <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  marginBottom: '0.35rem',
+                }}
+              >
                 Nombre/s <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <input
@@ -268,20 +322,37 @@ export const RegisterPage: React.FC = () => {
                 value={nombres}
                 onChange={(e) => {
                   setNombres(e.target.value);
-                  if (fieldErrors.nombres) setFieldErrors((prev) => ({ ...prev, nombres: undefined }));
+                  if (fieldErrors.nombres)
+                    setFieldErrors((prev) => ({ ...prev, nombres: undefined }));
                 }}
                 className="input"
                 aria-invalid={!!fieldErrors.nombres}
               />
               {fieldErrors.nombres && (
-                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <span
+                  style={{
+                    color: '#ef4444',
+                    fontSize: '0.75rem',
+                    marginTop: '0.2rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem',
+                  }}
+                >
                   <IconoAlerta size={13} /> {fieldErrors.nombres}
                 </span>
               )}
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  marginBottom: '0.35rem',
+                }}
+              >
                 Apellido/s <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <input
@@ -291,13 +362,23 @@ export const RegisterPage: React.FC = () => {
                 value={apellidos}
                 onChange={(e) => {
                   setApellidos(e.target.value);
-                  if (fieldErrors.apellidos) setFieldErrors((prev) => ({ ...prev, apellidos: undefined }));
+                  if (fieldErrors.apellidos)
+                    setFieldErrors((prev) => ({ ...prev, apellidos: undefined }));
                 }}
                 className="input"
                 aria-invalid={!!fieldErrors.apellidos}
               />
               {fieldErrors.apellidos && (
-                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <span
+                  style={{
+                    color: '#ef4444',
+                    fontSize: '0.75rem',
+                    marginTop: '0.2rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem',
+                  }}
+                >
                   <IconoAlerta size={13} /> {fieldErrors.apellidos}
                 </span>
               )}
@@ -306,7 +387,14 @@ export const RegisterPage: React.FC = () => {
 
           {/* Username */}
           <div>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                marginBottom: '0.35rem',
+              }}
+            >
               Nombre de usuario <span style={{ color: '#ef4444' }}>*</span>
             </label>
             <input
@@ -316,13 +404,23 @@ export const RegisterPage: React.FC = () => {
               value={username}
               onChange={(e) => {
                 setUsername(e.target.value);
-                if (fieldErrors.username) setFieldErrors((prev) => ({ ...prev, username: undefined }));
+                if (fieldErrors.username)
+                  setFieldErrors((prev) => ({ ...prev, username: undefined }));
               }}
               className="input"
               aria-invalid={!!fieldErrors.username}
             />
             {fieldErrors.username && (
-              <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+              <span
+                style={{
+                  color: '#ef4444',
+                  fontSize: '0.75rem',
+                  marginTop: '0.2rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                }}
+              >
                 <IconoAlerta size={13} /> {fieldErrors.username}
               </span>
             )}
@@ -330,7 +428,14 @@ export const RegisterPage: React.FC = () => {
 
           {/* Correo Electrónico */}
           <div>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                marginBottom: '0.35rem',
+              }}
+            >
               Correo Electrónico <span style={{ color: '#ef4444' }}>*</span>
             </label>
             <input
@@ -346,7 +451,16 @@ export const RegisterPage: React.FC = () => {
               aria-invalid={!!fieldErrors.email}
             />
             {fieldErrors.email && (
-              <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+              <span
+                style={{
+                  color: '#ef4444',
+                  fontSize: '0.75rem',
+                  marginTop: '0.2rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                }}
+              >
                 <IconoAlerta size={13} /> {fieldErrors.email}
               </span>
             )}
@@ -355,7 +469,14 @@ export const RegisterPage: React.FC = () => {
           {/* Tipo Doc, Nro Doc y Fecha Nac */}
           <div className="auth-fila auth-fila-doc">
             <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  marginBottom: '0.35rem',
+                }}
+              >
                 Tipo
               </label>
               <select
@@ -364,13 +485,22 @@ export const RegisterPage: React.FC = () => {
                 className="input"
               >
                 {TIPOS_DOC_VALIDOS.map((td) => (
-                  <option key={td.value} value={td.value}>{td.label}</option>
+                  <option key={td.value} value={td.value}>
+                    {td.label}
+                  </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  marginBottom: '0.35rem',
+                }}
+              >
                 Nro Documento <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <input
@@ -380,13 +510,23 @@ export const RegisterPage: React.FC = () => {
                 value={nroDoc}
                 onChange={(e) => {
                   setNroDoc(e.target.value);
-                  if (fieldErrors.nroDoc) setFieldErrors((prev) => ({ ...prev, nroDoc: undefined }));
+                  if (fieldErrors.nroDoc)
+                    setFieldErrors((prev) => ({ ...prev, nroDoc: undefined }));
                 }}
                 className="input"
                 aria-invalid={!!fieldErrors.nroDoc}
               />
               {fieldErrors.nroDoc && (
-                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <span
+                  style={{
+                    color: '#ef4444',
+                    fontSize: '0.75rem',
+                    marginTop: '0.2rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem',
+                  }}
+                >
                   <IconoAlerta size={13} /> {fieldErrors.nroDoc}
                 </span>
               )}
@@ -394,7 +534,14 @@ export const RegisterPage: React.FC = () => {
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                marginBottom: '0.35rem',
+              }}
+            >
               Fecha de Nacimiento <span style={{ color: '#ef4444' }}>*</span>
             </label>
             <input
@@ -405,13 +552,23 @@ export const RegisterPage: React.FC = () => {
               value={fechaNacimiento}
               onChange={(e) => {
                 setFechaNacimiento(e.target.value);
-                if (fieldErrors.fechaNacimiento) setFieldErrors((prev) => ({ ...prev, fechaNacimiento: undefined }));
+                if (fieldErrors.fechaNacimiento)
+                  setFieldErrors((prev) => ({ ...prev, fechaNacimiento: undefined }));
               }}
               className="input"
               aria-invalid={!!fieldErrors.fechaNacimiento}
             />
             {fieldErrors.fechaNacimiento && (
-              <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+              <span
+                style={{
+                  color: '#ef4444',
+                  fontSize: '0.75rem',
+                  marginTop: '0.2rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                }}
+              >
                 <IconoAlerta size={13} /> {fieldErrors.fechaNacimiento}
               </span>
             )}
@@ -419,7 +576,14 @@ export const RegisterPage: React.FC = () => {
 
           {/* Contraseñas */}
           <div>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                marginBottom: '0.35rem',
+              }}
+            >
               Contraseña <span style={{ color: '#ef4444' }}>*</span>
             </label>
             <input
@@ -429,21 +593,38 @@ export const RegisterPage: React.FC = () => {
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
-                if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: undefined }));
+                if (fieldErrors.password)
+                  setFieldErrors((prev) => ({ ...prev, password: undefined }));
               }}
               className="input"
               aria-invalid={!!fieldErrors.password}
             />
             <PasswordRequirements password={password} />
             {fieldErrors.password && (
-              <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+              <span
+                style={{
+                  color: '#ef4444',
+                  fontSize: '0.75rem',
+                  marginTop: '0.2rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                }}
+              >
                 <IconoAlerta size={13} /> {fieldErrors.password}
               </span>
             )}
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+            <label
+              style={{
+                display: 'block',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                marginBottom: '0.35rem',
+              }}
+            >
               Confirmar contraseña <span style={{ color: '#ef4444' }}>*</span>
             </label>
             <input
@@ -453,13 +634,23 @@ export const RegisterPage: React.FC = () => {
               value={confirmPassword}
               onChange={(e) => {
                 setConfirmPassword(e.target.value);
-                if (fieldErrors.confirmPassword) setFieldErrors((prev) => ({ ...prev, confirmPassword: undefined }));
+                if (fieldErrors.confirmPassword)
+                  setFieldErrors((prev) => ({ ...prev, confirmPassword: undefined }));
               }}
               className="input"
               aria-invalid={!!fieldErrors.confirmPassword}
             />
             {fieldErrors.confirmPassword && (
-              <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+              <span
+                style={{
+                  color: '#ef4444',
+                  fontSize: '0.75rem',
+                  marginTop: '0.2rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                }}
+              >
                 <IconoAlerta size={13} /> {fieldErrors.confirmPassword}
               </span>
             )}
@@ -467,7 +658,16 @@ export const RegisterPage: React.FC = () => {
 
           {/* Checkbox Aceptar Términos */}
           <div style={{ marginTop: '0.25rem' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.82rem', color: 'var(--text-primary)' }}>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                cursor: 'pointer',
+                fontSize: '0.82rem',
+                color: 'var(--text-primary)',
+              }}
+            >
               <input
                 type="checkbox"
                 checked={aceptaTerminos}
@@ -475,12 +675,26 @@ export const RegisterPage: React.FC = () => {
                   setAceptaTerminos(e.target.checked);
                   if (terminosError) setTerminosError(null);
                 }}
-                style={{ width: '16px', height: '16px', accentColor: 'var(--brand-black)', cursor: 'pointer' }}
+                style={{
+                  width: '16px',
+                  height: '16px',
+                  accentColor: 'var(--brand-black)',
+                  cursor: 'pointer',
+                }}
               />
               Acepto las Bases y Condiciones
             </label>
             {terminosError && (
-              <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+              <span
+                style={{
+                  color: '#ef4444',
+                  fontSize: '0.75rem',
+                  marginTop: '0.25rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                }}
+              >
                 <IconoAlerta size={13} /> {terminosError}
               </span>
             )}
@@ -504,9 +718,20 @@ export const RegisterPage: React.FC = () => {
         </form>
 
         {/* Footer Legal Notice */}
-        <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-          Al continuar, aceptas las Bases y Condiciones<br />
-          <strong style={{ color: 'var(--text-primary)' }}>y la Política de Privacidad de PICA</strong>
+        <div
+          style={{
+            marginTop: '2rem',
+            textAlign: 'center',
+            fontSize: '0.75rem',
+            color: 'var(--text-secondary)',
+            lineHeight: 1.5,
+          }}
+        >
+          Al continuar, aceptas las Bases y Condiciones
+          <br />
+          <strong style={{ color: 'var(--text-primary)' }}>
+            y la Política de Privacidad de PICA
+          </strong>
         </div>
       </div>
     </div>

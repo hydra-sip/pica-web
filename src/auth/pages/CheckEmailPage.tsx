@@ -35,18 +35,36 @@ export const CheckEmailPage: React.FC = () => {
 
   return (
     <div style={{ maxWidth: '420px', margin: '2rem auto', padding: '0 0.5rem' }}>
-      <div className="pica-card hydra-card" style={{ padding: '2rem 1.75rem', textAlign: 'center' }}>
+      <div
+        className="pica-card hydra-card"
+        style={{ padding: '2rem 1.75rem', textAlign: 'center' }}
+      >
         {/* Header bar */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '1.5rem',
+          }}
+        >
           <Link
             to="/auth/login"
-            style={{ color: 'var(--text-primary)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{
+              color: 'var(--text-primary)',
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
             title="Volver"
             aria-label="Volver al inicio de sesión"
           >
             <IconoFlechaIzquierda size={18} />
           </Link>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
+          <h2
+            style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}
+          >
             Verificación de Cuenta
           </h2>
           <div style={{ width: '20px' }} />
@@ -66,20 +84,42 @@ export const CheckEmailPage: React.FC = () => {
             margin: '1.25rem auto 1.5rem',
           }}
         >
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--brand-black)" strokeWidth="1.75">
+          <svg
+            width="40"
+            height="40"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="var(--brand-black)"
+            strokeWidth="1.75"
+          >
             <rect x="2" y="4" width="20" height="16" rx="2" />
             <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
           </svg>
         </div>
 
         {/* Title & Email */}
-        <h1 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+        <h1
+          style={{
+            fontSize: '1.35rem',
+            fontWeight: 800,
+            color: 'var(--text-primary)',
+            marginBottom: '0.5rem',
+          }}
+        >
           Revisa tu correo
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', margin: 0 }}>
           Hemos enviado un enlace de activación a:
         </p>
-        <p style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem', marginTop: '0.25rem', marginBottom: '1rem' }}>
+        <p
+          style={{
+            fontWeight: 700,
+            color: 'var(--text-primary)',
+            fontSize: '0.95rem',
+            marginTop: '0.25rem',
+            marginBottom: '1rem',
+          }}
+        >
           {email}
         </p>
 
@@ -100,7 +140,14 @@ export const CheckEmailPage: React.FC = () => {
               letterSpacing: '0.04em',
             }}
           >
-            <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: '#71717a' }}></span>
+            <span
+              style={{
+                width: '7px',
+                height: '7px',
+                borderRadius: '50%',
+                backgroundColor: '#71717a',
+              }}
+            ></span>
             ESTADO: PENDIENTE
           </span>
         </div>
@@ -116,16 +163,45 @@ export const CheckEmailPage: React.FC = () => {
             marginBottom: '1.5rem',
           }}
         >
-          <h4 style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
+          <h4
+            style={{
+              fontSize: '0.88rem',
+              fontWeight: 700,
+              color: 'var(--text-primary)',
+              marginBottom: '0.35rem',
+            }}
+          >
             ¿Por qué debo verificarme?
           </h4>
-          <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.45, margin: 0 }}>
-            Para inscribirte en torneos, comprar rifas y acceder a tu billetera debes tener una cuenta activa. El token expira automáticamente en 24 horas.
+          <p
+            style={{
+              fontSize: '0.82rem',
+              color: 'var(--text-secondary)',
+              lineHeight: 1.45,
+              margin: 0,
+            }}
+          >
+            Para inscribirte en torneos, comprar rifas y acceder a tu billetera debes tener una
+            cuenta activa. El token expira automáticamente en 24 horas.
           </p>
         </div>
 
         {resendSuccess && (
-          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', padding: '0.7rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem', fontSize: '0.82rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}>
+          <div
+            style={{
+              background: '#f0fdf4',
+              border: '1px solid #bbf7d0',
+              color: '#166534',
+              padding: '0.7rem',
+              borderRadius: 'var(--radius-md)',
+              marginBottom: '1rem',
+              fontSize: '0.82rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.4rem',
+            }}
+          >
             <IconoCheck size={16} />
             <span>Enlace de activación reenviado exitosamente</span>
           </div>
@@ -151,7 +227,9 @@ export const CheckEmailPage: React.FC = () => {
 
         {/* Countdown */}
         <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0 0 1.5rem' }}>
-          {secondsLeft > 0 ? `Podrás solicitar otro reenvío en ${formatTimer(secondsLeft)}` : 'Ya podés solicitar un nuevo reenvío'}
+          {secondsLeft > 0
+            ? `Podrás solicitar otro reenvío en ${formatTimer(secondsLeft)}`
+            : 'Ya podés solicitar un nuevo reenvío'}
         </p>
 
         {/* Back Link */}
@@ -170,12 +248,30 @@ export const CheckEmailPage: React.FC = () => {
         </div>
 
         {/* Demo Helper Links */}
-        <div style={{ marginTop: '1.75rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+        <div
+          style={{
+            marginTop: '1.75rem',
+            borderTop: '1px solid var(--border-color)',
+            paddingTop: '1rem',
+            fontSize: '0.75rem',
+            color: 'var(--text-muted)',
+          }}
+        >
           <p style={{ margin: '0 0 0.35rem' }}>Pruebas de verificación rápida:</p>
-          <Link to="/verificar?token=valid-demo-token-123" style={{ color: 'var(--text-secondary)', textDecoration: 'underline', marginRight: '0.75rem' }}>
+          <Link
+            to="/verificar?token=valid-demo-token-123"
+            style={{
+              color: 'var(--text-secondary)',
+              textDecoration: 'underline',
+              marginRight: '0.75rem',
+            }}
+          >
             Token Válido
           </Link>
-          <Link to="/verificar?token=expired-token" style={{ color: 'var(--text-secondary)', textDecoration: 'underline' }}>
+          <Link
+            to="/verificar?token=expired-token"
+            style={{ color: 'var(--text-secondary)', textDecoration: 'underline' }}
+          >
             Token Expirado
           </Link>
         </div>

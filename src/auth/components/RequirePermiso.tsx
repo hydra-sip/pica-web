@@ -15,7 +15,14 @@ export const RequirePermiso: React.FC<RequirePermisoProps> = ({ permisos, roles,
 
   if (isLoading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '300px',
+        }}
+      >
         <p style={{ color: 'var(--color-text-secondary)' }}>Validando permisos de acceso...</p>
       </div>
     );
