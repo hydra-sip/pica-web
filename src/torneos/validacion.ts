@@ -96,6 +96,7 @@ export interface LimitesTorneo {
 }
 
 const MIN_POR_HORA = 60;
+const MS_POR_MINUTO = 60_000;
 
 /** 60 → "1 h", 90 → "90 min", como el mensaje del back. */
 export const textoMargen = (minutos: number): string =>
@@ -140,7 +141,7 @@ export const validarBorrador = (
     cierre !== null &&
     inicio !== null &&
     (cambia('cierreInscripcionEn') || cambia('fechaInicio')) &&
-    cierre + margenCierreInicioMin * MIN_POR_HORA * 1000 > inicio
+    cierre + margenCierreInicioMin * MS_POR_MINUTO > inicio
   ) {
     errores.cierreInscripcionEn = `La inscripción tiene que cerrar al menos ${textoMargen(
       margenCierreInicioMin
