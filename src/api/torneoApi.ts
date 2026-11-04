@@ -183,6 +183,8 @@ export interface OpcionesTorneo {
   cupoMaximo: number;
   /** % vigente de gastos administrativos que paga aparte quien se inscribe; al publicar queda fijo. */
   pctGastosAdministrativos: number;
+  /** Minutos que tienen que pasar como mínimo entre el cierre de la inscripción y el inicio. */
+  margenCierreInicioMin: number;
   /** Las que ya existen en la sede pedida. */
   canchas: string[];
 }

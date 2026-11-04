@@ -6,7 +6,7 @@ import {
   TorneoInformacion,
 } from '../../api/torneoApi';
 import { Button, Field, Input, Textarea } from '../../shared/ui';
-import { ErroresTorneo, FormTorneo, MAX_REGLAMENTO } from '../validacion';
+import { ErroresTorneo, FormTorneo, MAX_REGLAMENTO, textoMargen } from '../validacion';
 import { ReglamentoPdf } from './ReglamentoPdf';
 
 interface PasoInformacionProps {
@@ -298,7 +298,16 @@ export const PasoInformacion: React.FC<PasoInformacionProps> = ({
             disabled={!puede('fechaFin')}
           />
         </Field>
-        <Field label="Fecha límite de inscripción" required error={errores.cierreInscripcionEn}>
+        <Field
+          label="Fecha límite de inscripción"
+          required
+          hint={
+            opciones.margenCierreInicioMin > 0
+              ? `Al menos ${textoMargen(opciones.margenCierreInicioMin)} antes del inicio.`
+              : undefined
+          }
+          error={errores.cierreInscripcionEn}
+        >
           <Input
             type="datetime-local"
             value={form.cierreInscripcionEn}

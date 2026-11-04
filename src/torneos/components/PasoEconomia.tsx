@@ -13,6 +13,8 @@ interface PasoEconomiaProps {
   habilitado: boolean;
   /** Cupo máximo del paso 2: la recaudación se estima con el cupo completo. */
   cupo: number | null;
+  /** Cupo mínimo del paso 2: con él los gastos tienen que quedar cubiertos para publicar. */
+  cupoMinimo: number | null;
   /** "equipos" o "jugadores". */
   quienes: string;
   /** El % sellado al publicar o, en borrador, el vigente de la plataforma. */
@@ -52,12 +54,14 @@ export const PasoEconomia: React.FC<PasoEconomiaProps> = ({
   errores,
   habilitado,
   cupo,
+  cupoMinimo,
   quienes,
   pctGastosAdministrativos,
   gastos,
   onGastos,
 }) => {
-  const cuentas = calcular(form, cupo, gastos, pctGastosAdministrativos);
+  const cuentas = calcular(form, cupo, gastos, pctGastosAdministrativos, cupoMinimo);
+  const sinPozoConElMinimo = cuentas.pozoNetoMinimo !== null && cuentas.pozoNetoMinimo <= 0;
   const valor = Number(form.valorInscripcion);
 
   const campo = (nombre: keyof Omit<FormEconomia, 'premios'>) => ({
@@ -131,7 +135,19 @@ export const PasoEconomia: React.FC<PasoEconomiaProps> = ({
           <Linea etiqueta="Pozo de competidores" monto={cuentas.recaudacion} />
           <Linea etiqueta="Gastos previstos" monto={cuentas.gastos === 0 ? 0 : -cuentas.gastos} />
           <Linea etiqueta="Pozo neto a repartir en premios" monto={cuentas.pozoNeto} destacada />
+          {cupoMinimo !== null && cuentas.gastos > 0 && (
+            <Linea
+              etiqueta={`Pozo neto si se inscriben solo ${cupoMinimo} (cupo mínimo)`}
+              monto={cuentas.pozoNetoMinimo}
+            />
+          )}
         </div>
+        {sinPozoConElMinimo && (
+          <p className="torneos-suma error" role="alert">
+            Con el cupo mínimo de {cupoMinimo} {quienes}, los gastos previstos se comen el pozo y el
+            torneo no se va a poder publicar. Bajá los gastos o subí el valor de la inscripción.
+          </p>
+        )}
       </section>
 
       <section className="torneos-seccion">
