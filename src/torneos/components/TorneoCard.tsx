@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { TorneoResumen } from '../types/torneo';
 import { StatusChip } from '../../admin/components/StatusChip';
-import { fecha, pesos, valorInscripcion } from '../../shared/formato';
+import { fechaHora, pesos, valorInscripcion } from '../../shared/formato';
 import { formatFormatoTorneo } from '../utils/formatters';
 import { IconoTrofeo } from '../../shared/ui/Iconos';
 import './TorneoCard.css';
@@ -102,7 +102,13 @@ export const TorneoCard: React.FC<TorneoCardProps> = ({ torneo }) => {
         {torneo.fechaInicio && (
           <div className="torneo-extra-item">
             <span className="torneo-extra-label">Comienza:</span>
-            <strong>{fecha(torneo.fechaInicio)}</strong>
+            <strong>{fechaHora(torneo.fechaInicio)}</strong>
+          </div>
+        )}
+        {torneo.fechaFin && (
+          <div className="torneo-extra-item">
+            <span className="torneo-extra-label">Finaliza:</span>
+            <strong>{fechaHora(torneo.fechaFin)}</strong>
           </div>
         )}
       </div>
