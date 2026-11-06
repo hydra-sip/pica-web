@@ -1,5 +1,6 @@
 import {
   IconoBackoffice,
+  IconoEscudo,
   IconoEscudoCheck,
   IconoExplorar,
   IconoIngresar,
@@ -24,6 +25,8 @@ export interface ItemNavegacion {
   permisos?: string[];
   soloConSesion?: boolean;
   soloSinSesion?: boolean;
+  // Solo a quien tiene designaciones de árbitro (HU-807): no hay un permiso propio del árbitro
+  soloConDesignaciones?: boolean;
   // La ruta activa tiene que ser exactamente esta (para '/' y '/admin')
   exacta?: boolean;
 }
@@ -51,6 +54,13 @@ export const NAVEGACION: Record<Seccion, ItemNavegacion[]> = {
       texto: 'Mis torneos',
       icono: <IconoTorneos />,
       permisos: ['TORNEO_GESTIONAR'],
+    },
+    // HU-807: las designaciones del árbitro, con cuántas esperan respuesta
+    {
+      ruta: '/mis-designaciones',
+      texto: 'Designaciones',
+      icono: <IconoEscudo />,
+      soloConDesignaciones: true,
     },
     // PICA-227: RIFA_GESTIONAR lo tienen ORGANIZADOR y ADMINISTRADOR
     { ruta: '/mis-rifas', texto: 'Mis rifas', icono: <IconoRifas />, permisos: ['RIFA_GESTIONAR'] },
