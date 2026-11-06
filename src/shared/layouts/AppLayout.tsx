@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/hooks/useAuth';
+import { AvisoDeNavegacion } from '../components/AvisoDeNavegacion';
+import { ScrollAlInicio } from '../components/ScrollAlInicio';
 import { Footer } from '../components/Footer';
 import { IncompleteProfileBanner } from '../components/IncompleteProfileBanner';
 import { IconoSalir, IconoSitio } from '../ui/Iconos';
@@ -51,6 +53,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ seccion }) => {
 
   return (
     <div className="app">
+      <ScrollAlInicio />
       <aside className="app-sidebar">
         <Link to="/" className="app-logo">
           <LogoPica className="app-logo-icono" />
@@ -107,6 +110,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ seccion }) => {
         <IncompleteProfileBanner />
 
         <main className={`app-contenido app-contenido-${seccion}`}>
+          <AvisoDeNavegacion />
           <Outlet />
         </main>
         {seccion === 'sitio' && <Footer />}

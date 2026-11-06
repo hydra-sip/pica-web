@@ -65,7 +65,10 @@ describe('entrada a la inscripción', () => {
 
     await screen.findByText('Ya estás inscripto en este torneo.');
     expect(screen.getByRole('status')).toHaveTextContent('Ya estás inscripto en este torneo');
-    expect(screen.getByRole('link', { name: 'Volver al inicio' })).toHaveAttribute('href', '/');
+    expect(screen.getByRole('link', { name: 'Ver torneo' })).toHaveAttribute(
+      'href',
+      '/torneos/torneo-gratis'
+    );
     expect(screen.getByRole('link', { name: 'Ver mi inscripción' })).toHaveAttribute(
       'href',
       `/inscripciones/${ID}`

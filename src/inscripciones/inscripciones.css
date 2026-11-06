@@ -20,6 +20,21 @@
 }
 
 /* Título y "Paso 2/2" (wireframe: 16 px en negrita y 12 px en gris) */
+/* Como el breadcrumb de la ficha del torneo */
+.inscripcion-volver {
+  align-self: flex-start;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.inscripcion-volver:hover {
+  color: var(--color-text);
+  text-decoration: underline;
+}
+
 .inscripcion-encabezado {
   display: flex;
   align-items: baseline;

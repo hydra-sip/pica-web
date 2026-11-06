@@ -4,6 +4,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import type { UserEvent } from '@testing-library/user-event';
 import { equipoApi } from '../api/equipoApi';
 import { inscripcionApi } from '../api/inscripcionApi';
+import { torneoApi } from '../api/torneoApi';
 import { problema } from '../mocks/adminHandlers';
 import { server } from '../mocks/server';
 import { renderRuta } from '../test/renderRuta';
@@ -46,12 +47,16 @@ describe('paso 1: equipo y nómina (alta)', () => {
     await renderRuta(ALTA_F5);
 
     expect(await screen.findByText('Torneo Apertura F5')).toBeInTheDocument();
-    expect(screen.getByText(/nómina de al menos 5 jugadores/i)).toBeInTheDocument();
-    expect(screen.getByText('1 jugador (mínimo 5)')).toBeInTheDocument();
+    expect(screen.getByText('Nómina de 5 a 7 jugadores')).toBeInTheDocument();
+    expect(screen.getByText('1 de 7 (mínimo 5)')).toBeInTheDocument();
     expect(screen.getByText(/Usuario PICA \(Capitán\)/)).toBeInTheDocument();
     expect(screen.getByText('@usuario')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /sacar/i })).not.toBeInTheDocument();
     expect(screen.queryByText(/titular|suplente|DNI/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '← Ver torneo' })).toHaveAttribute(
+      'href',
+      '/torneos/torneo-apertura-f5'
+    );
   });
 
   it('deja elegir uno de los equipos propios y deshabilita el que ya tiene una inscripción en el torneo', async () => {
@@ -142,7 +147,7 @@ describe('paso 1: equipo y nómina (alta)', () => {
     const nomina = screen.getByRole('list', { name: 'Nómina' });
     expect(within(nomina).getByText('Lucas Fernández')).toBeInTheDocument();
     expect(within(nomina).getByText('@lucas_f99')).toBeInTheDocument();
-    expect(screen.getByText('2 jugadores (mínimo 5)')).toBeInTheDocument();
+    expect(screen.getByText('2 de 7 (mínimo 5)')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Sumar a Lucas Fernández' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Sumar a Lucas Fernández' })).toHaveTextContent(
       'En la nómina'
@@ -157,12 +162,34 @@ describe('paso 1: equipo y nómina (alta)', () => {
 
     const nomina = screen.getByRole('list', { name: 'Nómina' });
     expect(within(nomina).queryByText('Lucas Fernández')).not.toBeInTheDocument();
-    expect(screen.getByText('1 jugador (mínimo 5)')).toBeInTheDocument();
+    expect(screen.getByText('1 de 7 (mínimo 5)')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Sumar a Lucas Fernández' })).toBeEnabled();
   });
 
-  it('con la nómina por encima del máximo del torneo, el aviso es el del back y el borrador queda guardado', async () => {
-    // El tipo público del torneo no trae el máximo de la nómina: lo valida el back al confirmar.
+  it('al llegar al máximo de la nómina deshabilita la búsqueda y lo avisa (CE4-4)', async () => {
+    const { user } = await renderRuta('/torneos/torneo-gratis/inscripcion'); // nómina de 3 a 4
+    await user.selectOptions(await screen.findByLabelText('Equipo'), 'Los Galácticos');
+    for (const texto of ['lucas', 'mrossi', 'joaco']) await sumarJugador(user, texto);
+
+    expect(screen.getByText('4 de 4 (mínimo 3)')).toBeInTheDocument();
+    expect(screen.getByText('Llegaste al máximo de 4 jugadores.')).toBeInTheDocument();
+    expect(screen.getByRole('searchbox', { name: /buscar jugador/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Sumar a Joaquín Gómez' })).toBeDisabled();
+
+    await user.click(screen.getByRole('button', { name: 'Sacar a Lucas Fernández' }));
+    expect(screen.getByText('3 de 4 (mínimo 3)')).toBeInTheDocument();
+    expect(screen.queryByText(/llegaste al máximo/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('searchbox', { name: /buscar jugador/i })).toBeEnabled();
+  });
+
+  it('con la nómina por encima del máximo (un back que no informa el tope), el aviso es el del back y el borrador queda guardado', async () => {
+    // Sin nominaMaxima en la ficha no se limita en pantalla: lo valida el back al confirmar.
+    const torneo = await torneoApi.getTorneoBySlug('torneo-gratis');
+    server.use(
+      http.get(`${API_URL}/torneos/slug/torneo-gratis`, () =>
+        HttpResponse.json({ ...torneo, nominaMaxima: null })
+      )
+    );
     const { user } = await renderRuta('/torneos/torneo-gratis/inscripcion'); // nómina de 3 a 4
     await user.selectOptions(await screen.findByLabelText('Equipo'), 'Los Galácticos');
     for (const texto of ['lucas', 'mrossi', 'joaco', 'salva']) await sumarJugador(user, texto);
@@ -244,14 +271,15 @@ describe('paso 1: equipo y nómina (alta)', () => {
     expect(inscripcion.reglamentoAceptadoEn).toBeTruthy();
   });
 
-  it('"Guardar como borrador y salir" guarda sin confirmar y vuelve al inicio, sin pedir el reglamento', async () => {
+  it('"Guardar como borrador y salir" guarda sin confirmar y vuelve a la ficha con el aviso, sin pedir el reglamento', async () => {
     const { user, ubicacion } = await renderRuta(ALTA_F5);
     await user.selectOptions(await screen.findByLabelText('Equipo'), 'Los Galácticos');
     await sumarJugador(user, 'lucas');
 
     await user.click(screen.getByRole('button', { name: 'Guardar como borrador y salir' }));
 
-    await waitFor(() => expect(ubicacion()).toBe('/'));
+    await waitFor(() => expect(ubicacion()).toBe('/torneos/torneo-apertura-f5'));
+    expect(await screen.findByText(/guardaste el borrador de tu inscripción/i)).toBeInTheDocument();
     const [borrador] = (await inscripcionApi.listarMias({ torneoId: 1 })).content;
     expect(borrador.estado).toBe('BORRADOR');
     expect(borrador.equipo?.nombre).toBe('Los Galácticos');
@@ -276,7 +304,7 @@ describe('paso 1: equipo y nómina (alta)', () => {
   it.each([
     [
       'sofi',
-      'Hay un jugador (o vos como capitán) que ya figura en otra inscripción de este torneo',
+      'Sofía Martínez (@sofi_m) ya figura en otra inscripción de este torneo. Elegí a otro jugador.',
     ],
     [
       'zoe',
