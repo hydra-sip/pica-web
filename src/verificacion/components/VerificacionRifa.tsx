@@ -14,6 +14,7 @@ import {
   IconoSimulacion,
 } from '../../shared/ui/Iconos';
 import { recalcularSorteoRifa, RecalculoRifaResultado } from '../crypto/recalcularSorteo';
+import { ConsultaDrand, consultarDrand, semillaEsDeLaFirma } from '../crypto/semillaDrand';
 
 interface Props {
   datos: RifaVerificacionData;
@@ -29,6 +30,15 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
   const [resultadoRecalculo, setResultadoRecalculo] = useState<RecalculoRifaResultado | null>(null);
   const [calculando, setCalculando] = useState(false);
   const [errorRecalculo, setErrorRecalculo] = useState<string | null>(null);
+  // la semilla de drand (HU-503): si es el SHA-256 de la firma y si drand publicó lo mismo
+  const [verificacionDrand, setVerificacionDrand] = useState<{
+    semillaDeLaFirma: boolean;
+    consulta: ConsultaDrand;
+  } | null>(null);
+
+  // las rifas sorteadas antes de drand no tienen ronda ni firma
+  const { semillaRonda, semillaUrl, semillaFirma } = datos;
+  const esDeDrand = semillaRonda !== null && semillaUrl !== null && semillaFirma !== null;
 
   // Feedback de copiado
   const [copiadoCampo, setCopiadoCampo] = useState<string | null>(null);
@@ -50,11 +60,20 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
         datos.fechaSorteo,
         datos.premios
       );
+      setVerificacionDrand(
+        esDeDrand
+          ? {
+              semillaDeLaFirma: await semillaEsDeLaFirma(semillaActual, semillaFirma),
+              consulta: await consultarDrand(semillaUrl, semillaRonda, semillaActual, semillaFirma),
+            }
+          : null
+      );
       setResultadoRecalculo(res);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error al recalcular el sorteo';
       setErrorRecalculo(msg);
       setResultadoRecalculo(null);
+      setVerificacionDrand(null);
     } finally {
       setCalculando(false);
     }
@@ -66,11 +85,18 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
   // la lista se recalcula del desglose y el compromiso, de esa lista y la fecha del sorteo
   const listaCoincide = resultadoRecalculo?.listaHashCalculado === datos.listaHash;
   const compromisoCoincide = resultadoRecalculo?.compromisoCalculado === datos.compromisoHash;
+  // si drand no responde no se puede comparar, pero eso no es una alteración
+  const semillaCoincide =
+    !esDeDrand ||
+    (verificacionDrand !== null &&
+      verificacionDrand.semillaDeLaFirma &&
+      verificacionDrand.consulta !== 'difiere');
 
   const todosCoinciden =
     resultadoRecalculo !== null &&
     listaCoincide &&
     compromisoCoincide &&
+    semillaCoincide &&
     ganadoresOficiales.length === ganadoresRecalculados.length &&
     ganadoresOficiales.every((oficial) => {
       const rec = ganadoresRecalculados.find((g) => g.puesto === oficial.puesto);
@@ -101,6 +127,7 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
     setModoSimulacion(false);
     setResultadoRecalculo(null);
     setErrorRecalculo(null);
+    setVerificacionDrand(null);
   };
 
   return (
@@ -248,27 +275,44 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
           {copiadoCampo === 'semilla' && (
             <span className="verificacion-copiado-aviso">Copiada al portapapeles</span>
           )}
-          <p className="verificacion-campo-explicacion">
-            Generada por la plataforma al sortear, después de publicado el compromiso.
-          </p>
+          {esDeDrand ? (
+            <p className="verificacion-campo-explicacion">
+              Valor público de drand (League of Entropy): el <code>randomness</code> de la ronda{' '}
+              <strong data-testid="semilla-ronda-rifa">{semillaRonda}</strong>, la vigente en la fecha
+              del sorteo, que sale después de publicado el compromiso. Nadie de la plataforma puede
+              elegirlo.{' '}
+              <a
+                href={semillaUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-testid="link-drand-rifa"
+              >
+                Ver la ronda en drand
+              </a>
+            </p>
+          ) : (
+            <p className="verificacion-campo-explicacion">
+              Generada por la plataforma al sortear, después de publicado el compromiso.
+            </p>
+          )}
         </div>
 
-        {/* Firma digital de la semilla: solo con semilla externa (PICA-299) */}
-        {datos.semillaFirma && (
+        {/* Firma de drand para la ronda de la semilla (HU-503) */}
+        {esDeDrand && (
           <div className="verificacion-campo-card">
             <div className="verificacion-campo-header">
               <span className="verificacion-campo-label">
                 <IconoEscudoCheck size={14} />
-                Firma Digital de la Semilla
+                Firma de drand
               </span>
-              <span className="verificacion-campo-badge">Ed25519 / RSA</span>
+              <span className="verificacion-campo-badge">BLS</span>
             </div>
             <div className="verificacion-mono-box">
-              <span data-testid="semilla-firma-rifa">{datos.semillaFirma}</span>
+              <span data-testid="semilla-firma-rifa">{semillaFirma}</span>
               <button
                 type="button"
                 className="verificacion-btn-copiar"
-                onClick={() => copiarAlPortapapeles(datos.semillaFirma!, 'firma')}
+                onClick={() => copiarAlPortapapeles(semillaFirma, 'firma')}
                 title="Copiar firma"
               >
                 <IconoCopiar size={14} />
@@ -278,7 +322,8 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
               <span className="verificacion-copiado-aviso">Copiada al portapapeles</span>
             )}
             <p className="verificacion-campo-explicacion">
-              Certificación criptográfica de autenticidad e inalterabilidad de la semilla externa.
+              La firma de la red drand para la ronda. La semilla es el SHA-256 de esta firma: al
+              verificar se comprueba en tu navegador y se compara con lo que publica drand.
             </p>
           </div>
         )}
@@ -355,6 +400,13 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
             <p className="verificacion-banner-desc">
               La lista sellada, el compromiso y los números ganadores recalculados en tu navegador
               coinciden plenamente con los publicados por la plataforma.
+              {verificacionDrand?.consulta === 'coincide' && (
+                <>
+                  {' '}
+                  La semilla es el SHA-256 de la firma y coincide con la que publicó drand para la
+                  ronda {semillaRonda}.
+                </>
+              )}
             </p>
           </div>
         </div>
@@ -381,12 +433,34 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
                 </>
               ) : !compromisoCoincide ? (
                 <>El compromiso recalculado no coincide con el publicado antes del sorteo.</>
+              ) : verificacionDrand && !verificacionDrand.semillaDeLaFirma ? (
+                <>La semilla no es el SHA-256 de la firma de drand: fue modificada.</>
+              ) : verificacionDrand?.consulta === 'difiere' ? (
+                <>
+                  drand publicó otra semilla o firma para la ronda {semillaRonda}: la semilla de la
+                  plataforma no es la de drand.
+                </>
               ) : (
                 <>
                   Los números ganadores recalculados difieren de los publicados por la plataforma.
                   Cualquier variación en los datos altera completamente el orden final.
                 </>
               )}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {resultadoRecalculo && verificacionDrand?.consulta === 'sin-respuesta' && (
+        <div className="verificacion-banner-status discrepancia" data-testid="banner-drand-sin-respuesta">
+          <div className="verificacion-banner-icono">
+            <IconoAlerta size={24} />
+          </div>
+          <div className="verificacion-banner-contenido">
+            <h4 className="verificacion-banner-titulo">No se pudo consultar drand</h4>
+            <p className="verificacion-banner-desc">
+              No se comparó la semilla con la que publica drand. Podés abrir la ronda con el link de la
+              semilla o volver a verificar más tarde.
             </p>
           </div>
         </div>
