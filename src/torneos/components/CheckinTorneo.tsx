@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   CheckinTorneoPayload,
   CriterioSinPresentes,
@@ -66,14 +66,35 @@ export const CheckinTorneo: React.FC<CheckinTorneoProps> = ({ torneo, onGuardado
   const [mensaje, setMensaje] = useState<{ tipo: 'exito' | 'error'; texto: string } | null>(null);
   const [guardando, setGuardando] = useState(false);
 
+  // El máximo de la ventana lo fija la plataforma (HU-702); sin él, el back igual lo valida.
+  const [duracionMaxima, setDuracionMaxima] = useState<number | null>(null);
+
   const editable = torneo.estado !== 'FINALIZADO' && torneo.estado !== 'CANCELADO';
   const linea = ejemplo(form);
+  const pasaElMaximo = (duracion: number | null) =>
+    duracionMaxima !== null && duracion !== null && duracion > duracionMaxima;
+  const textoMaximo = `La plataforma admite hasta ${duracionMaxima} minutos.`;
+
+  useEffect(() => {
+    let vigente = true;
+    torneoApi
+      .opciones()
+      .then((o) => vigente && setDuracionMaxima(o.checkinDuracionMaxMin))
+      .catch(() => undefined);
+    return () => {
+      vigente = false;
+    };
+  }, []);
 
   const guardar = async (e: React.FormEvent) => {
     e.preventDefault();
+    setMensaje(null);
+    if (pasaElMaximo(form.duracion)) {
+      setErrores({ duracion: textoMaximo });
+      return;
+    }
     setGuardando(true);
     setErrores({});
-    setMensaje(null);
     try {
       const guardado = await torneoApi.configurarCheckin(torneo.id, form);
       setForm({ ...form, sinPresentes: guardado.checkinSinPresentes });
@@ -81,6 +102,10 @@ export const CheckinTorneo: React.FC<CheckinTorneoProps> = ({ torneo, onGuardado
       setMensaje({ tipo: 'exito', texto: 'Check-in guardado.' });
     } catch (err) {
       const deCampo = erroresPorCampo(err, PROPIOS);
+      // Con una duración positiva, RANGO_INVALIDO es que pasa el máximo (el admin pudo cambiarlo mientras tanto).
+      if (deCampo.duracion === PROPIOS.RANGO_INVALIDO && (form.duracion ?? 0) > 0) {
+        deCampo.duracion = 'Pasa el máximo de minutos que admite la plataforma.';
+      }
       setErrores(deCampo);
       if (Object.keys(deCampo).length === 0) {
         setMensaje({
@@ -110,7 +135,12 @@ export const CheckinTorneo: React.FC<CheckinTorneoProps> = ({ torneo, onGuardado
             disabled={!editable}
           />
         </Field>
-        <Field label="Dura (minutos)" required error={errores.duracion}>
+        <Field
+          label="Dura (minutos)"
+          required
+          error={errores.duracion}
+          hint={duracionMaxima !== null ? textoMaximo : undefined}
+        >
           <Input
             type="number"
             min={1}

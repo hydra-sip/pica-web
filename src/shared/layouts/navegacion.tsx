@@ -1,5 +1,6 @@
 import {
   IconoBackoffice,
+  IconoConfiguracion,
   IconoEscudo,
   IconoEscudoCheck,
   IconoExplorar,
@@ -31,7 +32,12 @@ export interface ItemNavegacion {
   exacta?: boolean;
 }
 
-export const PERMISOS_BACKOFFICE = ['USUARIO_VER', 'ROL_VER', 'PERSONA_VER'];
+export const PERMISOS_BACKOFFICE = [
+  'USUARIO_VER',
+  'ROL_VER',
+  'PERSONA_VER',
+  'PARAMETRO_ADMINISTRAR',
+];
 
 /**
  * Ítems de cada sección, en orden. Una pantalla nueva (Rifas, Mis torneos...) suma acá su línea.
@@ -87,6 +93,12 @@ export const NAVEGACION: Record<Seccion, ItemNavegacion[]> = {
       texto: 'Personas',
       icono: <IconoPersonas />,
       permisos: ['PERSONA_VER'],
+    },
+    {
+      ruta: '/admin/parametros',
+      texto: 'Parámetros',
+      icono: <IconoConfiguracion />,
+      permisos: ['PARAMETRO_ADMINISTRAR'],
     },
   ],
 };

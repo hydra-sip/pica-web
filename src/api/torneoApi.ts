@@ -185,6 +185,8 @@ export interface OpcionesTorneo {
   pctGastosAdministrativos: number;
   /** Minutos que tienen que pasar como mínimo entre el cierre de la inscripción y el inicio. */
   margenCierreInicioMin: number;
+  /** Minutos que puede durar como máximo la ventana de check-in (HU-702). */
+  checkinDuracionMaxMin: number;
   /** Las que ya existen en la sede pedida. */
   canchas: string[];
 }

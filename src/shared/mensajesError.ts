@@ -205,6 +205,22 @@ export const erroresPorCampo = (
   return errores;
 };
 
+/**
+ * Los errores de un 400 VALIDACION por campo con el `mensaje` del back, para pantallas donde un mismo código dice
+ * cosas distintas según la regla (por ejemplo RANGO_INVALIDO en los parámetros del admin).
+ */
+export const mensajesDelBackPorCampo = (err: unknown): Record<string, string> => {
+  const errores: Record<string, string> = {};
+  (problemaDe(err)?.errores || []).forEach((e) => {
+    if (e.campo && !errores[e.campo]) {
+      errores[e.campo] = e.mensaje
+        ? `${e.mensaje}.`
+        : POR_CODIGO_DE_CAMPO[e.codigo] || 'Valor inválido.';
+    }
+  });
+  return errores;
+};
+
 /** `erroresPorCampo` más el campo al que apunta un código de negocio, como `{ EMAIL_DUPLICADO: 'email' }`. */
 export const erroresDelFormulario = (
   err: unknown,
