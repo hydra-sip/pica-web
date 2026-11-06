@@ -418,7 +418,7 @@ const usuarioPublico = (sesion: SesionMock, id: number): UsuarioPublico | undefi
 
 const equipoInscripto = (equipoId: number | null): EquipoInscripto | null => {
   const e = equipoId === null ? undefined : buscarEquipo(equipoId);
-  return e ? { id: e.id, nombre: e.nombre } : null;
+  return e ? { id: e.id, nombre: e.nombre, capitanId: e.capitanId } : null;
 };
 
 const torneoDeInscripcion = (torneoId: number): TorneoDeInscripcion => {

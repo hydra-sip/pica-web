@@ -16,6 +16,8 @@ export type RolEnInscripcion = 'CAPITAN' | 'JUGADOR' | 'INDIVIDUAL' | 'ORGANIZAD
 export interface EquipoInscripto {
   id: number;
   nombre: string;
+  /** Para marcar al capitán en la nómina, mire quien mire (HU-209). */
+  capitanId: number;
 }
 
 /** El torneo de una inscripción, para mostrarlo y llegar a su ficha con `torneoApi.getTorneoBySlug`. */

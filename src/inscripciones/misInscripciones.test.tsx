@@ -20,7 +20,7 @@ const fila = (cambios: Partial<InscripcionResumen>): InscripcionResumen => ({
   estado: 'CONFIRMADA',
   creadoEn: '2026-11-01T12:00:00Z',
   modificadoEn: '2026-11-01T12:00:00Z',
-  equipo: { id: 10, nombre: 'Los Rivales' },
+  equipo: { id: 10, nombre: 'Los Rivales', capitanId: 110 },
   rol: 'JUGADOR',
   ...cambios,
 });
@@ -70,7 +70,7 @@ describe('Mis inscripciones (HU-209)', () => {
         id: 2,
         estado: 'CANCELADA',
         rol: 'CAPITAN',
-        equipo: { id: 1, nombre: 'Los Galácticos' },
+        equipo: { id: 1, nombre: 'Los Galácticos', capitanId: 2 },
       }),
     ]);
 
@@ -94,7 +94,7 @@ describe('Mis inscripciones (HU-209)', () => {
           slug: 'copa-invierno',
           estado: 'INSCRIPCION_ABIERTA',
         },
-        equipo: { id: 1, nombre: 'Los Galácticos' },
+        equipo: { id: 1, nombre: 'Los Galácticos', capitanId: 2 },
       }),
       fila({}),
     ]);
