@@ -238,6 +238,9 @@ export const mockTorneosDetalle: (TorneoDetalle & { esBorrador?: boolean })[] = 
   })
 );
 
+const sinTildes = (texto: string) =>
+  texto.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim();
+
 export const torneoHandlers = [
   // HU-807: en los mocks nadie tiene designaciones de árbitro
   http.get(`${API_URL}/designaciones/mias`, () => HttpResponse.json([])),
@@ -245,7 +248,8 @@ export const torneoHandlers = [
   // GET /torneos/resumen (Público, sin sesión)
   http.get(`${API_URL}/torneos/resumen`, ({ request }) => {
     const url = new URL(request.url);
-    const disciplina = url.searchParams.get('disciplina')?.toLowerCase();
+    const q = sinTildes(url.searchParams.get('q') ?? '');
+    const modalidad = url.searchParams.get('modalidad');
     const estado = url.searchParams.get('estado');
     const page = parseInt(url.searchParams.get('page') || '0', 10);
     const size = parseInt(url.searchParams.get('size') || '20', 10);
@@ -254,8 +258,18 @@ export const torneoHandlers = [
     // Filtrar: excluir borradores siempre
     let filtered = mockTorneosDetalle.filter((t) => !t.esBorrador);
 
-    if (disciplina) {
-      filtered = filtered.filter((t) => t.disciplina.toLowerCase().includes(disciplina));
+    if (q) {
+      filtered = filtered.filter((t) =>
+        q
+          .split(/\s+/)
+          .every((palabra) =>
+            [t.nombre, t.disciplina, t.sede].some((campo) => sinTildes(campo ?? '').includes(palabra))
+          )
+      );
+    }
+
+    if (modalidad) {
+      filtered = filtered.filter((t) => t.modalidad === modalidad);
     }
 
     if (estado) {

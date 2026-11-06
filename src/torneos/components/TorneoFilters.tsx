@@ -1,29 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { EstadoTorneo } from '../types/torneo';
+import { EstadoTorneo, ModalidadTorneo } from '../types/torneo';
 import { IconoBuscar, IconoCampana, IconoCruz } from '../../shared/ui/Iconos';
 import './TorneoFilters.css';
 
 interface TorneoFiltersProps {
-  disciplina: string;
+  q: string;
+  modalidad: ModalidadTorneo | '';
   estado: EstadoTorneo | '';
-  onDisciplinaChange: (disciplina: string) => void;
+  onQChange: (q: string) => void;
+  onModalidadChange: (modalidad: ModalidadTorneo | '') => void;
   onEstadoChange: (estado: EstadoTorneo | '') => void;
+  onVerTodos: () => void;
   onReset: () => void;
 }
 
-interface CategoriaFiltro {
-  label: string;
-  query: string;
-}
+const DISCIPLINAS_FILTRO = ['Fútbol 5', 'Pádel', 'Básquet', 'Esports'];
 
-const CATEGORIAS_FILTRO: CategoriaFiltro[] = [
-  { label: 'Todos', query: '' },
-  { label: 'Fútbol 5', query: 'Fútbol 5' },
-  { label: 'Pádel', query: 'Pádel' },
-  { label: 'Básquet', query: 'Básquet' },
-  { label: 'Esports', query: 'Esports' },
-  { label: 'Presencial', query: 'Presencial' },
-  { label: 'Online', query: 'Online' },
+const MODALIDADES_FILTRO: { label: string; value: ModalidadTorneo }[] = [
+  { label: 'Presencial', value: 'PRESENCIAL' },
+  { label: 'Online', value: 'ONLINE' },
 ];
 
 const OPCIONES_ESTADO: { label: string; value: EstadoTorneo | '' }[] = [
@@ -36,34 +31,37 @@ const OPCIONES_ESTADO: { label: string; value: EstadoTorneo | '' }[] = [
 ];
 
 export const TorneoFilters: React.FC<TorneoFiltersProps> = ({
-  disciplina,
+  q,
+  modalidad,
   estado,
-  onDisciplinaChange,
+  onQChange,
+  onModalidadChange,
   onEstadoChange,
+  onVerTodos,
   onReset,
 }) => {
-  const [searchTerm, setSearchTerm] = useState(disciplina);
+  const [searchTerm, setSearchTerm] = useState(q);
 
   useEffect(() => {
-    setSearchTerm(disciplina);
-  }, [disciplina]);
+    setSearchTerm(q);
+  }, [q]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (searchTerm !== disciplina) {
-        onDisciplinaChange(searchTerm);
+      if (searchTerm !== q) {
+        onQChange(searchTerm);
       }
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchTerm, disciplina, onDisciplinaChange]);
+  }, [searchTerm, q, onQChange]);
 
-  const handleChipClick = (query: string) => {
-    setSearchTerm(query);
-    onDisciplinaChange(query);
+  const handleDisciplinaClick = (disciplina: string) => {
+    setSearchTerm(disciplina);
+    onQChange(disciplina);
   };
 
-  const hayFiltros = Boolean(disciplina || estado);
+  const hayFiltros = Boolean(q || modalidad || estado);
 
   return (
     <div className="torneo-figma-filters">
@@ -74,10 +72,10 @@ export const TorneoFilters: React.FC<TorneoFiltersProps> = ({
             <IconoBuscar size={18} />
           </span>
           <input
-            id="filtro-disciplina"
+            id="filtro-busqueda"
             type="text"
             className="torneo-search-input"
-            placeholder="Buscar por disciplina, sede, club o torneo..."
+            placeholder="Buscar por torneo, disciplina o sede..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -87,7 +85,7 @@ export const TorneoFilters: React.FC<TorneoFiltersProps> = ({
               className="torneo-search-clear"
               onClick={() => {
                 setSearchTerm('');
-                onDisciplinaChange('');
+                onQChange('');
               }}
               title="Borrar búsqueda"
               aria-label="Borrar búsqueda"
@@ -113,21 +111,37 @@ export const TorneoFilters: React.FC<TorneoFiltersProps> = ({
       {/* Category Pills & State Dropdown */}
       <div className="torneo-chips-and-status-row">
         <div className="torneo-category-chips">
-          {CATEGORIAS_FILTRO.map((cat) => {
-            const isSelected =
-              (!disciplina && cat.query === '') ||
-              (cat.query !== '' && disciplina.toLowerCase() === cat.query.toLowerCase());
-            return (
-              <button
-                key={cat.label}
-                type="button"
-                className={`torneo-chip ${isSelected ? 'active' : ''}`}
-                onClick={() => handleChipClick(cat.query)}
-              >
-                <span>{cat.label}</span>
-              </button>
-            );
-          })}
+          <button
+            type="button"
+            className={`torneo-chip ${!q && !modalidad ? 'active' : ''}`}
+            onClick={() => {
+              setSearchTerm('');
+              onVerTodos();
+            }}
+          >
+            <span>Todos</span>
+          </button>
+          {DISCIPLINAS_FILTRO.map((disciplina) => (
+            <button
+              key={disciplina}
+              type="button"
+              className={`torneo-chip ${q.toLowerCase() === disciplina.toLowerCase() ? 'active' : ''}`}
+              onClick={() => handleDisciplinaClick(disciplina)}
+            >
+              <span>{disciplina}</span>
+            </button>
+          ))}
+          {MODALIDADES_FILTRO.map((op) => (
+            <button
+              key={op.value}
+              type="button"
+              className={`torneo-chip ${modalidad === op.value ? 'active' : ''}`}
+              aria-pressed={modalidad === op.value}
+              onClick={() => onModalidadChange(modalidad === op.value ? '' : op.value)}
+            >
+              <span>{op.label}</span>
+            </button>
+          ))}
         </div>
 
         <div className="torneo-status-dropdown-wrap">
