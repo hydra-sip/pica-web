@@ -106,4 +106,70 @@ describe('Mis inscripciones (HU-209)', () => {
     expect(within(borrador).getByText('Borrador')).toBeInTheDocument();
     expect(screen.getByRole('listitem', { name: /Copa Primavera/ })).toBeInTheDocument();
   });
+
+  it('cada fila ofrece seguir el borrador, pagar la pendiente o ver la confirmada', async () => {
+    conMias([
+      fila({
+        id: 3,
+        estado: 'BORRADOR',
+        rol: 'CAPITAN',
+        torneo: { id: 3, nombre: 'Copa A', slug: 'copa-a', estado: 'INSCRIPCION_ABIERTA' },
+      }),
+      fila({
+        id: 4,
+        estado: 'PENDIENTE_PAGO',
+        rol: 'INDIVIDUAL',
+        equipo: null,
+        torneo: { id: 4, nombre: 'Copa B', slug: 'copa-b', estado: 'INSCRIPCION_ABIERTA' },
+      }),
+      fila({
+        id: 5,
+        estado: 'CONFIRMADA',
+        rol: 'JUGADOR',
+        torneo: { id: 5, nombre: 'Copa C', slug: 'copa-c', estado: 'EN_CURSO' },
+      }),
+    ]);
+
+    await renderRuta(RUTA);
+
+    const accion = async (torneo: string, nombre: string) =>
+      within(await screen.findByRole('listitem', { name: torneo })).getByRole('link', {
+        name: nombre,
+      });
+    expect(await accion('Copa A', 'Seguir la inscripción')).toHaveAttribute(
+      'href',
+      '/inscripciones/3/nomina'
+    );
+    expect(await accion('Copa B', 'Pagar')).toHaveAttribute('href', '/inscripciones/4/pago');
+    expect(await accion('Copa C', 'Ver mi inscripción')).toHaveAttribute(
+      'href',
+      '/inscripciones/5'
+    );
+  });
+
+  it('con sesión, la barra lateral lleva a Mis inscripciones y la barra de abajo del celular no cambia', async () => {
+    conMias([]);
+
+    await renderRuta('/');
+
+    const [lateral, inferior] = await screen.findAllByRole('navigation', {
+      name: 'Navegación principal',
+    });
+    expect(within(lateral).getByRole('link', { name: /Mis inscripciones/ })).toHaveAttribute(
+      'href',
+      '/mis-inscripciones'
+    );
+    expect(
+      within(inferior).queryByRole('link', { name: /Mis inscripciones/ })
+    ).not.toBeInTheDocument();
+  });
+
+  it('en el perfil hay un enlace a Mis inscripciones, para el celular', async () => {
+    await renderRuta('/mi-perfil');
+
+    const contenido = await screen.findByRole('main');
+    expect(
+      await within(contenido).findByRole('link', { name: /Mis inscripciones/ })
+    ).toHaveAttribute('href', '/mis-inscripciones');
+  });
 });
