@@ -223,6 +223,35 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
 
       {/* Criptografía del sorteo */}
       <div className="verificacion-crypto-grid">
+        {/* Hash de lista de números vendidos */}
+        <div className="verificacion-campo-card">
+          <div className="verificacion-campo-header">
+            <span className="verificacion-campo-label">
+              <IconoDocumento size={14} />
+              Hash de la Lista Sellada
+            </span>
+            <span className="verificacion-campo-badge">SHA-256</span>
+          </div>
+          <div className="verificacion-mono-box">
+            <span data-testid="lista-hash-rifa">{datos.listaHash}</span>
+            <button
+              type="button"
+              className="verificacion-btn-copiar"
+              onClick={() => copiarAlPortapapeles(datos.listaHash, 'lista')}
+              title="Copiar hash de lista"
+            >
+              <IconoCopiar size={14} />
+            </button>
+          </div>
+          {copiadoCampo === 'lista' && (
+            <span className="verificacion-copiado-aviso">Copiado al portapapeles</span>
+          )}
+          <p className="verificacion-campo-explicacion">
+            SHA-256 de una línea &quot;número;ticket&quot; por cada número vendido, de menor a
+            mayor, fijado al cerrar la venta.
+          </p>
+        </div>
+
         {/* Hash de compromiso previo */}
         <div className="verificacion-campo-card">
           <div className="verificacion-campo-header">
@@ -327,35 +356,6 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
             </p>
           </div>
         )}
-
-        {/* Hash de lista de números vendidos */}
-        <div className="verificacion-campo-card">
-          <div className="verificacion-campo-header">
-            <span className="verificacion-campo-label">
-              <IconoDocumento size={14} />
-              Hash de la Lista Sellada
-            </span>
-            <span className="verificacion-campo-badge">SHA-256</span>
-          </div>
-          <div className="verificacion-mono-box">
-            <span data-testid="lista-hash-rifa">{datos.listaHash}</span>
-            <button
-              type="button"
-              className="verificacion-btn-copiar"
-              onClick={() => copiarAlPortapapeles(datos.listaHash, 'lista')}
-              title="Copiar hash de lista"
-            >
-              <IconoCopiar size={14} />
-            </button>
-          </div>
-          {copiadoCampo === 'lista' && (
-            <span className="verificacion-copiado-aviso">Copiado al portapapeles</span>
-          )}
-          <p className="verificacion-campo-explicacion">
-            SHA-256 de una línea &quot;número;ticket&quot; por cada número vendido, de menor a
-            mayor, fijado al cerrar la venta.
-          </p>
-        </div>
       </div>
 
       {/* Botón de recálculo */}
