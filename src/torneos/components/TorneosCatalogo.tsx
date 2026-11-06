@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { torneoApi } from '../../api/torneoApi';
-import { TorneoResumen, EstadoTorneo, PageMetadata } from '../types/torneo';
+import { TorneoResumen, EstadoTorneo, ModalidadTorneo, PageMetadata } from '../types/torneo';
 import { TorneoCard } from './TorneoCard';
 import { TorneoFilters } from './TorneoFilters';
 import { TorneoPagination } from './TorneoPagination';
@@ -15,7 +15,8 @@ interface TorneosCatalogoProps {
 export const TorneosCatalogo: React.FC<TorneosCatalogoProps> = ({ pageSize = 9 }) => {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const disciplinaParam = searchParams.get('disciplina') || '';
+  const qParam = searchParams.get('q') || '';
+  const modalidadParam = (searchParams.get('modalidad') as ModalidadTorneo) || '';
   const estadoParam = (searchParams.get('estado') as EstadoTorneo) || '';
   const pageParam = parseInt(searchParams.get('page') || '0', 10);
 
@@ -29,17 +30,23 @@ export const TorneosCatalogo: React.FC<TorneosCatalogoProps> = ({ pageSize = 9 }
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // Solo vale la respuesta de la última consulta: una anterior puede llegar después y pisarla.
+  const ultimaConsulta = useRef(0);
+
   const fetchTorneos = useCallback(async () => {
+    const consulta = ++ultimaConsulta.current;
     setIsLoading(true);
     setErrorMsg(null);
 
     try {
       const response = await torneoApi.getTorneosResumen({
-        disciplina: disciplinaParam || undefined,
+        q: qParam || undefined,
+        modalidad: modalidadParam || undefined,
         estado: estadoParam || undefined,
         page: pageParam,
         size: pageSize,
       });
+      if (consulta !== ultimaConsulta.current) return;
 
       setTorneos(response.content || []);
       setPageMeta(
@@ -51,6 +58,7 @@ export const TorneosCatalogo: React.FC<TorneosCatalogoProps> = ({ pageSize = 9 }
         }
       );
     } catch (err: unknown) {
+      if (consulta !== ultimaConsulta.current) return;
       console.error('Error al cargar torneos:', err);
       const msg =
         err instanceof Error
@@ -58,21 +66,41 @@ export const TorneosCatalogo: React.FC<TorneosCatalogoProps> = ({ pageSize = 9 }
           : 'Ocurrió un error al cargar la lista de torneos. Por favor, reintentá.';
       setErrorMsg(msg);
     } finally {
-      setIsLoading(false);
+      if (consulta === ultimaConsulta.current) setIsLoading(false);
     }
-  }, [disciplinaParam, estadoParam, pageParam, pageSize]);
+  }, [qParam, modalidadParam, estadoParam, pageParam, pageSize]);
 
   useEffect(() => {
     fetchTorneos();
   }, [fetchTorneos]);
 
-  const handleDisciplinaChange = (nuevaDisciplina: string) => {
+  const handleQChange = (nuevoQ: string) => {
     const nextParams = new URLSearchParams(searchParams);
-    if (nuevaDisciplina) {
-      nextParams.set('disciplina', nuevaDisciplina);
+    if (nuevoQ) {
+      nextParams.set('q', nuevoQ);
     } else {
-      nextParams.delete('disciplina');
+      nextParams.delete('q');
     }
+    nextParams.set('page', '0');
+    setSearchParams(nextParams);
+  };
+
+  const handleModalidadChange = (nuevaModalidad: ModalidadTorneo | '') => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (nuevaModalidad) {
+      nextParams.set('modalidad', nuevaModalidad);
+    } else {
+      nextParams.delete('modalidad');
+    }
+    nextParams.set('page', '0');
+    setSearchParams(nextParams);
+  };
+
+  /** El chip "Todos": saca la búsqueda y la modalidad, y deja el estado como está. */
+  const handleVerTodos = () => {
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('q');
+    nextParams.delete('modalidad');
     nextParams.set('page', '0');
     setSearchParams(nextParams);
   };
@@ -101,7 +129,8 @@ export const TorneosCatalogo: React.FC<TorneosCatalogoProps> = ({ pageSize = 9 }
 
   const handleResetFilters = () => {
     const nextParams = new URLSearchParams(searchParams);
-    nextParams.delete('disciplina');
+    nextParams.delete('q');
+    nextParams.delete('modalidad');
     nextParams.delete('estado');
     nextParams.delete('page');
     setSearchParams(nextParams);
@@ -119,12 +148,15 @@ export const TorneosCatalogo: React.FC<TorneosCatalogoProps> = ({ pageSize = 9 }
         </p>
       </div>
 
-      {/* Filtros: disciplina (con debounce), estado (selector sin borrador) y reset */}
+      {/* Filtros: búsqueda (con debounce), modalidad, estado (selector sin borrador) y reset */}
       <TorneoFilters
-        disciplina={disciplinaParam}
+        q={qParam}
+        modalidad={modalidadParam}
         estado={estadoParam}
-        onDisciplinaChange={handleDisciplinaChange}
+        onQChange={handleQChange}
+        onModalidadChange={handleModalidadChange}
         onEstadoChange={handleEstadoChange}
+        onVerTodos={handleVerTodos}
         onReset={handleResetFilters}
       />
 
