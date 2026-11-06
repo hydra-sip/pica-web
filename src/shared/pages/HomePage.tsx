@@ -6,7 +6,7 @@ import { IconoBackoffice, IconoPerfil, IconoTrofeo, IconoUsuarios, IconoEscudo, 
 
 export const HomePage: React.FC = () => {
   const { user, hasPermission } = useAuth();
-  const veBackoffice = hasPermission(['USUARIO_VER', 'ROL_VER', 'PERSONA_VER']);
+  const veBackoffice = hasPermission(['USUARIO_VER', 'ROL_VER', 'PERSONA_VER', 'PARAMETRO_ADMINISTRAR']);
 
   return (
     <div

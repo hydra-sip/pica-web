@@ -5,7 +5,7 @@ import './BottomNav.css';
 
 export const BottomNav: React.FC = () => {
   const { isAuthenticated, hasPermission } = useAuth();
-  const veBackoffice = hasPermission(['USUARIO_VER', 'ROL_VER', 'PERSONA_VER']);
+  const veBackoffice = hasPermission(['USUARIO_VER', 'ROL_VER', 'PERSONA_VER', 'PARAMETRO_ADMINISTRAR']);
 
   return (
     <nav className="pica-bottom-nav" aria-label="Navegación inferior móvil">
