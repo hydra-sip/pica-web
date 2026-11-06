@@ -145,6 +145,10 @@ const sorteoTorneo3: TorneoVerificacionData = {
   },
 };
 
+// La red quicknet de drand, de donde sale la semilla de las rifas (HU-503)
+const DRAND_URL =
+  'https://api.drand.sh/52db9ba70e0cc0f6eaf7803dd07447a1f5477735fd3f661792ba94600c84e971';
+
 // Rifa 10 sorteada, como la devuelve GET /rifas/publicas/{id}/sorteo: los hashes y los ganadores
 // son los que da el algoritmo real, así el portal la verifica de punta a punta
 export const mockRifaVerificacion10: RifaVerificacionData = {
@@ -168,30 +172,34 @@ export const mockRifaVerificacion10: RifaVerificacionData = {
   ],
   compromisoHash: '124775535e5e5a4b8201471ea119df6391dab54ed8e97614f8265b80c60dd5dc',
   compromisoPublicadoEn: '2026-10-25T21:00:00Z',
-  semilla: '9f2c6e1d4b8a7f3e0c5d2a9b6e1f4c7d8a3b0e5f2c9d6a1b4e7f0c3d8a5b2e9f',
-  semillaFirma: null,
+  // la ronda de drand vigente en fechaSorteo, tal como la publica drand
+  semilla: 'f8e652f8382e3d4f32790fe2abbe96142e62d83528f890b6983d604fecd2791a',
+  semillaFirma:
+    '82b787f4d3b8d9b813c20681d6ec497853329c61bd88ad4bf181c16bbc589aea889496e60d6de5440eddc370f3492e66',
+  semillaRonda: 33415012,
+  semillaUrl: `${DRAND_URL}/public/33415012`,
   semillaObtenidaEn: '2026-10-26T21:00:05Z',
   premios: [
     {
       puesto: 1,
       descripcion: 'Camiseta Oficial Autografiada',
       pct: 60,
-      numeroGanador: 14,
-      ganador: 'mati_rios',
+      numeroGanador: 105,
+      ganador: 'nico.paz',
     },
     {
       puesto: 2,
       descripcion: 'Kit Deportivo Profesional',
       pct: 30,
-      numeroGanador: 88,
-      ganador: 'lucia.fer',
+      numeroGanador: 35,
+      ganador: 'sofi_lopez',
     },
     {
       puesto: 3,
       descripcion: 'Entradas VIP para la Final',
       pct: 10,
-      numeroGanador: 7,
-      ganador: 'mati_rios',
+      numeroGanador: 92,
+      ganador: 'lucia.fer',
     },
   ],
 };
@@ -258,6 +266,18 @@ export const verificacionHandlers = [
       );
     }
     return HttpResponse.json(mockRifaVerificacion10);
+  }),
+
+  // la ronda de drand de la rifa 10, como la devuelve drand; las demás no existen
+  http.get(`${DRAND_URL}/public/:ronda`, ({ params }) => {
+    if (Number(params.ronda) !== mockRifaVerificacion10.semillaRonda) {
+      return new HttpResponse(null, { status: 404 });
+    }
+    return HttpResponse.json({
+      round: mockRifaVerificacion10.semillaRonda,
+      randomness: mockRifaVerificacion10.semilla,
+      signature: mockRifaVerificacion10.semillaFirma,
+    });
   }),
 
   // GET /torneos/{id}/bracket (público); los demás torneos del catálogo simulado no tienen bracket

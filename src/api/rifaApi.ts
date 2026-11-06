@@ -283,8 +283,9 @@ export interface RifaSorteadaResumen {
 
 /**
  * GET /rifas/publicas/{id}/sorteo (HU-504): la lista sellada con su desglose, el compromiso
- * (SHA-256 de `listaHash:fechaSorteo`), la semilla y los premios con su ganador. `semillaFirma` es
- * null mientras la semilla la genere la plataforma (PICA-299).
+ * (SHA-256 de `listaHash:fechaSorteo`), la semilla y los premios con su ganador. La semilla es el
+ * `randomness` de la ronda `semillaRonda` de drand (HU-503), que se consulta en `semillaUrl`; los
+ * tres datos de drand son null en las rifas sorteadas con la semilla de la plataforma.
  */
 export interface SorteoRifa {
   id: number;
@@ -298,6 +299,8 @@ export interface SorteoRifa {
   compromisoPublicadoEn: string;
   semilla: string;
   semillaFirma: string | null;
+  semillaRonda: number | null;
+  semillaUrl: string | null;
   semillaObtenidaEn: string;
   premios: GanadorRifa[];
 }
