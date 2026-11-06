@@ -3,6 +3,7 @@ import type {
   EquipoInscripto,
   EstadoInscripcion,
   InscripcionDetalle,
+  RolEnInscripcion,
   TorneoDeInscripcion,
 } from '../api/inscripcionApi';
 import type { UsuarioPublico } from '../api/jugadorApi';
@@ -422,10 +423,17 @@ const equipoInscripto = (equipoId: number | null): EquipoInscripto | null => {
 
 const torneoDeInscripcion = (torneoId: number): TorneoDeInscripcion => {
   const t = buscarTorneo(torneoId)!;
-  return { id: t.id, nombre: t.nombre, slug: t.slug };
+  return { id: t.id, nombre: t.nombre, slug: t.slug, estado: t.estado };
 };
 
-const resumen = (i: InscripcionMock) => ({
+/** El rol con que mira la inscripción el usuario de la sesión, como lo calcula el back (HU-209). */
+const rolDe = (usuarioId: number, i: InscripcionMock): RolEnInscripcion => {
+  if (buscarTorneo(i.torneoId)!.organizador.id === usuarioId) return 'ORGANIZADOR';
+  if (i.equipoId === null) return 'INDIVIDUAL';
+  return i.duenioId === usuarioId ? 'CAPITAN' : 'JUGADOR';
+};
+
+const resumen = (usuarioId: number, i: InscripcionMock) => ({
   id: i.id,
   torneoId: i.torneoId,
   torneo: torneoDeInscripcion(i.torneoId),
@@ -434,10 +442,11 @@ const resumen = (i: InscripcionMock) => ({
   creadoEn: i.creadoEn,
   modificadoEn: i.modificadoEn,
   equipo: equipoInscripto(i.equipoId),
+  rol: rolDe(usuarioId, i),
 });
 
 const detalle = (sesion: SesionMock, i: InscripcionMock): InscripcionDetalle => ({
-  ...resumen(i),
+  ...resumen(sesion.usuario.id, i),
   reglamentoAceptadoEn: i.reglamentoAceptadoEn,
   nomina: i.nomina && i.nomina.map((id) => usuarioPublico(sesion, id)!),
 });
@@ -638,12 +647,16 @@ export const crearInscripcionesHandlers = (sesion: () => SesionMock) => {
       if (!s) return sinSesion();
       const url = new URL(request.url);
       const torneoId = url.searchParams.get('torneoId');
+      // las que armé, en todos los estados, y las confirmadas de equipos ajenos donde figuro en la nómina
       const propias = estado.inscripciones
         .filter(
-          (i) => i.duenioId === s.usuario.id && (!torneoId || i.torneoId === Number(torneoId))
+          (i) =>
+            (i.duenioId === s.usuario.id ||
+              (i.estado === 'CONFIRMADA' && !!i.nomina?.includes(s.usuario.id))) &&
+            (!torneoId || i.torneoId === Number(torneoId))
         )
         .sort((a, b) => b.id - a.id)
-        .map(resumen);
+        .map((i) => resumen(s.usuario.id, i));
       return pagina(propias, url);
     }),
 
