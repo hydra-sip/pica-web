@@ -5,15 +5,18 @@ import { fecha, pesos } from '../../shared/formato';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { Button, Card, Modal } from '../../shared/ui';
 import { MENSAJES_INSCRIPCION } from '../mensajesInscripcion';
+import { VolverAlTorneo } from './VolverAlTorneo';
 
 interface ResumenDePagoProps {
   resumen: ResumenPago;
   /** Se llama con la inscripción ya confirmada cuando el pago salió bien. */
   onPagada: (inscripcion: InscripcionDetalle) => void;
+  /** El del torneo, para el "← Ver torneo" (el resumen no lo trae). */
+  slug?: string | null;
 }
 
 /** Paso 2: lo que se va a pagar, la garantía de custodia, confirmar el pago y volver a la nómina. */
-export const ResumenDePago: React.FC<ResumenDePagoProps> = ({ resumen, onPagada }) => {
+export const ResumenDePago: React.FC<ResumenDePagoProps> = ({ resumen, onPagada, slug }) => {
   const navigate = useNavigate();
   // Un fallo al pagar no tira la página: la inscripción sigue pendiente y se puede reintentar.
   const [aviso, setAviso] = useState<string | null>(null);
@@ -58,6 +61,7 @@ export const ResumenDePago: React.FC<ResumenDePagoProps> = ({ resumen, onPagada 
 
   return (
     <div className="inscripcion-page">
+      <VolverAlTorneo slug={slug} />
       <header className="inscripcion-encabezado">
         <h1>Confirmar y pagar</h1>
         <span className="inscripcion-paso">Paso 2/2</span>

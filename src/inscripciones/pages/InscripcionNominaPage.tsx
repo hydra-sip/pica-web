@@ -6,6 +6,7 @@ import { TorneoDetalle } from '../../torneos/types/torneo';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { MENSAJES_PASO_1 } from '../mensajesInscripcion';
 import { PasoEquipoNomina } from '../components/PasoEquipoNomina';
+import { VolverAlTorneo } from '../components/VolverAlTorneo';
 import '../inscripciones.css';
 
 interface Datos {
@@ -75,6 +76,7 @@ export const InscripcionNominaPage: React.FC = () => {
   if (inscripcion.estado !== 'BORRADOR') {
     return (
       <div className="inscripcion-page">
+        <VolverAlTorneo slug={inscripcion.torneo.slug} />
         <div className="alerta alerta-aviso" role="status">
           Esta inscripción está cancelada y ya no se puede modificar.
         </div>

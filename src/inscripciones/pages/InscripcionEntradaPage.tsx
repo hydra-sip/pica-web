@@ -8,6 +8,7 @@ import { inscripcionAbierta } from '../inscripcionAbierta';
 import { MENSAJES_PASO_1 } from '../mensajesInscripcion';
 import { TAMANIO } from '../hooks/useEquiposDelTorneo';
 import { PasoEquipoNomina } from '../components/PasoEquipoNomina';
+import { VolverAlTorneo } from '../components/VolverAlTorneo';
 import '../inscripciones.css';
 
 interface Datos {
@@ -55,6 +56,7 @@ export const InscripcionEntradaPage: React.FC = () => {
   if (error) {
     return (
       <div className="inscripcion-page">
+        <VolverAlTorneo slug={slug} />
         <div className="alerta alerta-peligro" role="alert">
           {error}
         </div>
@@ -82,8 +84,8 @@ export const InscripcionEntradaPage: React.FC = () => {
           <Link to={`/inscripciones/${confirmada.id}`} className="btn btn-primary btn-block">
             Ver mi inscripción
           </Link>
-          <Link to="/" className="btn btn-secondary btn-block">
-            Volver al inicio
+          <Link to={`/torneos/${datos.torneo.slug}`} className="btn btn-secondary btn-block">
+            Ver torneo
           </Link>
         </div>
       </div>
@@ -96,8 +98,8 @@ export const InscripcionEntradaPage: React.FC = () => {
           La inscripción a {datos.torneo.nombre} no está abierta o ya cerró.
         </div>
         <div className="inscripcion-acciones">
-          <Link to="/" className="btn btn-secondary btn-block">
-            Volver al inicio
+          <Link to={`/torneos/${datos.torneo.slug}`} className="btn btn-secondary btn-block">
+            Ver torneo
           </Link>
         </div>
       </div>

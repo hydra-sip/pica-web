@@ -53,12 +53,12 @@ describe('paso 1: torneo individual', () => {
     expect((await inscripcionApi.obtener(idDeLaUbicacion(ubicacion()))).estado).toBe('CONFIRMADA');
   });
 
-  it('"Guardar como borrador y salir" deja el borrador creado y vuelve al inicio', async () => {
+  it('"Guardar como borrador y salir" deja el borrador creado y vuelve a la ficha del torneo', async () => {
     const { user, ubicacion } = await renderRuta('/torneos/individual-pago/inscripcion');
 
     await user.click(await screen.findByRole('button', { name: 'Guardar como borrador y salir' }));
 
-    await waitFor(() => expect(ubicacion()).toBe('/'));
+    await waitFor(() => expect(ubicacion()).toBe('/torneos/individual-pago'));
     const [borrador] = (await inscripcionApi.listarMias({ torneoId: TORNEO_INDIVIDUAL_PAGO }))
       .content;
     expect(borrador.estado).toBe('BORRADOR');

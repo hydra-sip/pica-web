@@ -27,6 +27,8 @@ export interface ProblemDetail {
   /** Solo en CHECKIN_FUERA_DE_VENTANA: cuándo abre y cuándo cierra la ventana, sin la tolerancia. */
   abreEn?: string;
   cierraEn?: string;
+  /** Solo en JUGADOR_YA_INSCRIPTO: el que ya figura en otra inscripción del torneo (puede ser el capitán). */
+  jugador?: { id: number; username: string; nombres: string; apellidos: string };
 }
 
 export interface PersonaInfo {

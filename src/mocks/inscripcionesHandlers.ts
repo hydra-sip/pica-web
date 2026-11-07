@@ -77,8 +77,6 @@ type Cuerpo = Record<string, unknown>;
 
 /** El torneo de la API más lo que el mock necesita para simular a los demás participantes. */
 interface TorneoMock extends TorneoDetalle {
-  /** Jugadores máximos de la nómina; el back lo valida, pero el contrato público del torneo no lo trae. */
-  nominaMaxima: number | null;
   /** Inscripciones confirmadas de otros equipos que no están en el mock (ocupan cupo). */
   ocupadasAparte: number;
   /** El pago siempre se rechaza. */
@@ -373,6 +371,12 @@ const conflicto = (codigo: string, detail: string) => problema(409, codigo, deta
 const prohibido = (codigo: string, detail: string) => problema(403, codigo, detail);
 const noEncontrado = (codigo: string, detail: string) => problema(404, codigo, detail);
 
+/** El 409 dice cuál es el jugador (CE4-4). */
+const jugadorYaInscripto = (sesion: SesionMock, id: number) =>
+  problema(409, 'JUGADOR_YA_INSCRIPTO', 'El jugador ya figura en otra inscripción del torneo', {
+    jugador: usuarioPublico(sesion, id),
+  });
+
 const sinSesion = () => problema(401, 'NO_AUTENTICADO', 'Falta el token de acceso');
 const sinPermiso = () => prohibido('SIN_PERMISO', 'No tenés permiso para hacer esto');
 
@@ -380,7 +384,6 @@ const sinPermiso = () => prohibido('SIN_PERMISO', 'No tenés permiso para hacer 
 const sinDatosDelMock = ({
   ocupadasAparte: _o,
   cobroRechazado: _c,
-  nominaMaxima: _n,
   ...publico
 }: TorneoMock): TorneoDetalle => publico;
 
@@ -558,9 +561,8 @@ const validarEquipoYNomina = (
   ) {
     return conflicto('INSCRIPCION_DUPLICADA', 'El equipo ya tiene una inscripción en el torneo');
   }
-  if (nomina.some((id) => inscripcionActivaDe(t.id, id, exceptoId))) {
-    return conflicto('JUGADOR_YA_INSCRIPTO', 'Un jugador ya figura en otra inscripción del torneo');
-  }
+  const repetido = nomina.find((id) => inscripcionActivaDe(t.id, id, exceptoId));
+  if (repetido !== undefined) return jugadorYaInscripto(sesion, repetido);
   if (nomina.some((id) => buscarJugador(id)?.bloqueado)) {
     return prohibido('USUARIO_BLOQUEADO', 'Un jugador tiene un bloqueo vigente');
   }
@@ -785,10 +787,7 @@ export const crearInscripcionesHandlers = (sesion: () => SesionMock) => {
         return conflicto('REEMPLAZO_INVALIDO', 'El jugador no se puede reemplazar en esta nómina');
       }
       if (inscripcionActivaDe(i.torneoId, entra as number, i.id)) {
-        return conflicto(
-          'JUGADOR_YA_INSCRIPTO',
-          'El jugador ya figura en otra inscripción del torneo'
-        );
+        return jugadorYaInscripto(s, entra as number);
       }
       if (buscarJugador(entra as number)?.bloqueado) {
         return prohibido('USUARIO_BLOQUEADO', 'El jugador que entra tiene un bloqueo vigente');
@@ -882,12 +881,8 @@ export const crearInscripcionesHandlers = (sesion: () => SesionMock) => {
             `La nómina tiene que tener de ${desde} a ${hasta} jugadores`
           );
         }
-        if (i.nomina.some((id) => inscripcionActivaDe(t.id, id, i.id))) {
-          return conflicto(
-            'JUGADOR_YA_INSCRIPTO',
-            'Un jugador ya figura en otra inscripción del torneo'
-          );
-        }
+        const repetido = i.nomina.find((id) => inscripcionActivaDe(t.id, id, i.id));
+        if (repetido !== undefined) return jugadorYaInscripto(s, repetido);
         if (i.nomina.some((id) => buscarJugador(id)?.bloqueado)) {
           return prohibido('USUARIO_BLOQUEADO', 'Un jugador tiene un bloqueo vigente');
         }

@@ -10,11 +10,13 @@ import { TorneoDetalle } from '../../torneos/types/torneo';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { pesos } from '../../shared/formato';
 import { mensajeDeError } from '../../shared/mensajesError';
-import { MENSAJES_PASO_1 } from '../mensajesInscripcion';
+import { EstadoConAviso } from '../../shared/components/AvisoDeNavegacion';
+import { MENSAJES_PASO_1, mensajeJugadorYaInscripto } from '../mensajesInscripcion';
 import { Button, Card } from '../../shared/ui';
 import { useEquiposDelTorneo } from '../hooks/useEquiposDelTorneo';
 import { BuscadorJugadores } from './BuscadorJugadores';
 import { EQUIPO_NUEVO, SelectorEquipo } from './SelectorEquipo';
+import { VolverAlTorneo } from './VolverAlTorneo';
 import '../inscripciones.css';
 
 export interface PasoEquipoNominaProps {
@@ -30,15 +32,17 @@ const cantidad = (n: number) => `${n} ${n === 1 ? 'jugador' : 'jugadores'}`;
 
 /**
  * Paso 1 de la inscripción (HU-204): equipo, nómina y reglamento. Sirve para el alta y para retomar
- * un borrador, y guarda y navega solo (al paso 2 o al inicio).
+ * un borrador, y guarda y navega solo (al paso 2, o a la ficha del torneo al guardar el borrador).
  */
 export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, inscripcion }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   // El torneo individual se reduce al reglamento: no hay equipo ni nómina.
   const individual = torneo.tipoParticipante === 'INDIVIDUAL';
-  // El tipo público del torneo no trae el máximo de la nómina: el tope lo valida el back (NOMINA_INVALIDA).
   const minimo = torneo.tamanioEquipo ?? 1;
+  // Con suplentes (CE4-4). Sin él no se limita acá: igual lo valida el back al confirmar (NOMINA_INVALIDA).
+  // un back sin CE4-4 no manda el campo: undefined cuenta como sin máximo
+  const maximo = torneo.nominaMaxima ?? null;
 
   const {
     equipos,
@@ -56,7 +60,9 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
     () => inscripcion?.nomina?.filter((j) => j.id !== capitanId) ?? []
   );
   const total = jugadores.length + 1;
-  const sumar = (j: UsuarioPublico) => setJugadores((prev) => [...prev, j]);
+  const lleno = maximo !== null && total >= maximo;
+  const sumar = (j: UsuarioPublico) =>
+    setJugadores((prev) => (maximo !== null && prev.length + 1 >= maximo ? prev : [...prev, j]));
   const sacar = (id: number) => setJugadores((prev) => prev.filter((j) => j.id !== id));
 
   const [reglamentoAceptado, setReglamentoAceptado] = useState(false);
@@ -64,7 +70,8 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
   const gratis = torneo.valorInscripcion === 0;
   const creaNuevo = equipos?.length === 0 || equipoElegido === EQUIPO_NUEVO;
   const equipoListo = individual || (creaNuevo ? nombreNuevo.trim() !== '' : equipoElegido !== '');
-  const nominaValida = individual || total >= minimo;
+  // un borrador viejo puede tener de más: se sacan jugadores hasta entrar en el máximo
+  const nominaValida = individual || (total >= minimo && (maximo === null || total <= maximo));
   const puedeContinuar = reglamentoAceptado && equipoListo && nominaValida;
 
   // El borrador que ya existe en la API: el que se retoma o el que este paso guardó.
@@ -108,7 +115,9 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
       await inscripcionApi.confirmar(guardada.id, true);
       navigate(`/inscripciones/${guardada.id}/pago`);
     } catch (err) {
-      const mensaje = mensajeDeError(err, 'No se pudo guardar la inscripción.', MENSAJES_PASO_1);
+      const mensaje =
+        mensajeJugadorYaInscripto(err, capitanId) ??
+        mensajeDeError(err, 'No se pudo guardar la inscripción.', MENSAJES_PASO_1);
       setError(guardada ? `${mensaje} Tu borrador quedó guardado.` : mensaje);
     } finally {
       setOcupado(false);
@@ -120,10 +129,15 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
     setError(null);
     try {
       await guardar();
-      // TODO: volver al detalle del torneo (/torneos/:slug, que ya existe); por ahora, al inicio.
-      navigate('/');
+      const estado: EstadoConAviso = {
+        aviso: 'Guardaste el borrador de tu inscripción: la retomás cuando vuelvas a inscribirte en este torneo.',
+      };
+      navigate(`/torneos/${torneo.slug}`, { state: estado });
     } catch (err) {
-      setError(mensajeDeError(err, 'No se pudo guardar el borrador.', MENSAJES_PASO_1));
+      setError(
+        mensajeJugadorYaInscripto(err, capitanId) ??
+          mensajeDeError(err, 'No se pudo guardar el borrador.', MENSAJES_PASO_1)
+      );
     } finally {
       setOcupado(false);
     }
@@ -131,6 +145,7 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
 
   return (
     <div className="inscripcion-page">
+      <VolverAlTorneo slug={torneo.slug} />
       <header className="inscripcion-encabezado">
         <h1>{individual ? 'Inscripción individual' : 'Inscripción de Equipo'}</h1>
         {!gratis && <span className="inscripcion-paso">Paso 1/2</span>}
@@ -140,7 +155,9 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
         <strong>{torneo.nombre}</strong>
         {!individual && (
           <span>
-            {`Nómina de al menos ${minimo} jugadores`}
+            {maximo !== null
+              ? `Nómina de ${minimo} a ${maximo} jugadores`
+              : `Nómina de al menos ${minimo} jugadores`}
           </span>
         )}
       </Card>
@@ -168,6 +185,7 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
             <BuscadorJugadores
               enNomina={new Set([capitanId, ...jugadores.map((j) => j.id)])}
               onSumar={sumar}
+              bloqueo={lleno ? `Llegaste al máximo de ${maximo} jugadores.` : null}
             />
             <ul className="nomina-lista" aria-label="Nómina">
               <li className="nomina-fila">
@@ -202,7 +220,9 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
               ))}
             </ul>
             <p className="inscripcion-contador">
-              {cantidad(total)} (mínimo {minimo})
+              {maximo !== null
+                ? `${total} de ${maximo} (mínimo ${minimo})`
+                : `${cantidad(total)} (mínimo ${minimo})`}
             </p>
           </section>
         </>

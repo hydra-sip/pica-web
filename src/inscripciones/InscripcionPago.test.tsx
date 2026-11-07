@@ -60,6 +60,10 @@ describe('paso 2: confirmar y pagar', () => {
     expect(botonPagar('22.000')).toBeEnabled();
     expect(screen.queryByText(/tasa de servicio/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/método de pago/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '← Ver torneo' })).toHaveAttribute(
+      'href',
+      '/torneos/torneo-apertura-f5'
+    );
   });
 
   it('al confirmar el pago muestra que la inscripción quedó confirmada, con el equipo y el torneo', async () => {
@@ -73,7 +77,10 @@ describe('paso 2: confirmar y pagar', () => {
     expect(await screen.findByRole('heading', { name: '¡Inscripción confirmada!' })).toBeInTheDocument();
     expect(screen.getByText(/Los Galácticos/)).toBeInTheDocument();
     expect(screen.getByText(/Torneo Apertura F5/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /inicio/i })).toHaveAttribute('href', '/');
+    expect(screen.getByRole('link', { name: 'Ver torneo' })).toHaveAttribute(
+      'href',
+      '/torneos/torneo-apertura-f5'
+    );
     expect(screen.getByRole('link', { name: 'Ver mi inscripción' })).toHaveAttribute(
       'href',
       `/inscripciones/${ID}`
@@ -264,7 +271,10 @@ describe('pantalla final y otros estados de la inscripción', () => {
 
     expect(await screen.findByRole('heading', { name: '¡Inscripción confirmada!' })).toBeInTheDocument();
     expect(screen.getByText(/Los Galácticos/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /inicio/i })).toHaveAttribute('href', '/');
+    expect(screen.getByRole('link', { name: 'Ver torneo' })).toHaveAttribute(
+      'href',
+      '/torneos/torneo-gratis'
+    );
     expect(screen.queryByRole('button', { name: /Confirmar pago/ })).not.toBeInTheDocument();
   });
 
@@ -321,6 +331,10 @@ describe('pantalla final y otros estados de la inscripción', () => {
     await screen.findByText(/Esta inscripción fue cancelada/);
     expect(screen.getByRole('status')).toHaveTextContent('Esta inscripción fue cancelada');
     expect(screen.queryByRole('button', { name: /Confirmar pago/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ver torneo' })).toHaveAttribute(
+      'href',
+      '/torneos/torneo-apertura-f5'
+    );
   });
 
   it.each([

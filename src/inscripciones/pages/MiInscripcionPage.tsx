@@ -8,6 +8,7 @@ import { TorneoDetalle } from '../../torneos/types/torneo';
 import { Card } from '../../shared/ui';
 import { AvisoInscripcionTerminada } from '../components/AvisoInscripcionTerminada';
 import { HistorialReemplazos } from '../components/HistorialReemplazos';
+import { VolverAlTorneo } from '../components/VolverAlTorneo';
 import { NominaConfirmada } from '../components/NominaConfirmada';
 import { inscripcionAbierta } from '../inscripcionAbierta';
 import { MENSAJES_MI_INSCRIPCION, MENSAJES_REEMPLAZO } from '../mensajesInscripcion';
@@ -91,7 +92,13 @@ export const MiInscripcionPage: React.FC = () => {
     return <Navigate to={`/inscripciones/${inscripcion.id}/pago`} replace />;
   }
   if (inscripcion.estado === 'CANCELADA' || inscripcion.estado === 'REINTEGRADA') {
-    return <AvisoInscripcionTerminada estado={inscripcion.estado} motivo={motivoRecarga} />;
+    return (
+      <AvisoInscripcionTerminada
+        estado={inscripcion.estado}
+        motivo={motivoRecarga}
+        slug={inscripcion.torneo.slug}
+      />
+    );
   }
 
   const puedeReemplazar =
@@ -100,6 +107,7 @@ export const MiInscripcionPage: React.FC = () => {
 
   return (
     <div className="inscripcion-page">
+      <VolverAlTorneo slug={inscripcion.torneo.slug} />
       <header className="inscripcion-encabezado">
         <h1>Mi inscripción</h1>
       </header>
