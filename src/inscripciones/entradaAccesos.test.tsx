@@ -26,9 +26,11 @@ describe('accesos a la entrada de la inscripción', () => {
     await waitFor(() => expect(ubicacion()).toBe('/unauthorized'));
     expect(await screen.findByRole('heading', { name: 'Acceso Denegado' })).toBeInTheDocument();
     expect(screen.getByText(/no tiene habilitada la inscripción a torneos/)).toBeInTheDocument();
-    // Nada del texto del backoffice
+    // Nada del texto del backoffice ni credenciales
     expect(screen.queryByText(/módulo de administración/)).not.toBeInTheDocument();
     expect(screen.queryByText(/admin123/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/admin@pica\.edu\.ar/)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Volver' })).toBeInTheDocument();
     expect(screen.queryByLabelText('Equipo')).not.toBeInTheDocument();
   });
 
@@ -38,6 +40,9 @@ describe('accesos a la entrada de la inscripción', () => {
     await waitFor(() => expect(ubicacion()).toBe('/unauthorized'));
     expect(await screen.findByText(/módulo de administración/)).toBeInTheDocument();
     expect(screen.queryByText(/inscripción a torneos/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/admin123/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/admin@pica\.edu\.ar/)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Volver' })).toBeInTheDocument();
   });
 
   it('si la cuenta se bloquea al guardar, lo explica en la página y no avanza', async () => {
