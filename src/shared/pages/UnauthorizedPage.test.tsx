@@ -62,10 +62,12 @@ describe('CE4-1 (PICA-302): Pantalla de Acceso Denegado sin credenciales filtrad
     expect(screen.queryByText(/admin@pica\.edu\.ar/i)).not.toBeInTheDocument();
   });
 
-  it('el botón "Volver" navega hacia atrás (navigate(-1)) cuando hay historial previo en la navegación', async () => {
+  // react-router guarda en `history.state.idx` la posición dentro de la app.
+  const clickEnVolverCon = async (idx: number | null, length: number) => {
     const user = userEvent.setup();
     const originalLength = window.history.length;
-    Object.defineProperty(window.history, 'length', { value: 3, configurable: true });
+    window.history.replaceState(idx === null ? null : { idx }, '');
+    Object.defineProperty(window.history, 'length', { value: length, configurable: true });
 
     render(
       <MemoryRouter initialEntries={['/unauthorized']}>
@@ -73,34 +75,33 @@ describe('CE4-1 (PICA-302): Pantalla de Acceso Denegado sin credenciales filtrad
       </MemoryRouter>
     );
 
-    const botonVolver = screen.getByRole('button', { name: 'Volver' });
-    expect(botonVolver).toBeInTheDocument();
+    try {
+      await user.click(screen.getByRole('button', { name: 'Volver' }));
+    } finally {
+      window.history.replaceState(null, '');
+      Object.defineProperty(window.history, 'length', { value: originalLength, configurable: true });
+    }
+  };
 
-    await user.click(botonVolver);
+  it('el botón "Volver" navega hacia atrás (navigate(-1)) cuando hay una página previa de la app', async () => {
+    await clickEnVolverCon(2, 3);
+
     expect(mockNavigate).toHaveBeenCalledTimes(1);
     expect(mockNavigate).toHaveBeenCalledWith(-1);
-
-    Object.defineProperty(window.history, 'length', { value: originalLength, configurable: true });
   });
 
   it('el botón "Volver" realiza fallback al inicio (navigate("/")) cuando no hay historial previo', async () => {
-    const user = userEvent.setup();
-    const originalLength = window.history.length;
-    Object.defineProperty(window.history, 'length', { value: 1, configurable: true });
-
-    render(
-      <MemoryRouter initialEntries={['/unauthorized']}>
-        <UnauthorizedPage />
-      </MemoryRouter>
-    );
-
-    const botonVolver = screen.getByRole('button', { name: 'Volver' });
-    await user.click(botonVolver);
+    await clickEnVolverCon(null, 1);
 
     expect(mockNavigate).toHaveBeenCalledTimes(1);
     expect(mockNavigate).toHaveBeenCalledWith('/');
+  });
 
-    Object.defineProperty(window.history, 'length', { value: originalLength, configurable: true });
+  it('el botón "Volver" lleva al inicio si se llegó desde otro sitio, sin sacar al usuario de la app', async () => {
+    await clickEnVolverCon(0, 4);
+
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+    expect(mockNavigate).toHaveBeenCalledWith('/');
   });
 
   it('ofrece enlaces secundarios visibles y funcionales para "Ir al Inicio" y "Iniciar sesión con otra cuenta"', () => {

@@ -10,8 +10,11 @@ export const UnauthorizedPage: React.FC = () => {
   const desde = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
   const esInscripcion = RUTA_DE_INSCRIPCION.test(desde ?? '');
 
+  // `idx` lo guarda react-router y cuenta solo las páginas de la app:
+  // `history.length` incluye las de otros sitios y «Volver» sacaría al usuario.
   const handleVolver = () => {
-    if (window.history.length > 1) {
+    const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0;
+    if (idx > 0) {
       navigate(-1);
     } else {
       navigate('/');
