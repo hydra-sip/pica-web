@@ -39,6 +39,7 @@ import { RifaPublicaPage } from '../rifas/pages/RifaPublicaPage';
 import { PortalVerificacionPage } from '../verificacion/pages/PortalVerificacionPage';
 import { TicketPage } from '../rifas/pages/TicketPage';
 import { MisTicketsPage } from '../rifas/pages/MisTicketsPage';
+import { MisInscripcionesPage } from '../inscripciones/pages/MisInscripcionesPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -66,6 +67,8 @@ export const AppRoutes: React.FC = () => {
         <Route element={<RequireAuth />}>
           <Route path="mi-perfil" element={<ProfilePage />} />
           <Route path="mis-tickets" element={<MisTicketsPage />} />
+          {/* HU-209: las inscripciones propias y las de las nóminas donde figuro; alcanza con la sesión */}
+          <Route path="mis-inscripciones" element={<MisInscripcionesPage />} />
           {/* HU-404 y HU-506 / T506-2: el ticket con el comprobante y el reclamo; el back pide sesión */}
           <Route path="tickets/:ticketId" element={<TicketPage />} />
           <Route path="rifas/:rifaId/tickets/:ticketId" element={<TicketPage />} />

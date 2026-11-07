@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { EstadoInscripcion, InscripcionDelTorneo, torneoApi } from '../../api/torneoApi';
 import { PageResponse } from '../../api/usuarioApi';
+import { ESTADO_INSCRIPCION } from '../../inscripciones/formato';
 import { mensajeDeError } from '../../shared/mensajesError';
-import { Badge, BadgeTone, Button, Card, Table } from '../../shared/ui';
+import { Badge, Button, Card, Table } from '../../shared/ui';
 import { formatFecha } from '../utils/formatters';
 
 const TAMANIO_PAGINA = 20;
@@ -14,22 +15,6 @@ const ESTADOS: Exclude<EstadoInscripcion, 'BORRADOR'>[] = [
   'CANCELADA',
   'REINTEGRADA',
 ];
-
-const ESTADO_UI: Record<EstadoInscripcion, string> = {
-  BORRADOR: 'Borrador',
-  PENDIENTE_PAGO: 'Pendiente de pago',
-  CONFIRMADA: 'Confirmada',
-  CANCELADA: 'Cancelada',
-  REINTEGRADA: 'Reintegrada',
-};
-
-const TONO: Record<EstadoInscripcion, BadgeTone> = {
-  BORRADOR: 'neutral',
-  PENDIENTE_PAGO: 'aviso',
-  CONFIRMADA: 'exito',
-  CANCELADA: 'neutral',
-  REINTEGRADA: 'info',
-};
 
 const participante = (i: InscripcionDelTorneo): { nombre: string; detalle: string } => {
   if (i.equipo && i.capitan) {
@@ -109,7 +94,7 @@ export const InscripcionesDelTorneo: React.FC<InscripcionesDelTorneoProps> = ({
             aria-pressed={estado === e}
             onClick={() => elegir(e)}
           >
-            {ESTADO_UI[e]}
+            {ESTADO_INSCRIPCION[e].texto}
           </button>
         ))}
       </div>
@@ -148,7 +133,9 @@ export const InscripcionesDelTorneo: React.FC<InscripcionesDelTorneoProps> = ({
                       {detalle && <span className="torneos-celda-secundaria">{detalle}</span>}
                     </td>
                     <td>
-                      <Badge tone={TONO[i.estado]}>{ESTADO_UI[i.estado]}</Badge>
+                      <Badge tone={ESTADO_INSCRIPCION[i.estado].tono}>
+                        {ESTADO_INSCRIPCION[i.estado].texto}
+                      </Badge>
                     </td>
                     <td>{formatFecha(i.creadoEn)}</td>
                   </tr>

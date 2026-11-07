@@ -14,6 +14,10 @@ import { inscripcionAbierta } from '../inscripcionAbierta';
 import { MENSAJES_MI_INSCRIPCION, MENSAJES_REEMPLAZO } from '../mensajesInscripcion';
 import '../inscripciones.css';
 
+/** El capitán o el participante individual: los demás roles la ven en solo lectura. */
+const esDelQueMira = (i: InscripcionDetalle): boolean =>
+  i.rol === 'CAPITAN' || i.rol === 'INDIVIDUAL';
+
 /**
  * `/inscripciones/:id`: la inscripción confirmada del capitán, con el equipo, el torneo y la nómina.
  * La individual muestra el participante y no tiene nómina. Un borrador lleva al paso 1, una pendiente
@@ -21,6 +25,9 @@ import '../inscripciones.css';
  *
  * Reemplazar se ofrece solo mientras el torneo tenga la inscripción abierta y quede cupo: con el cupo
  * completo la lista también queda fija. Si el torneo no carga, no se ofrece.
+ *
+ * Un jugador de la nómina o el organizador la ven en solo lectura (HU-209): sin reemplazar ni el aviso de la
+ * lista fija, y sin que un borrador o una pendiente los lleven a editarla o pagarla.
  */
 export const MiInscripcionPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -50,6 +57,7 @@ export const MiInscripcionPage: React.FC = () => {
       try {
         const detalle = await inscripcionApi.obtener(Number(id));
         if (vigente) setInscripcion(detalle);
+        if (!esDelQueMira(detalle)) return;
         if (detalle.estado !== 'CONFIRMADA' || !detalle.equipo || !detalle.torneo.slug) return;
         const delTorneo = await torneoApi.getTorneoBySlug(detalle.torneo.slug).catch(() => null);
         if (vigente) setTorneo(delTorneo);
@@ -85,10 +93,11 @@ export const MiInscripcionPage: React.FC = () => {
     );
   }
 
-  if (inscripcion.estado === 'BORRADOR') {
+  const propia = esDelQueMira(inscripcion);
+  if (propia && inscripcion.estado === 'BORRADOR') {
     return <Navigate to={`/inscripciones/${inscripcion.id}/nomina`} replace />;
   }
-  if (inscripcion.estado === 'PENDIENTE_PAGO') {
+  if (propia && inscripcion.estado === 'PENDIENTE_PAGO') {
     return <Navigate to={`/inscripciones/${inscripcion.id}/pago`} replace />;
   }
   if (inscripcion.estado === 'CANCELADA' || inscripcion.estado === 'REINTEGRADA') {
@@ -102,14 +111,18 @@ export const MiInscripcionPage: React.FC = () => {
   }
 
   const puedeReemplazar =
-    torneo !== null && !cerrada && inscripcionAbierta(torneo) && torneo.cupoDisponible > 0;
-  const listaFija = cerrada || (torneo !== null && !puedeReemplazar);
+    propia &&
+    torneo !== null &&
+    !cerrada &&
+    inscripcionAbierta(torneo) &&
+    torneo.cupoDisponible > 0;
+  const listaFija = propia && (cerrada || (torneo !== null && !puedeReemplazar));
 
   return (
     <div className="inscripcion-page">
       <VolverAlTorneo slug={inscripcion.torneo.slug} />
       <header className="inscripcion-encabezado">
-        <h1>Mi inscripción</h1>
+        <h1>{inscripcion.rol === 'ORGANIZADOR' ? 'Inscripción' : 'Mi inscripción'}</h1>
       </header>
       {motivoRecarga && (
         <div className="alerta alerta-peligro" role="alert">
@@ -121,7 +134,9 @@ export const MiInscripcionPage: React.FC = () => {
         <span>
           {inscripcion.equipo
             ? `Equipo: ${inscripcion.equipo.nombre}`
-            : `Participante: ${user?.name}`}
+            : propia
+              ? `Participante: ${user?.name}`
+              : 'Inscripción individual'}
         </span>
       </Card>
       {inscripcion.equipo && (
@@ -133,7 +148,7 @@ export const MiInscripcionPage: React.FC = () => {
           )}
           <NominaConfirmada
             inscripcion={inscripcion}
-            capitanId={Number(user?.id)}
+            capitanId={inscripcion.equipo.capitanId}
             puedeReemplazar={puedeReemplazar}
             onReemplazada={(actualizada) => {
               setInscripcion(actualizada);
