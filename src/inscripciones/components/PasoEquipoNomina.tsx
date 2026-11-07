@@ -41,7 +41,8 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
   const individual = torneo.tipoParticipante === 'INDIVIDUAL';
   const minimo = torneo.tamanioEquipo ?? 1;
   // Con suplentes (CE4-4). Sin él no se limita acá: igual lo valida el back al confirmar (NOMINA_INVALIDA).
-  const maximo = torneo.nominaMaxima;
+  // un back sin CE4-4 no manda el campo: undefined cuenta como sin máximo
+  const maximo = torneo.nominaMaxima ?? null;
 
   const {
     equipos,

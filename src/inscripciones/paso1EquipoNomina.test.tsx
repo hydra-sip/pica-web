@@ -183,14 +183,14 @@ describe('paso 1: equipo y nómina (alta)', () => {
   });
 
   it('con la nómina por encima del máximo (un back que no informa el tope), el aviso es el del back y el borrador queda guardado', async () => {
-    // Sin nominaMaxima en la ficha no se limita en pantalla: lo valida el back al confirmar.
-    const torneo = await torneoApi.getTorneoBySlug('torneo-gratis');
-    server.use(
-      http.get(`${API_URL}/torneos/slug/torneo-gratis`, () =>
-        HttpResponse.json({ ...torneo, nominaMaxima: null })
-      )
-    );
+    // Sin nominaMaxima en la ficha no se limita en pantalla: lo valida el back al confirmar. Un back viejo
+    // no manda el campo (ni siquiera null).
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { nominaMaxima: _sinMaximo, ...torneo } =
+      await torneoApi.getTorneoBySlug('torneo-gratis');
+    server.use(http.get(`${API_URL}/torneos/slug/torneo-gratis`, () => HttpResponse.json(torneo)));
     const { user } = await renderRuta('/torneos/torneo-gratis/inscripcion'); // nómina de 3 a 4
+    expect(await screen.findByText('Nómina de al menos 3 jugadores')).toBeInTheDocument();
     await user.selectOptions(await screen.findByLabelText('Equipo'), 'Los Galácticos');
     for (const texto of ['lucas', 'mrossi', 'joaco', 'salva']) await sumarJugador(user, texto);
     await user.click(screen.getByLabelText('Acepto el Reglamento y Código de Conducta'));
