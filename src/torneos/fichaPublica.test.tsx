@@ -45,6 +45,7 @@ const torneoDetalleBase: TorneoDetalle = {
   cupoMinimo: 4,
   cupoDisponible: 8,
   tamanioEquipo: null,
+  nominaMaxima: null,
   valorInscripcion: 5000,
   moneda: 'ARS',
   pctGastosAdministrativos: 10,
