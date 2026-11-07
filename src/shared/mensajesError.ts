@@ -14,6 +14,10 @@ const POR_CODIGO: Record<string, string> = {
   REFRESH_REUTILIZADO: SESION_VENCIDA,
   SIN_PERMISO: 'No tenés permiso para hacer esto.',
   ERROR_INTERNO: 'Algo falló en el servidor. Probá de nuevo en un rato.',
+  DESIGNACION_NO_ENCONTRADA: 'Ya no figurás como árbitro de ese torneo.',
+  DESIGNACION_YA_RESPONDIDA: 'Esa designación ya la respondiste.',
+  COMPROMISO_NO_ACEPTADO:
+    'Para aceptar la designación tenés que aceptar el código de imparcialidad.',
   ALMACENAMIENTO_NO_DISPONIBLE:
     'No se pudo guardar ni leer el archivo: el almacenamiento no respondió. Probá de nuevo en un rato.',
   USUARIO_NO_ENCONTRADO: 'El usuario no existe o está dado de baja.',
@@ -74,7 +78,8 @@ const POR_CODIGO: Record<string, string> = {
   PARTICIPANTES_INSUFICIENTES:
     'Hacen falta al menos 2 inscripciones confirmadas para armar el bracket.',
   BRACKET_YA_GENERADO: 'El torneo ya tiene bracket: recargá la página.',
-  SIN_ARBITROS: 'Designá al menos un árbitro en el paso 2: cada partido necesita uno.',
+  SIN_ARBITROS:
+    'Hace falta al menos un árbitro que haya aceptado la designación: cada partido necesita uno.',
   BRACKET_CON_RESULTADOS: 'Ya hay resultados cargados: el bracket no se puede volver a sortear.',
   PARTIDO_NO_ENCONTRADO: 'El partido no existe.',
   EVIDENCIA_NO_ENCONTRADA: 'Ese archivo ya no está: recargá la página.',
@@ -195,6 +200,22 @@ export const erroresPorCampo = (
   (problemaDe(err)?.errores || []).forEach((e) => {
     if (e.campo && !errores[e.campo]) {
       errores[e.campo] = propios[e.codigo] || POR_CODIGO_DE_CAMPO[e.codigo] || e.mensaje;
+    }
+  });
+  return errores;
+};
+
+/**
+ * Los errores de un 400 VALIDACION por campo con el `mensaje` del back, para pantallas donde un mismo código dice
+ * cosas distintas según la regla (por ejemplo RANGO_INVALIDO en los parámetros del admin).
+ */
+export const mensajesDelBackPorCampo = (err: unknown): Record<string, string> => {
+  const errores: Record<string, string> = {};
+  (problemaDe(err)?.errores || []).forEach((e) => {
+    if (e.campo && !errores[e.campo]) {
+      errores[e.campo] = e.mensaje
+        ? `${e.mensaje}.`
+        : POR_CODIGO_DE_CAMPO[e.codigo] || 'Valor inválido.';
     }
   });
   return errores;

@@ -1,0 +1,71 @@
+/* Parámetros de la plataforma (HU-702): una tarjeta por grupo, dos campos por fila en escritorio. */
+.parametros-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-width: 960px;
+}
+
+.parametros-page h1 {
+  margin: 0;
+}
+
+.parametros-subtitulo {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-secondary);
+}
+
+.parametros-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.parametros-grupo h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.parametros-grilla {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.parametros-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+.parametros-mensaje {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  border: 1px solid;
+}
+
+.parametros-mensaje-exito {
+  color: var(--color-success);
+  background: var(--color-success-bg);
+  border-color: var(--color-success-border);
+}
+
+.parametros-mensaje-error {
+  color: var(--color-danger);
+  background: var(--color-danger-bg);
+  border-color: var(--color-danger-border);
+}
+
+@media (max-width: 768px) {
+  .parametros-grilla {
+    grid-template-columns: 1fr;
+  }
+
+  .parametros-acciones {
+    flex-direction: column-reverse;
+  }
+}

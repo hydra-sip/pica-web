@@ -66,7 +66,11 @@ export const InscripcionPagoPage: React.FC = () => {
       return <Navigate to={`/inscripciones/${inscripcion.id}/nomina`} replace />;
 
     case 'PENDIENTE_PAGO':
-      return resumen ? <ResumenDePago resumen={resumen} onPagada={setInscripcion} /> : cargando;
+      return resumen ? (
+        <ResumenDePago resumen={resumen} onPagada={setInscripcion} slug={inscripcion.torneo.slug} />
+      ) : (
+        cargando
+      );
 
     case 'CONFIRMADA':
       return (
@@ -77,6 +81,8 @@ export const InscripcionPagoPage: React.FC = () => {
       );
 
     default:
-      return <AvisoInscripcionTerminada estado={inscripcion.estado} />;
+      return (
+        <AvisoInscripcionTerminada estado={inscripcion.estado} slug={inscripcion.torneo.slug} />
+      );
   }
 };

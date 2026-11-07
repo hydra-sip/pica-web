@@ -31,6 +31,7 @@ const detalles: DetalleMock[] = [
     cupoMinimo: 2,
     cupoDisponible: 7,
     tamanioEquipo: 3,
+    nominaMaxima: 5,
     valorInscripcion: 5000.0,
     moneda: 'ARS',
     pozoEstimado: 48000.0,
@@ -67,6 +68,7 @@ const detalles: DetalleMock[] = [
     cupoMinimo: 8,
     cupoDisponible: 4,
     tamanioEquipo: 2,
+    nominaMaxima: 4,
     valorInscripcion: 8000.0,
     moneda: 'ARS',
     pozoEstimado: 120000.0,
@@ -102,6 +104,7 @@ const detalles: DetalleMock[] = [
     cupoMinimo: 10,
     cupoDisponible: 0,
     tamanioEquipo: null,
+    nominaMaxima: null,
     valorInscripcion: 2500.0,
     moneda: 'ARS',
     pozoEstimado: 75000.0,
@@ -138,6 +141,7 @@ const detalles: DetalleMock[] = [
     cupoMinimo: 6,
     cupoDisponible: 0,
     tamanioEquipo: 4,
+    nominaMaxima: 6,
     valorInscripcion: 6000.0,
     moneda: 'ARS',
     pozoEstimado: 65000.0,
@@ -172,6 +176,7 @@ const detalles: DetalleMock[] = [
     cupoMinimo: 4,
     cupoDisponible: 0,
     tamanioEquipo: 6,
+    nominaMaxima: 8,
     valorInscripcion: 4000.0,
     moneda: 'ARS',
     pozoEstimado: 40000.0,
@@ -207,6 +212,7 @@ const detalles: DetalleMock[] = [
     cupoMinimo: 4,
     cupoDisponible: 16,
     tamanioEquipo: 1,
+    nominaMaxima: 3,
     valorInscripcion: 10000,
     moneda: 'ARS',
     pozoEstimado: 160000,
@@ -239,6 +245,9 @@ export const mockTorneosDetalle: (TorneoDetalle & { esBorrador?: boolean })[] = 
 );
 
 export const torneoHandlers = [
+  // HU-807: en los mocks nadie tiene designaciones de árbitro
+  http.get(`${API_URL}/designaciones/mias`, () => HttpResponse.json([])),
+
   // GET /torneos/resumen (Público, sin sesión)
   http.get(`${API_URL}/torneos/resumen`, ({ request }) => {
     const url = new URL(request.url);

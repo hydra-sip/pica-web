@@ -185,6 +185,8 @@ export interface OpcionesTorneo {
   pctGastosAdministrativos: number;
   /** Minutos que tienen que pasar como mínimo entre el cierre de la inscripción y el inicio. */
   margenCierreInicioMin: number;
+  /** Minutos que puede durar como máximo la ventana de check-in (HU-702). */
+  checkinDuracionMaxMin: number;
   /** Las que ya existen en la sede pedida. */
   canchas: string[];
 }
@@ -223,6 +225,28 @@ export interface ArbitroDetalle {
   estado: EstadoDesignacion;
   permisos: PermisoArbitro[];
   designadoEn: string;
+  /** Cuándo aceptó o rechazó (HU-807). */
+  respondidoEn: string | null;
+  /** El que dio al rechazar, si dio uno. */
+  motivoRechazo: string | null;
+}
+
+/** GET /designaciones/mias: una designación como la ve el árbitro (HU-807, wireframes 48 y 49). */
+export interface MiDesignacion {
+  torneoId: number;
+  torneo: string;
+  /** null mientras el torneo está en BORRADOR. */
+  slug: string | null;
+  disciplina: string;
+  estadoTorneo: EstadoTorneo;
+  fechaInicio: string | null;
+  fechaFin: string | null;
+  organizador: string;
+  estado: EstadoDesignacion;
+  permisos: PermisoArbitro[];
+  designadoEn: string;
+  respondidoEn: string | null;
+  motivoRechazo: string | null;
 }
 
 /** Un resultado del buscador de árbitros (GET /arbitros). */
@@ -420,6 +444,21 @@ export const torneoApi = {
     permisos: PermisoArbitro[]
   ): Promise<ArbitroDetalle> => {
     return httpClient.post<ArbitroDetalle>(`/torneos/${id}/arbitros`, { usuarioId, permisos });
+  },
+
+  misDesignaciones: async (): Promise<MiDesignacion[]> => {
+    return httpClient.get<MiDesignacion[]>('/designaciones/mias');
+  },
+
+  /** Con el código de imparcialidad aceptado: sin él, el back responde 409 COMPROMISO_NO_ACEPTADO. */
+  aceptarDesignacion: async (torneoId: number): Promise<MiDesignacion> => {
+    return httpClient.post<MiDesignacion>(`/designaciones/${torneoId}/aceptar`, {
+      compromisoAceptado: true,
+    });
+  },
+
+  rechazarDesignacion: async (torneoId: number, motivo: string | null): Promise<MiDesignacion> => {
+    return httpClient.post<MiDesignacion>(`/designaciones/${torneoId}/rechazar`, { motivo });
   },
 
   quitarArbitro: async (id: number, usuarioId: number): Promise<void> => {

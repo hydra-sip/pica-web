@@ -1,6 +1,9 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
+import { RifaVerificacionData } from '../api/verificacionApi';
+import { server } from '../mocks/server';
 import { mockRifaVerificacion10 } from '../mocks/verificacionHandlers';
 import { renderRuta } from '../test/renderRuta';
 import { VerificacionRifa } from './components/VerificacionRifa';
@@ -9,6 +12,7 @@ import {
   recalcularSorteoBracket,
   recalcularSorteoRifa,
 } from './crypto/recalcularSorteo';
+import { semillaEsDeLaFirma } from './crypto/semillaDrand';
 
 describe('HU-505 / T505-1: Motor Criptográfico (Unitario)', () => {
   it('calcularSha256 genera el hash correcto idéntico al estándar', async () => {
@@ -64,7 +68,7 @@ describe('HU-505 / T505-1: Motor Criptográfico (Unitario)', () => {
 
     expect(res.listaHashCalculado).toBe(listaHash);
     expect(res.compromisoCalculado).toBe(compromisoHash);
-    expect(res.ganadores.map((g) => g.numeroGanador)).toEqual([14, 88, 7]);
+    expect(res.ganadores.map((g) => g.numeroGanador)).toEqual([105, 35, 92]);
   });
 
   it('recalcularSorteoRifa deja sin ganador los premios que superan a los vendidos', async () => {
@@ -274,15 +278,14 @@ describe('HU-504 / T504-3: Verificación de una rifa', () => {
       mockRifaVerificacion10.semilla
     );
     expect(screen.getByTestId('lista-hash-rifa')).toHaveTextContent(/^059f/);
-    // la semilla la genera la plataforma: todavía no hay firma (PICA-299)
-    expect(screen.queryByTestId('semilla-firma-rifa')).not.toBeInTheDocument();
 
     const tabla = screen.getByTestId('tabla-ganadores-rifa');
-    expect(within(tabla).getByText(/número 14/i)).toBeInTheDocument();
-    expect(within(tabla).getByText(/número 88/i)).toBeInTheDocument();
-    expect(within(tabla).getByText(/número 7$/i)).toBeInTheDocument();
+    expect(within(tabla).getByText(/número 105/i)).toBeInTheDocument();
+    expect(within(tabla).getByText(/número 35/i)).toBeInTheDocument();
+    expect(within(tabla).getByText(/número 92/i)).toBeInTheDocument();
     // y quién compró cada número ganador
-    expect(within(tabla).getAllByText('mati_rios')).toHaveLength(2);
+    expect(within(tabla).getByText('nico.paz')).toBeInTheDocument();
+    expect(within(tabla).getByText('sofi_lopez')).toBeInTheDocument();
     expect(within(tabla).getByText('lucia.fer')).toBeInTheDocument();
 
     const btnRecalcular = screen.getByTestId('btn-recalcular-rifa');
@@ -299,5 +302,98 @@ describe('HU-504 / T504-3: Verificación de una rifa', () => {
     expect(await screen.findByTestId('banner-discrepancia-detectada-rifa')).toHaveTextContent(
       /la lista de números vendidos fue modificada/i
     );
+  });
+});
+
+describe('HU-503 / T503-2: La semilla de drand en el portal', () => {
+  const { semilla, semillaFirma } = mockRifaVerificacion10;
+
+  it('La semilla es el SHA-256 de la firma: alterada o con una firma inválida, no', async () => {
+    expect(await semillaEsDeLaFirma(semilla, semillaFirma!)).toBe(true);
+    expect(await semillaEsDeLaFirma(semilla + '0', semillaFirma!)).toBe(false);
+    expect(await semillaEsDeLaFirma(semilla, 'no-es-hexadecimal')).toBe(false);
+  });
+
+  it('Muestra de dónde salió la semilla y que coincide con su firma y con drand', async () => {
+    const user = userEvent.setup();
+    render(<VerificacionRifa datos={mockRifaVerificacion10} />);
+
+    expect(screen.getByTestId('semilla-ronda-rifa')).toHaveTextContent('33415012');
+    expect(screen.getByTestId('link-drand-rifa')).toHaveAttribute(
+      'href',
+      mockRifaVerificacion10.semillaUrl
+    );
+    expect(screen.getByTestId('semilla-firma-rifa')).toHaveTextContent(semillaFirma!);
+
+    await user.click(screen.getByTestId('btn-recalcular-rifa'));
+
+    expect(await screen.findByTestId('banner-verificacion-exitosa-rifa')).toHaveTextContent(
+      /coincide con la que publicó drand para la ronda 33415012/i
+    );
+  });
+
+  it('Con la semilla alterada deja de ser el SHA-256 de la firma', async () => {
+    const user = userEvent.setup();
+    render(<VerificacionRifa datos={mockRifaVerificacion10} />);
+
+    await user.click(screen.getByTestId('toggle-simulacion-rifa-btn'));
+    await user.click(screen.getByTestId('btn-alterar-semilla-rifa'));
+    await user.click(screen.getByTestId('btn-recalcular-rifa'));
+
+    expect(await screen.findByTestId('banner-discrepancia-detectada-rifa')).toHaveTextContent(
+      /no es el sha-256 de la firma/i
+    );
+  });
+
+  it('Si drand publicó otra cosa para la ronda, lo avisa', async () => {
+    server.use(
+      http.get(mockRifaVerificacion10.semillaUrl!, () =>
+        HttpResponse.json({ round: 33415012, randomness: 'f'.repeat(64), signature: 'ab' })
+      )
+    );
+    const user = userEvent.setup();
+    render(<VerificacionRifa datos={mockRifaVerificacion10} />);
+
+    await user.click(screen.getByTestId('btn-recalcular-rifa'));
+
+    expect(await screen.findByTestId('banner-discrepancia-detectada-rifa')).toHaveTextContent(
+      /drand publicó otra semilla o firma para la ronda 33415012/i
+    );
+  });
+
+  it('Si drand no responde, verifica el resto y avisa que no se pudo comparar', async () => {
+    server.use(http.get(mockRifaVerificacion10.semillaUrl!, () => HttpResponse.error()));
+    const user = userEvent.setup();
+    render(<VerificacionRifa datos={mockRifaVerificacion10} />);
+
+    await user.click(screen.getByTestId('btn-recalcular-rifa'));
+
+    expect(await screen.findByTestId('banner-drand-sin-respuesta')).toBeInTheDocument();
+    expect(screen.getByTestId('banner-verificacion-exitosa-rifa')).not.toHaveTextContent(/drand/i);
+  });
+
+  it('Una rifa sorteada con la semilla de la plataforma no muestra ronda ni firma', async () => {
+    // la misma rifa con la semilla que generaba la plataforma antes de drand, y sus ganadores
+    const sinDrand: RifaVerificacionData = {
+      ...mockRifaVerificacion10,
+      semilla: '9f2c6e1d4b8a7f3e0c5d2a9b6e1f4c7d8a3b0e5f2c9d6a1b4e7f0c3d8a5b2e9f',
+      semillaFirma: null,
+      semillaRonda: null,
+      semillaUrl: null,
+      premios: mockRifaVerificacion10.premios.map((p, i) => ({
+        ...p,
+        numeroGanador: [14, 88, 7][i],
+      })),
+    };
+    const user = userEvent.setup();
+    render(<VerificacionRifa datos={sinDrand} />);
+
+    expect(screen.queryByTestId('semilla-firma-rifa')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('link-drand-rifa')).not.toBeInTheDocument();
+    expect(screen.getByText(/generada por la plataforma/i)).toBeInTheDocument();
+
+    await user.click(screen.getByTestId('btn-recalcular-rifa'));
+
+    expect(await screen.findByTestId('banner-verificacion-exitosa-rifa')).toBeInTheDocument();
   });
 });

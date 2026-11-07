@@ -302,6 +302,8 @@ export const TorneoConsolaPage: React.FC = () => {
                 partido={p}
                 editable={programable}
                 resaltarSinFecha={enCurso}
+                inicioTorneo={torneo.fechaInicio}
+                finTorneo={torneo.fechaFin}
                 onProgramado={programado}
               />
             )}

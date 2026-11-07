@@ -1,5 +1,7 @@
 import {
   IconoBackoffice,
+  IconoConfiguracion,
+  IconoEscudo,
   IconoEscudoCheck,
   IconoExplorar,
   IconoIngresar,
@@ -11,6 +13,7 @@ import {
   IconoRoles,
   IconoTicket,
   IconoTorneos,
+  IconoTrofeo,
   IconoUsuarios,
 } from '../ui/Iconos';
 
@@ -24,15 +27,22 @@ export interface ItemNavegacion {
   permisos?: string[];
   soloConSesion?: boolean;
   soloSinSesion?: boolean;
+  // Solo a quien tiene designaciones de árbitro (HU-807): no hay un permiso propio del árbitro
+  soloConDesignaciones?: boolean;
   // La ruta activa tiene que ser exactamente esta (para '/' y '/admin')
   exacta?: boolean;
 }
 
-export const PERMISOS_BACKOFFICE = ['USUARIO_VER', 'ROL_VER', 'PERSONA_VER'];
+export const PERMISOS_BACKOFFICE = [
+  'USUARIO_VER',
+  'ROL_VER',
+  'PERSONA_VER',
+  'PARAMETRO_ADMINISTRAR',
+];
 
 /**
  * Ítems de cada sección, en orden. Una pantalla nueva (Rifas, Mis torneos...) suma acá su línea.
- * En el celular la barra inferior muestra hasta 4; en escritorio la sidebar muestra todos.
+ * En el celular la barra inferior muestra hasta 5; en escritorio la sidebar muestra todos.
  */
 export const NAVEGACION: Record<Seccion, ItemNavegacion[]> = {
   sitio: [
@@ -45,12 +55,27 @@ export const NAVEGACION: Record<Seccion, ItemNavegacion[]> = {
     { ruta: '/mis-tickets', texto: 'Mis tickets', icono: <IconoTicket />, soloConSesion: true },
     // HU-505 / T505-1: Portal público de verificación de sorteos
     { ruta: '/verificacion', texto: 'Verificación', icono: <IconoEscudoCheck /> },
+    // HU-209: las inscripciones propias y las de las nóminas donde figuro. Va después de los cinco que entran
+    // en la barra de abajo del celular, para no desplazar ninguno; ahí se llega desde Perfil
+    {
+      ruta: '/mis-inscripciones',
+      texto: 'Mis inscripciones',
+      icono: <IconoTrofeo />,
+      soloConSesion: true,
+    },
     // PICA-202: TORNEO_GESTIONAR lo tienen ORGANIZADOR y ADMINISTRADOR
     {
       ruta: '/mis-torneos',
       texto: 'Mis torneos',
       icono: <IconoTorneos />,
       permisos: ['TORNEO_GESTIONAR'],
+    },
+    // HU-807: las designaciones del árbitro, con cuántas esperan respuesta
+    {
+      ruta: '/mis-designaciones',
+      texto: 'Designaciones',
+      icono: <IconoEscudo />,
+      soloConDesignaciones: true,
     },
     // PICA-227: RIFA_GESTIONAR lo tienen ORGANIZADOR y ADMINISTRADOR
     { ruta: '/mis-rifas', texto: 'Mis rifas', icono: <IconoRifas />, permisos: ['RIFA_GESTIONAR'] },
@@ -77,6 +102,12 @@ export const NAVEGACION: Record<Seccion, ItemNavegacion[]> = {
       texto: 'Personas',
       icono: <IconoPersonas />,
       permisos: ['PERSONA_VER'],
+    },
+    {
+      ruta: '/admin/parametros',
+      texto: 'Parámetros',
+      icono: <IconoConfiguracion />,
+      permisos: ['PARAMETRO_ADMINISTRAR'],
     },
   ],
 };

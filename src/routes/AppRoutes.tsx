@@ -12,6 +12,7 @@ import { AdminDashboardPage } from '../admin/pages/AdminDashboardPage';
 import { UsuariosPage } from '../admin/pages/UsuariosPage';
 import { RolesPage } from '../admin/pages/RolesPage';
 import { PersonasPage } from '../admin/pages/PersonasPage';
+import { ParametrosPage } from '../admin/pages/ParametrosPage';
 import { NotFoundPage } from '../shared/pages/NotFoundPage';
 import { UnauthorizedPage } from '../shared/pages/UnauthorizedPage';
 import { RequireAuth } from '../auth/components/RequireAuth';
@@ -30,12 +31,15 @@ import { MiInscripcionPage } from '../inscripciones/pages/MiInscripcionPage';
 import { InscripcionPagoPage } from '../inscripciones/pages/InscripcionPagoPage';
 import { PartidoPage } from '../partidos/pages/PartidoPage';
 import { ObjecionesTorneoPage } from '../partidos/pages/ObjecionesTorneoPage';
+import { DesignacionPage } from '../torneos/pages/DesignacionPage';
+import { MisDesignacionesPage } from '../torneos/pages/MisDesignacionesPage';
 import { PronosticosPage } from '../pronosticos/pages/PronosticosPage';
 import { RifasEnVentaPage } from '../rifas/pages/RifasEnVentaPage';
 import { RifaPublicaPage } from '../rifas/pages/RifaPublicaPage';
 import { PortalVerificacionPage } from '../verificacion/pages/PortalVerificacionPage';
 import { TicketPage } from '../rifas/pages/TicketPage';
 import { MisTicketsPage } from '../rifas/pages/MisTicketsPage';
+import { MisInscripcionesPage } from '../inscripciones/pages/MisInscripcionesPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -63,12 +67,18 @@ export const AppRoutes: React.FC = () => {
         <Route element={<RequireAuth />}>
           <Route path="mi-perfil" element={<ProfilePage />} />
           <Route path="mis-tickets" element={<MisTicketsPage />} />
+          {/* HU-209: las inscripciones propias y las de las nóminas donde figuro; alcanza con la sesión */}
+          <Route path="mis-inscripciones" element={<MisInscripcionesPage />} />
           {/* HU-404 y HU-506 / T506-2: el ticket con el comprobante y el reclamo; el back pide sesión */}
           <Route path="tickets/:ticketId" element={<TicketPage />} />
           <Route path="rifas/:rifaId/tickets/:ticketId" element={<TicketPage />} />
 
           {/* Cargar y aceptar el resultado (PICA-243): lo decide el back según el lado del que es capitán */}
           <Route path="partidos/:id" element={<PartidoPage />} />
+
+          {/* HU-807 / PICA-315: el árbitro acepta o rechaza sus designaciones; el back responde solo las suyas */}
+          <Route path="mis-designaciones" element={<MisDesignacionesPage />} />
+          <Route path="mis-designaciones/:torneoId" element={<DesignacionPage />} />
 
           {/* Objeciones del torneo (PICA-247): el organizador o un árbitro con permiso; si no, el back responde 403 */}
           <Route path="torneos/:id/objeciones" element={<ObjecionesTorneoPage />} />
@@ -105,7 +115,9 @@ export const AppRoutes: React.FC = () => {
       <Route element={<RequireAuth />}>
         <Route
           element={
-            <RequirePermiso permisos={['USUARIO_VER', 'ROL_VER', 'PERSONA_VER']}>
+            <RequirePermiso
+              permisos={['USUARIO_VER', 'ROL_VER', 'PERSONA_VER', 'PARAMETRO_ADMINISTRAR']}
+            >
               <AppLayout seccion="admin" />
             </RequirePermiso>
           }
@@ -133,6 +145,14 @@ export const AppRoutes: React.FC = () => {
               element={
                 <RequirePermiso permisos="PERSONA_VER">
                   <PersonasPage />
+                </RequirePermiso>
+              }
+            />
+            <Route
+              path="parametros"
+              element={
+                <RequirePermiso permisos="PARAMETRO_ADMINISTRAR">
+                  <ParametrosPage />
                 </RequirePermiso>
               }
             />

@@ -1,3 +1,5 @@
+import { ProblemDetail } from '../auth/types';
+
 /**
  * Textos de las pantallas de inscripción que pisan los de `mensajeDeError`: los globales sirven a
  * otras pantallas (el login, el backoffice de roles) y acá el contexto es otro.
@@ -15,6 +17,8 @@ export const MENSAJES_PASO_1: Record<string, string> = {
   ...MENSAJES_INSCRIPCION,
   USUARIO_BLOQUEADO:
     'Tu cuenta, o la de un jugador de la nómina, tiene un bloqueo vigente. Si creés que es un error, escribile a un administrador.',
+  INSCRIPCION_NO_PERMITIDA_EN_TORNEO:
+    'Sos el organizador o árbitro de este torneo: no podés inscribirte. Lo gestionás desde la consola.',
 };
 
 /** Los de "Mi inscripción", además de los de toda la inscripción. */
@@ -33,4 +37,16 @@ export const MENSAJES_REEMPLAZO: Record<string, string> = {
   INSCRIPCION_NO_PERMITIDA_EN_TORNEO:
     'El organizador y los árbitros del torneo no pueden jugar en él.',
   INSCRIPCION_NO_EDITABLE: 'Esta inscripción ya no está confirmada.',
+};
+
+/**
+ * El 409 JUGADOR_YA_INSCRIPTO dice cuál es el jugador (CE4-4): lo nombra, o habla de vos si sos el capitán.
+ * Sin `jugador` (un back viejo) devuelve undefined y queda el texto general de `mensajeDeError`.
+ */
+export const mensajeJugadorYaInscripto = (err: unknown, miId: number): string | undefined => {
+  const problema = (err as { problemDetail?: ProblemDetail } | null)?.problemDetail;
+  const jugador = problema?.codigo === 'JUGADOR_YA_INSCRIPTO' ? problema.jugador : undefined;
+  if (!jugador) return undefined;
+  if (jugador.id === miId) return 'Ya figurás en otra inscripción de este torneo.';
+  return `${jugador.nombres} ${jugador.apellidos} (@${jugador.username}) ya figura en otra inscripción de este torneo. Elegí a otro jugador.`;
 };

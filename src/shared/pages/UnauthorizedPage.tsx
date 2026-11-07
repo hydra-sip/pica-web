@@ -1,13 +1,25 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { IconoAlerta } from '../ui/Iconos';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 // RequirePermiso manda la ruta a la que no se pudo entrar en `state.from`.
 const RUTA_DE_INSCRIPCION = /^\/(torneos\/[^/]+\/inscripcion|inscripciones\/)/;
 
 export const UnauthorizedPage: React.FC = () => {
-  const desde = (useLocation().state as { from?: { pathname?: string } } | null)?.from?.pathname;
+  const navigate = useNavigate();
+  const location = useLocation();
+  const desde = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname;
   const esInscripcion = RUTA_DE_INSCRIPCION.test(desde ?? '');
+
+  // `idx` lo guarda react-router y cuenta solo las páginas de la app:
+  // `history.length` incluye las de otros sitios y «Volver» sacaría al usuario.
+  const handleVolver = () => {
+    const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0;
+    if (idx > 0) {
+      navigate(-1);
+    } else {
+      navigate('/');
+    }
+  };
 
   return (
     <div
@@ -42,42 +54,23 @@ export const UnauthorizedPage: React.FC = () => {
         {esInscripcion ? (
           'Tu cuenta no tiene habilitada la inscripción a torneos. Si creés que es un error, escribile a un administrador, o iniciá sesión con otra cuenta.'
         ) : (
-          <>
-            No poseés los permisos necesarios (<code>*_VER</code>) ni el rol adecuado para acceder a esta sección del módulo de administración.
-          </>
+          'No poseés los permisos necesarios ni el rol adecuado para acceder a esta sección del módulo de administración.'
         )}
       </p>
 
-      {!esInscripcion && (
-        <div
-          style={{
-            background: 'var(--color-danger-bg)',
-            border: '1px solid var(--color-danger-border)',
-            padding: '0.85rem 1rem',
-            borderRadius: 'var(--radius-sm)',
-            fontSize: '0.85rem',
-            color: 'var(--color-danger)',
-            marginBottom: '1.75rem',
-            textAlign: 'left',
-            width: '100%',
-          }}
+      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' }}>
+        <button
+          type="button"
+          onClick={handleVolver}
+          className="btn btn-primary"
         >
-          <p style={{ margin: 0, fontWeight: 600, marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <IconoAlerta size={15} />
-            <span>Ejemplo de Control de Acceso:</span>
-          </p>
-          <p style={{ margin: 0, lineHeight: 1.4 }}>
-            Los usuarios con rol <strong>Participante</strong> no tienen habilitados los módulos administrativos. Para ingresar con rol de <strong>Administrador</strong>, probá iniciar sesión con <code>admin@pica.edu.ar</code> / <code>admin123</code>.
-          </p>
-        </div>
-      )}
-
-      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+          Volver
+        </button>
         <Link to="/" className="btn btn-secondary">
-          Volver al Inicio
+          Ir al Inicio
         </Link>
-        <Link to="/auth/login" className="btn btn-primary">
-          Iniciar Sesión con otra Cuenta
+        <Link to="/auth/login" className="btn btn-secondary">
+          Iniciar sesión con otra cuenta
         </Link>
       </div>
     </div>

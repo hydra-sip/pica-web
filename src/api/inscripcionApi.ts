@@ -1,14 +1,23 @@
 import { httpClient } from './httpClient';
+import { EstadoTorneo } from './torneoApi';
 import { UsuarioPublico } from './jugadorApi';
 import { PageResponse } from './usuarioApi';
 
 export type EstadoInscripcion =
   'BORRADOR' | 'PENDIENTE_PAGO' | 'CONFIRMADA' | 'CANCELADA' | 'REINTEGRADA';
 
+/**
+ * Con qué rol participa en la inscripción el usuario que la consulta (HU-209). `ORGANIZADOR` solo llega en el
+ * detalle: el organizador no se inscribe en su propio torneo.
+ */
+export type RolEnInscripcion = 'CAPITAN' | 'JUGADOR' | 'INDIVIDUAL' | 'ORGANIZADOR';
+
 /** El equipo dentro de una inscripción o de un resumen de pago. */
 export interface EquipoInscripto {
   id: number;
   nombre: string;
+  /** Para marcar al capitán en la nómina, mire quien mire (HU-209). */
+  capitanId: number;
 }
 
 /** El torneo de una inscripción, para mostrarlo y llegar a su ficha con `torneoApi.getTorneoBySlug`. */
@@ -17,9 +26,13 @@ export interface TorneoDeInscripcion {
   nombre: string;
   /** Null mientras el torneo no se publicó, cosa que no pasa con uno que ya tiene inscripciones. */
   slug: string | null;
+  estado: EstadoTorneo;
 }
 
-/** Fila de GET /inscripciones/mias. La individual lleva `usuarioId`; la de equipo, `equipo`. */
+/**
+ * Fila de GET /inscripciones/mias: las que armé y las confirmadas de equipos ajenos donde figuro en la nómina.
+ * La individual lleva `usuarioId`; la de equipo, `equipo`.
+ */
 export interface InscripcionResumen {
   id: number;
   torneoId: number;
@@ -29,6 +42,8 @@ export interface InscripcionResumen {
   creadoEn: string;
   modificadoEn: string;
   equipo?: EquipoInscripto | null;
+  /** El del usuario de la sesión. */
+  rol: RolEnInscripcion;
 }
 
 /**

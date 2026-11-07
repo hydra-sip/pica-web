@@ -9,6 +9,8 @@ import { problema } from '../mocks/adminHandlers';
 import { server } from '../mocks/server';
 import { renderRuta } from '../test/renderRuta';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
+
 // Los mocks numeran las inscripciones nuevas desde 1000 y se reinician entre test y test: la
 // primera que arma `prepara` es siempre esta.
 const ID = 1000;
@@ -67,6 +69,10 @@ describe('mi inscripción', () => {
     expect(filas[0]).toHaveTextContent('@usuario');
     expect(filas[1]).toHaveTextContent('Lucas Fernández');
     expect(filas[1]).toHaveTextContent('@lucas_f99');
+    expect(screen.getByRole('link', { name: '← Ver torneo' })).toHaveAttribute(
+      'href',
+      '/torneos/torneo-apertura-f5'
+    );
   });
 
   it('un borrador lleva al paso 1', async () => {
@@ -100,6 +106,10 @@ describe('mi inscripción', () => {
 
     expect(await screen.findByText(/Esta inscripción fue cancelada/)).toBeInTheDocument();
     expect(screen.queryByRole('list', { name: 'Nómina' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ver torneo' })).toHaveAttribute(
+      'href',
+      '/torneos/torneo-apertura-f5'
+    );
   });
 
   it('una que no existe muestra que no la encontramos', async () => {
@@ -205,6 +215,26 @@ describe('reemplazar un jugador', () => {
     expect(ultimo).toHaveTextContent(
       'Salió Joaquín Gómez (@joaco_g), entró Lucas Fernández (@lucas_f99)'
     );
+  });
+
+  it('si el que entra ya figura en otra inscripción del torneo, lo nombra (CE4-4)', async () => {
+    // Sofía juega en torneo-apertura-f5 y la 902 es de copa-de-invierno: el 409 se arma acá
+    server.use(
+      http.post(`${API_URL}/inscripciones/902/reemplazos`, () =>
+        problema(409, 'JUGADOR_YA_INSCRIPTO', 'Ya figura', {
+          jugador: { id: 105, username: 'sofi_m', nombres: 'Sofía', apellidos: 'Martínez' },
+        })
+      )
+    );
+    const { user } = await renderRuta(CON_REEMPLAZOS);
+
+    await elegir(user, 'Joaquín Gómez', 'sofi', 'Sofía Martínez');
+    await user.click(screen.getByRole('button', { name: 'Confirmar reemplazo' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Sofía Martínez (@sofi_m) ya figura en otra inscripción de este torneo. Elegí a otro jugador.'
+    );
+    expect(nomina().getByText(/Joaquín Gómez/)).toBeInTheDocument();
   });
 
   it('en la búsqueda, los que ya están en la nómina no se pueden elegir', async () => {
