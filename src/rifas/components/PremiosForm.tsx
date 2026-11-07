@@ -124,15 +124,6 @@ export const PremiosForm = forwardRef<PasoGuardable, PremiosFormProps>(function 
         <span>Puede haber hasta un premio por número ({cantidadNumeros})</span>
       </div>
 
-      {mensaje && (
-        <div
-          className={`alerta ${mensaje.tipo === 'exito' ? 'alerta-exito' : 'alerta-peligro'}`}
-          role={mensaje.tipo === 'exito' ? 'status' : 'alert'}
-        >
-          {mensaje.texto}
-        </div>
-      )}
-
       <div className="alerta alerta-info">
         {rifa.torneoNombre ? (
           <>
@@ -251,6 +242,15 @@ export const PremiosForm = forwardRef<PasoGuardable, PremiosFormProps>(function 
           </Button>
         )}
       </div>
+
+      {mensaje && (
+        <div
+          className={`alerta ${mensaje.tipo === 'exito' ? 'alerta-exito' : 'alerta-peligro'}`}
+          role={mensaje.tipo === 'exito' ? 'status' : 'alert'}
+        >
+          {mensaje.texto}
+        </div>
+      )}
 
       <div className="rifas-pie">
         <span>Paso 2 de 3{editable && ' · Los cambios se guardan al cambiar de paso'}</span>
