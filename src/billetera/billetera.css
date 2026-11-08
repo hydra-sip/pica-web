@@ -1,0 +1,265 @@
+/*
+ * Estilos de Mi Billetera (HU-602 / PICA-319 / T602-3), alineados al UI kit (global.css).
+ */
+
+.billetera-page {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.billetera-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.billetera-titulo-bloque h1 {
+  margin: 0;
+  font-size: var(--text-2xl);
+  overflow-wrap: anywhere;
+}
+
+.billetera-subtitulo {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-md);
+}
+
+.billetera-header-acciones {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+/* Indicadores de saldos en grid de 3 columnas */
+.billetera-saldos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-4);
+}
+
+.billetera-saldo-card {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-4);
+  gap: var(--space-2);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.billetera-saldo-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--color-text-secondary);
+}
+
+.billetera-saldo-card-header span {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.billetera-saldo-monto {
+  font-size: var(--text-3xl);
+  font-weight: 800;
+  color: var(--color-text);
+  line-height: 1.2;
+}
+
+.billetera-saldo-disponible .billetera-saldo-monto {
+  color: var(--color-primary, #059669);
+}
+
+.billetera-saldo-nota {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  margin-top: auto;
+}
+
+/* Bloque de Movimientos */
+.billetera-movimientos-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.billetera-seccion-titulo {
+  margin: 0;
+  font-size: var(--text-xl);
+  color: var(--color-text);
+}
+
+.billetera-tabla-card {
+  overflow: hidden;
+  padding: 0;
+}
+
+.billetera-tabla-contenedor {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.billetera-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: var(--text-sm);
+}
+
+.billetera-tabla th {
+  background-color: var(--color-surface-subtle, #f8fafc);
+  padding: var(--space-3) var(--space-4);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.billetera-tabla td {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+
+.billetera-tabla tr:last-child td {
+  border-bottom: none;
+}
+
+.billetera-tabla tr:hover td {
+  background-color: var(--color-surface-hover, #f1f5f9);
+}
+
+.billetera-fecha {
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  font-size: var(--text-xs);
+}
+
+.billetera-enlace {
+  color: var(--color-primary, #059669);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.billetera-enlace:hover {
+  text-decoration: underline;
+}
+
+.billetera-monto-col {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.monto-positivo {
+  color: var(--color-success, #16a34a);
+  font-weight: 700;
+}
+
+.monto-negativo {
+  color: var(--color-text, inherit);
+  font-weight: 600;
+}
+
+.billetera-saldo-res {
+  text-align: right;
+  white-space: nowrap;
+  color: var(--color-text-secondary);
+  font-size: var(--text-xs);
+}
+
+/* Estado vacío */
+.billetera-vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  gap: var(--space-3);
+  color: var(--color-text-secondary);
+}
+
+.billetera-vacio-icono {
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+}
+
+.billetera-vacio-texto {
+  max-width: 420px;
+  margin: 0;
+  font-size: var(--text-md);
+}
+
+/* Paginación */
+.billetera-paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--color-border);
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.billetera-paginacion-info {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.billetera-paginacion-botones {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* Modal Carga */
+.billetera-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.billetera-modal-campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.billetera-modal-campo label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.billetera-modal-campo input {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background);
+  color: var(--color-text);
+}
+
+.billetera-modal-campo input:focus {
+  outline: none;
+  border-color: var(--color-primary, #059669);
+  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.2);
+}
+
+.billetera-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+

@@ -30,6 +30,8 @@ const POR_CODIGO: Record<string, string> = {
     'Tiene el email sin verificar: no se lo puede pasar a Activo hasta que lo verifique.',
   USUARIO_BLOQUEADO:
     'La cuenta está bloqueada. Si creés que es un error, escribile a un administrador.',
+  BILLETERA_BLOQUEADA:
+    'Tu billetera está bloqueada. Ponete en contacto con soporte si creés que es un error.',
   TOKEN_EXPIRADO: 'El enlace venció. Pedí uno nuevo.',
   TOKEN_USADO: 'Ese enlace ya se usó. Si ya verificaste tu cuenta, iniciá sesión.',
   CODIGO_INVALIDO: 'No se pudo terminar el ingreso con Google. Probá de nuevo.',

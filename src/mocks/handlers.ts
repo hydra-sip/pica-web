@@ -6,6 +6,7 @@ import { pronosticoHandlers } from './pronosticoHandlers';
 import { torneoHandlers } from './torneoHandlers';
 import { verificacionHandlers } from './verificacionHandlers';
 import { ticketHandlers } from './ticketHandlers';
+import { billeteraHandlers } from './billeteraHandlers';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
@@ -97,6 +98,9 @@ export const handlers = [
 
   // Tickets de rifa y reclamos (HU-506 / T506-2)
   ...ticketHandlers,
+
+  // Billetera virtual y movimientos (HU-602 / T602-3)
+  ...billeteraHandlers,
 
   // Auth: Registro Endpoint (POST /auth/registro) -> 201 { id }
   http.post(`${API_URL}/auth/registro`, async ({ request }) => {
