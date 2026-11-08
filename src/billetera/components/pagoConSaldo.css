@@ -47,9 +47,15 @@
   margin: 0;
 }
 
-.comprobante-pago .resumen-pago-detalle code,
+.comprobante-pago .pago-codigo,
 .pago-saldo-restante strong {
   font-weight: 700;
+}
+
+/* el concepto es texto largo: baja de renglón (los montos no) */
+.comprobante-concepto dd {
+  white-space: normal;
+  text-align: right;
 }
 
 .pago-saldo-restante {

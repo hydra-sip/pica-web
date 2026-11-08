@@ -49,7 +49,7 @@ export const ComprobanteInscripcion: React.FC<ComprobanteInscripcionProps> = ({
           <dt>Pagó</dt>
           <dd>{comprobante.pagadorNombre}</dd>
         </div>
-        <div>
+        <div className="comprobante-concepto">
           <dt>Concepto</dt>
           <dd>{comprobante.concepto}</dd>
         </div>
