@@ -1,5 +1,6 @@
 import {
   IconoBackoffice,
+  IconoBilletera,
   IconoConfiguracion,
   IconoEscudo,
   IconoEscudoCheck,
@@ -51,6 +52,8 @@ export const NAVEGACION: Record<Seccion, ItemNavegacion[]> = {
     { ruta: '/pronosticos', texto: 'Pronósticos', icono: <IconoPronosticos /> },
     // PICA-221: las rifas en venta, para cualquiera
     { ruta: '/rifas', texto: 'Rifas', icono: <IconoRifas />, exacta: true },
+    // HU-602 / T602-3: Mi billetera con saldos, movimientos y cargas
+    { ruta: '/billetera', texto: 'Billetera', icono: <IconoBilletera />, soloConSesion: true },
     // HU-404: los tickets que compró el usuario
     { ruta: '/mis-tickets', texto: 'Mis tickets', icono: <IconoTicket />, soloConSesion: true },
     // HU-505 / T505-1: Portal público de verificación de sorteos

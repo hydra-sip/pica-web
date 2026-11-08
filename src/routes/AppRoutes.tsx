@@ -40,6 +40,7 @@ import { PortalVerificacionPage } from '../verificacion/pages/PortalVerificacion
 import { TicketPage } from '../rifas/pages/TicketPage';
 import { MisTicketsPage } from '../rifas/pages/MisTicketsPage';
 import { MisInscripcionesPage } from '../inscripciones/pages/MisInscripcionesPage';
+import { MiBilleteraPage } from '../billetera/pages/MiBilleteraPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -66,6 +67,8 @@ export const AppRoutes: React.FC = () => {
         {/* Rutas Autenticadas Públicas / Perfil */}
         <Route element={<RequireAuth />}>
           <Route path="mi-perfil" element={<ProfilePage />} />
+          {/* HU-602 / T602-3: Mi billetera con saldos, movimientos y cargas */}
+          <Route path="billetera" element={<MiBilleteraPage />} />
           <Route path="mis-tickets" element={<MisTicketsPage />} />
           {/* HU-209: las inscripciones propias y las de las nóminas donde figuro; alcanza con la sesión */}
           <Route path="mis-inscripciones" element={<MisInscripcionesPage />} />
