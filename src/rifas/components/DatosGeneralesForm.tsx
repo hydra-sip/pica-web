@@ -2,8 +2,8 @@ import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'rea
 import { rifaApi, RifaDetalle, RifaPayload } from '../../api/rifaApi';
 import { torneoApi } from '../../api/torneoApi';
 import { ESTADOS_TORNEO_CON_RIFA } from '../formato';
-import { erroresPorCampo, mensajeDeError } from '../../shared/mensajesError';
-import { DatosRifaForm, validateDatosRifa } from '../../shared/validators';
+import { erroresDelFormulario, mensajeDeError } from '../../shared/mensajesError';
+import { DatosRifaForm, FechasTorneoRifa, validateDatosRifa } from '../../shared/validators';
 import { Button, Field, Input, Select, Textarea } from '../../shared/ui';
 import { inputLocalAIso, isoAInputLocal } from '../../shared/formato';
 import { CampoFechaHora } from './CampoFechaHora';
@@ -28,12 +28,20 @@ interface TorneoOpcion {
   nombre: string;
 }
 
+// Los errores del back sobre el torneo elegido no traen campo: se marcan en el selector
+const CAMPO_POR_CODIGO = {
+  TORNEO_NO_ENCONTRADO: 'torneoId',
+  TORNEO_NO_ADMITE_RIFA: 'torneoId',
+  TORNEO_CON_RIFA: 'torneoId',
+};
+
 const desdeRifa = (rifa: RifaDetalle | null, torneoInicial?: number): Formulario => ({
   titulo: rifa?.titulo ?? '',
   descripcion: rifa?.descripcion ?? '',
   numeroDesde: rifa ? String(rifa.numeroDesde) : '',
   numeroHasta: rifa ? String(rifa.numeroHasta) : '',
   precioNumero: rifa ? String(rifa.precioNumero) : '',
+  inicioVenta: rifa?.ventaHasta && !rifa.ventaDesde ? 'AL_PUBLICAR' : 'FECHA',
   ventaDesde: isoAInputLocal(rifa?.ventaDesde ?? null),
   ventaHasta: isoAInputLocal(rifa?.ventaHasta ?? null),
   fechaSorteo: isoAInputLocal(rifa?.fechaSorteo ?? null),
@@ -54,6 +62,7 @@ export const DatosGeneralesForm = forwardRef<PasoGuardable, DatosGeneralesFormPr
     const [mensaje, setMensaje] = useState<{ tipo: 'exito' | 'error'; texto: string } | null>(null);
     const [guardando, setGuardando] = useState(false);
     const [torneos, setTorneos] = useState<TorneoOpcion[]>([]);
+    const [fechasTorneo, setFechasTorneo] = useState<FechasTorneoRifa | null>(null);
 
     // Se reinicia al pasar de una rifa a otra, no cada vez que se guarda.
     useEffect(() => {
@@ -81,10 +90,31 @@ export const DatosGeneralesForm = forwardRef<PasoGuardable, DatosGeneralesFormPr
       };
     }, [editable]);
 
+    useEffect(() => {
+      setFechasTorneo(null);
+      if (!editable || !form.torneoId) {
+        return;
+      }
+      let vigente = true;
+      torneoApi
+        .obtener(Number(form.torneoId))
+        .then((torneo) => vigente && setFechasTorneo(torneo))
+        // Sin las fechas igual se puede guardar: las controla el back
+        .catch(() => vigente && setFechasTorneo(null));
+      return () => {
+        vigente = false;
+      };
+    }, [editable, form.torneoId]);
+
     const elegirTorneo = (e: React.ChangeEvent<HTMLSelectElement>) => {
       const valor = e.target.value;
       setForm((prev) => ({ ...prev, torneoId: valor, pctDestinadoTorneo: '0' }));
       setErrores((prev) => ({ ...prev, torneoId: undefined, pctDestinadoTorneo: undefined }));
+    };
+
+    const elegirInicioVenta = (valor: Formulario['inicioVenta']) => {
+      setForm((prev) => ({ ...prev, inicioVenta: valor, ventaDesde: '' }));
+      setErrores((prev) => ({ ...prev, ventaDesde: undefined }));
     };
 
     // La rifa puede tener un torneo que ya no está en la lista (por ejemplo, porque empezó)
@@ -113,7 +143,9 @@ export const DatosGeneralesForm = forwardRef<PasoGuardable, DatosGeneralesFormPr
       const encontrados: Errores = validateDatosRifa(
         form,
         rifa?.premios.length ?? 0,
-        rifa?.premios.reduce((total, p) => total + p.pct, 0) ?? 0
+        rifa?.premios.reduce((total, p) => total + p.pct, 0) ?? 0,
+        fechasTorneo,
+        isoAInputLocal(rifa?.ventaDesde ?? null)
       );
       if (form.descripcion.trim().length > 2000) {
         encontrados.descripcion = 'La descripción no puede superar los 2000 caracteres.';
@@ -150,7 +182,7 @@ export const DatosGeneralesForm = forwardRef<PasoGuardable, DatosGeneralesFormPr
         onGuardada(guardada);
         return guardada;
       } catch (err) {
-        const delBack = erroresPorCampo(err);
+        const delBack = erroresDelFormulario(err, CAMPO_POR_CODIGO);
         // Lo demás de las fechas ya lo validó la pantalla; con torneo, el back controla sus fechas
         if (form.torneoId && delBack.ventaDesde) {
           delBack.ventaDesde = 'No puede empezar antes de que se publique el torneo.';
@@ -204,7 +236,7 @@ export const DatosGeneralesForm = forwardRef<PasoGuardable, DatosGeneralesFormPr
         error={errores[nombre]}
         value={form[nombre]}
         onChange={cambiarValor(nombre)}
-        disabled={bloqueado}
+        disabled={bloqueado || (nombre === 'ventaDesde' && form.inicioVenta === 'AL_PUBLICAR')}
       />
     );
 
@@ -214,15 +246,6 @@ export const DatosGeneralesForm = forwardRef<PasoGuardable, DatosGeneralesFormPr
           <h2>Paso 1: Datos generales de la rifa</h2>
           {editable && <span>Los campos con * son obligatorios</span>}
         </div>
-
-        {mensaje && (
-          <div
-            className={`alerta ${mensaje.tipo === 'exito' ? 'alerta-exito' : 'alerta-peligro'}`}
-            role={mensaje.tipo === 'exito' ? 'status' : 'alert'}
-          >
-            {mensaje.texto}
-          </div>
-        )}
 
         {campo('titulo', 'Título de la rifa', { type: 'text', maxLength: 100 }, true)}
 
@@ -289,11 +312,44 @@ export const DatosGeneralesForm = forwardRef<PasoGuardable, DatosGeneralesFormPr
           )}
         </div>
 
+        <fieldset className="rifas-opciones">
+          <legend>Inicio de la venta</legend>
+          <label>
+            <input
+              type="radio"
+              name="inicioVenta"
+              checked={form.inicioVenta === 'FECHA'}
+              onChange={() => elegirInicioVenta('FECHA')}
+              disabled={bloqueado}
+            />
+            <span>Indicar fecha de inicio</span>
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="inicioVenta"
+              checked={form.inicioVenta === 'AL_PUBLICAR'}
+              onChange={() => elegirInicioVenta('AL_PUBLICAR')}
+              disabled={bloqueado}
+            />
+            <span>Iniciar la venta al publicar</span>
+          </label>
+        </fieldset>
+
         <div className="rifas-grilla">
-          {fecha('ventaDesde', 'Inicio de la venta')}
+          {fecha('ventaDesde', 'Fecha de inicio de la venta')}
           {fecha('ventaHasta', 'Fin de la venta')}
           {fecha('fechaSorteo', 'Fecha del sorteo')}
         </div>
+
+        {mensaje && (
+          <div
+            className={`alerta ${mensaje.tipo === 'exito' ? 'alerta-exito' : 'alerta-peligro'}`}
+            role={mensaje.tipo === 'exito' ? 'status' : 'alert'}
+          >
+            {mensaje.texto}
+          </div>
+        )}
 
         <div className="rifas-pie">
           <span>

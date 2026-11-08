@@ -98,7 +98,8 @@ export interface PageResponse<T> {
 }
 
 export interface FiltrosTorneo {
-  disciplina?: string;
+  q?: string;
+  modalidad?: ModalidadTorneo | '';
   estado?: EstadoTorneo | '';
   page?: number;
   size?: number;

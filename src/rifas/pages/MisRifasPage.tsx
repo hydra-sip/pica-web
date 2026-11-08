@@ -154,9 +154,9 @@ export const MisRifasPage: React.FC = () => {
                   </td>
                   <td>{pesos(rifa.precioNumero)}</td>
                   <td>
-                    {rifa.ventaDesde ? (
+                    {rifa.ventaHasta ? (
                       <>
-                        {fechaHora(rifa.ventaDesde)}
+                        {rifa.ventaDesde ? fechaHora(rifa.ventaDesde) : 'Al publicar'}
                         <span className="rifas-celda-secundaria">
                           hasta {fechaHora(rifa.ventaHasta)}
                         </span>
