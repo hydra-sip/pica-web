@@ -2,7 +2,9 @@ import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { InscripcionDetalle, inscripcionApi, ResumenPago } from '../../api/inscripcionApi';
 import { fecha, pesos } from '../../shared/formato';
-import { mensajeDeError } from '../../shared/mensajesError';
+import { codigoDeError, mensajeDeError } from '../../shared/mensajesError';
+import { MetodoDePago } from '../../billetera/components/MetodoDePago';
+import { alcanzaElSaldo, useSaldo } from '../../billetera/hooks/useSaldo';
 import { Button, Card, Modal } from '../../shared/ui';
 import { MENSAJES_INSCRIPCION } from '../mensajesInscripcion';
 import { VolverAlTorneo } from './VolverAlTorneo';
@@ -15,7 +17,10 @@ interface ResumenDePagoProps {
   slug?: string | null;
 }
 
-/** Paso 2: lo que se va a pagar, la garantía de custodia, confirmar el pago y volver a la nómina. */
+/**
+ * Paso 2: lo que se va a pagar, con el saldo de la billetera (HU-603), la garantía de custodia, pagar y volver a la
+ * nómina. Si el saldo no alcanza, no se puede pagar y se carga lo que falta sin salir de acá.
+ */
 export const ResumenDePago: React.FC<ResumenDePagoProps> = ({ resumen, onPagada, slug }) => {
   const navigate = useNavigate();
   // Un fallo al pagar no tira la página: la inscripción sigue pendiente y se puede reintentar.
@@ -23,6 +28,8 @@ export const ResumenDePago: React.FC<ResumenDePagoProps> = ({ resumen, onPagada,
   const [pagando, setPagando] = useState(false);
   // El estado se actualiza después del primer toque; la referencia corta un segundo toque en el acto.
   const cobroEnCurso = useRef(false);
+  const saldo = useSaldo();
+  const alcanza = alcanzaElSaldo(saldo.billetera, resumen.total);
 
   const [modificando, setModificando] = useState(false);
   const [reabriendo, setReabriendo] = useState(false);
@@ -37,6 +44,8 @@ export const ResumenDePago: React.FC<ResumenDePagoProps> = ({ resumen, onPagada,
       onPagada(await inscripcionApi.pagar(resumen.inscripcionId));
     } catch (err) {
       setAviso(mensajeDeError(err, 'No se pudo confirmar el pago.', MENSAJES_INSCRIPCION));
+      // otro pago pudo gastar el saldo mientras tanto: se relee para mostrar cuánto falta
+      if (codigoDeError(err) === 'SALDO_INSUFICIENTE') void saldo.recargar();
       cobroEnCurso.current = false;
       setPagando(false);
     }
@@ -96,6 +105,18 @@ export const ResumenDePago: React.FC<ResumenDePagoProps> = ({ resumen, onPagada,
         </p>
       </Card>
 
+      <MetodoDePago
+        billetera={saldo.billetera}
+        cargando={saldo.cargando}
+        error={saldo.error}
+        total={resumen.total}
+        onCargado={() => {
+          setAviso(null);
+          void saldo.recargar();
+        }}
+        deshabilitado={pagando}
+      />
+
       <section className="custodia">
         <span className="custodia-icono" aria-hidden="true">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
@@ -118,8 +139,8 @@ export const ResumenDePago: React.FC<ResumenDePagoProps> = ({ resumen, onPagada,
       )}
 
       <div className="inscripcion-acciones">
-        <Button block onClick={pagar} loading={pagando}>
-          {pagando ? 'Confirmando el pago...' : `Confirmar pago de ${pesos(resumen.total)}`}
+        <Button block onClick={pagar} loading={pagando} disabled={!alcanza}>
+          {pagando ? 'Confirmando el pago...' : `Pagar ${pesos(resumen.total)} con saldo`}
         </Button>
 
         {/* En una inscripción individual no hay nómina que modificar */}

@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom';
 import { CompraRifa, ReservaRifa } from '../../api/rifaApi';
 import { fechaHora, pesos } from '../../shared/formato';
 import { Button, Card, Modal } from '../../shared/ui';
+import { MetodoDePago } from '../../billetera/components/MetodoDePago';
+import { SaldoRestante } from '../../billetera/components/SaldoRestante';
+import { alcanzaElSaldo, useSaldo } from '../../billetera/hooks/useSaldo';
 import '../../inscripciones/inscripciones.css';
 
 interface PagoRifaProps {
@@ -52,9 +55,10 @@ const Custodia: React.FC = () => (
 );
 
 /**
- * El pago simulado de la compra (PICA-223): con los números ya reservados muestra lo que se cobra y cuánto queda de
- * la reserva, con los estilos de "Confirmar y pagar" de la inscripción (HU-406). Confirmar hace el cobro, como lo
- * hará la pasarela; después muestra el comprobante.
+ * El pago de la compra (PICA-223) con el saldo de la billetera (HU-603): con los números ya reservados muestra lo que
+ * se cobra, el saldo y cuánto queda de la reserva, con los estilos de "Confirmar y pagar" de la inscripción (HU-406).
+ * Si el saldo no alcanza, se carga acá mismo y los números siguen reservados. Después muestra el comprobante y el
+ * saldo que quedó.
  */
 export const PagoRifa: React.FC<PagoRifaProps> = ({
   rifaTitulo,
@@ -68,6 +72,13 @@ export const PagoRifa: React.FC<PagoRifaProps> = ({
 }) => {
   const segundos = useSegundosHasta(compra ? null : (reserva?.venceEn ?? null));
   const vencida = !compra && reserva !== null && segundos === 0;
+  const saldo = useSaldo(reserva !== null);
+  const { recargar } = saldo;
+
+  // un rechazo por saldo (otro pago lo gastó mientras tanto): se relee para mostrar cuánto falta
+  useEffect(() => {
+    if (error && reserva) void recargar();
+  }, [error, reserva, recargar]);
 
   if (compra) {
     return (
@@ -111,6 +122,7 @@ export const PagoRifa: React.FC<PagoRifaProps> = ({
             </div>
           </dl>
           <p className="resumen-pago-extra">Fecha: {fechaHora(compra.compradoEn)}</p>
+          <SaldoRestante />
         </Card>
       </Modal>
     );
@@ -123,11 +135,6 @@ export const PagoRifa: React.FC<PagoRifaProps> = ({
   return (
     <Modal isOpen title="Confirmar y pagar" onClose={onCancelar} closeDisabled={pagando}>
       <div className="pago-rifa">
-        <div className="alerta alerta-info">
-          <strong>Pago simulado.</strong> Esta pantalla es temporal: más adelante, al confirmar, se
-          va a redirigir a la plataforma de pago.
-        </div>
-
         <Card className="resumen-pago">
           <h2>Resumen de compra</h2>
           <p className="resumen-pago-detalle">
@@ -158,6 +165,15 @@ export const PagoRifa: React.FC<PagoRifaProps> = ({
           </p>
         </Card>
 
+        <MetodoDePago
+          billetera={saldo.billetera}
+          cargando={saldo.cargando}
+          error={saldo.error}
+          total={reserva.total}
+          onCargado={() => void recargar()}
+          deshabilitado={pagando || vencida}
+        />
+
         <Custodia />
 
         {error && (
@@ -167,8 +183,13 @@ export const PagoRifa: React.FC<PagoRifaProps> = ({
         )}
 
         <div className="inscripcion-acciones">
-          <Button block onClick={onPagar} loading={pagando} disabled={vencida}>
-            {pagando ? 'Confirmando el pago...' : `Confirmar pago de ${pesos(reserva.total)}`}
+          <Button
+            block
+            onClick={onPagar}
+            loading={pagando}
+            disabled={vencida || !alcanzaElSaldo(saldo.billetera, reserva.total)}
+          >
+            {pagando ? 'Confirmando el pago...' : `Pagar ${pesos(reserva.total)} con saldo`}
           </Button>
           <Button variant="secondary" block onClick={onCancelar} disabled={pagando}>
             Cancelar

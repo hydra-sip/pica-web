@@ -10,6 +10,7 @@ import { PremiosForm } from '../components/PremiosForm';
 import { PublicarForm } from '../components/PublicarForm';
 import { ListaSellada } from '../components/ListaSellada';
 import { RecaudadoRifa } from '../components/RecaudadoRifa';
+import { CustodiaDelEvento } from '../../billetera/components/CustodiaDelEvento';
 import { ResultadoSorteo } from '../components/ResultadoSorteo';
 import { PasoGuardable } from '../components/pasoGuardable';
 import { ESTADO_RIFA_UI, TONO_ESTADO_RIFA } from '../formato';
@@ -326,6 +327,8 @@ export const RifaFormPage: React.FC = () => {
           vendidos={`${rifa.numerosVendidos} de ${rifa.numeroHasta - rifa.numeroDesde + 1}`}
         />
       )}
+      {/* HU-603: lo cobrado, en custodia hasta que vence el plazo de reclamo */}
+      {rifa && rifa.estado !== 'BORRADOR' && <CustodiaDelEvento evento="rifas" id={rifa.id} />}
       {rifa?.listaHash && rifa.listaSelladaEn && (
         <ListaSellada
           rifaId={rifa.id}

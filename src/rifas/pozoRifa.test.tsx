@@ -140,7 +140,9 @@ describe('HU-406 / T406-1: Pozo de la rifa y avance de la venta', () => {
     expect(screen.getByText('Total a pagar').nextSibling).toHaveTextContent('1.100,00');
     expect(screen.getByText('Garantía de fondos en custodia')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /confirmar pago de .*1\.100,00/i }));
+    // HU-603: el saldo del mock ($ 15.000) alcanza
+    expect(await screen.findByText(/Saldo disponible/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /pagar .*1\.100,00 con saldo/i }));
     expect(onPagar).toHaveBeenCalledOnce();
   });
 });

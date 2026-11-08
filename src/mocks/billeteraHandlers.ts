@@ -8,7 +8,37 @@ import { CargaRequest } from '../api/billeteraApi';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
+/** HU-603: la custodia de un torneo o una rifa, para su organizador, con una inscripción paga. */
+const custodiaMock = {
+  estado: 'RETENIDA',
+  total: 22000,
+  recaudado: 20000,
+  gastosAdministrativos: 2000,
+  pagos: 1,
+  moneda: 'ARS',
+  eventoTerminado: false,
+  liberadaEn: null,
+};
+
+const fondosEnCustodia = () =>
+  new HttpResponse(
+    JSON.stringify({
+      status: 409,
+      codigo: 'FONDOS_EN_CUSTODIA',
+      detail: 'Los fondos están en custodia hasta que el evento termine',
+    }),
+    { status: 409, headers: { 'Content-Type': 'application/problem+json' } }
+  );
+
 export const billeteraHandlers = [
+  // GET /torneos/{id}/custodia y /rifas/{id}/custodia
+  http.get(`${API_URL}/torneos/:id/custodia`, () => HttpResponse.json(custodiaMock)),
+  http.get(`${API_URL}/rifas/:id/custodia`, () => HttpResponse.json(custodiaMock)),
+
+  // POST .../custodia/retiro: antes del cierre, siempre 409
+  http.post(`${API_URL}/torneos/:id/custodia/retiro`, fondosEnCustodia),
+  http.post(`${API_URL}/rifas/:id/custodia/retiro`, fondosEnCustodia),
+
   // GET /billetera
   http.get(`${API_URL}/billetera`, () => {
     return HttpResponse.json(getBilleteraMock());

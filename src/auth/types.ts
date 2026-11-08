@@ -29,6 +29,8 @@ export interface ProblemDetail {
   cierraEn?: string;
   /** Solo en JUGADOR_YA_INSCRIPTO: el que ya figura en otra inscripción del torneo (puede ser el capitán). */
   jugador?: { id: number; username: string; nombres: string; apellidos: string };
+  /** Solo en SALDO_INSUFICIENTE: lo que hay que cargar para pagar el total (HU-603). */
+  faltante?: number;
 }
 
 export interface PersonaInfo {
