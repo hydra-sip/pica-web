@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { torneoApi } from '../../api/torneoApi';
+import { inscripcionApi, InscripcionResumen } from '../../api/inscripcionApi';
 import { ApiError } from '../../api/httpClient';
 import { EstadoTorneo, TorneoDetalle } from '../types/torneo';
 import { useTorneoRealtime } from '../../realtime/useTorneoRealtime';
@@ -25,9 +26,10 @@ import './TorneoDetallePage.css';
 export const TorneoDetallePage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   const [torneo, setTorneo] = useState<TorneoDetalle | null>(null);
+  const [miInscripcion, setMiInscripcion] = useState<InscripcionResumen | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isNotFound, setIsNotFound] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -59,6 +61,31 @@ export const TorneoDetallePage: React.FC = () => {
   useEffect(() => {
     fetchTorneoDetalle();
   }, [fetchTorneoDetalle]);
+
+  useEffect(() => {
+    let cancelado = false;
+    if (!isAuthenticated || !torneo?.id) {
+      setMiInscripcion(null);
+      return;
+    }
+
+    inscripcionApi
+      .listarMias({ torneoId: torneo.id })
+      .then((res) => {
+        if (cancelado) return;
+        const activa = res.content?.find((i) => i.estado !== 'CANCELADA') ?? null;
+        setMiInscripcion(activa);
+      })
+      .catch(() => {
+        if (!cancelado) {
+          setMiInscripcion(null);
+        }
+      });
+
+    return () => {
+      cancelado = true;
+    };
+  }, [isAuthenticated, torneo?.id]);
 
   useTorneoRealtime(torneo?.id, {
     onPozoChange: (pozoEstimado) => {
@@ -220,7 +247,24 @@ export const TorneoDetallePage: React.FC = () => {
   }
 
   // Lógica de inscripción
-  const puedeInscribirse = torneo.estado === 'INSCRIPCION_ABIERTA' && torneo.cupoDisponible > 0;
+  // Lógica de organizador, cupos e inscripción
+  const isOrganizador = Boolean(
+    user &&
+      torneo.organizador &&
+      (String(user.id) === String(torneo.organizador.id) ||
+        (user.username &&
+          torneo.organizador.username &&
+          user.username.toLowerCase() === torneo.organizador.username.toLowerCase()))
+  );
+
+  const fechaCierre = torneo.cierreInscripcionEn ? new Date(torneo.cierreInscripcionEn) : null;
+  const cierreVencido = Boolean(
+    fechaCierre && !isNaN(fechaCierre.getTime()) && fechaCierre.getTime() <= Date.now()
+  );
+  const inscripcionCerrada = cierreVencido || torneo.estado !== 'INSCRIPCION_ABIERTA';
+
+  const puedeInscribirse =
+    !isOrganizador && !miInscripcion && !inscripcionCerrada && torneo.cupoDisponible > 0;
 
   const handleInscripcionClick = () => {
     if (!isAuthenticated) {
@@ -318,7 +362,27 @@ export const TorneoDetallePage: React.FC = () => {
           </div>
 
           <div>
-            {puedeInscribirse ? (
+            {isOrganizador ? (
+              <Link
+                to={`/torneos/${torneo.id}/consola`}
+                className="btn btn-primary"
+                style={{ padding: '0.75rem 1.75rem', fontSize: 'var(--text-md)', fontWeight: 700 }}
+              >
+                Ir a la consola
+              </Link>
+            ) : miInscripcion ? (
+              <Link
+                to={`/inscripciones/${miInscripcion.id}`}
+                className="btn btn-primary"
+                style={{ padding: '0.75rem 1.75rem', fontSize: 'var(--text-md)', fontWeight: 700 }}
+              >
+                Ver mi inscripción
+              </Link>
+            ) : inscripcionCerrada ? (
+              <button type="button" className="btn btn-secondary" disabled>
+                Inscripción cerrada
+              </button>
+            ) : puedeInscribirse ? (
               <button
                 type="button"
                 className="btn btn-primary"
@@ -337,7 +401,7 @@ export const TorneoDetallePage: React.FC = () => {
               </button>
             ) : (
               <button type="button" className="btn btn-secondary" disabled>
-                Inscripción No Disponible
+                Inscripción cerrada
               </button>
             )}
           </div>
@@ -496,14 +560,14 @@ export const TorneoDetallePage: React.FC = () => {
             <div className="torneo-info-row">
               <span className="torneo-info-label">Inicio del torneo</span>
               <span className="torneo-info-value">
-                {torneo.fechaInicio ? fecha(torneo.fechaInicio) : 'A definir'}
+                {torneo.fechaInicio ? fechaHora(torneo.fechaInicio) : 'A definir'}
               </span>
             </div>
 
             <div className="torneo-info-row">
               <span className="torneo-info-label">Fin estimado</span>
               <span className="torneo-info-value">
-                {torneo.fechaFin ? fecha(torneo.fechaFin) : 'A definir'}
+                {torneo.fechaFin ? fechaHora(torneo.fechaFin) : 'A definir'}
               </span>
             </div>
           </div>
