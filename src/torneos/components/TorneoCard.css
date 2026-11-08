@@ -202,6 +202,8 @@
   color: var(--text-secondary);
   background-color: var(--bg-subtle);
   border: 1px solid var(--border-color);
+  flex-wrap: wrap;
+  gap: 0.5rem;
   padding: 0.45rem 0.75rem;
   border-radius: var(--radius-sm);
   margin-bottom: 1.15rem;

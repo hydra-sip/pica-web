@@ -3,7 +3,7 @@ import { InscripcionDetalle, inscripcionApi } from '../../api/inscripcionApi';
 import { UsuarioPublico } from '../../api/jugadorApi';
 import { codigoDeError, mensajeDeError } from '../../shared/mensajesError';
 import { Button } from '../../shared/ui';
-import { MENSAJES_REEMPLAZO } from '../mensajesInscripcion';
+import { MENSAJES_REEMPLAZO, mensajeJugadorYaInscripto } from '../mensajesInscripcion';
 import { BuscadorJugadores } from './BuscadorJugadores';
 
 interface NominaConfirmadaProps {
@@ -81,7 +81,9 @@ export const NominaConfirmada: React.FC<NominaConfirmadaProps> = ({
         onCerrada();
         return;
       }
-      const mensaje = mensajeDeError(err, 'No se pudo hacer el reemplazo.', MENSAJES_REEMPLAZO);
+      const mensaje =
+        mensajeJugadorYaInscripto(err, capitanId) ??
+        mensajeDeError(err, 'No se pudo hacer el reemplazo.', MENSAJES_REEMPLAZO);
       if (codigo === 'INSCRIPCION_NO_EDITABLE') {
         cerrar();
         onNoEditable(mensaje);

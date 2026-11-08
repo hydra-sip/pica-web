@@ -168,6 +168,8 @@ export interface DatosRifaForm {
   numeroDesde: string;
   numeroHasta: string;
   precioNumero: string;
+  /** AL_PUBLICAR: sin fecha de inicio, la venta arranca al publicar la rifa; igual lleva fecha de fin. */
+  inicioVenta: 'FECHA' | 'AL_PUBLICAR';
   ventaDesde: string;
   ventaHasta: string;
   /** Fecha programada del sorteo (PICA-219); opcional en borrador, posterior al fin de la venta. */
@@ -178,14 +180,24 @@ export interface DatosRifaForm {
   pctDestinadoTorneo: string;
 }
 
+/** Las fechas del torneo elegido contra las que se controla la venta; la que todavía no tiene no se controla. */
+export interface FechasTorneoRifa {
+  publicadoEn: string | null;
+  fechaInicio: string | null;
+  fechaFin: string | null;
+}
+
 /**
  * Errores por campo del paso "Datos generales". `premiosCargados` evita achicar el rango por debajo, y
- * `sumaPremios` que lo destinado al torneo pase de 100 con los premios ya cargados.
+ * `sumaPremios` que lo destinado al torneo pase de 100 con los premios ya cargados. `ventaDesdeGuardada`
+ * es el inicio del borrador: si no se cambia, puede haber quedado en el pasado y se acepta (PICA-287).
  */
 export const validateDatosRifa = (
   datos: DatosRifaForm,
   premiosCargados: number = 0,
-  sumaPremios: number = 0
+  sumaPremios: number = 0,
+  torneo: FechasTorneoRifa | null = null,
+  ventaDesdeGuardada: string = ''
 ): Partial<Record<keyof DatosRifaForm, string>> => {
   const errores: Partial<Record<keyof DatosRifaForm, string>> = {};
   const titulo = datos.titulo.trim();
@@ -215,16 +227,32 @@ export const validateDatosRifa = (
     errores.precioNumero = 'Hasta 2 decimales.';
   }
 
-  if (!datos.ventaDesde !== !datos.ventaHasta) {
+  const alPublicar = datos.inicioVenta === 'AL_PUBLICAR';
+  if (alPublicar && !datos.ventaHasta) {
+    errores.ventaHasta = 'Completá el fin de la venta.';
+  } else if (!alPublicar && !datos.ventaDesde !== !datos.ventaHasta) {
     const falta = datos.ventaDesde ? 'ventaHasta' : 'ventaDesde';
     errores[falta] = 'Las dos fechas van juntas: completá ambas o ninguna.';
-  } else if (datos.ventaDesde && datos.ventaHasta) {
-    const inicio = new Date(datos.ventaDesde).getTime();
+  } else if (datos.ventaHasta) {
+    const inicio = alPublicar ? null : new Date(datos.ventaDesde).getTime();
     const fin = new Date(datos.ventaHasta).getTime();
-    if (fin <= inicio) {
+    if (inicio !== null) {
+      if (datos.ventaDesde !== ventaDesdeGuardada && inicio < new Date().setHours(0, 0, 0, 0)) {
+        errores.ventaDesde = 'No puede ser anterior a hoy.';
+      } else if (torneo?.publicadoEn && inicio < new Date(torneo.publicadoEn).getTime()) {
+        errores.ventaDesde = 'No puede empezar antes de que se publique el torneo.';
+      }
+    }
+    // Como en el back: hasta la finalización del torneo o, si no la tiene, hasta su inicio
+    const limite = torneo?.fechaFin ?? torneo?.fechaInicio;
+    if (inicio !== null && fin <= inicio) {
       errores.ventaHasta = 'Tiene que ser posterior al inicio de la venta.';
     } else if (fin <= Date.now()) {
       errores.ventaHasta = 'La venta no puede terminar en el pasado.';
+    } else if (limite && fin > new Date(limite).getTime()) {
+      errores.ventaHasta = torneo?.fechaFin
+        ? 'La fecha debe ser anterior a la finalización del torneo.'
+        : 'La fecha debe ser anterior al inicio del torneo.';
     }
   }
 

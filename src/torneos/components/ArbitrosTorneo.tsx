@@ -87,7 +87,12 @@ export const ArbitrosTorneo: React.FC<ArbitrosTorneoProps> = ({ torneoId, habili
     ejecutar(async () => {
       if (!torneoId) return;
       const designado = await torneoApi.designarArbitro(torneoId, opcion.id, permisos);
-      setArbitros((actuales) => [...actuales, designado]);
+      // A uno que había rechazado se lo vuelve a designar: reemplaza su fila en vez de sumar otra.
+      setArbitros((actuales) =>
+        actuales.some((a) => a.usuarioId === designado.usuarioId)
+          ? actuales.map((a) => (a.usuarioId === designado.usuarioId ? designado : a))
+          : [...actuales, designado]
+      );
     });
 
   const quitar = (arbitro: ArbitroDetalle) =>
@@ -102,7 +107,13 @@ export const ArbitrosTorneo: React.FC<ArbitrosTorneoProps> = ({ torneoId, habili
       elegido ? [...actuales, codigo] : actuales.filter((p) => p !== codigo)
     );
 
-  const designados = new Set(arbitros.map((a) => a.usuarioId));
+  // Los que rechazaron se pueden volver a designar (HU-807).
+  const designados = new Set(
+    arbitros.filter((a) => a.estado !== 'RECHAZADO').map((a) => a.usuarioId)
+  );
+  const rechazaron = new Set(
+    arbitros.filter((a) => a.estado === 'RECHAZADO').map((a) => a.usuarioId)
+  );
 
   return (
     <section className="torneos-seccion torneos-arbitros">
@@ -113,8 +124,9 @@ export const ArbitrosTorneo: React.FC<ArbitrosTorneoProps> = ({ torneoId, habili
         </Badge>
       </div>
       <p className="torneos-arbitros-ayuda">
-        Solo los árbitros que acepten la designación van a poder cargar resultados y resolver
-        objeciones, según los permisos que les des.
+        A cada árbitro le llega un aviso para aceptar la designación. Solo los que aceptan cargan
+        resultados y resuelven objeciones, según los permisos que les des, y para generar el bracket
+        hace falta al menos uno que haya aceptado.
       </p>
 
       {!torneoId ? (
@@ -135,6 +147,9 @@ export const ArbitrosTorneo: React.FC<ArbitrosTorneoProps> = ({ torneoId, habili
                       .join(' · ')}
                   </span>
                   <Badge tone={ESTADO[a.estado].tono}>{ESTADO[a.estado].texto}</Badge>
+                  {a.estado === 'RECHAZADO' && a.motivoRechazo && (
+                    <span className="torneos-arbitro-motivo">Motivo: {a.motivoRechazo}</span>
+                  )}
                   {habilitado && (
                     <Button
                       type="button"
@@ -197,7 +212,11 @@ export const ArbitrosTorneo: React.FC<ArbitrosTorneoProps> = ({ torneoId, habili
                         disabled={ocupado || permisos.length === 0 || designados.has(o.id)}
                         onClick={() => designar(o)}
                       >
-                        {designados.has(o.id) ? 'Designado' : 'Designar'}
+                        {designados.has(o.id)
+                          ? 'Designado'
+                          : rechazaron.has(o.id)
+                            ? 'Volver a designar'
+                            : 'Designar'}
                       </Button>
                     </li>
                   ))}

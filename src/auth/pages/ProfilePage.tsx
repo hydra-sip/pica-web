@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { authApi } from '../../api/authApi';
 import { ApiError } from '../../api/httpClient';
@@ -250,6 +251,13 @@ export const ProfilePage: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* HU-209: en el celular, Mis inscripciones no entra en la barra de abajo y se llega desde acá */}
+      <div className="pica-card hydra-card perfil-accesos">
+        <Link to="/mis-inscripciones" className="btn btn-secondary btn-block">
+          Mis inscripciones
+        </Link>
       </div>
 
       {/* Profile Form: Datos Personales */}

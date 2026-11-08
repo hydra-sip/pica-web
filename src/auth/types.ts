@@ -27,6 +27,10 @@ export interface ProblemDetail {
   /** Solo en CHECKIN_FUERA_DE_VENTANA: cuándo abre y cuándo cierra la ventana, sin la tolerancia. */
   abreEn?: string;
   cierraEn?: string;
+  /** Solo en JUGADOR_YA_INSCRIPTO: el que ya figura en otra inscripción del torneo (puede ser el capitán). */
+  jugador?: { id: number; username: string; nombres: string; apellidos: string };
+  /** Solo en SALDO_INSUFICIENTE: lo que hay que cargar para pagar el total (HU-603). */
+  faltante?: number;
 }
 
 export interface PersonaInfo {
@@ -77,6 +81,9 @@ export interface AuthContextType extends AuthState {
   logout: () => Promise<void>;
   hasPermission: (permiso: string | string[]) => boolean;
   hasRole: (role: RoleName | RoleName[]) => boolean;
+  /** Aviso de lo que pasó con la sesión en otra pestaña (otra cuenta, sesión cerrada); null si no hay. */
+  avisoSesion: string | null;
+  descartarAvisoSesion: () => void;
 }
 
 export interface LoginResponse {

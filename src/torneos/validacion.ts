@@ -88,13 +88,27 @@ export const aPayload = (
   };
 };
 
+/** Lo que fija la plataforma, de GET /torneos/opciones. */
+export interface LimitesTorneo {
+  cupoTope: number;
+  /** Minutos que tienen que pasar como mínimo entre el cierre de la inscripción y el inicio. */
+  margenCierreInicioMin: number;
+}
+
+const MIN_POR_HORA = 60;
+const MS_POR_MINUTO = 60_000;
+
+/** 60 → "1 h", 90 → "90 min", como el mensaje del back. */
+export const textoMargen = (minutos: number): string =>
+  minutos > 0 && minutos % MIN_POR_HORA === 0 ? `${minutos / MIN_POR_HORA} h` : `${minutos} min`;
+
 /**
  * Lo que el back exige para guardar el borrador: nombre y disciplina, y que lo cargado sea coherente
  * (las mismas reglas que InformacionTorneoRequest en el contrato).
  */
 export const validarBorrador = (
   f: FormTorneo,
-  cupoTope: number,
+  { cupoTope, margenCierreInicioMin }: LimitesTorneo,
   original?: FormTorneo
 ): ErroresTorneo => {
   const errores: ErroresTorneo = {};
@@ -123,6 +137,15 @@ export const validarBorrador = (
     errores.cierreInscripcionEn = 'Tiene que ser una fecha futura.';
   } else if (cierre !== null && inicio !== null && cierre > inicio) {
     errores.cierreInscripcionEn = 'La inscripción tiene que cerrar antes del inicio.';
+  } else if (
+    cierre !== null &&
+    inicio !== null &&
+    (cambia('cierreInscripcionEn') || cambia('fechaInicio')) &&
+    cierre + margenCierreInicioMin * MS_POR_MINUTO > inicio
+  ) {
+    errores.cierreInscripcionEn = `La inscripción tiene que cerrar al menos ${textoMargen(
+      margenCierreInicioMin
+    )} antes del inicio, para programar los partidos y el check-in.`;
   }
 
   const maximo = numero(f.cupoMaximo);
@@ -158,10 +181,10 @@ export const validarBorrador = (
 export const validarPaso = (
   paso: 1 | 2,
   f: FormTorneo,
-  cupoTope: number,
+  limites: LimitesTorneo,
   conPdf = false
 ): ErroresTorneo => {
-  const errores = validarBorrador(f, cupoTope);
+  const errores = validarBorrador(f, limites);
   const falta = (campo: keyof FormTorneo, mensaje: string) => {
     if (!errores[campo]) errores[campo] = mensaje;
   };

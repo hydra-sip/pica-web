@@ -18,6 +18,7 @@ export const InscripcionPagoPage: React.FC = () => {
   const [inscripcion, setInscripcion] = useState<InscripcionDetalle | null>(null);
   const [resumen, setResumen] = useState<ResumenPago | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [recienPagada, setRecienPagada] = useState(false);
 
   useEffect(() => {
     let vigente = true;
@@ -66,17 +67,31 @@ export const InscripcionPagoPage: React.FC = () => {
       return <Navigate to={`/inscripciones/${inscripcion.id}/nomina`} replace />;
 
     case 'PENDIENTE_PAGO':
-      return resumen ? <ResumenDePago resumen={resumen} onPagada={setInscripcion} /> : cargando;
+      return resumen ? (
+        <ResumenDePago
+          resumen={resumen}
+          onPagada={(pagada) => {
+            setRecienPagada(true);
+            setInscripcion(pagada);
+          }}
+          slug={inscripcion.torneo.slug}
+        />
+      ) : (
+        cargando
+      );
 
     case 'CONFIRMADA':
       return (
         <InscripcionConfirmada
           inscripcion={inscripcion}
           participante={user?.name ? `Participante: ${user.name}` : null}
+          recienPagada={recienPagada}
         />
       );
 
     default:
-      return <AvisoInscripcionTerminada estado={inscripcion.estado} />;
+      return (
+        <AvisoInscripcionTerminada estado={inscripcion.estado} slug={inscripcion.torneo.slug} />
+      );
   }
 };

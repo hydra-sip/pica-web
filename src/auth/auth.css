@@ -174,3 +174,8 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Accesos desde el perfil (HU-209): lo que en el celular no entra en la barra de abajo */
+.perfil-accesos {
+  padding: 1.25rem 1.75rem;
+}

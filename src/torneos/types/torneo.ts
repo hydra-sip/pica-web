@@ -59,7 +59,10 @@ export interface TorneoDetalle {
   cupoMaximo: number;
   cupoMinimo: number;
   cupoDisponible: number;
+  /** Solo por equipos: el mínimo de jugadores de la nómina. */
   tamanioEquipo: number | null;
+  /** Solo por equipos: el máximo de jugadores de la nómina, con suplentes. */
+  nominaMaxima: number | null;
   valorInscripcion: number;
   moneda: string;
   /** Sellado al publicar; null en los publicados antes de que existiera (sin gastos). */
@@ -95,7 +98,8 @@ export interface PageResponse<T> {
 }
 
 export interface FiltrosTorneo {
-  disciplina?: string;
+  q?: string;
+  modalidad?: ModalidadTorneo | '';
   estado?: EstadoTorneo | '';
   page?: number;
   size?: number;

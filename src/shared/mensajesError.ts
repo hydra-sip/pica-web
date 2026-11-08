@@ -1,5 +1,5 @@
 import { ProblemDetail } from '../auth/types';
-import { fechaHora } from './formato';
+import { fechaHora, pesos } from './formato';
 
 // La UI decide el mensaje por `codigo` (openapi.yaml, CodigoError); `detail` queda de respaldo.
 const SESION_VENCIDA = 'Tu sesión venció. Iniciá sesión de nuevo.';
@@ -14,6 +14,12 @@ const POR_CODIGO: Record<string, string> = {
   REFRESH_REUTILIZADO: SESION_VENCIDA,
   SIN_PERMISO: 'No tenés permiso para hacer esto.',
   ERROR_INTERNO: 'Algo falló en el servidor. Probá de nuevo en un rato.',
+  DESIGNACION_NO_ENCONTRADA: 'Ya no figurás como árbitro de ese torneo.',
+  DESIGNACION_YA_RESPONDIDA: 'Esa designación ya la respondiste.',
+  COMPROMISO_NO_ACEPTADO:
+    'Para aceptar la designación tenés que aceptar el código de imparcialidad.',
+  ALMACENAMIENTO_NO_DISPONIBLE:
+    'No se pudo guardar ni leer el archivo: el almacenamiento no respondió. Probá de nuevo en un rato.',
   USUARIO_NO_ENCONTRADO: 'El usuario no existe o está dado de baja.',
   PERSONA_NO_ENCONTRADA: 'La persona no existe o está dada de baja.',
   ROL_NO_ENCONTRADO: 'El rol no existe o está dado de baja.',
@@ -24,6 +30,8 @@ const POR_CODIGO: Record<string, string> = {
     'Tiene el email sin verificar: no se lo puede pasar a Activo hasta que lo verifique.',
   USUARIO_BLOQUEADO:
     'La cuenta está bloqueada. Si creés que es un error, escribile a un administrador.',
+  BILLETERA_BLOQUEADA:
+    'Tu billetera está bloqueada. Ponete en contacto con soporte si creés que es un error.',
   TOKEN_EXPIRADO: 'El enlace venció. Pedí uno nuevo.',
   TOKEN_USADO: 'Ese enlace ya se usó. Si ya verificaste tu cuenta, iniciá sesión.',
   CODIGO_INVALIDO: 'No se pudo terminar el ingreso con Google. Probá de nuevo.',
@@ -72,7 +80,8 @@ const POR_CODIGO: Record<string, string> = {
   PARTICIPANTES_INSUFICIENTES:
     'Hacen falta al menos 2 inscripciones confirmadas para armar el bracket.',
   BRACKET_YA_GENERADO: 'El torneo ya tiene bracket: recargá la página.',
-  SIN_ARBITROS: 'Designá al menos un árbitro en el paso 2: cada partido necesita uno.',
+  SIN_ARBITROS:
+    'Hace falta al menos un árbitro que haya aceptado la designación: cada partido necesita uno.',
   BRACKET_CON_RESULTADOS: 'Ya hay resultados cargados: el bracket no se puede volver a sortear.',
   PARTIDO_NO_ENCONTRADO: 'El partido no existe.',
   EVIDENCIA_NO_ENCONTRADA: 'Ese archivo ya no está: recargá la página.',
@@ -102,6 +111,13 @@ const POR_CODIGO: Record<string, string> = {
     'La nómina no cumple lo que pide el torneo: revisá la cantidad de jugadores y que estés vos como capitán.',
   COBRO_RECHAZADO:
     'No se aprobó el pago y no se cobró nada. Tu inscripción sigue pendiente: probá de nuevo.',
+  // HU-603: pago con saldo y custodia de los fondos
+  SALDO_INSUFICIENTE:
+    'Tu saldo no alcanza para pagar. No se cobró nada: cargá saldo y volvé a intentar.',
+  FONDOS_EN_CUSTODIA:
+    'Los fondos están en custodia y no se pueden mover hasta que termine el evento. Al terminar, la liquidación acredita lo tuyo en tu billetera.',
+  CUSTODIA_LIBERADA: 'Los fondos ya se liquidaron: lo que te corresponde está en tu billetera.',
+  COMPROBANTE_NO_ENCONTRADO: 'Esta inscripción no tiene un pago.',
   INSCRIPCION_NO_PERMITIDA_EN_TORNEO:
     'El organizador y los árbitros de un torneo no pueden inscribirse en él.',
   PRONOSTICO_FUERA_DE_VENTANA:
@@ -168,6 +184,10 @@ export const mensajeDeError = (
       ? `Todavía no abrió el check-in: abre el ${fechaHora(problema.abreEn)}.`
       : `El check-in cerró el ${fechaHora(problema.cierraEn)}.`;
   }
+  // HU-603: el 409 trae cuánto falta
+  if (problema?.codigo === 'SALDO_INSUFICIENTE' && problema.faltante && !propios[problema.codigo]) {
+    return `Tu saldo no alcanza: te faltan ${pesos(problema.faltante)}. No se cobró nada: cargá saldo y volvé a intentar.`;
+  }
   // HU-306: la ventana de pronóstico cerró
   if (
     problema?.codigo === 'PRONOSTICO_FUERA_DE_VENTANA' &&
@@ -193,6 +213,22 @@ export const erroresPorCampo = (
   (problemaDe(err)?.errores || []).forEach((e) => {
     if (e.campo && !errores[e.campo]) {
       errores[e.campo] = propios[e.codigo] || POR_CODIGO_DE_CAMPO[e.codigo] || e.mensaje;
+    }
+  });
+  return errores;
+};
+
+/**
+ * Los errores de un 400 VALIDACION por campo con el `mensaje` del back, para pantallas donde un mismo código dice
+ * cosas distintas según la regla (por ejemplo RANGO_INVALIDO en los parámetros del admin).
+ */
+export const mensajesDelBackPorCampo = (err: unknown): Record<string, string> => {
+  const errores: Record<string, string> = {};
+  (problemaDe(err)?.errores || []).forEach((e) => {
+    if (e.campo && !errores[e.campo]) {
+      errores[e.campo] = e.mensaje
+        ? `${e.mensaje}.`
+        : POR_CODIGO_DE_CAMPO[e.codigo] || 'Valor inválido.';
     }
   });
   return errores;

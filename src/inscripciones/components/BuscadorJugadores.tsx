@@ -15,6 +15,8 @@ interface BuscadorJugadoresProps {
   onSumar: (jugador: UsuarioPublico) => void;
   /** Lo que dice el botón de cada resultado: sumar a la nómina, o elegir al que entra en un reemplazo. */
   accion?: 'Sumar' | 'Elegir';
+  /** Por qué no se puede sumar a nadie más (por ejemplo, la nómina llegó al máximo): deshabilita la búsqueda. */
+  bloqueo?: string | null;
 }
 
 /** La consulta como la entiende el back: sin espacios de los costados ni la @ del usuario. */
@@ -25,6 +27,7 @@ export const BuscadorJugadores: React.FC<BuscadorJugadoresProps> = ({
   enNomina,
   onSumar,
   accion = 'Sumar',
+  bloqueo = null,
 }) => {
   const [texto, setTexto] = useState('');
   const [encontrados, setEncontrados] = useState<UsuarioPublico[] | null>(null);
@@ -70,8 +73,15 @@ export const BuscadorJugadores: React.FC<BuscadorJugadoresProps> = ({
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
           autoComplete="off"
+          disabled={bloqueo !== null}
         />
       </div>
+
+      {bloqueo && (
+        <p className="inscripcion-ayuda" role="status">
+          {bloqueo}
+        </p>
+      )}
 
       {corto && (
         <p className="inscripcion-ayuda">Escribí al menos {MINIMO_LETRAS} letras para buscar.</p>
@@ -105,7 +115,7 @@ export const BuscadorJugadores: React.FC<BuscadorJugadoresProps> = ({
                   size="sm"
                   variant="secondary"
                   onClick={() => onSumar(j)}
-                  disabled={yaEsta}
+                  disabled={yaEsta || bloqueo !== null}
                   aria-label={`${accion} a ${nombre}`}
                 >
                   {yaEsta ? 'En la nómina' : accion}

@@ -1,10 +1,11 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/react';
 import { equipoApi } from '../api/equipoApi';
 import { inscripcionApi } from '../api/inscripcionApi';
 import { torneoApi } from '../api/torneoApi';
 import { delay, http } from 'msw';
 import { problema } from '../mocks/adminHandlers';
+import { setBilleteraMock } from '../mocks/data';
 import { server } from '../mocks/server';
 import { renderRuta } from '../test/renderRuta';
 
@@ -31,8 +32,13 @@ const pendienteDePago = (slug: string) => async () => {
 // El monto va con el espacio duro que pone Intl entre el signo y el número.
 const botonPagar = (monto: string) =>
   screen.getByRole('button', {
-    name: new RegExp(`^Confirmar pago de \\$\\s${monto.replace('.', '\\.')},00$`),
+    name: new RegExp(`^Pagar \\$\\s${monto.replace('.', '\\.')},00 con saldo$`),
   });
+
+// HU-603: se paga con el saldo de la billetera; salvo en los casos sin saldo, alcanza para cualquier inscripción.
+beforeEach(() => {
+  setBilleteraMock({ saldoDisponible: 100000 });
+});
 
 afterEach(() => {
   vi.useRealTimers();
@@ -59,7 +65,11 @@ describe('paso 2: confirmar y pagar', () => {
     expect(screen.getByText('$ 22.000,00')).toBeInTheDocument();
     expect(botonPagar('22.000')).toBeEnabled();
     expect(screen.queryByText(/tasa de servicio/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/método de pago/i)).not.toBeInTheDocument();
+    expect(await screen.findByText(/Saldo disponible: \$\s100\.000,00/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '← Ver torneo' })).toHaveAttribute(
+      'href',
+      '/torneos/torneo-apertura-f5'
+    );
   });
 
   it('al confirmar el pago muestra que la inscripción quedó confirmada, con el equipo y el torneo', async () => {
@@ -71,9 +81,12 @@ describe('paso 2: confirmar y pagar', () => {
     await user.click(botonPagar('22.000'));
 
     expect(await screen.findByRole('heading', { name: '¡Inscripción confirmada!' })).toBeInTheDocument();
-    expect(screen.getByText(/Los Galácticos/)).toBeInTheDocument();
-    expect(screen.getByText(/Torneo Apertura F5/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /inicio/i })).toHaveAttribute('href', '/');
+    expect(screen.getByText('Equipo: Los Galácticos')).toBeInTheDocument();
+    expect(screen.getByText('Torneo: Torneo Apertura F5')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ver torneo' })).toHaveAttribute(
+      'href',
+      '/torneos/torneo-apertura-f5'
+    );
     expect(screen.getByRole('link', { name: 'Ver mi inscripción' })).toHaveAttribute(
       'href',
       `/inscripciones/${ID}`
@@ -264,8 +277,11 @@ describe('pantalla final y otros estados de la inscripción', () => {
 
     expect(await screen.findByRole('heading', { name: '¡Inscripción confirmada!' })).toBeInTheDocument();
     expect(screen.getByText(/Los Galácticos/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /inicio/i })).toHaveAttribute('href', '/');
-    expect(screen.queryByRole('button', { name: /Confirmar pago/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ver torneo' })).toHaveAttribute(
+      'href',
+      '/torneos/torneo-gratis'
+    );
+    expect(screen.queryByRole('button', { name: /con saldo/ })).not.toBeInTheDocument();
   });
 
   it('una individual gratis confirmada muestra al participante en la pantalla final', async () => {
@@ -320,7 +336,11 @@ describe('pantalla final y otros estados de la inscripción', () => {
 
     await screen.findByText(/Esta inscripción fue cancelada/);
     expect(screen.getByRole('status')).toHaveTextContent('Esta inscripción fue cancelada');
-    expect(screen.queryByRole('button', { name: /Confirmar pago/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /con saldo/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ver torneo' })).toHaveAttribute(
+      'href',
+      '/torneos/torneo-apertura-f5'
+    );
   });
 
   it.each([
@@ -330,5 +350,86 @@ describe('pantalla final y otros estados de la inscripción', () => {
     await renderRuta(ruta);
 
     expect(await screen.findByRole('alert')).toHaveTextContent('La inscripción no existe o no es tuya');
+  });
+});
+
+describe('HU-603: pago con el saldo de la billetera', () => {
+  it('con saldo paga y muestra el comprobante y el saldo que quedó', async () => {
+    const { user } = await renderRuta(RUTA_PAGO, {
+      prepara: pendienteDePago('torneo-apertura-f5'),
+    });
+    expect(await screen.findByText(/Saldo disponible: \$\s100\.000,00/)).toBeInTheDocument();
+    expect(screen.getByText('Disponible')).toBeInTheDocument();
+
+    await user.click(botonPagar('22.000'));
+
+    const comprobante = await screen.findByRole('region', { name: 'Comprobante de pago' });
+    expect(within(comprobante).getByText(/^I\d+-\d+$/)).toBeInTheDocument();
+    expect(
+      within(comprobante).getByText('Inscripción de Los Galácticos al torneo Torneo Apertura F5')
+    ).toBeInTheDocument();
+    expect(within(comprobante).getByText('Pagaste').nextSibling).toHaveTextContent('22.000,00');
+    expect(
+      within(comprobante).getByText(/En custodia hasta que termine el torneo/)
+    ).toBeInTheDocument();
+    // 100.000 - 22.000 disponibles; 5.000 que ya había más 22.000 en custodia
+    expect(await screen.findByText(/Te quedan/)).toHaveTextContent(
+      /Te quedan \$\s78\.000,00 disponibles y \$\s27\.000,00 en custodia/
+    );
+  });
+
+  it('sin saldo no deja pagar, dice cuánto falta y después de cargar paga sin rehacer la inscripción', async () => {
+    setBilleteraMock({ saldoDisponible: 15000 });
+    const { user } = await renderRuta(RUTA_PAGO, {
+      prepara: pendienteDePago('torneo-apertura-f5'),
+    });
+
+    expect(await screen.findByText('No alcanza')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent(
+      /Te faltan \$\s7\.000,00 para pagar \$\s22\.000,00/
+    );
+    expect(botonPagar('22.000')).toBeDisabled();
+    expect(screen.getByLabelText('Monto a cargar (ARS)')).toHaveValue(7000);
+
+    await user.click(screen.getByRole('button', { name: 'Cargar saldo' }));
+
+    expect(await screen.findByText(/Saldo disponible: \$\s22\.000,00/)).toBeInTheDocument();
+    expect(screen.queryByText(/Te faltan/)).not.toBeInTheDocument();
+    await user.click(botonPagar('22.000'));
+    expect(
+      await screen.findByRole('heading', { name: '¡Inscripción confirmada!' })
+    ).toBeInTheDocument();
+    expect((await inscripcionApi.obtener(ID)).estado).toBe('CONFIRMADA');
+  });
+
+  it('si el back rechaza por saldo, avisa cuánto falta y la inscripción sigue pendiente', async () => {
+    server.use(
+      http.post('*/inscripciones/:id/pago', () =>
+        problema(409, 'SALDO_INSUFICIENTE', 'No alcanza', { faltante: 500 })
+      )
+    );
+    const { user } = await renderRuta(RUTA_PAGO, {
+      prepara: pendienteDePago('torneo-apertura-f5'),
+    });
+    await screen.findByText(/Saldo disponible/);
+
+    await user.click(botonPagar('22.000'));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      /Tu saldo no alcanza: te faltan \$\s500,00\. No se cobró nada/
+    );
+    expect((await inscripcionApi.obtener(ID)).estado).toBe('PENDIENTE_PAGO');
+  });
+
+  it('el comprobante también se ve en Mi inscripción', async () => {
+    await renderRuta(`/inscripciones/${ID}`, {
+      prepara: async () => {
+        await pendienteDePago('torneo-apertura-f5')();
+        await inscripcionApi.pagar(ID);
+      },
+    });
+
+    const comprobante = await screen.findByRole('region', { name: 'Comprobante de pago' });
+    expect(within(comprobante).getByText('Pagaste').nextSibling).toHaveTextContent('22.000,00');
   });
 });

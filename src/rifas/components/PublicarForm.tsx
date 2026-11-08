@@ -47,7 +47,8 @@ const NOMBRE_PASO = ['Datos generales', 'Premios'];
  */
 const faltantesDe = (rifa: RifaDetalle): FaltantePublicacion[] => {
   const faltantes: FaltantePublicacion[] = [];
-  if (!rifa.ventaDesde || !rifa.ventaHasta) {
+  // Sin inicio, la venta arranca al publicar: el que hace falta es el fin
+  if (!rifa.ventaHasta) {
     faltantes.push('VENTANA');
   } else if (new Date(rifa.ventaHasta).getTime() <= Date.now()) {
     // Un inicio pasado sí se acepta: la venta arranca al publicar
@@ -182,9 +183,11 @@ export const PublicarForm: React.FC<PublicarFormProps> = ({
         <div>
           <dt>Venta</dt>
           <dd>
-            {rifa.ventaDesde
-              ? `${fechaHora(rifa.ventaDesde)} a ${fechaHora(rifa.ventaHasta)}`
-              : '-'}
+            {!rifa.ventaHasta
+              ? '-'
+              : rifa.ventaDesde
+                ? `${fechaHora(rifa.ventaDesde)} a ${fechaHora(rifa.ventaHasta)}`
+                : `Desde que se publica hasta ${fechaHora(rifa.ventaHasta)}`}
           </dd>
         </div>
         <div>

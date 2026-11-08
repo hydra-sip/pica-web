@@ -1,4 +1,4 @@
-# Lint y build en cada PR y en cada push a dev/main.
+# Lint, tests y build en cada PR y en cada push a dev/main.
 # Al mergear a dev, además publica la imagen en GHCR y actualiza la web de staging
 # (los pasos de la instancia están en pica-back/infra/README.md).
 name: CI
@@ -19,11 +19,13 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          # vitest pide Node ^22.12 o ^24; el Dockerfile sigue en 20 porque solo hace el build
+          node-version-file: .nvmrc
           cache: npm
 
       - run: npm ci
       - run: npm run lint
+      - run: npm test
       - run: npm run build
 
   # En los PR solo comprueba que el Dockerfile construye; en dev la publica

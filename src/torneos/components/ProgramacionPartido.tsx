@@ -2,13 +2,16 @@ import React, { useState } from 'react';
 import { partidoApi, PartidoDetalle } from '../../api/partidoApi';
 import { PartidoBracket } from '../../api/torneoApi';
 import { sinFechaParaJugar } from '../../partidos/formato';
-import { erroresPorCampo, mensajeDeError } from '../../shared/mensajesError';
+import { mensajeDeError, mensajesDelBackPorCampo } from '../../shared/mensajesError';
 import { fechaHora, inputLocalAIso, isoAInputLocal } from '../../shared/formato';
 import { Button, Input } from '../../shared/ui';
 
-/** El back la rechaza si es pasada, anterior al inicio del torneo o posterior a su fin. */
-const FECHA_FUERA_DE_RANGO = {
-  RANGO_INVALIDO: 'Tiene que ser futura y dentro de las fechas del torneo.',
+/** El rango en que el back acepta la fecha (además de que sea futura); sin ninguna de las dos, nada. */
+const rangoDelTorneo = (inicio: string | null, fin: string | null): string | null => {
+  if (inicio && fin) return `Entre el ${fechaHora(inicio)} y el ${fechaHora(fin)}.`;
+  if (inicio) return `Desde el ${fechaHora(inicio)}.`;
+  if (fin) return `Hasta el ${fechaHora(fin)}.`;
+  return null;
 };
 
 interface ProgramacionPartidoProps {
@@ -17,6 +20,9 @@ interface ProgramacionPartidoProps {
   editable: boolean;
   /** Con el torneo en curso, un partido para jugar sin fecha se resalta (HU-309). */
   resaltarSinFecha?: boolean;
+  /** Inicio y fin del torneo: la fecha del partido tiene que caer entre los dos. */
+  inicioTorneo?: string | null;
+  finTorneo?: string | null;
   onProgramado: (partido: PartidoDetalle) => void;
 }
 
@@ -29,6 +35,8 @@ export const ProgramacionPartido: React.FC<ProgramacionPartidoProps> = ({
   partido,
   editable,
   resaltarSinFecha = false,
+  inicioTorneo = null,
+  finTorneo = null,
   onProgramado,
 }) => {
   const [valor, setValor] = useState<string | null>(null);
@@ -52,8 +60,9 @@ export const ProgramacionPartido: React.FC<ProgramacionPartidoProps> = ({
       onProgramado(await partidoApi.programar(partido.id, iso));
       setValor(null);
     } catch (err) {
+      // RANGO_INVALIDO no dice cuál regla rompió (pasada, antes del inicio o después del fin): el mensaje del back sí
       setError(
-        erroresPorCampo(err, FECHA_FUERA_DE_RANGO).fechaProgramada ??
+        mensajesDelBackPorCampo(err).fechaProgramada ??
           mensajeDeError(err, 'No se pudo programar el partido.')
       );
     } finally {
@@ -84,6 +93,9 @@ export const ProgramacionPartido: React.FC<ProgramacionPartidoProps> = ({
     );
   }
 
+  const rango = rangoDelTorneo(inicioTorneo, finTorneo);
+  const rangoId = `programacion-rango-${partido.id}`;
+
   return (
     <div className="bracket-programacion bracket-programacion-editando">
       <Input
@@ -92,7 +104,13 @@ export const ProgramacionPartido: React.FC<ProgramacionPartidoProps> = ({
         value={valor}
         onChange={(e) => setValor(e.target.value)}
         aria-invalid={!!error}
+        aria-describedby={rango ? rangoId : undefined}
       />
+      {rango && (
+        <span id={rangoId} className="field-ayuda">
+          {rango}
+        </span>
+      )}
       <div className="bracket-programacion-acciones">
         <Button
           variant="ghost"

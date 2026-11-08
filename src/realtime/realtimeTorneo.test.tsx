@@ -138,6 +138,7 @@ const torneoDetalleMock: TorneoDetalle = {
   cupoMinimo: 4,
   cupoDisponible: 0,
   tamanioEquipo: 5,
+  nominaMaxima: 8,
   valorInscripcion: 5000,
   moneda: 'ARS',
   pctGastosAdministrativos: 10,

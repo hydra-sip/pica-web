@@ -31,6 +31,7 @@ const detalles: DetalleMock[] = [
     cupoMinimo: 2,
     cupoDisponible: 7,
     tamanioEquipo: 3,
+    nominaMaxima: 5,
     valorInscripcion: 5000.0,
     moneda: 'ARS',
     pozoEstimado: 48000.0,
@@ -67,6 +68,7 @@ const detalles: DetalleMock[] = [
     cupoMinimo: 8,
     cupoDisponible: 4,
     tamanioEquipo: 2,
+    nominaMaxima: 4,
     valorInscripcion: 8000.0,
     moneda: 'ARS',
     pozoEstimado: 120000.0,
@@ -102,6 +104,7 @@ const detalles: DetalleMock[] = [
     cupoMinimo: 10,
     cupoDisponible: 0,
     tamanioEquipo: null,
+    nominaMaxima: null,
     valorInscripcion: 2500.0,
     moneda: 'ARS',
     pozoEstimado: 75000.0,
@@ -138,6 +141,7 @@ const detalles: DetalleMock[] = [
     cupoMinimo: 6,
     cupoDisponible: 0,
     tamanioEquipo: 4,
+    nominaMaxima: 6,
     valorInscripcion: 6000.0,
     moneda: 'ARS',
     pozoEstimado: 65000.0,
@@ -172,6 +176,7 @@ const detalles: DetalleMock[] = [
     cupoMinimo: 4,
     cupoDisponible: 0,
     tamanioEquipo: 6,
+    nominaMaxima: 8,
     valorInscripcion: 4000.0,
     moneda: 'ARS',
     pozoEstimado: 40000.0,
@@ -207,6 +212,7 @@ const detalles: DetalleMock[] = [
     cupoMinimo: 4,
     cupoDisponible: 16,
     tamanioEquipo: 1,
+    nominaMaxima: 3,
     valorInscripcion: 10000,
     moneda: 'ARS',
     pozoEstimado: 160000,
@@ -238,11 +244,18 @@ export const mockTorneosDetalle: (TorneoDetalle & { esBorrador?: boolean })[] = 
   })
 );
 
+const sinTildes = (texto: string) =>
+  texto.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim();
+
 export const torneoHandlers = [
+  // HU-807: en los mocks nadie tiene designaciones de árbitro
+  http.get(`${API_URL}/designaciones/mias`, () => HttpResponse.json([])),
+
   // GET /torneos/resumen (Público, sin sesión)
   http.get(`${API_URL}/torneos/resumen`, ({ request }) => {
     const url = new URL(request.url);
-    const disciplina = url.searchParams.get('disciplina')?.toLowerCase();
+    const q = sinTildes(url.searchParams.get('q') ?? '');
+    const modalidad = url.searchParams.get('modalidad');
     const estado = url.searchParams.get('estado');
     const page = parseInt(url.searchParams.get('page') || '0', 10);
     const size = parseInt(url.searchParams.get('size') || '20', 10);
@@ -251,8 +264,18 @@ export const torneoHandlers = [
     // Filtrar: excluir borradores siempre
     let filtered = mockTorneosDetalle.filter((t) => !t.esBorrador);
 
-    if (disciplina) {
-      filtered = filtered.filter((t) => t.disciplina.toLowerCase().includes(disciplina));
+    if (q) {
+      filtered = filtered.filter((t) =>
+        q
+          .split(/\s+/)
+          .every((palabra) =>
+            [t.nombre, t.disciplina, t.sede].some((campo) => sinTildes(campo ?? '').includes(palabra))
+          )
+      );
+    }
+
+    if (modalidad) {
+      filtered = filtered.filter((t) => t.modalidad === modalidad);
     }
 
     if (estado) {

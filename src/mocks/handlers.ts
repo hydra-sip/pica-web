@@ -1,14 +1,16 @@
 import { http, HttpResponse } from 'msw';
 import { adminHandlers } from './adminHandlers';
+import { parametroHandlers } from './parametroHandlers';
 import { crearInscripcionesHandlers } from './inscripcionesHandlers';
 import { pronosticoHandlers } from './pronosticoHandlers';
 import { torneoHandlers } from './torneoHandlers';
 import { verificacionHandlers } from './verificacionHandlers';
 import { ticketHandlers } from './ticketHandlers';
+import { billeteraHandlers } from './billeteraHandlers';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
-// El admin es Super Usuario: tiene los 13 permisos del seed V4, como en el back
+// El admin es Super Usuario: tiene los 13 permisos del seed V4 y el de parámetros de V35, como en el back
 const PERMISOS_SUPER_USUARIO = [
   'USUARIO_VER',
   'USUARIO_CREAR',
@@ -23,6 +25,7 @@ const PERMISOS_SUPER_USUARIO = [
   'ROL_EDITAR',
   'ROL_ELIMINAR',
   'ROL_ASIGNAR',
+  'PARAMETRO_ADMINISTRAR',
 ];
 
 // El PARTICIPANTE puede inscribirse a torneos (seed del back); el organizador de los mocks no.
@@ -78,6 +81,8 @@ const establecerUsuario = (usuario: typeof USUARIO_INICIAL) => {
 export const handlers = [
   // Backoffice (usuarios, personas, roles y permisos) según el contrato
   ...adminHandlers,
+  // Parámetros de la plataforma (HU-702)
+  ...parametroHandlers,
   // Inscripción en dos pasos: el capitán es el usuario logueado de estos mocks. Va antes que los torneos
   // públicos: atiende los slugs de sus escenarios y deja pasar los que no conoce.
   ...crearInscripcionesHandlers(() => mockCurrentUserState),
@@ -93,6 +98,9 @@ export const handlers = [
 
   // Tickets de rifa y reclamos (HU-506 / T506-2)
   ...ticketHandlers,
+
+  // Billetera virtual y movimientos (HU-602 / T602-3)
+  ...billeteraHandlers,
 
   // Auth: Registro Endpoint (POST /auth/registro) -> 201 { id }
   http.post(`${API_URL}/auth/registro`, async ({ request }) => {

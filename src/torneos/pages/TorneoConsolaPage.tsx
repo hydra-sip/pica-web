@@ -12,6 +12,7 @@ import { CheckinTorneo } from '../components/CheckinTorneo';
 import { InscripcionesDelTorneo } from '../components/InscripcionesDelTorneo';
 import { ProgramacionPartido } from '../components/ProgramacionPartido';
 import { RifaDelTorneo } from '../components/RifaDelTorneo';
+import { CustodiaDelEvento } from '../../billetera/components/CustodiaDelEvento';
 import { abreviarHash, ESTADO_TORNEO_UI, participantes, TONO_ESTADO_TORNEO } from '../formato';
 import { formatFecha } from '../utils/formatters';
 import '../torneos.css';
@@ -26,7 +27,8 @@ const conResultados = (bracket: BracketTorneo): boolean =>
  * la inscripción cerrada, o para volver a sortearlo mientras no haya resultados. Con la inscripción abierta, el
  * organizador la cierra desde acá (HU-206); cerrada, se ve cuándo y el sello de la lista. Abajo, las inscripciones.
  * Con el bracket sorteado, las objeciones del torneo (PICA-247). La ventana de check-in del torneo y la fecha de cada
- * partido, en el bracket (HU-308). Si el torneo tiene rifa, lo que lleva vendido y su pozo (HU-406).
+ * partido, en el bracket (HU-308). Si el torneo tiene rifa, lo que lleva vendido y su pozo (HU-406). Lo cobrado, en
+ * custodia hasta que el torneo termine (HU-603).
  */
 export const TorneoConsolaPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -277,6 +279,8 @@ export const TorneoConsolaPage: React.FC = () => {
         )}
       </Card>
 
+      <CustodiaDelEvento evento="torneos" id={torneo.id} />
+
       <RifaDelTorneo torneoId={torneo.id} />
 
       <InscripcionesDelTorneo torneoId={torneo.id} recarga={recargaInscripciones} />
@@ -302,6 +306,8 @@ export const TorneoConsolaPage: React.FC = () => {
                 partido={p}
                 editable={programable}
                 resaltarSinFecha={enCurso}
+                inicioTorneo={torneo.fechaInicio}
+                finTorneo={torneo.fechaFin}
                 onProgramado={programado}
               />
             )}
