@@ -18,6 +18,7 @@ export const InscripcionPagoPage: React.FC = () => {
   const [inscripcion, setInscripcion] = useState<InscripcionDetalle | null>(null);
   const [resumen, setResumen] = useState<ResumenPago | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [recienPagada, setRecienPagada] = useState(false);
 
   useEffect(() => {
     let vigente = true;
@@ -67,7 +68,14 @@ export const InscripcionPagoPage: React.FC = () => {
 
     case 'PENDIENTE_PAGO':
       return resumen ? (
-        <ResumenDePago resumen={resumen} onPagada={setInscripcion} slug={inscripcion.torneo.slug} />
+        <ResumenDePago
+          resumen={resumen}
+          onPagada={(pagada) => {
+            setRecienPagada(true);
+            setInscripcion(pagada);
+          }}
+          slug={inscripcion.torneo.slug}
+        />
       ) : (
         cargando
       );
@@ -77,6 +85,7 @@ export const InscripcionPagoPage: React.FC = () => {
         <InscripcionConfirmada
           inscripcion={inscripcion}
           participante={user?.name ? `Participante: ${user.name}` : null}
+          recienPagada={recienPagada}
         />
       );
 

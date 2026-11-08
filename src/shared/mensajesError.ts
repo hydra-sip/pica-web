@@ -1,5 +1,5 @@
 import { ProblemDetail } from '../auth/types';
-import { fechaHora } from './formato';
+import { fechaHora, pesos } from './formato';
 
 // La UI decide el mensaje por `codigo` (openapi.yaml, CodigoError); `detail` queda de respaldo.
 const SESION_VENCIDA = 'Tu sesión venció. Iniciá sesión de nuevo.';
@@ -111,6 +111,13 @@ const POR_CODIGO: Record<string, string> = {
     'La nómina no cumple lo que pide el torneo: revisá la cantidad de jugadores y que estés vos como capitán.',
   COBRO_RECHAZADO:
     'No se aprobó el pago y no se cobró nada. Tu inscripción sigue pendiente: probá de nuevo.',
+  // HU-603: pago con saldo y custodia de los fondos
+  SALDO_INSUFICIENTE:
+    'Tu saldo no alcanza para pagar. No se cobró nada: cargá saldo y volvé a intentar.',
+  FONDOS_EN_CUSTODIA:
+    'Los fondos están en custodia y no se pueden mover hasta que termine el evento. Al terminar, la liquidación acredita lo tuyo en tu billetera.',
+  CUSTODIA_LIBERADA: 'Los fondos ya se liquidaron: lo que te corresponde está en tu billetera.',
+  COMPROBANTE_NO_ENCONTRADO: 'Esta inscripción no tiene un pago.',
   INSCRIPCION_NO_PERMITIDA_EN_TORNEO:
     'El organizador y los árbitros de un torneo no pueden inscribirse en él.',
   PRONOSTICO_FUERA_DE_VENTANA:
@@ -176,6 +183,10 @@ export const mensajeDeError = (
     return Date.now() < new Date(problema.abreEn).getTime()
       ? `Todavía no abrió el check-in: abre el ${fechaHora(problema.abreEn)}.`
       : `El check-in cerró el ${fechaHora(problema.cierraEn)}.`;
+  }
+  // HU-603: el 409 trae cuánto falta
+  if (problema?.codigo === 'SALDO_INSUFICIENTE' && problema.faltante && !propios[problema.codigo]) {
+    return `Tu saldo no alcanza: te faltan ${pesos(problema.faltante)}. No se cobró nada: cargá saldo y volvé a intentar.`;
   }
   // HU-306: la ventana de pronóstico cerró
   if (

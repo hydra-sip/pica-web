@@ -8,6 +8,7 @@ import { torneoApi } from '../api/torneoApi';
 import { problema } from '../mocks/adminHandlers';
 import { server } from '../mocks/server';
 import { renderRuta } from '../test/renderRuta';
+import { setBilleteraMock } from '../mocks/data';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
@@ -45,6 +46,7 @@ const equipoPendienteDePago = async () => {
 /** Y ya pagado: CONFIRMADA. */
 const equipoConfirmado = async () => {
   await equipoPendienteDePago();
+  setBilleteraMock({ saldoDisponible: 100000 });
   await inscripcionApi.pagar(ID);
 };
 
@@ -53,6 +55,7 @@ const individualConfirmada = async () => {
   const torneo = await torneoApi.getTorneoBySlug('individual-pago');
   await inscripcionApi.crear(torneo.id);
   await inscripcionApi.confirmar(ID, true);
+  setBilleteraMock({ saldoDisponible: 100000 });
   await inscripcionApi.pagar(ID);
 };
 

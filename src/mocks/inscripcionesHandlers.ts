@@ -9,6 +9,7 @@ import type {
 import type { UsuarioPublico } from '../api/jugadorApi';
 import type { TorneoDetalle } from '../torneos/types/torneo';
 import { type ErrorCampo, problema, validacion } from './adminHandlers';
+import { getBilleteraMock, setBilleteraMock } from './data';
 
 // Inscripción en dos pasos (PICA-211) en memoria: equipos propios, búsqueda de jugadores, torneo por
 // slug (TorneoDetalle del contrato público), y las inscripciones con su máquina de estados, según
@@ -345,8 +346,18 @@ const estadoInicial = () => ({
 let estado = estadoInicial();
 
 /** Vuelve los equipos y las inscripciones al estado inicial; las pruebas lo llaman entre test y test. */
+/** HU-603: lo que se pagó con saldo por cada inscripción, para su comprobante. */
+interface PagoMock {
+  numero: string;
+  pagadoEn: string;
+  monto: number;
+  gastos: number;
+}
+let pagos = new Map<number, PagoMock>();
+
 export const reiniciarInscripciones = () => {
   estado = estadoInicial();
+  pagos = new Map();
 };
 
 // --- ayudas -----------------------------------------------------------------------------------
@@ -984,8 +995,60 @@ export const crearInscripcionesHandlers = (sesion: () => SesionMock) => {
       if (t.cobroRechazado) {
         return conflicto('COBRO_RECHAZADO', 'El pago no se aprobó y no se cobró nada');
       }
+      // HU-603: como el back, se paga con el disponible y el total pasa al retenido (en custodia)
+      const gastos = (t.valorInscripcion * (t.pctGastosAdministrativos ?? 0)) / 100;
+      const total = t.valorInscripcion + gastos;
+      if (total > 0) {
+        const billetera = getBilleteraMock();
+        if (billetera.saldoDisponible < total) {
+          return problema(409, 'SALDO_INSUFICIENTE', 'El saldo disponible no alcanza', {
+            faltante: total - billetera.saldoDisponible,
+          });
+        }
+        setBilleteraMock({
+          saldoDisponible: billetera.saldoDisponible - total,
+          saldoRetenido: billetera.saldoRetenido + total,
+        });
+        pagos.set(i.id, {
+          numero: `I${t.id}-${9000 + i.id}`,
+          pagadoEn: ahora(),
+          monto: t.valorInscripcion,
+          gastos,
+        });
+      }
       cambiar(i, { estado: 'CONFIRMADA' });
       return HttpResponse.json(detalle(s, i));
+    }),
+
+    // HU-603: el comprobante del pago, solo para quien se inscribió
+    http.get(`${API_URL}/inscripciones/:id/comprobante`, ({ request, params }) => {
+      const s = conSesion(request);
+      if (!s) return sinSesion();
+      const i = propia(s, idDe(params));
+      if (i instanceof Response) return i;
+      const pago = pagos.get(i.id);
+      if (!pago)
+        return noEncontrado('COMPROBANTE_NO_ENCONTRADO', 'La inscripción no tiene un pago');
+      const t = buscarTorneo(i.torneoId)!;
+      const quien = usuarioPublico(s, s.usuario.id)!;
+      const equipo = equipoInscripto(i.equipoId);
+      return HttpResponse.json({
+        numero: pago.numero,
+        pagadoEn: pago.pagadoEn,
+        pagadorNombre: `${quien.nombres} ${quien.apellidos}`,
+        pagadorUsername: quien.username,
+        concepto: equipo
+          ? `Inscripción de ${equipo.nombre} al torneo ${t.nombre}`
+          : `Inscripción al torneo ${t.nombre}`,
+        torneoId: t.id,
+        torneoNombre: t.nombre,
+        equipoNombre: equipo?.nombre ?? null,
+        monto: pago.monto,
+        gastosAdministrativos: pago.gastos,
+        total: pago.monto + pago.gastos,
+        moneda: t.moneda,
+        custodia: 'RETENIDA',
+      });
     }),
   ];
 };

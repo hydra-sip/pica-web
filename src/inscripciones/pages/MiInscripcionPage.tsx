@@ -7,6 +7,7 @@ import { mensajeDeError } from '../../shared/mensajesError';
 import { TorneoDetalle } from '../../torneos/types/torneo';
 import { Card } from '../../shared/ui';
 import { AvisoInscripcionTerminada } from '../components/AvisoInscripcionTerminada';
+import { ComprobanteInscripcion } from '../../billetera/components/ComprobanteInscripcion';
 import { HistorialReemplazos } from '../components/HistorialReemplazos';
 import { VolverAlTorneo } from '../components/VolverAlTorneo';
 import { NominaConfirmada } from '../components/NominaConfirmada';
@@ -162,6 +163,10 @@ export const MiInscripcionPage: React.FC = () => {
           />
           <HistorialReemplazos inscripcionId={inscripcion.id} recarga={reemplazos} />
         </>
+      )}
+      {/* HU-603: quien pagó ve su comprobante */}
+      {propia && inscripcion.estado === 'CONFIRMADA' && (
+        <ComprobanteInscripcion inscripcionId={inscripcion.id} />
       )}
     </div>
   );

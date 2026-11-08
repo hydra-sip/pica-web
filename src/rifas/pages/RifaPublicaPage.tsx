@@ -42,8 +42,8 @@ const numerosDelError = (err: unknown): number[] =>
 
 /**
  * GET /rifas/publicas/{id} y su grilla (PICA-221): la rifa como la ve quien compra, sin login. Con la venta abierta
- * se eligen números y se compran en dos pasos (PICA-223): "Comprar" los reserva y abre el pago simulado, y "Aceptar"
- * los paga. Las ventas de otros llegan por el tiempo real y la grilla se actualiza sola.
+ * se eligen números y se compran en dos pasos (PICA-223): "Comprar" los reserva y abre el pago, y "Pagar con saldo"
+ * los paga con la billetera (HU-603). Las ventas de otros llegan por el tiempo real y la grilla se actualiza sola.
  */
 export const RifaPublicaPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
