@@ -502,8 +502,12 @@ export const torneoApi = {
   getTorneosResumen: async (filtros: FiltrosTorneo = {}): Promise<PaginaTorneos<TorneoResumen>> => {
     const params: Record<string, string | number | undefined> = {};
 
-    if (filtros.disciplina && filtros.disciplina.trim() !== '') {
-      params.disciplina = filtros.disciplina.trim();
+    if (filtros.q && filtros.q.trim() !== '') {
+      params.q = filtros.q.trim();
+    }
+
+    if (filtros.modalidad) {
+      params.modalidad = filtros.modalidad;
     }
 
     if (filtros.estado && filtros.estado.trim() !== '') {
