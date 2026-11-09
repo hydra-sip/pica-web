@@ -19,7 +19,9 @@ export type TipoMovimientoBilletera =
   | 'REINTEGRO'
   | 'COMISION'
   | 'RETIRO'
-  | 'PAGO_SERVICIO';
+  | 'PAGO_SERVICIO'
+  /** HU-606: lo que la liquidación le acredita al organizador (gastos del torneo) y a la plataforma. */
+  | 'LIQUIDACION';
 
 export type EstadoMovimientoBilletera = 'PENDIENTE' | 'CONFIRMADO' | 'RECHAZADO' | 'REVERTIDO';
 
@@ -58,11 +60,11 @@ export type PaginaMovimientoBilletera = PageResponse<MovimientoBilletera>;
 
 /**
  * Determina si un movimiento representa un ingreso de fondos (+).
- * Entran: CARGA, PREMIO, REINTEGRO.
+ * Entran: CARGA, PREMIO, REINTEGRO, LIQUIDACION.
  * Salen: INSCRIPCION, COMPRA_NUMERO, COMISION, RETIRO, PAGO_SERVICIO.
  */
 export const esIngreso = (tipo: TipoMovimientoBilletera): boolean => {
-  return tipo === 'CARGA' || tipo === 'PREMIO' || tipo === 'REINTEGRO';
+  return tipo === 'CARGA' || tipo === 'PREMIO' || tipo === 'REINTEGRO' || tipo === 'LIQUIDACION';
 };
 
 export const TIPO_MOVIMIENTO_LABEL: Record<TipoMovimientoBilletera, string> = {
@@ -74,6 +76,7 @@ export const TIPO_MOVIMIENTO_LABEL: Record<TipoMovimientoBilletera, string> = {
   COMISION: 'Gastos administrativos',
   RETIRO: 'Retiro',
   PAGO_SERVICIO: 'Pago de servicio',
+  LIQUIDACION: 'Liquidación',
 };
 
 export const ESTADO_MOVIMIENTO_LABEL: Record<EstadoMovimientoBilletera, string> = {

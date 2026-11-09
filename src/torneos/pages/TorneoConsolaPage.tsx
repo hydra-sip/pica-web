@@ -13,6 +13,7 @@ import { InscripcionesDelTorneo } from '../components/InscripcionesDelTorneo';
 import { ProgramacionPartido } from '../components/ProgramacionPartido';
 import { RifaDelTorneo } from '../components/RifaDelTorneo';
 import { CustodiaDelEvento } from '../../billetera/components/CustodiaDelEvento';
+import { RepartoDeLaLiquidacion } from '../../billetera/components/RepartoDeLaLiquidacion';
 import { abreviarHash, ESTADO_TORNEO_UI, participantes, TONO_ESTADO_TORNEO } from '../formato';
 import { formatFecha } from '../utils/formatters';
 import '../torneos.css';
@@ -280,6 +281,7 @@ export const TorneoConsolaPage: React.FC = () => {
       </Card>
 
       <CustodiaDelEvento evento="torneos" id={torneo.id} />
+      <RepartoDeLaLiquidacion evento="torneos" id={torneo.id} />
 
       <RifaDelTorneo torneoId={torneo.id} />
 

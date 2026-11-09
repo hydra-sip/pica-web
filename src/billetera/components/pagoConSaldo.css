@@ -76,3 +76,42 @@
   font-size: var(--text-xs);
   color: var(--color-text-secondary);
 }
+
+/* HU-606: el reparto de la liquidación (wireframe 64) */
+.reparto-liquidacion h2 {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-md);
+}
+
+.reparto-tarjetas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-3) 0;
+}
+
+.reparto-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface);
+}
+
+.reparto-tarjeta span {
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.reparto-tarjeta strong {
+  font-size: var(--text-lg);
+}
+
+.reparto-tarjeta small {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}

@@ -83,6 +83,8 @@ export interface TorneoDetalle {
   reglamentoHash: string | null;
   organizador: OrganizadorTorneo;
   publicadoEn: string | null;
+  /** HU-606: cuándo se repartió la custodia del torneo terminado; null mientras no se liquidó. */
+  liquidadoEn?: string | null;
 }
 
 export interface PageMetadata {

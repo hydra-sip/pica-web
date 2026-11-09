@@ -20,6 +20,9 @@ const custodiaMock = {
   liberadaEn: null,
 };
 
+/** HU-606: el reparto de un evento que todavía no se liquidó. */
+const sinLiquidar = { liquidado: false, liquidadoEn: null, total: 0, moneda: 'ARS', lineas: [] };
+
 const fondosEnCustodia = () =>
   new HttpResponse(
     JSON.stringify({
@@ -34,6 +37,10 @@ export const billeteraHandlers = [
   // GET /torneos/{id}/custodia y /rifas/{id}/custodia
   http.get(`${API_URL}/torneos/:id/custodia`, () => HttpResponse.json(custodiaMock)),
   http.get(`${API_URL}/rifas/:id/custodia`, () => HttpResponse.json(custodiaMock)),
+
+  // GET /torneos/{id}/liquidacion y /rifas/{id}/liquidacion (HU-606): sin liquidar, sin líneas
+  http.get(`${API_URL}/torneos/:id/liquidacion`, () => HttpResponse.json(sinLiquidar)),
+  http.get(`${API_URL}/rifas/:id/liquidacion`, () => HttpResponse.json(sinLiquidar)),
 
   // POST .../custodia/retiro: antes del cierre, siempre 409
   http.post(`${API_URL}/torneos/:id/custodia/retiro`, fondosEnCustodia),

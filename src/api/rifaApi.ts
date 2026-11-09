@@ -137,6 +137,8 @@ export interface TicketDetalle {
   ventanaReclamoAbierta: boolean;
   /** HU-504: los premios que ganó alguno de sus números; vacío antes del sorteo o si no ganó. */
   premiosGanados: PremioRifa[];
+  /** HU-606: lo que la liquidación le acreditó por esos premios; null mientras no se liquidó o si no ganó. */
+  premioAcreditado?: number | null;
 }
 
 // PICA-226, PICA-227, PICA-219, PICA-218: todas exigen RIFA_GESTIONAR y cada organizador ve solo las suyas.
