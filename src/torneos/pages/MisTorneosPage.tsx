@@ -17,6 +17,7 @@ const PESTANAS: EstadoTorneo[] = [
   'INSCRIPCION_CERRADA',
   'EN_CURSO',
   'FINALIZADO',
+  'CANCELACION_EN_REVISION',
   'CANCELADO',
 ];
 
