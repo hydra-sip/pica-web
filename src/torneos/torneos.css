@@ -934,3 +934,42 @@
 .torneos-consola-aviso p {
   margin: var(--space-1) 0 0;
 }
+
+/* HU-605: el modal de cancelación */
+.torneos-cancelacion-resumen {
+  display: grid;
+  gap: 0.4rem;
+  margin: 1rem 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-subtle);
+}
+
+.torneos-cancelacion-resumen div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.torneos-cancelacion-resumen dt {
+  color: var(--text-muted);
+}
+
+.torneos-cancelacion-resumen dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+
+.torneos-cancelacion-confirmo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+  cursor: pointer;
+}
+
+.torneos-consola-cancelar {
+  margin-left: auto;
+}

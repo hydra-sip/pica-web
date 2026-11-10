@@ -8,6 +8,7 @@ import { sinFechaParaJugar } from '../../partidos/formato';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { Badge, Button, Card } from '../../shared/ui';
 import { Bracket } from '../components/Bracket';
+import { CancelarTorneo } from '../components/CancelarTorneo';
 import { CheckinTorneo } from '../components/CheckinTorneo';
 import { InscripcionesDelTorneo } from '../components/InscripcionesDelTorneo';
 import { ProgramacionPartido } from '../components/ProgramacionPartido';
@@ -181,6 +182,13 @@ export const TorneoConsolaPage: React.FC = () => {
   };
 
   const abierta = torneo.estado === 'INSCRIPCION_ABIERTA';
+  const cancelable = abierta || programable;
+
+  const cancelado = (texto: string) => {
+    setMensaje({ tipo: 'exito', texto });
+    recargarConsola();
+    setRecargaInscripciones((n) => n + 1);
+  };
 
   return (
     <div className="torneos-page">
@@ -189,6 +197,11 @@ export const TorneoConsolaPage: React.FC = () => {
         <div className="torneos-titulo-con-chip">
           <h1>{torneo.nombre}</h1>
           <Badge tone={TONO_ESTADO_TORNEO[torneo.estado]}>{ESTADO_TORNEO_UI[torneo.estado]}</Badge>
+          {cancelable && (
+            <div className="torneos-consola-cancelar">
+              <CancelarTorneo torneoId={torneo.id} onCancelado={cancelado} />
+            </div>
+          )}
         </div>
         <p className="torneos-subtitulo">
           Consola del torneo · {torneo.disciplina} · Hasta {torneo.cupoMaximo}{' '}
