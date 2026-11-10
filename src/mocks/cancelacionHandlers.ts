@@ -53,6 +53,26 @@ const torneoBase: TorneoInformacion = {
   },
 };
 
+/**
+ * Las partes de un multipart: el valor de cada campo y, de cada archivo, su nombre. Se lee el texto a mano porque en
+ * las pruebas `request.formData()` de Node no acepta los `File` de jsdom.
+ */
+export const leerMultipart = async (request: Request): Promise<Map<string, string>> => {
+  const tipo = request.headers.get('Content-Type') ?? '';
+  const limite = /boundary=(.+)$/.exec(tipo)?.[1];
+  const partes = new Map<string, string>();
+  if (!limite) return partes;
+  const cuerpo = await request.text();
+  for (const parte of cuerpo.split(`--${limite}`)) {
+    const nombre = /name="([^"]+)"/.exec(parte)?.[1];
+    if (!nombre) continue;
+    const archivo = /filename="([^"]*)"/.exec(parte)?.[1];
+    const valor = parte.split('\r\n\r\n').slice(1).join('\r\n\r\n').replace(/\r\n$/, '');
+    partes.set(nombre, archivo ?? valor);
+  }
+  return partes;
+};
+
 let estadoTorneo: EstadoTorneo = torneoBase.estado;
 let cancelacion: CancelacionDelTorneo | null = null;
 
@@ -111,7 +131,7 @@ export const cancelacionHandlers = [
         estado: estadoTorneo,
       });
     }
-    const datos = await request.formData();
+    const datos = await leerMultipart(request);
     const gastos: { concepto: string; monto: number }[] = [];
     const errores: { campo: string; codigo: string; mensaje: string }[] = [];
     for (let i = 0; datos.has(`gastos[${i}].monto`); i++) {

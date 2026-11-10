@@ -973,3 +973,27 @@
 .torneos-consola-cancelar {
   margin-left: auto;
 }
+
+.torneos-cancelacion-gastos {
+  display: grid;
+  gap: 0.6rem;
+  margin: 1rem 0;
+}
+
+.torneos-cancelacion-gastos h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.torneos-cancelacion-gasto {
+  display: grid;
+  grid-template-columns: 2fr 1fr 2fr auto;
+  gap: 0.5rem;
+  align-items: end;
+}
+
+@media (max-width: 640px) {
+  .torneos-cancelacion-gasto {
+    grid-template-columns: 1fr;
+  }
+}

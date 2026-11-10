@@ -2,7 +2,11 @@ import { screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 import { EstadoTorneo, MisTorneos } from '../api/torneoApi';
-import { prepararTorneoACancelar, TORNEO_A_CANCELAR } from '../mocks/cancelacionHandlers';
+import {
+  leerMultipart,
+  prepararTorneoACancelar,
+  TORNEO_A_CANCELAR,
+} from '../mocks/cancelacionHandlers';
 import { server } from '../mocks/server';
 import { renderRuta } from '../test/renderRuta';
 
@@ -10,6 +14,7 @@ import { renderRuta } from '../test/renderRuta';
 const consola = (estado: EstadoTorneo = 'EN_CURSO') => {
   prepararTorneoACancelar(estado);
   server.use(
+    http.get(`${API_URL}/torneos/opciones`, () => HttpResponse.json({ checkinDuracionMaxMin: 60 })),
     http.get(`${API_URL}/rifas/mis-rifas`, () =>
       HttpResponse.json({
         content: [],
@@ -20,12 +25,12 @@ const consola = (estado: EstadoTorneo = 'EN_CURSO') => {
   return renderRuta(`/torneos/${TORNEO_A_CANCELAR}/consola`, { usuario: 'organizador' });
 };
 
-/** Lo que llega en el multipart de la cancelación. */
+/** Lo que llega en el multipart de la cancelación; de cada archivo, su nombre. */
 const espiarCancelacion = () => {
-  const enviados: FormData[] = [];
+  const enviados: Map<string, string>[] = [];
   server.use(
     http.post(`${API_URL}/torneos/${TORNEO_A_CANCELAR}/cancelacion`, async ({ request }) => {
-      enviados.push(await request.clone().formData());
+      enviados.push(await leerMultipart(request.clone()));
     })
   );
   return enviados;
@@ -151,6 +156,107 @@ describe('Cancelación de torneos (HU-605)', () => {
       await consola('FINALIZADO');
       expect(await screen.findByText('Apertura F5')).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Cancelar torneo' })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('gastos a retener', () => {
+    const pdf = () => new File(['%PDF-1.7 factura'], 'cancha.pdf', { type: 'application/pdf' });
+
+    const abrirConGasto = async (monto: string) => {
+      const enviados = espiarCancelacion();
+      const r = await consola();
+      await r.user.click(await screen.findByRole('button', { name: 'Cancelar torneo' }));
+      const modal = await screen.findByRole('dialog');
+      await within(modal).findByText(/Hasta \$ 4\.000,00/);
+      await r.user.type(within(modal).getByLabelText(/Motivo de la cancelación/), 'Lluvia');
+      await r.user.click(within(modal).getByLabelText(/Confirmo la cancelación irreversible/));
+      await r.user.click(within(modal).getByRole('button', { name: 'Agregar gasto' }));
+      await r.user.type(
+        within(modal).getByLabelText('Concepto del gasto 1'),
+        'Alquiler de la cancha'
+      );
+      await r.user.type(within(modal).getByLabelText('Monto del gasto 1 ($)'), monto);
+      return { ...r, modal, enviados };
+    };
+
+    it('con un gasto sin comprobante no se puede enviar y avisa; con el comprobante va a revisión', async () => {
+      const { user, modal, enviados } = await abrirConGasto('3000');
+      const enviar = within(modal).getByRole('button', { name: 'Enviar a revisión de soporte' });
+
+      expect(enviar).toBeDisabled();
+      expect(
+        within(modal).getByText('Debe adjuntar un comprobante válido por cada gasto declarado')
+      ).toBeInTheDocument();
+      await user.upload(within(modal).getByLabelText('Comprobante del gasto 1'), pdf());
+      expect(enviar).toBeEnabled();
+      expect(
+        within(modal).getByText(/Total declarado: \$ 3\.000,00 de \$ 4\.000,00/)
+      ).toBeInTheDocument();
+      await user.click(enviar);
+
+      expect(
+        await screen.findByText('Cancelación enviada a revisión de soporte.')
+      ).toBeInTheDocument();
+      expect(enviados[0].get('gastos[0].concepto')).toBe('Alquiler de la cancha');
+      expect(enviados[0].get('gastos[0].monto')).toBe('3000');
+      // el archivo va como parte del multipart (jsdom no conserva el nombre al enviarlo)
+      expect(enviados[0].has('gastos[0].comprobante')).toBe(true);
+      expect(await screen.findAllByText('Cancelación en revisión')).not.toHaveLength(0);
+    });
+
+    it('por encima del tope no se puede enviar y dice cuál es el máximo', async () => {
+      const { user, modal } = await abrirConGasto('4000.01');
+      await user.upload(within(modal).getByLabelText('Comprobante del gasto 1'), pdf());
+
+      expect(
+        within(modal).getByRole('button', { name: 'Enviar a revisión de soporte' })
+      ).toBeDisabled();
+      expect(
+        within(modal).getByText(
+          'Los gastos a retener no pueden superar el 20% del pozo. El monto excedente debe ser devuelto a los participantes.'
+        )
+      ).toBeInTheDocument();
+    });
+
+    it('quitar el gasto vuelve a la cancelación con reintegro total', async () => {
+      const { user, modal } = await abrirConGasto('100');
+
+      await user.click(within(modal).getByRole('button', { name: 'Quitar el gasto 1' }));
+
+      expect(within(modal).queryByLabelText('Concepto del gasto 1')).not.toBeInTheDocument();
+      expect(
+        within(modal).getByRole('button', { name: 'Ejecutar cancelación y reintegro' })
+      ).toBeEnabled();
+    });
+
+    it('un error del back sobre un comprobante queda junto a ese gasto y el modal sigue abierto', async () => {
+      const { user, modal } = await abrirConGasto('100');
+      server.use(
+        http.post(`${API_URL}/torneos/${TORNEO_A_CANCELAR}/cancelacion`, () =>
+          HttpResponse.json(
+            {
+              status: 400,
+              codigo: 'VALIDACION',
+              detail: 'Hay campos inválidos',
+              errores: [
+                {
+                  campo: 'gastos[0].comprobante',
+                  codigo: 'FORMATO_INVALIDO',
+                  mensaje: 'Tiene que ser un PDF, JPG o PNG',
+                },
+              ],
+            },
+            { status: 400, headers: { 'Content-Type': 'application/problem+json' } }
+          )
+        )
+      );
+      await user.upload(within(modal).getByLabelText('Comprobante del gasto 1'), pdf());
+      await user.click(within(modal).getByRole('button', { name: 'Enviar a revisión de soporte' }));
+
+      expect(
+        await within(modal).findByText('Tiene que ser un PDF, JPG o PNG.')
+      ).toBeInTheDocument();
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
     });
   });
 });
