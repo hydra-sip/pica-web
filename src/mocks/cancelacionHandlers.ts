@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { CancelacionDelTorneo } from '../api/cancelacionApi';
+import { CancelacionDelTorneo, CancelacionEnRevision } from '../api/cancelacionApi';
 import { EstadoTorneo, TorneoInformacion } from '../api/torneoApi';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
@@ -73,6 +73,37 @@ export const leerMultipart = async (request: Request): Promise<Map<string, strin
   return partes;
 };
 
+/** La cola de soporte: dos cancelaciones con gastos, la más vieja primero. */
+const colaInicial = (): CancelacionEnRevision[] => [
+  {
+    torneoId: 31,
+    torneoNombre: 'Copa Otoño',
+    torneoSlug: 'copa-otono',
+    organizador: { id: 4, nombreCompleto: 'Organizador Eventos', username: 'organizador' },
+    motivo: 'Se inundó la cancha',
+    pedidaEn: '2026-11-09T18:00:00Z',
+    pozo: 3000,
+    totalGastos: 450.5,
+    gastos: [
+      { id: 301, concepto: 'Alquiler de la cancha', monto: 300, tipoContenido: 'application/pdf' },
+      { id: 302, concepto: 'Árbitro', monto: 150.5, tipoContenido: 'image/jpeg' },
+    ],
+  },
+  {
+    torneoId: 32,
+    torneoNombre: 'Relámpago de Primavera',
+    torneoSlug: 'relampago-primavera',
+    organizador: { id: 9, nombreCompleto: 'Club Mercedes', username: 'club_mercedes' },
+    motivo: 'Corte de luz en la sede',
+    pedidaEn: '2026-11-10T09:30:00Z',
+    pozo: 10000,
+    totalGastos: 1000,
+    gastos: [{ id: 303, concepto: 'Generador', monto: 1000, tipoContenido: 'application/pdf' }],
+  },
+];
+
+let cola = colaInicial();
+
 let estadoTorneo: EstadoTorneo = torneoBase.estado;
 let cancelacion: CancelacionDelTorneo | null = null;
 
@@ -100,7 +131,10 @@ export const prepararTorneoACancelar = (
   cancelacion = conCancelacion ? { ...sinCancelar(), ...conCancelacion } : null;
 };
 
-export const resetCancelacionMock = () => prepararTorneoACancelar(torneoBase.estado);
+export const resetCancelacionMock = () => {
+  prepararTorneoACancelar(torneoBase.estado);
+  cola = colaInicial();
+};
 
 const problema = (status: number, codigo: string, detail: string, extra: object = {}) =>
   HttpResponse.json(
@@ -182,5 +216,26 @@ export const cancelacionHandlers = [
       },
       { status: 201 }
     );
+  }),
+
+  // GET /admin/cancelaciones: la cola de soporte
+  http.get(`${API_URL}/admin/cancelaciones`, () =>
+    HttpResponse.json({
+      content: cola,
+      page: { size: 20, number: 0, totalElements: cola.length, totalPages: 1 },
+    })
+  ),
+
+  // GET /admin/cancelaciones/{torneoId}/gastos/{gastoId}/comprobante
+  http.get(`${API_URL}/admin/cancelaciones/:torneoId/gastos/:gastoId/comprobante`, ({ params }) => {
+    const gasto = cola
+      .find((c) => c.torneoId === Number(params.torneoId))
+      ?.gastos.find((g) => g.id === Number(params.gastoId));
+    if (!gasto) {
+      return problema(404, 'COMPROBANTE_NO_ENCONTRADO', 'No existe el comprobante');
+    }
+    return new HttpResponse('%PDF-1.7 factura', {
+      headers: { 'Content-Type': gasto.tipoContenido },
+    });
   }),
 ];

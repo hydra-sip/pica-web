@@ -1,4 +1,5 @@
 import { customFetch, httpClient } from './httpClient';
+import { PageResponse } from './usuarioApi';
 
 /** HU-605: cómo se resolvió (o se está resolviendo) la cancelación de un torneo. */
 export type EstadoCancelacion = 'AUTOMATICA' | 'EN_REVISION' | 'APROBADA' | 'RECHAZADA';
@@ -39,6 +40,29 @@ export interface GastoACancelar {
   comprobante: File | null;
 }
 
+/** GET /admin/cancelaciones: una cancelación en la cola de soporte. */
+export interface CancelacionEnRevision {
+  torneoId: number;
+  torneoNombre: string;
+  torneoSlug: string | null;
+  organizador: { id: number; nombreCompleto: string; username: string };
+  motivo: string;
+  pedidaEn: string;
+  /** Lo recaudado en inscripciones. */
+  pozo: number;
+  totalGastos: number;
+  gastos: { id: number; concepto: string; monto: number; tipoContenido: string }[];
+}
+
+/** POST /admin/cancelaciones/{torneoId}/aprobar o /rechazar. */
+export interface ResolucionCancelacion {
+  torneoId: number;
+  estado: 'APROBADA' | 'RECHAZADA';
+  reintegrado: number;
+  retenido: number;
+  alOrganizador: number;
+}
+
 export const cancelacionApi = {
   detalle: async (torneoId: number): Promise<CancelacionDelTorneo> => {
     return httpClient.get<CancelacionDelTorneo>(`/torneos/${torneoId}/cancelacion`);
@@ -60,6 +84,31 @@ export const cancelacionApi = {
     return customFetch<CancelacionRealizada>(`/torneos/${torneoId}/cancelacion`, {
       method: 'POST',
       body,
+    });
+  },
+
+  // --- soporte (CANCELACION_REVISAR) ---
+
+  cola: async (page = 0, size = 20): Promise<PageResponse<CancelacionEnRevision>> => {
+    return httpClient.get<PageResponse<CancelacionEnRevision>>('/admin/cancelaciones', {
+      params: { page, size },
+    });
+  },
+
+  /** Pide la sesión, así que se baja con el token y se abre desde memoria. */
+  comprobante: async (torneoId: number, gastoId: number): Promise<Blob> => {
+    return httpClient.get<Blob>(`/admin/cancelaciones/${torneoId}/gastos/${gastoId}/comprobante`, {
+      comoBlob: true,
+    });
+  },
+
+  aprobar: async (torneoId: number): Promise<ResolucionCancelacion> => {
+    return httpClient.post<ResolucionCancelacion>(`/admin/cancelaciones/${torneoId}/aprobar`);
+  },
+
+  rechazar: async (torneoId: number, motivo: string): Promise<ResolucionCancelacion> => {
+    return httpClient.post<ResolucionCancelacion>(`/admin/cancelaciones/${torneoId}/rechazar`, {
+      motivo,
     });
   },
 };
