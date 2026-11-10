@@ -238,4 +238,35 @@ export const cancelacionHandlers = [
       headers: { 'Content-Type': gasto.tipoContenido },
     });
   }),
+
+  // POST /admin/cancelaciones/{torneoId}/aprobar y /rechazar: sale de la cola; si ya no está, ya se resolvió
+  http.post(`${API_URL}/admin/cancelaciones/:torneoId/:decision`, async ({ params, request }) => {
+    const torneoId = Number(params.torneoId);
+    const caso = cola.find((c) => c.torneoId === torneoId);
+    if (!caso) {
+      return problema(409, 'CANCELACION_YA_RESUELTA', 'La cancelación ya se resolvió', {
+        estado: 'APROBADA',
+      });
+    }
+    const aprobar = params.decision === 'aprobar';
+    if (!aprobar) {
+      const { motivo } = (await request.json()) as { motivo?: string };
+      if (!motivo?.trim()) {
+        return problema(400, 'VALIDACION', 'Hay campos inválidos', {
+          errores: [
+            { campo: 'motivo', codigo: 'REQUERIDO', mensaje: 'Indicá el motivo del rechazo' },
+          ],
+        });
+      }
+    }
+    cola = cola.filter((c) => c.torneoId !== torneoId);
+    const pagado = caso.pozo * 1.1;
+    return HttpResponse.json({
+      torneoId,
+      estado: aprobar ? 'APROBADA' : 'RECHAZADA',
+      reintegrado: aprobar ? pagado - caso.totalGastos : pagado,
+      retenido: aprobar ? caso.totalGastos : 0,
+      alOrganizador: aprobar ? caso.totalGastos : 0,
+    });
+  }),
 ];
