@@ -10,6 +10,7 @@ import { Badge, Button, Card } from '../../shared/ui';
 import { Bracket } from '../components/Bracket';
 import { CancelarTorneo } from '../components/CancelarTorneo';
 import { CheckinTorneo } from '../components/CheckinTorneo';
+import { EstadoDeLaCancelacion } from '../components/EstadoDeLaCancelacion';
 import { InscripcionesDelTorneo } from '../components/InscripcionesDelTorneo';
 import { ProgramacionPartido } from '../components/ProgramacionPartido';
 import { RifaDelTorneo } from '../components/RifaDelTorneo';
@@ -189,6 +190,55 @@ export const TorneoConsolaPage: React.FC = () => {
     recargarConsola();
     setRecargaInscripciones((n) => n + 1);
   };
+
+  const enRevision = torneo.estado === 'CANCELACION_EN_REVISION';
+  const encabezado = (
+    <header>
+      {volver}
+      <div className="torneos-titulo-con-chip">
+        <h1>{torneo.nombre}</h1>
+        <Badge tone={TONO_ESTADO_TORNEO[torneo.estado]}>{ESTADO_TORNEO_UI[torneo.estado]}</Badge>
+        {cancelable && (
+          <div className="torneos-consola-cancelar">
+            <CancelarTorneo torneoId={torneo.id} onCancelado={cancelado} />
+          </div>
+        )}
+      </div>
+      <p className="torneos-subtitulo">
+        Consola del torneo · {torneo.disciplina} · Hasta {torneo.cupoMaximo}{' '}
+        {participantes(torneo.tipoParticipante)}
+      </p>
+    </header>
+  );
+
+  // HU-605: cancelado o en revisión, la consola queda en solo lectura (wireframe «Consola Torneo Cancelado»)
+  if (enRevision || torneo.estado === 'CANCELADO') {
+    return (
+      <div className="torneos-page">
+        {encabezado}
+        {mensaje && (
+          <div
+            className={`alerta ${mensaje.tipo === 'exito' ? 'alerta-exito' : 'alerta-peligro'}`}
+            role={mensaje.tipo === 'exito' ? 'status' : 'alert'}
+          >
+            {mensaje.texto}
+          </div>
+        )}
+        <EstadoDeLaCancelacion torneoId={torneo.id} enRevision={enRevision} />
+        <Card>
+          <div className="torneos-tarjeta-titulo">
+            <h2>Estructura del bracket</h2>
+            <span className="torneos-subtitulo">Solo lectura</span>
+          </div>
+          {generado ? (
+            <Bracket bracket={bracket} />
+          ) : (
+            <p className="torneos-vacio">El torneo no llegó a tener bracket.</p>
+          )}
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="torneos-page">

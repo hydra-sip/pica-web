@@ -31,7 +31,14 @@ const detalle = (t: MiTorneoResumen): string =>
 /** Un borrador abre el asistente en el paso pendiente; uno publicado, su confirmación con el enlace y el sello (para editarlo está "Editar"). */
 const rutaDeEdicion = (t: MiTorneoResumen): string => {
   // con la inscripción cerrada, la consola: ahí se sortea el bracket y después se sigue el torneo (PICA-217)
-  if (t.estado === 'INSCRIPCION_CERRADA' || t.estado === 'EN_CURSO' || t.estado === 'FINALIZADO') {
+  // cancelado o en revisión (HU-605), la consola muestra la cancelación
+  if (
+    t.estado === 'INSCRIPCION_CERRADA' ||
+    t.estado === 'EN_CURSO' ||
+    t.estado === 'FINALIZADO' ||
+    t.estado === 'CANCELACION_EN_REVISION' ||
+    t.estado === 'CANCELADO'
+  ) {
     return `/torneos/${t.id}/consola`;
   }
   if (t.estado !== 'BORRADOR') return `/torneos/${t.id}/publicado`;

@@ -259,4 +259,97 @@ describe('Cancelación de torneos (HU-605)', () => {
       expect(screen.getByRole('dialog')).toBeInTheDocument();
     });
   });
+
+  describe('la consola después de cancelar', () => {
+    const consolaCon = (
+      estado: EstadoTorneo,
+      cancelacion: Parameters<typeof prepararTorneoACancelar>[1]
+    ) => {
+      const r = consola(estado);
+      prepararTorneoACancelar(estado, cancelacion);
+      return r;
+    };
+
+    it('en revisión muestra que soporte está revisando, el motivo y los gastos, sin acciones', async () => {
+      await consolaCon('CANCELACION_EN_REVISION', {
+        estado: 'EN_REVISION',
+        motivo: 'Se inundó la cancha',
+        pedidaEn: '2026-11-10T18:00:00Z',
+        gastos: [
+          { concepto: 'Alquiler de la cancha', monto: 3000 },
+          { concepto: 'Árbitro', monto: 500 },
+        ],
+        totalGastos: 3500,
+      });
+
+      expect(
+        await screen.findByText(
+          'Soporte está revisando los gastos que declaraste. Hasta que decida, la plata sigue en custodia y no se devuelve nada.'
+        )
+      ).toBeInTheDocument();
+      expect(await screen.findByText('Se inundó la cancha')).toBeInTheDocument();
+      expect(screen.getByText('Alquiler de la cancha')).toBeInTheDocument();
+      expect(screen.getByText('$ 3.500,00')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Estructura del bracket' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Cancelar torneo' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: 'Check-in' })).not.toBeInTheDocument();
+    });
+
+    it('cancelado con gastos aprobados muestra el porcentaje devuelto y el balance', async () => {
+      await consolaCon('CANCELADO', {
+        estado: 'APROBADA',
+        motivo: 'Se inundó la cancha',
+        pedidaEn: '2026-11-10T18:00:00Z',
+        revisadaEn: '2026-11-11T10:00:00Z',
+        gastos: [{ concepto: 'Alquiler de la cancha', monto: 3000 }],
+        totalGastos: 3000,
+        reintegrado: 19000,
+        retenido: 3000,
+      });
+
+      expect(
+        await screen.findByText('Torneo cancelado. Reintegro del 86,36 % ejecutado.')
+      ).toBeInTheDocument();
+      expect(screen.getByText(/Soporte aprobó los gastos el/)).toBeInTheDocument();
+      expect(screen.getByText('Gastos retenidos para vos').closest('li')).toHaveTextContent(
+        '$ 3.000,00'
+      );
+      expect(
+        screen.getByText('Total reintegrado a los participantes').closest('li')
+      ).toHaveTextContent('$ 19.000,00');
+      expect(screen.queryByText(/Ver comprobantes de reintegro/)).not.toBeInTheDocument();
+    });
+
+    it('cancelado sin gastos dice que se devolvió el 100 % en el momento', async () => {
+      await consolaCon('CANCELADO', {
+        estado: 'AUTOMATICA',
+        motivo: 'Lluvia',
+        pedidaEn: '2026-11-10T18:00:00Z',
+        reintegrado: 22000,
+      });
+
+      expect(
+        await screen.findByText('Torneo cancelado. Reintegro del 100 % ejecutado.')
+      ).toBeInTheDocument();
+      expect(screen.getByText(/Sin gastos: se devolvió todo en el momento/)).toBeInTheDocument();
+    });
+
+    it('cancelado con los gastos rechazados muestra el motivo de soporte', async () => {
+      await consolaCon('CANCELADO', {
+        estado: 'RECHAZADA',
+        motivo: 'Lluvia',
+        pedidaEn: '2026-11-10T18:00:00Z',
+        revisadaEn: '2026-11-11T10:00:00Z',
+        motivoRechazo: 'Los comprobantes no son del torneo',
+        gastos: [{ concepto: 'Cancha', monto: 3000 }],
+        totalGastos: 3000,
+        reintegrado: 22000,
+      });
+
+      expect(
+        await screen.findByText('Torneo cancelado. Reintegro del 100 % ejecutado.')
+      ).toBeInTheDocument();
+      expect(screen.getByText(/Los comprobantes no son del torneo/)).toBeInTheDocument();
+    });
+  });
 });

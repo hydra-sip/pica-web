@@ -997,3 +997,29 @@
     grid-template-columns: 1fr;
   }
 }
+
+.torneos-cancelacion-subtitulo {
+  margin: 1rem 0 0.35rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.torneos-cancelacion-lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.torneos-cancelacion-lista li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.torneos-cancelacion-total {
+  font-weight: 700;
+}
