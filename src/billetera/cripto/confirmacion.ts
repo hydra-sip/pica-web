@@ -18,25 +18,42 @@ const sePuedeReintentar = (err: unknown) =>
   err instanceof ApiError &&
   (err.problemDetail?.codigo === 'TRANSACCION_PENDIENTE' || err.status === 503);
 
-const esperar = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+/** Se dejó de esperar: se cerró el modal o se salió de la pantalla. */
+export class EsperaCancelada extends Error {
+  constructor() {
+    super('Se dejó de esperar la acreditación');
+    this.name = 'EsperaCancelada';
+  }
+}
+
+const esperar = (ms: number, senal?: AbortSignal) =>
+  new Promise<void>((resolve, reject) => {
+    const reloj = setTimeout(resolve, ms);
+    senal?.addEventListener('abort', () => {
+      clearTimeout(reloj);
+      reject(new EsperaCancelada());
+    });
+  });
 
 /**
  * Pide al back que acredite la carga con el hash hasta que lo haga, reintentando cada `REINTENTO_MS` mientras
- * la transacción no esté confirmada. Pasado `ESPERA_MAXIMA_MS`, rechaza con `CargaDemorada`; cualquier otro
- * error del back es definitivo y se propaga.
+ * la transacción no esté confirmada. Pasado `ESPERA_MAXIMA_MS`, rechaza con `CargaDemorada`; con la `senal`
+ * abortada, con `EsperaCancelada`. Cualquier otro error del back es definitivo y se propaga.
  */
 export const confirmarHastaAcreditar = async (
   referencia: string,
-  hash: string
+  hash: string,
+  senal?: AbortSignal
 ): Promise<MovimientoBilletera> => {
   const limite = Date.now() + ESPERA_MAXIMA_MS;
   for (;;) {
+    if (senal?.aborted) throw new EsperaCancelada();
     try {
       return await billeteraApi.confirmarCargaCripto(referencia, hash);
     } catch (err) {
       if (!sePuedeReintentar(err)) throw err;
     }
     if (Date.now() + REINTENTO_MS > limite) throw new CargaDemorada();
-    await esperar(REINTENTO_MS);
+    await esperar(REINTENTO_MS, senal);
   }
 };

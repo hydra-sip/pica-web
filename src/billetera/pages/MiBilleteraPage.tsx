@@ -8,6 +8,7 @@ import {
   MovimientoBilletera,
   TIPO_MOVIMIENTO_LABEL,
 } from '../../api/billeteraApi';
+import { useAuth } from '../../auth/hooks/useAuth';
 import { fechaHora, pesos } from '../../shared/formato';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { Badge, BadgeTone, Card, Modal } from '../../shared/ui';
@@ -19,6 +20,7 @@ import {
   IconoRefrescar,
   IconoTrofeo,
 } from '../../shared/ui/Iconos';
+import { useRetomarCargasCripto } from '../cripto/useRetomarCargasCripto';
 import '../billetera.css';
 
 const TAMANIO_PAGINA = 10;
@@ -100,6 +102,15 @@ export const MiBilleteraPage: React.FC = () => {
     [cargarBilletera, cargarMovimientos]
   );
 
+  const { user } = useAuth();
+  const retomadas = useRetomarCargasCripto(
+    user?.id,
+    criptoAbierto,
+    (movimiento) => void cargaCriptoAcreditada(movimiento),
+    setError
+  );
+  const montoRetomado = retomadas.pendientes.reduce((total, c) => total + c.montoPesos, 0);
+
   const abrirModalCarga = () => {
     setMontoInput('');
     setErrorModal(null);
@@ -174,6 +185,26 @@ export const MiBilleteraPage: React.FC = () => {
             Tu billetera está bloqueada temporalmente. No es posible realizar cargas ni operaciones.
             Contactate con soporte si creés que se trata de un error.
           </span>
+        </div>
+      )}
+
+      {retomadas.pendientes.length > 0 && (
+        <div role="status" className="alerta alerta-aviso">
+          <IconoEspera size={20} />
+          <span>
+            {retomadas.demorada
+              ? `Tu carga con cripto de ${pesos(montoRetomado)} todavía no se confirmó: la red puede tardar más de lo normal.`
+              : `Tenés una carga con cripto confirmándose: ${pesos(montoRetomado)}.`}
+          </span>
+          {retomadas.demorada && (
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={retomadas.reintentar}
+            >
+              Reintentar
+            </button>
+          )}
         </div>
       )}
 
@@ -374,6 +405,7 @@ export const MiBilleteraPage: React.FC = () => {
       {criptoAbierto && (
         <Suspense fallback={null}>
           <CargaConCripto
+            usuarioId={user?.id ?? ''}
             onCerrar={() => setCriptoAbierto(false)}
             onAcreditada={(movimiento) => void cargaCriptoAcreditada(movimiento)}
           />

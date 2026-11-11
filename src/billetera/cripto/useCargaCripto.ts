@@ -1,4 +1,4 @@
-import { useCallback, useReducer } from 'react';
+import { useCallback, useEffect, useReducer, useRef } from 'react';
 import {
   BaseError,
   ContractFunctionRevertedError,
@@ -17,7 +17,8 @@ import {
   type Hash,
   validarMonto,
 } from './cargaCripto';
-import { CargaDemorada, confirmarHastaAcreditar } from './confirmacion';
+import { borrarCargaPendiente, guardarCargaPendiente } from './cargaPendiente';
+import { CargaDemorada, confirmarHastaAcreditar, EsperaCancelada } from './confirmacion';
 import { MOTIVO_DE_REVERSION, pasarelaCargasAbi } from './pasarelaCargas';
 
 const SIN_FONDOS: ErrorCarga = {
@@ -73,9 +74,19 @@ const motivoDeReversion = async (
  * Los pasos de una carga con cripto (HU-609): iniciarla en el back, pagarla en el contrato con la wallet,
  * esperar el recibo y confirmarla en el back con el hash.
  */
-export const useCargaCripto = (onAcreditada: (movimiento: MovimientoBilletera) => void) => {
+export const useCargaCripto = (
+  usuarioId: number | string,
+  onAcreditada: (movimiento: MovimientoBilletera) => void
+) => {
   const config = useConfig();
   const [estado, dispatch] = useReducer(cargaCriptoReducer, ESTADO_INICIAL);
+
+  // al cerrar el modal se deja de esperar la acreditación
+  const cierre = useRef(new AbortController());
+  useEffect(() => {
+    cierre.current = new AbortController();
+    return () => cierre.current.abort();
+  }, []);
 
   const iniciar = useCallback(async (montoTexto: string) => {
     const validado = validarMonto(montoTexto);
@@ -97,19 +108,27 @@ export const useCargaCripto = (onAcreditada: (movimiento: MovimientoBilletera) =
   const acreditar = useCallback(
     async (carga: CargaCripto, hash: Hash) => {
       try {
-        const movimiento = await confirmarHastaAcreditar(carga.referencia, hash);
+        const movimiento = await confirmarHastaAcreditar(
+          carga.referencia,
+          hash,
+          cierre.current.signal
+        );
+        borrarCargaPendiente(usuarioId, carga.referencia);
         dispatch({ tipo: 'acreditada', movimiento });
         onAcreditada(movimiento);
       } catch (err) {
+        // al cerrar el modal la carga queda guardada: la retoma Mi billetera
+        if (err instanceof EsperaCancelada) return;
         if (err instanceof CargaDemorada) {
           dispatch({ tipo: 'demorada' });
           return;
         }
+        borrarCargaPendiente(usuarioId, carga.referencia);
         const mensaje = mensajeDeError(err, 'No se pudo acreditar la carga.');
         dispatch({ tipo: 'fallo', error: { tipo: 'rechazadaPorElBack', mensaje } });
       }
     },
-    [onAcreditada]
+    [onAcreditada, usuarioId]
   );
 
   const reintentar = useCallback(
@@ -170,18 +189,27 @@ export const useCargaCripto = (onAcreditada: (movimiento: MovimientoBilletera) =
         dispatch({ tipo: 'fallo', error: errorDeEnvio(err) });
         return;
       }
+      // desde acá el pago está hecho: si se cierra la pestaña, Mi billetera lo retoma
+      guardarCargaPendiente(usuarioId, {
+        referencia: carga.referencia,
+        hash,
+        montoPesos: carga.montoPesos,
+      });
       dispatch({ tipo: 'enviada', hash });
 
       const red = getPublicClient(config, { chainId: carga.chainId })!;
       const recibo = await red.waitForTransactionReceipt({ hash });
+      if (cierre.current.signal.aborted) return;
       if (recibo.status === 'reverted') {
+        // no hay nada que acreditar
+        borrarCargaPendiente(usuarioId, carga.referencia);
         const mensaje = await motivoDeReversion(red, carga, recibo.from, recibo.blockNumber);
         dispatch({ tipo: 'fallo', error: { tipo: 'revertida', mensaje } });
         return;
       }
       await acreditar(carga, hash);
     },
-    [config, acreditar]
+    [config, acreditar, usuarioId]
   );
 
   return { estado, iniciar, pagar, reintentar };

@@ -14,6 +14,7 @@ import { enlaceTransaccion, FAUCET_BASE_SEPOLIA } from './pasarelaCargas';
 import { useCargaCripto } from './useCargaCripto';
 
 interface Props {
+  usuarioId: number | string;
   onCerrar: () => void;
   onAcreditada: (movimiento: MovimientoBilletera) => void;
 }
@@ -36,11 +37,11 @@ const Alerta: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   </div>
 );
 
-const ModalCargaConCripto: React.FC<Props> = ({ onCerrar, onAcreditada }) => {
+const ModalCargaConCripto: React.FC<Props> = ({ usuarioId, onCerrar, onAcreditada }) => {
   const { isConnected, chainId } = useAccount();
   const { switchChain, isPending: cambiandoDeRed } = useSwitchChain();
   const enOtraRed = isConnected && chainId !== baseSepolia.id;
-  const { estado, iniciar, pagar, reintentar } = useCargaCripto(onAcreditada);
+  const { estado, iniciar, pagar, reintentar } = useCargaCripto(usuarioId, onAcreditada);
   const [montoTexto, setMontoTexto] = useState('');
   const ocupado = estado.fase === 'iniciando' || estado.fase === 'firmando';
 

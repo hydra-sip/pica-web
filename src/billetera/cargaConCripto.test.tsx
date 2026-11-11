@@ -296,6 +296,69 @@ describe('HU-609 / T609-4 (PICA-334): Cargar con cripto desde Mi billetera', () 
     });
   });
 
+  describe('una carga que quedó a medio camino', () => {
+    /** Paga $ 10.000, la deja confirmándose y cierra la pantalla, como quien cierra la pestaña. */
+    const pagarYCerrar = async () => {
+      confirmarResponde(...Array.from({ length: 50 }, () => pendiente));
+      const { user, dialogo, unmount } = await pagarDiezMil();
+      expect(await within(dialogo).findByText(/Confirmando/)).toBeInTheDocument();
+      await user.click(within(dialogo).getByRole('button', { name: /cerrar/i }));
+      unmount();
+      server.resetHandlers(); // el back de la segunda visita lo arma cada test
+    };
+
+    beforeEach(() => vi.useFakeTimers({ shouldAdvanceTime: true }));
+    afterEach(() => vi.useRealTimers());
+
+    it('al volver a Mi billetera se retoma sola, avisa y se acredita', async () => {
+      await pagarYCerrar();
+      const pedidos = confirmarResponde(pendiente);
+
+      await renderRuta('/billetera', { usuario: 'participante' });
+
+      expect(
+        await screen.findByText(/Tenés una carga con cripto confirmándose/)
+      ).toBeInTheDocument();
+      await waitFor(() => expect(pedidos.cantidad).toBe(1));
+      await vi.advanceTimersByTimeAsync(3000);
+      await waitFor(() => expect(pedidos.cantidad).toBe(2));
+      await waitFor(() =>
+        expect(
+          within(screen.getByTestId('indicadores-saldo')).getByText(/\$\s*25\.000,00/)
+        ).toBeInTheDocument()
+      );
+      expect(screen.queryByText(/confirmándose/)).not.toBeInTheDocument();
+    });
+
+    it('si el back la rechaza, muestra su mensaje y no la vuelve a retomar', async () => {
+      await pagarYCerrar();
+      confirmarResponde(() =>
+        problema(400, 'TRANSACCION_FALLIDA', 'La transacción revirtió en la red')
+      );
+
+      const { unmount } = await renderRuta('/billetera', { usuario: 'participante' });
+      expect(await screen.findByText(/La transacción revirtió en la red/)).toBeInTheDocument();
+      unmount();
+
+      const pedidos = confirmarResponde();
+      await renderRuta('/billetera', { usuario: 'participante' });
+      expect(await screen.findByRole('heading', { name: 'Mi billetera' })).toBeInTheDocument();
+      expect(screen.queryByText(/confirmándose/)).not.toBeInTheDocument();
+      expect(pedidos.cantidad).toBe(0);
+    });
+
+    it('otro usuario en la misma computadora no la ve ni la retoma', async () => {
+      await pagarYCerrar();
+      const pedidos = confirmarResponde();
+
+      await renderRuta('/billetera', { usuario: 'sinPermiso' });
+
+      expect(await screen.findByRole('heading', { name: 'Mi billetera' })).toBeInTheDocument();
+      expect(screen.queryByText(/confirmándose/)).not.toBeInTheDocument();
+      expect(pedidos.cantidad).toBe(0);
+    });
+  });
+
   it('no deja seguir con un monto que el back rechazaría', async () => {
     const { user, dialogo } = await abrirCargaConCripto();
 
