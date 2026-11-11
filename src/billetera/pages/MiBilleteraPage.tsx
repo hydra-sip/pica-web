@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   billeteraApi,
@@ -22,6 +22,9 @@ import {
 import '../billetera.css';
 
 const TAMANIO_PAGINA = 10;
+
+// HU-609: wagmi, viem y RainbowKit se bajan recién al abrir Cargar con cripto
+const CargaConCripto = lazy(() => import('../cripto/CargaConCripto'));
 
 const tonoEstado = (estado: string): BadgeTone => {
   switch (estado) {
@@ -87,6 +90,16 @@ export const MiBilleteraPage: React.FC = () => {
     void cargarMovimientos(pagina);
   }, [cargarMovimientos, pagina]);
 
+  const [criptoAbierto, setCriptoAbierto] = useState<boolean>(false);
+
+  const cargaCriptoAcreditada = useCallback(
+    async (movimiento: MovimientoBilletera) => {
+      setMensajeExito(`Se acreditaron ${pesos(movimiento.monto)} en tu billetera con cripto.`);
+      await Promise.all([cargarBilletera(), cargarMovimientos(0)]);
+    },
+    [cargarBilletera, cargarMovimientos]
+  );
+
   const abrirModalCarga = () => {
     setMontoInput('');
     setErrorModal(null);
@@ -143,7 +156,14 @@ export const MiBilleteraPage: React.FC = () => {
           >
             Cargar saldo
           </button>
-          {/* Espacio reservado para el futuro botón "Cargar con cripto" de T609-4 */}
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setCriptoAbierto(true)}
+            disabled={billetera?.estado === 'BLOQUEADA'}
+          >
+            Cargar con cripto
+          </button>
         </div>
       </header>
 
@@ -350,6 +370,15 @@ export const MiBilleteraPage: React.FC = () => {
           </Card>
         )}
       </section>
+
+      {criptoAbierto && (
+        <Suspense fallback={null}>
+          <CargaConCripto
+            onCerrar={() => setCriptoAbierto(false)}
+            onAcreditada={(movimiento) => void cargaCriptoAcreditada(movimiento)}
+          />
+        </Suspense>
+      )}
 
       {/* Modal Cargar saldo */}
       <Modal
