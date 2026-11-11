@@ -129,6 +129,14 @@ const POR_CODIGO: Record<string, string> = {
     'Los fondos están en custodia y no se pueden mover hasta que termine el evento. Al terminar, la liquidación acredita lo tuyo en tu billetera.',
   CUSTODIA_LIBERADA: 'Los fondos ya se liquidaron: lo que te corresponde está en tu billetera.',
   COMPROBANTE_NO_ENCONTRADO: 'Esta inscripción no tiene un pago.',
+  // HU-605: cancelación de torneos y revisión de soporte
+  TORNEO_NO_CANCELABLE:
+    'Este torneo ya no se puede cancelar: se cancela con la inscripción abierta o cerrada, o en curso.',
+  GASTOS_SOBRE_TOPE:
+    'Los gastos a retener superan el máximo permitido. El monto excedente debe ser devuelto a los participantes.',
+  CANCELACION_YA_RESUELTA: 'Esta cancelación ya se resolvió.',
+  CANCELACION_PROPIA: 'No podés revisar la cancelación de un torneo que organizás.',
+  CANCELACION_NO_ENCONTRADA: 'Este torneo no tiene una cancelación.',
   INSCRIPCION_NO_PERMITIDA_EN_TORNEO:
     'El organizador y los árbitros de un torneo no pueden inscribirse en él.',
   PRONOSTICO_FUERA_DE_VENTANA:

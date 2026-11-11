@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   billeteraApi,
@@ -9,6 +9,7 @@ import {
   TIPO_MOVIMIENTO_LABEL,
   TipoMovimientoBilletera,
 } from '../../api/billeteraApi';
+import { useAuth } from '../../auth/hooks/useAuth';
 import { fechaHora, pesos } from '../../shared/formato';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { Badge, BadgeTone, Card, Modal } from '../../shared/ui';
@@ -20,6 +21,7 @@ import {
   IconoRefrescar,
   IconoTrofeo,
 } from '../../shared/ui/Iconos';
+import { useRetomarCargasCripto } from '../cripto/useRetomarCargasCripto';
 import '../billetera.css';
 
 const TAMANIO_PAGINA = 10;
@@ -32,6 +34,9 @@ const CON_DETALLE: TipoMovimientoBilletera[] = [
   'PAGO_SERVICIO',
   'REINTEGRO',
 ];
+
+// HU-609: wagmi, viem y RainbowKit se bajan recién al abrir Cargar con cripto
+const CargaConCripto = lazy(() => import('../cripto/CargaConCripto'));
 
 const tonoEstado = (estado: string): BadgeTone => {
   switch (estado) {
@@ -97,6 +102,25 @@ export const MiBilleteraPage: React.FC = () => {
     void cargarMovimientos(pagina);
   }, [cargarMovimientos, pagina]);
 
+  const [criptoAbierto, setCriptoAbierto] = useState<boolean>(false);
+
+  const cargaCriptoAcreditada = useCallback(
+    async (movimiento: MovimientoBilletera) => {
+      setMensajeExito(`Se acreditaron ${pesos(movimiento.monto)} en tu billetera con cripto.`);
+      await Promise.all([cargarBilletera(), cargarMovimientos(0)]);
+    },
+    [cargarBilletera, cargarMovimientos]
+  );
+
+  const { user } = useAuth();
+  const retomadas = useRetomarCargasCripto(
+    user?.id,
+    criptoAbierto,
+    (movimiento) => void cargaCriptoAcreditada(movimiento),
+    setError
+  );
+  const montoRetomado = retomadas.pendientes.reduce((total, c) => total + c.montoPesos, 0);
+
   const abrirModalCarga = () => {
     setMontoInput('');
     setErrorModal(null);
@@ -153,7 +177,14 @@ export const MiBilleteraPage: React.FC = () => {
           >
             Cargar saldo
           </button>
-          {/* Espacio reservado para el futuro botón "Cargar con cripto" de T609-4 */}
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setCriptoAbierto(true)}
+            disabled={billetera?.estado === 'BLOQUEADA'}
+          >
+            Cargar con cripto
+          </button>
         </div>
       </header>
 
@@ -164,6 +195,26 @@ export const MiBilleteraPage: React.FC = () => {
             Tu billetera está bloqueada temporalmente. No es posible realizar cargas ni operaciones.
             Contactate con soporte si creés que se trata de un error.
           </span>
+        </div>
+      )}
+
+      {retomadas.pendientes.length > 0 && (
+        <div role="status" className="alerta alerta-aviso">
+          <IconoEspera size={20} />
+          <span>
+            {retomadas.demorada
+              ? `Tu carga con cripto de ${pesos(montoRetomado)} todavía no se confirmó: la red puede tardar más de lo normal.`
+              : `Tenés una carga con cripto confirmándose: ${pesos(montoRetomado)}.`}
+          </span>
+          {retomadas.demorada && (
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={retomadas.reintentar}
+            >
+              Reintentar
+            </button>
+          )}
         </div>
       )}
 
@@ -307,6 +358,16 @@ export const MiBilleteraPage: React.FC = () => {
                             mov.descripcion && (
                               <span className="billetera-movimiento-detalle">{mov.descripcion}</span>
                             )}
+                          {mov.enlaceExplorador && (
+                            <a
+                              href={mov.enlaceExplorador}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="billetera-enlace billetera-movimiento-detalle"
+                            >
+                              Ver en BaseScan
+                            </a>
+                          )}
                         </td>
                         <td>
                           <Badge tone={tonoEstado(mov.estado)}>{estadoLabel}</Badge>
@@ -350,6 +411,16 @@ export const MiBilleteraPage: React.FC = () => {
           </Card>
         )}
       </section>
+
+      {criptoAbierto && (
+        <Suspense fallback={null}>
+          <CargaConCripto
+            usuarioId={user?.id ?? ''}
+            onCerrar={() => setCriptoAbierto(false)}
+            onAcreditada={(movimiento) => void cargaCriptoAcreditada(movimiento)}
+          />
+        </Suspense>
+      )}
 
       {/* Modal Cargar saldo */}
       <Modal

@@ -69,7 +69,9 @@ export const HonorariosDelTorneo: React.FC<HonorariosDelTorneoProps> = ({ torneo
 
   if (honorarios.length === 0 && !error) return null;
 
-  const abierto = estado !== 'FINALIZADO' && estado !== 'CANCELADO';
+  // en revisión de una cancelación (HU-605) la plata queda como está hasta que soporte la resuelva
+  const abierto =
+    estado !== 'FINALIZADO' && estado !== 'CANCELADO' && estado !== 'CANCELACION_EN_REVISION';
   // Pueden cobrar los designados que no rechazaron y tienen la identidad verificada.
   const elegibles = arbitros.filter((a) => a.estado !== 'RECHAZADO' && a.identidadVerificada);
 

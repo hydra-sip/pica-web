@@ -14,6 +14,8 @@ export type EstadoTorneo =
   | 'INSCRIPCION_CERRADA'
   | 'EN_CURSO'
   | 'FINALIZADO'
+  /** HU-605: canceló con gastos y espera a soporte; la plata sigue en custodia. */
+  | 'CANCELACION_EN_REVISION'
   | 'CANCELADO';
 export type Formato = 'ELIMINACION_DIRECTA';
 export type Modalidad = 'PRESENCIAL' | 'ONLINE';

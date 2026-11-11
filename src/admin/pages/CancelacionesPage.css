@@ -1,0 +1,44 @@
+.cancelaciones-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.cancelaciones-subtitulo,
+.cancelaciones-usuario,
+.cancelaciones-vacia {
+  color: var(--text-muted);
+}
+
+.cancelaciones-titulo {
+  margin: 1rem 0 0.35rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.cancelaciones-gastos {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cancelaciones-gastos li {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.cancelaciones-total {
+  font-weight: 700;
+}
+
+.cancelaciones-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
