@@ -49,11 +49,25 @@ export interface MovimientoBilletera {
   torneo?: TorneoMovimiento | null;
   rifa?: RifaMovimiento | null;
   creadoEn: string;
+  /** HU-609: la transacción en BaseScan de una carga con cripto; null en el resto. */
+  enlaceExplorador?: string | null;
 }
 
 export interface CargaRequest {
   monto: number;
   referencia?: string;
+}
+
+/**
+ * HU-609: lo que hace falta para pagar una carga en el contrato PasarelaCargas. `montoWei` viene como texto
+ * porque pasa el rango de enteros exactos de JavaScript: se usa como `bigint`.
+ */
+export interface CargaCripto {
+  referencia: `0x${string}`;
+  contrato: `0x${string}`;
+  chainId: number;
+  montoWei: string;
+  montoPesos: number;
 }
 
 export type PaginaMovimientoBilletera = PageResponse<MovimientoBilletera>;
@@ -112,6 +126,18 @@ export const billeteraApi = {
   /**
    * Acredita una carga de saldo en la billetera virtual del usuario logueado.
    */
+  /** HU-609: inicia una carga con cripto; el back fija la referencia y los wei con su cotización. */
+  iniciarCargaCripto: async (monto: number): Promise<CargaCripto> => {
+    return httpClient.post<CargaCripto>('/billetera/cargas/cripto', { monto });
+  },
+
+  /** HU-609: acredita la carga con el hash de la transacción que la pagó. 409 si todavía no se confirmó. */
+  confirmarCargaCripto: async (referencia: string, hash: string): Promise<MovimientoBilletera> => {
+    return httpClient.post<MovimientoBilletera>(`/billetera/cargas/cripto/${referencia}/confirmar`, {
+      hash,
+    });
+  },
+
   cargarSaldo: async (monto: number, referencia?: string): Promise<MovimientoBilletera> => {
     const payload: CargaRequest = { monto, ...(referencia ? { referencia } : {}) };
     return httpClient.post<MovimientoBilletera>('/billetera/cargas', payload);

@@ -1,4 +1,4 @@
-import { Billetera, MovimientoBilletera } from '../api/billeteraApi';
+import { Billetera, CargaCripto, MovimientoBilletera } from '../api/billeteraApi';
 
 export const billeteraInicialMock: Billetera = {
   saldoDisponible: 15000.0,
@@ -116,8 +116,42 @@ export const cargarSaldoMock = (monto: number, referencia?: string): MovimientoB
   return nuevoMovimiento;
 };
 
+/** HU-609: el contrato PasarelaCargas de Base Sepolia (PICA-328) y la cotización fija de testnet del back. */
+export const CONTRATO_PASARELA = '0x36e633eDD1E79Ef2b9A3c6A099D873D52e44EDF0';
+const WEI_POR_CENTAVO = 100_000_000n;
+
+let cargasCripto = new Map<string, CargaCripto>();
+
+export const iniciarCargaCriptoMock = (monto: number): CargaCripto => {
+  const numero = (cargasCripto.size + 1).toString(16).padStart(64, '0');
+  const carga: CargaCripto = {
+    referencia: `0x${numero}`,
+    contrato: CONTRATO_PASARELA,
+    chainId: 84532,
+    montoWei: (BigInt(Math.round(monto * 100)) * WEI_POR_CENTAVO).toString(),
+    montoPesos: monto,
+  };
+  cargasCripto.set(carga.referencia, carga);
+  return carga;
+};
+
+export const getCargaCriptoMock = (referencia: string): CargaCripto | undefined =>
+  cargasCripto.get(referencia);
+
+/** Acredita la carga como el back: el hash queda de referencia externa, con su enlace a BaseScan. */
+export const acreditarCargaCriptoMock = (carga: CargaCripto, hash: string): MovimientoBilletera => {
+  const movimiento: MovimientoBilletera = {
+    ...cargarSaldoMock(carga.montoPesos, hash),
+    descripcion: 'Carga de saldo con cripto',
+    enlaceExplorador: `https://sepolia.basescan.org/tx/${hash}`,
+  };
+  movimientosEstado = [movimiento, ...movimientosEstado.slice(1)];
+  return movimiento;
+};
+
 export const resetBilleteraMock = () => {
   billeteraEstado = { ...billeteraInicialMock };
   movimientosEstado = [...movimientosInicialesMock];
+  cargasCripto = new Map();
 };
 

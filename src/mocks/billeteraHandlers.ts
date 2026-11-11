@@ -1,6 +1,9 @@
 import { http, HttpResponse } from 'msw';
 import {
+  acreditarCargaCriptoMock,
   cargarSaldoMock,
+  getCargaCriptoMock,
+  iniciarCargaCriptoMock,
   getBilleteraMock,
   getMovimientosMock,
 } from './data';
@@ -72,6 +75,25 @@ export const billeteraHandlers = [
         totalPages,
       },
     });
+  }),
+
+  // POST /billetera/cargas/cripto (HU-609): la referencia y los wei a pagar en el contrato
+  http.post(`${API_URL}/billetera/cargas/cripto`, async ({ request }) => {
+    const { monto } = (await request.json()) as CargaRequest;
+    return HttpResponse.json(iniciarCargaCriptoMock(monto), { status: 201 });
+  }),
+
+  // POST /billetera/cargas/cripto/{referencia}/confirmar: acredita con el hash, sin mirar la red
+  http.post(`${API_URL}/billetera/cargas/cripto/:referencia/confirmar`, async ({ params, request }) => {
+    const carga = getCargaCriptoMock(params.referencia as string);
+    if (!carga) {
+      return HttpResponse.json(
+        { status: 404, codigo: 'CARGA_NO_ENCONTRADA', detail: 'No hay una carga con esa referencia' },
+        { status: 404 }
+      );
+    }
+    const { hash } = (await request.json()) as { hash: string };
+    return HttpResponse.json(acreditarCargaCriptoMock(carga, hash));
   }),
 
   // POST /billetera/cargas

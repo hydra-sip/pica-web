@@ -7,6 +7,7 @@ import { resetParametrosMock } from '../mocks/parametroHandlers';
 import { resetPronosticosMock } from '../mocks/pronosticoHandlers';
 import { resetTicketsMock } from '../mocks/ticketHandlers';
 import { resetBilleteraMock } from '../mocks/data';
+import { resetCadenaMock } from '../mocks/cadenaHandlers';
 import { resetCancelacionMock } from '../mocks/cancelacionHandlers';
 import { server } from '../mocks/server';
 import { resetRealtime } from '../realtime/websocketService';
@@ -22,6 +23,7 @@ afterEach(() => {
   resetPronosticosMock();
   resetTicketsMock();
   resetBilleteraMock();
+  resetCadenaMock();
   resetCancelacionMock();
   clearSessionTokens();
   localStorage.clear();
