@@ -1,18 +1,13 @@
 import { useCallback, useReducer } from 'react';
 import {
   BaseError,
+  ContractFunctionRevertedError,
   encodeFunctionData,
   InsufficientFundsError,
   UserRejectedRequestError,
 } from 'viem';
 import { useConfig } from 'wagmi';
-import {
-  estimateGas,
-  getAccount,
-  getPublicClient,
-  waitForTransactionReceipt,
-  writeContract,
-} from 'wagmi/actions';
+import { estimateGas, getAccount, getPublicClient, writeContract } from 'wagmi/actions';
 import { billeteraApi, type CargaCripto, type MovimientoBilletera } from '../../api/billeteraApi';
 import { mensajeDeError } from '../../shared/mensajesError';
 import {
@@ -23,7 +18,7 @@ import {
   validarMonto,
 } from './cargaCripto';
 import { CargaDemorada, confirmarHastaAcreditar } from './confirmacion';
-import { pasarelaCargasAbi } from './pasarelaCargas';
+import { MOTIVO_DE_REVERSION, pasarelaCargasAbi } from './pasarelaCargas';
 
 const SIN_FONDOS: ErrorCarga = {
   tipo: 'sinFondos',
@@ -39,6 +34,39 @@ const errorDeEnvio = (err: unknown): ErrorCarga => {
     if (err.walk((e) => e instanceof InsufficientFundsError)) return SIN_FONDOS;
   }
   return { tipo: 'inesperado', mensaje: 'No se pudo enviar el pago. Probá de nuevo.' };
+};
+
+type ClientePublico = NonNullable<ReturnType<typeof getPublicClient>>;
+
+/**
+ * Por qué revirtió el pago: se repite la llamada en el bloque de la transacción y se lee el error del contrato.
+ * Si no se puede saber, el mensaje genérico.
+ */
+const motivoDeReversion = async (
+  red: ClientePublico,
+  carga: CargaCripto,
+  pagador: `0x${string}`,
+  bloque: bigint
+): Promise<string> => {
+  const generico = 'La transacción falló.';
+  try {
+    await red.simulateContract({
+      address: carga.contrato,
+      abi: pasarelaCargasAbi,
+      functionName: 'cargar',
+      args: [carga.referencia],
+      value: BigInt(carga.montoWei),
+      account: pagador,
+      blockNumber: bloque,
+    });
+  } catch (err) {
+    const revertido =
+      err instanceof BaseError ? err.walk((e) => e instanceof ContractFunctionRevertedError) : null;
+    const nombre =
+      revertido instanceof ContractFunctionRevertedError ? revertido.data?.errorName : undefined;
+    return (nombre && MOTIVO_DE_REVERSION[nombre]) || generico;
+  }
+  return generico;
 };
 
 /**
@@ -144,7 +172,13 @@ export const useCargaCripto = (onAcreditada: (movimiento: MovimientoBilletera) =
       }
       dispatch({ tipo: 'enviada', hash });
 
-      await waitForTransactionReceipt(config, { hash, chainId: carga.chainId });
+      const red = getPublicClient(config, { chainId: carga.chainId })!;
+      const recibo = await red.waitForTransactionReceipt({ hash });
+      if (recibo.status === 'reverted') {
+        const mensaje = await motivoDeReversion(red, carga, recibo.from, recibo.blockNumber);
+        dispatch({ tipo: 'fallo', error: { tipo: 'revertida', mensaje } });
+        return;
+      }
       await acreditar(carga, hash);
     },
     [config, acreditar]

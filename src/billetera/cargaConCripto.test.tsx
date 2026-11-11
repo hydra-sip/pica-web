@@ -1,6 +1,6 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
-import { encodeFunctionData } from 'viem';
+import { encodeErrorResult, encodeFunctionData } from 'viem';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { server } from '../mocks/server';
 import { renderRuta } from '../test/renderRuta';
@@ -236,6 +236,63 @@ describe('HU-609 / T609-4 (PICA-334): Cargar con cripto desde Mi billetera', () 
       expect(await within(dialogo).findByText(/Acreditado/)).toBeInTheDocument();
       // pagó la referencia de la primera carga: no se inició otra
       expect(getTransaccionesEnviadas()[0].data.endsWith(PRIMERA_REFERENCIA.slice(2))).toBe(true);
+    });
+  });
+
+  describe('con la transacción revertida', () => {
+    const revierteCon = (errorName: 'EnforcedPause' | 'ReferenciaYaPagada') =>
+      setCadenaMock({
+        reciboExitoso: false,
+        errorDelContrato: {
+          code: 3,
+          message: 'execution reverted',
+          data:
+            errorName === 'EnforcedPause'
+              ? encodeErrorResult({
+                  abi: [{ type: 'error', name: 'EnforcedPause', inputs: [] }],
+                  errorName,
+                })
+              : encodeErrorResult({
+                  abi: [
+                    {
+                      type: 'error',
+                      name: 'ReferenciaYaPagada',
+                      inputs: [{ name: 'referencia', type: 'bytes32' }],
+                    },
+                  ],
+                  errorName,
+                  args: [PRIMERA_REFERENCIA],
+                }),
+        },
+      });
+
+    it('dice por qué revirtió cuando el contrato lo explica, y no la manda a acreditar', async () => {
+      revierteCon('EnforcedPause');
+      const pedidos = confirmarResponde();
+      const { dialogo } = await pagarDiezMil();
+
+      expect(await within(dialogo).findByRole('alert')).toHaveTextContent(
+        'La pasarela está en pausa'
+      );
+      expect(within(dialogo).getByRole('link', { name: 'Ver en BaseScan' })).toBeInTheDocument();
+      expect(pedidos.cantidad).toBe(0);
+    });
+
+    it('una carga ya pagada tiene su propio mensaje', async () => {
+      revierteCon('ReferenciaYaPagada');
+      const { dialogo } = await pagarDiezMil();
+
+      expect(await within(dialogo).findByRole('alert')).toHaveTextContent(
+        'La carga ya está pagada'
+      );
+    });
+
+    it('sin un motivo que se pueda leer, avisa que la transacción falló', async () => {
+      setCadenaMock({ reciboExitoso: false });
+      const { dialogo } = await pagarDiezMil();
+
+      expect(await within(dialogo).findByRole('alert')).toHaveTextContent('La transacción falló');
+      expect(within(dialogo).getByRole('link', { name: 'Ver en BaseScan' })).toBeInTheDocument();
     });
   });
 
