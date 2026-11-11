@@ -9,6 +9,7 @@ import { mensajeDeError } from '../../shared/mensajesError';
 import { Badge, Button, Card } from '../../shared/ui';
 import { Bracket } from '../components/Bracket';
 import { CheckinTorneo } from '../components/CheckinTorneo';
+import { HonorariosDelTorneo } from '../components/HonorariosDelTorneo';
 import { InscripcionesDelTorneo } from '../components/InscripcionesDelTorneo';
 import { ProgramacionPartido } from '../components/ProgramacionPartido';
 import { RifaDelTorneo } from '../components/RifaDelTorneo';
@@ -29,7 +30,7 @@ const conResultados = (bracket: BracketTorneo): boolean =>
  * organizador la cierra desde acá (HU-206); cerrada, se ve cuándo y el sello de la lista. Abajo, las inscripciones.
  * Con el bracket sorteado, las objeciones del torneo (PICA-247). La ventana de check-in del torneo y la fecha de cada
  * partido, en el bracket (HU-308). Si el torneo tiene rifa, lo que lleva vendido y su pozo (HU-406). Lo cobrado, en
- * custodia hasta que el torneo termine (HU-603).
+ * custodia hasta que el torneo termine (HU-603), y los honorarios arbitrales que se depositan ahí (HU-604).
  */
 export const TorneoConsolaPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -281,6 +282,7 @@ export const TorneoConsolaPage: React.FC = () => {
       </Card>
 
       <CustodiaDelEvento evento="torneos" id={torneo.id} />
+      <HonorariosDelTorneo torneoId={torneo.id} estado={torneo.estado} />
       <RepartoDeLaLiquidacion evento="torneos" id={torneo.id} />
 
       <RifaDelTorneo torneoId={torneo.id} />

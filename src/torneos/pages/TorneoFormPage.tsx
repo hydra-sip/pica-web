@@ -449,7 +449,11 @@ export const TorneoFormPage: React.FC = () => {
                 bloqueados={bloqueados}
                 cupoTope={cupoTope}
               />
-              <ArbitrosTorneo torneoId={torneo?.id ?? null} habilitado={conArbitros} />
+              <ArbitrosTorneo
+                torneoId={torneo?.id ?? null}
+                habilitado={conArbitros}
+                conDinero={(torneo?.economia.valorInscripcion ?? 0) > 0}
+              />
             </>
           )}
           {paso === 3 && torneo && formEco && (

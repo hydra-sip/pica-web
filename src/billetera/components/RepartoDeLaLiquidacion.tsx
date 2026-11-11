@@ -30,6 +30,7 @@ const beneficiario = (linea: LineaReparto): string => {
 const concepto = (linea: LineaReparto): string => {
   if (linea.rol === 'PREMIO') return `Premio del ${linea.puesto}º puesto`;
   if (linea.rol === 'PLATAFORMA') return 'Gastos administrativos';
+  if (linea.rol === 'HONORARIO') return 'Honorario arbitral';
   return linea.origen === 'TORNEO' ? 'Gastos del torneo' : 'Organizador';
 };
 

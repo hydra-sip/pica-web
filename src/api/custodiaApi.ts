@@ -37,7 +37,8 @@ export type EventoCustodia = 'torneos' | 'rifas';
 
 /** Una acreditación de la liquidación (HU-606). APORTE_RIFA: lo que la rifa aporta al pozo del torneo. */
 export interface LineaReparto {
-  rol: 'PREMIO' | 'ORGANIZADOR' | 'PLATAFORMA';
+  /** HONORARIO: lo depositado para un árbitro (HU-604). */
+  rol: 'PREMIO' | 'ORGANIZADOR' | 'PLATAFORMA' | 'HONORARIO';
   origen: 'TORNEO' | 'RIFA' | 'APORTE_RIFA';
   puesto?: number | null;
   /** Null en la plataforma. */

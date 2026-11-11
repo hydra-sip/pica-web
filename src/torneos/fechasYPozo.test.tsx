@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { GastoDetalle } from '../api/torneoApi';
 import { PasoEconomia } from './components/PasoEconomia';
 import { calcular } from './economia';
 import { desdeTorneo, FormTorneo, validarBorrador } from './validacion';
@@ -47,7 +48,16 @@ describe('margen entre el cierre de la inscripción y el inicio (CE4-5)', () => 
 });
 
 describe('pozo neto con el cupo mínimo (CE4-5)', () => {
-  const gasto = { gastoId: 1, descripcion: 'Cancha', monto: 100_000 };
+  const gasto: GastoDetalle = {
+    gastoId: 1,
+    descripcion: 'Cancha',
+    monto: 100_000,
+    tipo: 'OTRO',
+    estadoPago: 'PENDIENTE',
+    beneficiario: null,
+    abonadoEn: null,
+    comprobante: null,
+  };
   const form = { valorInscripcion: '10000', premios: ['100'] };
 
   it('hace la misma cuenta que el back al publicar', () => {
