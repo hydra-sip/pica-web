@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { AppLayout } from '../shared/layouts/AppLayout';
+import { PERMISOS_BACKOFFICE } from '../shared/layouts/navegacion';
 import { HomePage } from '../shared/pages/HomePage';
 import { LoginPage } from '../auth/pages/LoginPage';
 import { RegisterPage } from '../auth/pages/RegisterPage';
@@ -12,6 +13,7 @@ import { AdminDashboardPage } from '../admin/pages/AdminDashboardPage';
 import { UsuariosPage } from '../admin/pages/UsuariosPage';
 import { RolesPage } from '../admin/pages/RolesPage';
 import { PersonasPage } from '../admin/pages/PersonasPage';
+import { CancelacionesPage } from '../admin/pages/CancelacionesPage';
 import { ParametrosPage } from '../admin/pages/ParametrosPage';
 import { NotFoundPage } from '../shared/pages/NotFoundPage';
 import { UnauthorizedPage } from '../shared/pages/UnauthorizedPage';
@@ -118,9 +120,7 @@ export const AppRoutes: React.FC = () => {
       <Route element={<RequireAuth />}>
         <Route
           element={
-            <RequirePermiso
-              permisos={['USUARIO_VER', 'ROL_VER', 'PERSONA_VER', 'PARAMETRO_ADMINISTRAR']}
-            >
+            <RequirePermiso permisos={PERMISOS_BACKOFFICE}>
               <AppLayout seccion="admin" />
             </RequirePermiso>
           }
@@ -148,6 +148,14 @@ export const AppRoutes: React.FC = () => {
               element={
                 <RequirePermiso permisos="PERSONA_VER">
                   <PersonasPage />
+                </RequirePermiso>
+              }
+            />
+            <Route
+              path="cancelaciones"
+              element={
+                <RequirePermiso permisos="CANCELACION_REVISAR">
+                  <CancelacionesPage />
                 </RequirePermiso>
               }
             />

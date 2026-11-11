@@ -934,3 +934,92 @@
 .torneos-consola-aviso p {
   margin: var(--space-1) 0 0;
 }
+
+/* HU-605: el modal de cancelación */
+.torneos-cancelacion-resumen {
+  display: grid;
+  gap: 0.4rem;
+  margin: 1rem 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-subtle);
+}
+
+.torneos-cancelacion-resumen div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.torneos-cancelacion-resumen dt {
+  color: var(--text-muted);
+}
+
+.torneos-cancelacion-resumen dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+
+.torneos-cancelacion-confirmo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+  cursor: pointer;
+}
+
+.torneos-consola-cancelar {
+  margin-left: auto;
+}
+
+.torneos-cancelacion-gastos {
+  display: grid;
+  gap: 0.6rem;
+  margin: 1rem 0;
+}
+
+.torneos-cancelacion-gastos h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.torneos-cancelacion-gasto {
+  display: grid;
+  grid-template-columns: 2fr 1fr 2fr auto;
+  gap: 0.5rem;
+  align-items: end;
+}
+
+@media (max-width: 640px) {
+  .torneos-cancelacion-gasto {
+    grid-template-columns: 1fr;
+  }
+}
+
+.torneos-cancelacion-subtitulo {
+  margin: 1rem 0 0.35rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.torneos-cancelacion-lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.torneos-cancelacion-lista li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.torneos-cancelacion-total {
+  font-weight: 700;
+}
