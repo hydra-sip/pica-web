@@ -49,6 +49,8 @@ export interface MovimientoBilletera {
   torneo?: TorneoMovimiento | null;
   rifa?: RifaMovimiento | null;
   creadoEn: string;
+  /** HU-609: la transacción en BaseScan de una carga con cripto; null en el resto. */
+  enlaceExplorador?: string | null;
 }
 
 export interface CargaRequest {

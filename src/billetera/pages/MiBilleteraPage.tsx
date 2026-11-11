@@ -297,6 +297,16 @@ export const MiBilleteraPage: React.FC = () => {
                             mov.descripcion && (
                               <span className="billetera-movimiento-detalle">{mov.descripcion}</span>
                             )}
+                          {mov.enlaceExplorador && (
+                            <a
+                              href={mov.enlaceExplorador}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="billetera-enlace billetera-movimiento-detalle"
+                            >
+                              Ver en BaseScan
+                            </a>
+                          )}
                         </td>
                         <td>
                           <Badge tone={tonoEstado(mov.estado)}>{estadoLabel}</Badge>
