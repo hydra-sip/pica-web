@@ -17,6 +17,7 @@ export const ESTADO_TORNEO_UI: Record<EstadoTorneo, string> = {
   INSCRIPCION_CERRADA: 'Inscripción cerrada',
   EN_CURSO: 'En curso',
   FINALIZADO: 'Finalizado',
+  CANCELACION_EN_REVISION: 'Cancelación en revisión',
   CANCELADO: 'Cancelado',
 };
 
@@ -27,6 +28,7 @@ export const TONO_ESTADO_TORNEO: Record<EstadoTorneo, BadgeTone> = {
   INSCRIPCION_CERRADA: 'info',
   EN_CURSO: 'solido',
   FINALIZADO: 'neutral',
+  CANCELACION_EN_REVISION: 'aviso',
   CANCELADO: 'peligro',
 };
 

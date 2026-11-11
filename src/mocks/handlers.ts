@@ -7,6 +7,7 @@ import { torneoHandlers } from './torneoHandlers';
 import { verificacionHandlers } from './verificacionHandlers';
 import { ticketHandlers } from './ticketHandlers';
 import { billeteraHandlers } from './billeteraHandlers';
+import { cancelacionHandlers } from './cancelacionHandlers';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
@@ -101,6 +102,7 @@ export const handlers = [
 
   // Billetera virtual y movimientos (HU-602 / T602-3)
   ...billeteraHandlers,
+  ...cancelacionHandlers,
 
   // Auth: Registro Endpoint (POST /auth/registro) -> 201 { id }
   http.post(`${API_URL}/auth/registro`, async ({ request }) => {
@@ -262,13 +264,46 @@ export const handlers = [
           telefono: '1133221100',
         },
         roles: [{ id: 4, nombre: 'ORGANIZADOR', nombreAmigable: 'Organizador de Eventos' }],
-        permisos: ['USUARIO_VER', 'PERSONA_VER'],
+        // TORNEO_GESTIONAR, como el rol ORGANIZADOR del back: entra a Mis torneos y a la consola
+        permisos: ['USUARIO_VER', 'PERSONA_VER', 'TORNEO_GESTIONAR'],
         datosCompletos: true,
       });
 
       return HttpResponse.json({
         accessToken: 'mock-jwt-access-token-organizador-12345',
         refreshToken: 'mock-jwt-refresh-token-organizador-67890',
+        tokenType: 'Bearer',
+        expiresIn: 3600,
+      });
+    }
+
+    // SOPORTE (HU-605): solo revisa las cancelaciones con gastos
+    if ((id === 'soporte@pica.edu.ar' || id === 'soporte') && body.password === 'sop123') {
+      establecerUsuario({
+        usuario: {
+          id: 6,
+          username: 'soporte',
+          email: 'soporte@pica.edu.ar',
+          estado: 'ACTIVO',
+          tieneContrasena: true,
+        },
+        persona: {
+          nombres: 'Sofía',
+          apellidos: 'Soporte',
+          tipoDoc: 'DNI',
+          nroDoc: '36777888',
+          fechaNacimiento: '1990-08-10',
+          domicilioPostal: 'Rivadavia 300, Luján',
+          telefono: '1155667788',
+        },
+        roles: [{ id: 5, nombre: 'SOPORTE', nombreAmigable: 'Soporte' }],
+        permisos: ['CANCELACION_REVISAR'],
+        datosCompletos: true,
+      });
+
+      return HttpResponse.json({
+        accessToken: 'mock-jwt-access-token-soporte-12345',
+        refreshToken: 'mock-jwt-refresh-token-soporte-67890',
         tokenType: 'Bearer',
         expiresIn: 3600,
       });
