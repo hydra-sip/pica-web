@@ -1,5 +1,6 @@
 import { EstadoRifa, TicketDetalle } from '../api/rifaApi';
 import { EstadoTorneo } from '../api/torneoApi';
+import { pesos } from '../shared/formato';
 import { BadgeTone } from '../shared/ui';
 
 // Montos y fechas para mostrar, y los <input type="datetime-local">: shared/formato.ts
@@ -29,7 +30,8 @@ const SORTEADAS: EstadoRifa[] = ['SORTEADA', 'EN_REVISION', 'LIQUIDADA'];
 
 /**
  * HU-504: qué le tocó al ticket en el sorteo, para el comprador; null si la rifa todavía no se sorteó.
- * Ej.: "¡Ganaste el 1º premio con el #12!" o "Esta vez no ganaste."
+ * Ej.: "¡Ganaste el 1º premio con el #12!" o "Esta vez no ganaste." Liquidada la rifa (HU-606), suma lo que se le
+ * acreditó.
  */
 export const resultadoDelTicket = (
   ticket: TicketDetalle
@@ -39,7 +41,11 @@ export const resultadoDelTicket = (
   const premios = ticket.premiosGanados
     .map((p) => `el ${p.puesto}º premio con el #${p.numeroGanador}`)
     .join(' y ');
-  return { texto: `¡Ganaste ${premios}!`, gano: true };
+  const acreditado =
+    ticket.rifaEstado === 'LIQUIDADA' && ticket.premioAcreditado != null
+      ? ` Te acreditamos ${pesos(ticket.premioAcreditado)} en tu billetera.`
+      : '';
+  return { texto: `¡Ganaste ${premios}!${acreditado}`, gano: true };
 };
 
 /** La rifa va con un torneo en borrador o publicado que todavía no empezó (lo mismo valida el back). */

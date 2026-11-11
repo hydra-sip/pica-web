@@ -276,20 +276,27 @@ export const MiBilleteraPage: React.FC = () => {
                           </span>
                         </td>
                         <td>
-                          {mov.torneo ? (
+                          {/* la rifa primero: si tiene torneo, el movimiento trae los dos */}
+                          {mov.rifa ? (
+                            <Link to={`/rifas/${mov.rifa.id}`} className="billetera-enlace">
+                              {mov.rifa.titulo}
+                            </Link>
+                          ) : mov.torneo ? (
                             <Link
                               to={`/torneos/${mov.torneo.slug || mov.torneo.id}`}
                               className="billetera-enlace"
                             >
                               {mov.torneo.titulo || mov.torneo.nombre}
                             </Link>
-                          ) : mov.rifa ? (
-                            <Link to={`/rifas/${mov.rifa.id}`} className="billetera-enlace">
-                              {mov.rifa.titulo}
-                            </Link>
                           ) : (
                             <span>{mov.descripcion || mov.referenciaExterna || '-'}</span>
                           )}
+                          {/* HU-606: lo que acredita la liquidación dice qué es ("Premio del 1.º puesto en ...") */}
+                          {(mov.rifa || mov.torneo) &&
+                            (mov.tipo === 'PREMIO' || mov.tipo === 'LIQUIDACION') &&
+                            mov.descripcion && (
+                              <span className="billetera-movimiento-detalle">{mov.descripcion}</span>
+                            )}
                         </td>
                         <td>
                           <Badge tone={tonoEstado(mov.estado)}>{estadoLabel}</Badge>

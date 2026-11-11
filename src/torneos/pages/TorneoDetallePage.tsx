@@ -311,6 +311,12 @@ export const TorneoDetallePage: React.FC = () => {
               Publicado el {fecha(torneo.publicadoEn)}
             </span>
           )}
+          {/* HU-606: la custodia ya se repartió entre los ganadores */}
+          {torneo.liquidadoEn && (
+            <span className="badge badge-exito" role="status">
+              Liquidado el {fechaHora(torneo.liquidadoEn)}
+            </span>
+          )}
         </div>
 
         <h1 className="torneo-hero-title">{torneo.nombre}</h1>
