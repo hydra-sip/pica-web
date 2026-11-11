@@ -37,7 +37,7 @@ const Alerta: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
 const ModalCargaConCripto: React.FC<Props> = ({ onCerrar, onAcreditada }) => {
   const { isConnected } = useAccount();
-  const { estado, iniciar, pagar } = useCargaCripto(onAcreditada);
+  const { estado, iniciar, pagar, reintentar } = useCargaCripto(onAcreditada);
   const [montoTexto, setMontoTexto] = useState('');
   const ocupado = estado.fase === 'iniciando' || estado.fase === 'firmando';
 
@@ -118,6 +118,30 @@ const ModalCargaConCripto: React.FC<Props> = ({ onCerrar, onAcreditada }) => {
           <p role="status">
             Confirmando la transacción en la red… <EnlaceBaseScan hash={estado.hash} />
           </p>
+        )}
+
+        {estado.fase === 'demorada' && (
+          <>
+            <div role="status" className="alerta alerta-aviso">
+              <IconoAlerta size={18} />
+              <span>
+                Todavía no se confirmó: la red puede tardar más de lo normal. Si ya pagaste, no lo
+                pagues de nuevo. <EnlaceBaseScan hash={estado.hash} />
+              </span>
+            </div>
+            <div className="billetera-modal-footer">
+              <button type="button" className="btn btn-secondary" onClick={onCerrar}>
+                Cerrar
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => void reintentar(estado.carga, estado.hash)}
+              >
+                Reintentar
+              </button>
+            </div>
+          </>
         )}
 
         {estado.fase === 'acreditado' && (

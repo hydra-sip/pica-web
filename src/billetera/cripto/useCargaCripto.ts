@@ -3,7 +3,8 @@ import { useConfig } from 'wagmi';
 import { waitForTransactionReceipt, writeContract } from 'wagmi/actions';
 import { billeteraApi, type CargaCripto, type MovimientoBilletera } from '../../api/billeteraApi';
 import { mensajeDeError } from '../../shared/mensajesError';
-import { cargaCriptoReducer, ESTADO_INICIAL, validarMonto } from './cargaCripto';
+import { cargaCriptoReducer, ESTADO_INICIAL, type Hash, validarMonto } from './cargaCripto';
+import { CargaDemorada, confirmarHastaAcreditar } from './confirmacion';
 import { pasarelaCargasAbi } from './pasarelaCargas';
 
 /**
@@ -31,6 +32,32 @@ export const useCargaCripto = (onAcreditada: (movimiento: MovimientoBilletera) =
     }
   }, []);
 
+  const acreditar = useCallback(
+    async (carga: CargaCripto, hash: Hash) => {
+      try {
+        const movimiento = await confirmarHastaAcreditar(carga.referencia, hash);
+        dispatch({ tipo: 'acreditada', movimiento });
+        onAcreditada(movimiento);
+      } catch (err) {
+        if (err instanceof CargaDemorada) {
+          dispatch({ tipo: 'demorada' });
+          return;
+        }
+        const mensaje = mensajeDeError(err, 'No se pudo acreditar la carga.');
+        dispatch({ tipo: 'fallo', error: { tipo: 'rechazadaPorElBack', mensaje } });
+      }
+    },
+    [onAcreditada]
+  );
+
+  const reintentar = useCallback(
+    async (carga: CargaCripto, hash: Hash) => {
+      dispatch({ tipo: 'reintentar' });
+      await acreditar(carga, hash);
+    },
+    [acreditar]
+  );
+
   const pagar = useCallback(
     async (carga: CargaCripto) => {
       dispatch({ tipo: 'firmar' });
@@ -54,22 +81,10 @@ export const useCargaCripto = (onAcreditada: (movimiento: MovimientoBilletera) =
       dispatch({ tipo: 'enviada', hash });
 
       await waitForTransactionReceipt(config, { hash, chainId: carga.chainId });
-      try {
-        const movimiento = await billeteraApi.confirmarCargaCripto(carga.referencia, hash);
-        dispatch({ tipo: 'acreditada', movimiento });
-        onAcreditada(movimiento);
-      } catch (err) {
-        dispatch({
-          tipo: 'fallo',
-          error: {
-            tipo: 'rechazadaPorElBack',
-            mensaje: mensajeDeError(err, 'No se pudo acreditar la carga.'),
-          },
-        });
-      }
+      await acreditar(carga, hash);
     },
-    [config, onAcreditada]
+    [config, acreditar]
   );
 
-  return { estado, iniciar, pagar };
+  return { estado, iniciar, pagar, reintentar };
 };

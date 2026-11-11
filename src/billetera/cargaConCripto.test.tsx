@@ -1,6 +1,8 @@
 import { screen, waitFor, within } from '@testing-library/react';
+import { http, HttpResponse } from 'msw';
 import { encodeFunctionData } from 'viem';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { server } from '../mocks/server';
 import { renderRuta } from '../test/renderRuta';
 import { conectarWalletDePrueba } from '../test/wallet';
 import {
@@ -27,6 +29,38 @@ const abrirCargaConCripto = async () => {
   await resultado.user.click(await screen.findByRole('button', { name: 'Cargar con cripto' }));
   const dialogo = await screen.findByRole('dialog', { name: 'Cargar con cripto' });
   return { ...resultado, dialogo };
+};
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
+const CONFIRMAR = `${API_URL}/billetera/cargas/cripto/:referencia/confirmar`;
+
+const problema = (status: number, codigo: string, detail: string) =>
+  HttpResponse.json({ status, codigo, detail }, { status });
+
+/** `confirmar` responde `respuestas` en orden y, cuando se acaban, sigue con el handler de siempre. */
+const confirmarResponde = (...respuestas: (() => Response)[]) => {
+  const pedidos = { cantidad: 0 };
+  server.use(
+    http.post(CONFIRMAR, () => {
+      const respuesta = respuestas[pedidos.cantidad++];
+      return respuesta?.();
+    })
+  );
+  return pedidos;
+};
+
+const pendiente = () =>
+  problema(409, 'TRANSACCION_PENDIENTE', 'La transacción todavía no se confirmó');
+const redCaida = () => problema(503, 'RED_NO_DISPONIBLE', 'El nodo no respondió');
+
+/** Abre el modal, inicia la carga de $ 10.000 y la paga: deja la transacción enviada. */
+const pagarDiezMil = async () => {
+  const abierto = await abrirCargaConCripto();
+  const { user, dialogo } = abierto;
+  await user.type(await within(dialogo).findByLabelText(/Monto a cargar/i), '10000');
+  await user.click(within(dialogo).getByRole('button', { name: 'Continuar' }));
+  await user.click(await within(dialogo).findByRole('button', { name: 'Pagar con MetaMask' }));
+  return abierto;
 };
 
 describe('HU-609 / T609-4 (PICA-334): Cargar con cripto desde Mi billetera', () => {
@@ -81,6 +115,70 @@ describe('HU-609 / T609-4 (PICA-334): Cargar con cripto desde Mi billetera', () 
         within(screen.getByTestId('indicadores-saldo')).getByText(/\$\s*25\.000,00/)
       ).toBeInTheDocument()
     );
+  });
+
+  describe('mientras el back espera las confirmaciones', () => {
+    beforeEach(() => vi.useFakeTimers({ shouldAdvanceTime: true }));
+    afterEach(() => vi.useRealTimers());
+
+    it('una transacción todavía sin confirmar se reintenta a los 3 segundos y se acredita', async () => {
+      const pedidos = confirmarResponde(pendiente);
+      const { dialogo } = await pagarDiezMil();
+
+      expect(await within(dialogo).findByText(/Confirmando/)).toBeInTheDocument();
+      expect(within(dialogo).getByRole('link', { name: 'Ver en BaseScan' })).toBeInTheDocument();
+      await waitFor(() => expect(pedidos.cantidad).toBe(1));
+
+      await vi.advanceTimersByTimeAsync(3000);
+
+      expect(await within(dialogo).findByText(/Acreditado: \$\s*10\.000,00/)).toBeInTheDocument();
+      expect(pedidos.cantidad).toBe(2);
+    });
+
+    it('con el nodo del back caído también reintenta', async () => {
+      const pedidos = confirmarResponde(redCaida, redCaida);
+      const { dialogo } = await pagarDiezMil();
+
+      await waitFor(() => expect(pedidos.cantidad).toBe(1));
+      await vi.advanceTimersByTimeAsync(3000);
+      await waitFor(() => expect(pedidos.cantidad).toBe(2));
+      expect(within(dialogo).getByText(/Confirmando/)).toBeInTheDocument();
+      await vi.advanceTimersByTimeAsync(3000);
+
+      expect(await within(dialogo).findByText(/Acreditado/)).toBeInTheDocument();
+    });
+
+    it('a los dos minutos sin acreditarse avisa la demora, y Reintentar vuelve a esperar', async () => {
+      const pedidos = confirmarResponde(...Array.from({ length: 41 }, () => pendiente));
+      const { user, dialogo } = await pagarDiezMil();
+
+      await waitFor(() => expect(pedidos.cantidad).toBe(1));
+      await vi.advanceTimersByTimeAsync(120_000);
+
+      expect(await within(dialogo).findByText(/Todavía no se confirmó/)).toBeInTheDocument();
+      expect(within(dialogo).getByRole('link', { name: 'Ver en BaseScan' })).toBeInTheDocument();
+      const hechos = pedidos.cantidad;
+      await vi.advanceTimersByTimeAsync(30_000);
+      expect(pedidos.cantidad).toBe(hechos); // ya no reintenta solo
+
+      await user.click(within(dialogo).getByRole('button', { name: 'Reintentar' }));
+
+      expect(await within(dialogo).findByText(/Acreditado/)).toBeInTheDocument();
+    });
+
+    it('si el back rechaza la transacción, muestra su mensaje y deja de reintentar', async () => {
+      const pedidos = confirmarResponde(() =>
+        problema(400, 'MONTO_NO_COINCIDE', 'La transacción no paga el monto de la carga')
+      );
+      const { dialogo } = await pagarDiezMil();
+
+      expect(await within(dialogo).findByRole('alert')).toHaveTextContent(
+        'La transacción no paga el monto de la carga'
+      );
+      expect(within(dialogo).getByRole('link', { name: 'Ver en BaseScan' })).toBeInTheDocument();
+      await vi.advanceTimersByTimeAsync(10_000);
+      expect(pedidos.cantidad).toBe(1);
+    });
   });
 
   it('no deja seguir con un monto que el back rechazaría', async () => {
