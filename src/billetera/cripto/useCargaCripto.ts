@@ -1,11 +1,45 @@
 import { useCallback, useReducer } from 'react';
+import {
+  BaseError,
+  encodeFunctionData,
+  InsufficientFundsError,
+  UserRejectedRequestError,
+} from 'viem';
 import { useConfig } from 'wagmi';
-import { waitForTransactionReceipt, writeContract } from 'wagmi/actions';
+import {
+  estimateGas,
+  getAccount,
+  getPublicClient,
+  waitForTransactionReceipt,
+  writeContract,
+} from 'wagmi/actions';
 import { billeteraApi, type CargaCripto, type MovimientoBilletera } from '../../api/billeteraApi';
 import { mensajeDeError } from '../../shared/mensajesError';
-import { cargaCriptoReducer, ESTADO_INICIAL, type Hash, validarMonto } from './cargaCripto';
+import {
+  cargaCriptoReducer,
+  type ErrorCarga,
+  ESTADO_INICIAL,
+  type Hash,
+  validarMonto,
+} from './cargaCripto';
 import { CargaDemorada, confirmarHastaAcreditar } from './confirmacion';
 import { pasarelaCargasAbi } from './pasarelaCargas';
+
+const SIN_FONDOS: ErrorCarga = {
+  tipo: 'sinFondos',
+  mensaje: 'No te alcanza para el pago y el gas.',
+};
+
+/** Lo que salió mal al estimar o enviar la transacción, antes de tener el hash. */
+const errorDeEnvio = (err: unknown): ErrorCarga => {
+  if (err instanceof BaseError) {
+    if (err.walk((e) => e instanceof UserRejectedRequestError)) {
+      return { tipo: 'firmaRechazada', mensaje: 'Cancelaste el pago en la wallet.' };
+    }
+    if (err.walk((e) => e instanceof InsufficientFundsError)) return SIN_FONDOS;
+  }
+  return { tipo: 'inesperado', mensaje: 'No se pudo enviar el pago. Probá de nuevo.' };
+};
 
 /**
  * Los pasos de una carga con cripto (HU-609): iniciarla en el back, pagarla en el contrato con la wallet,
@@ -61,21 +95,51 @@ export const useCargaCripto = (onAcreditada: (movimiento: MovimientoBilletera) =
   const pagar = useCallback(
     async (carga: CargaCripto) => {
       dispatch({ tipo: 'firmar' });
-      let hash: `0x${string}`;
+      const value = BigInt(carga.montoWei);
+      const { address } = getAccount(config);
+
+      // antes de abrir la wallet: que alcance para el pago más el gas
+      try {
+        const red = getPublicClient(config, { chainId: carga.chainId })!;
+        const [saldo, gas, gasPrice] = await Promise.all([
+          red.getBalance({ address: address! }),
+          estimateGas(config, {
+            account: address,
+            to: carga.contrato,
+            data: encodeFunctionData({
+              abi: pasarelaCargasAbi,
+              functionName: 'cargar',
+              args: [carga.referencia],
+            }),
+            value,
+            chainId: carga.chainId,
+          }),
+          red.getGasPrice(),
+        ]);
+        if (saldo < value + gas * gasPrice) {
+          dispatch({ tipo: 'fallo', error: SIN_FONDOS });
+          return;
+        }
+      } catch (err) {
+        // si no se pudo estimar por otra cosa, que lo diga la wallet al enviar
+        if (errorDeEnvio(err).tipo === 'sinFondos') {
+          dispatch({ tipo: 'fallo', error: SIN_FONDOS });
+          return;
+        }
+      }
+
+      let hash: Hash;
       try {
         hash = await writeContract(config, {
           address: carga.contrato,
           abi: pasarelaCargasAbi,
           functionName: 'cargar',
           args: [carga.referencia],
-          value: BigInt(carga.montoWei),
+          value,
           chainId: carga.chainId,
         });
-      } catch {
-        dispatch({
-          tipo: 'fallo',
-          error: { tipo: 'inesperado', mensaje: 'No se pudo enviar el pago.' },
-        });
+      } catch (err) {
+        dispatch({ tipo: 'fallo', error: errorDeEnvio(err) });
         return;
       }
       dispatch({ tipo: 'enviada', hash });

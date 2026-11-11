@@ -6,12 +6,7 @@ import type { CargaCripto, MovimientoBilletera } from '../../api/billeteraApi';
  * con la misma referencia; desde el hash, lo que queda es esperar que el back la acredite.
  */
 export type TipoErrorCarga =
-  | 'firmaRechazada'
-  | 'redEquivocada'
-  | 'sinFondos'
-  | 'revertida'
-  | 'rechazadaPorElBack'
-  | 'inesperado';
+  'firmaRechazada' | 'sinFondos' | 'revertida' | 'rechazadaPorElBack' | 'inesperado';
 
 export interface ErrorCarga {
   tipo: TipoErrorCarga;

@@ -12,3 +12,6 @@ export const pasarelaCargasAbi = [
 export const BASESCAN = 'https://sepolia.basescan.org';
 
 export const enlaceTransaccion = (hash: string) => `${BASESCAN}/tx/${hash}`;
+
+/** Donde conseguir ETH de prueba en Base Sepolia. */
+export const FAUCET_BASE_SEPOLIA = 'https://docs.base.org/base-chain/tools/network-faucets';

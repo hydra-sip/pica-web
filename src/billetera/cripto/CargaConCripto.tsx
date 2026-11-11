@@ -2,14 +2,15 @@ import React, { useState } from 'react';
 import '@rainbow-me/rainbowkit/styles.css';
 import { ConnectButton, lightTheme, RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useAccount, WagmiProvider } from 'wagmi';
+import { useAccount, useSwitchChain, WagmiProvider } from 'wagmi';
+import { baseSepolia } from 'wagmi/chains';
 import type { MovimientoBilletera } from '../../api/billeteraApi';
 import { pesos } from '../../shared/formato';
 import { Modal } from '../../shared/ui';
 import { IconoAlerta, IconoCheck } from '../../shared/ui/Iconos';
 import { eth } from './cargaCripto';
 import { configWallet } from './configWallet';
-import { enlaceTransaccion } from './pasarelaCargas';
+import { enlaceTransaccion, FAUCET_BASE_SEPOLIA } from './pasarelaCargas';
 import { useCargaCripto } from './useCargaCripto';
 
 interface Props {
@@ -36,7 +37,9 @@ const Alerta: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 );
 
 const ModalCargaConCripto: React.FC<Props> = ({ onCerrar, onAcreditada }) => {
-  const { isConnected } = useAccount();
+  const { isConnected, chainId } = useAccount();
+  const { switchChain, isPending: cambiandoDeRed } = useSwitchChain();
+  const enOtraRed = isConnected && chainId !== baseSepolia.id;
   const { estado, iniciar, pagar, reintentar } = useCargaCripto(onAcreditada);
   const [montoTexto, setMontoTexto] = useState('');
   const ocupado = estado.fase === 'iniciando' || estado.fase === 'firmando';
@@ -50,6 +53,20 @@ const ModalCargaConCripto: React.FC<Props> = ({ onCerrar, onAcreditada }) => {
     <Modal isOpen onClose={onCerrar} title="Cargar con cripto" closeDisabled={ocupado}>
       <div className="billetera-modal-form">
         <ConnectButton chainStatus="icon" showBalance={false} />
+
+        {enOtraRed && (
+          <Alerta>
+            Estás en otra red: la carga se paga en Base Sepolia.{' '}
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => switchChain({ chainId: baseSepolia.id })}
+              disabled={cambiandoDeRed}
+            >
+              Cambiar a Base Sepolia
+            </button>
+          </Alerta>
+        )}
 
         {(estado.fase === 'inicial' || estado.fase === 'iniciando') && (
           <form onSubmit={continuar} className="billetera-modal-form">
@@ -82,7 +99,7 @@ const ModalCargaConCripto: React.FC<Props> = ({ onCerrar, onAcreditada }) => {
               <button
                 type="submit"
                 className="btn btn-primary"
-                disabled={ocupado || !isConnected || !montoTexto}
+                disabled={ocupado || !isConnected || enOtraRed || !montoTexto}
               >
                 {estado.fase === 'iniciando' ? 'Preparando...' : 'Continuar'}
               </button>
@@ -103,6 +120,7 @@ const ModalCargaConCripto: React.FC<Props> = ({ onCerrar, onAcreditada }) => {
                 type="button"
                 className="btn btn-primary"
                 onClick={() => void pagar(estado.carga)}
+                disabled={enOtraRed}
               >
                 Pagar con MetaMask
               </button>
@@ -164,11 +182,32 @@ const ModalCargaConCripto: React.FC<Props> = ({ onCerrar, onAcreditada }) => {
           <>
             <Alerta>
               {estado.error.mensaje} {estado.hash && <EnlaceBaseScan hash={estado.hash} />}
+              {estado.error.tipo === 'sinFondos' && (
+                <a
+                  href={FAUCET_BASE_SEPOLIA}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="billetera-enlace"
+                >
+                  Conseguir ETH de prueba
+                </a>
+              )}
             </Alerta>
             <div className="billetera-modal-footer">
               <button type="button" className="btn btn-secondary" onClick={onCerrar}>
                 Cerrar
               </button>
+              {/* sin hash, la transacción no salió: se puede volver a pagar la misma carga */}
+              {!estado.hash && (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => void pagar(estado.carga)}
+                  disabled={enOtraRed}
+                >
+                  Pagar con MetaMask
+                </button>
+              )}
             </div>
           </>
         )}

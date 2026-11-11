@@ -181,6 +181,64 @@ describe('HU-609 / T609-4 (PICA-334): Cargar con cripto desde Mi billetera', () 
     });
   });
 
+  describe('antes de que salga la transacción', () => {
+    it('en otra red avisa y ofrece cambiar a Base Sepolia, y después deja seguir', async () => {
+      conectarWalletDePrueba({ enOtraRed: true });
+      const { user, dialogo } = await abrirCargaConCripto();
+
+      expect(await within(dialogo).findByRole('alert')).toHaveTextContent('Estás en otra red');
+      await user.type(within(dialogo).getByLabelText(/Monto a cargar/i), '10000');
+      expect(within(dialogo).getByRole('button', { name: 'Continuar' })).toBeDisabled();
+
+      await user.click(within(dialogo).getByRole('button', { name: 'Cambiar a Base Sepolia' }));
+
+      await waitFor(() => expect(within(dialogo).queryByRole('alert')).not.toBeInTheDocument());
+      await user.click(within(dialogo).getByRole('button', { name: 'Continuar' }));
+      expect(await within(dialogo).findByText(/Vas a pagar/)).toBeInTheDocument();
+    });
+
+    it('sin ETH para el pago y el gas avisa antes de abrir la wallet y lleva al faucet', async () => {
+      setCadenaMock({ saldoWei: 10n ** 13n }); // el pago es de 10^14 wei
+      const { dialogo } = await pagarDiezMil();
+
+      expect(await within(dialogo).findByRole('alert')).toHaveTextContent(
+        'No te alcanza para el pago y el gas'
+      );
+      expect(within(dialogo).getByRole('link', { name: /ETH de prueba/ })).toHaveAttribute(
+        'href',
+        expect.stringContaining('faucet')
+      );
+      expect(getTransaccionesEnviadas()).toHaveLength(0);
+    });
+
+    it('si la red rechaza el envío por falta de fondos, muestra el mismo aviso', async () => {
+      setCadenaMock({
+        errorAlEnviar: { code: -32000, message: 'insufficient funds for gas * price + value' },
+      });
+      const { dialogo } = await pagarDiezMil();
+
+      expect(await within(dialogo).findByRole('alert')).toHaveTextContent(
+        'No te alcanza para el pago y el gas'
+      );
+    });
+
+    it('con la firma rechazada avisa, y se puede volver a pagar la misma carga', async () => {
+      setCadenaMock({ errorAlEnviar: { code: 4001, message: 'User rejected the request.' } });
+      const { user, dialogo } = await pagarDiezMil();
+
+      expect(await within(dialogo).findByRole('alert')).toHaveTextContent(
+        'Cancelaste el pago en la wallet'
+      );
+
+      setCadenaMock({ errorAlEnviar: null });
+      await user.click(within(dialogo).getByRole('button', { name: 'Pagar con MetaMask' }));
+
+      expect(await within(dialogo).findByText(/Acreditado/)).toBeInTheDocument();
+      // pagó la referencia de la primera carga: no se inició otra
+      expect(getTransaccionesEnviadas()[0].data.endsWith(PRIMERA_REFERENCIA.slice(2))).toBe(true);
+    });
+  });
+
   it('no deja seguir con un monto que el back rechazaría', async () => {
     const { user, dialogo } = await abrirCargaConCripto();
 

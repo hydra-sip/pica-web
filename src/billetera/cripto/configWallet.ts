@@ -8,8 +8,15 @@ import { baseSepolia } from 'wagmi/chains';
  * (MetaMask y las que se anuncian por EIP-6963). Sin WalletConnect no hace falta un projectId de Reown: el que
  * pide RainbowKit no se usa.
  */
+/**
+ * Sin batching por Multicall3: el saldo se lee con un `eth_getBalance` común. Lo comparten la config real y la
+ * de las pruebas.
+ */
+export const OPCIONES_DE_LECTURA = { batch: { multicall: false } } as const;
+
 const crearConfig = (): Config =>
   createConfig({
+    ...OPCIONES_DE_LECTURA,
     chains: [baseSepolia],
     connectors: connectorsForWallets(
       [{ groupName: 'Wallets del navegador', wallets: [injectedWallet] }],
