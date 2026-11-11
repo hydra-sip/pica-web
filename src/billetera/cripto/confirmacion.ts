@@ -13,10 +13,13 @@ export class CargaDemorada extends Error {
   }
 }
 
-// la transacción todavía no tiene las confirmaciones que pide el back, o su nodo no respondió
+// la transacción todavía no tiene las confirmaciones que pide el back, su nodo todavía no la ve (puede ir atrás
+// del que leyó el recibo) o no respondió: ya está pagada, así que se sigue esperando
+const REINTENTABLES = ['TRANSACCION_PENDIENTE', 'TRANSACCION_INEXISTENTE'];
+
 const sePuedeReintentar = (err: unknown) =>
   err instanceof ApiError &&
-  (err.problemDetail?.codigo === 'TRANSACCION_PENDIENTE' || err.status === 503);
+  (REINTENTABLES.includes(err.problemDetail?.codigo ?? '') || err.status === 503);
 
 /** Se dejó de esperar: se cerró el modal o se salió de la pantalla. */
 export class EsperaCancelada extends Error {

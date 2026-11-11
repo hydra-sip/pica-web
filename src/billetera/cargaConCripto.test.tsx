@@ -148,6 +148,19 @@ describe('HU-609 / T609-4 (PICA-334): Cargar con cripto desde Mi billetera', () 
       expect(await within(dialogo).findByText(/Acreditado/)).toBeInTheDocument();
     });
 
+    it('si el nodo del back todavía no ve la transacción, reintenta en vez de darla por perdida', async () => {
+      const pedidos = confirmarResponde(() =>
+        problema(400, 'TRANSACCION_INEXISTENTE', 'La red no tiene una transacción con ese hash')
+      );
+      const { dialogo } = await pagarDiezMil();
+
+      await waitFor(() => expect(pedidos.cantidad).toBe(1));
+      expect(within(dialogo).getByText(/Confirmando/)).toBeInTheDocument();
+      await vi.advanceTimersByTimeAsync(3000);
+
+      expect(await within(dialogo).findByText(/Acreditado/)).toBeInTheDocument();
+    });
+
     it('a los dos minutos sin acreditarse avisa la demora, y Reintentar vuelve a esperar', async () => {
       const pedidos = confirmarResponde(...Array.from({ length: 41 }, () => pendiente));
       const { user, dialogo } = await pagarDiezMil();
