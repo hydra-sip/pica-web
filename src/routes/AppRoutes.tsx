@@ -17,7 +17,6 @@ import { CancelacionesPage } from '../admin/pages/CancelacionesPage';
 import { ParametrosPage } from '../admin/pages/ParametrosPage';
 import { ReclamosPage } from '../admin/pages/ReclamosPage';
 import { ReclamoDetallePage } from '../admin/pages/ReclamoDetallePage';
-import { PERMISOS_BACKOFFICE } from '../shared/layouts/navegacion';
 import { NotFoundPage } from '../shared/pages/NotFoundPage';
 import { UnauthorizedPage } from '../shared/pages/UnauthorizedPage';
 import { RequireAuth } from '../auth/components/RequireAuth';
