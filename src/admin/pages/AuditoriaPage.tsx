@@ -2,10 +2,10 @@ import React, { useEffect, useState } from 'react';
 import {
   AccionAuditoria,
   auditoriaApi,
+  EntidadAuditoria,
   FiltrosAuditoria,
   RegistroAuditoria,
 } from '../../api/auditoriaApi';
-import { torneoApi } from '../../api/torneoApi';
 import { PageResponse, usuarioApi } from '../../api/usuarioApi';
 import { fechaHora } from '../../shared/formato';
 import { mensajeDeError } from '../../shared/mensajesError';
@@ -14,9 +14,10 @@ import { BuscadorFiltro, OpcionFiltro } from '../components/BuscadorFiltro';
 import './AuditoriaPage.css';
 
 /**
- * HU-704 (T704-2): el libro de auditoría. Filtros por torneo, usuario, acción y fechas que se combinan, y la tabla
- * paginada del más nuevo al más viejo; el detalle de cada registro se abre completo. Sigue la pantalla «Auditoría 2»
- * del Figma (filtros arriba y la tabla de registros) con los estilos del backoffice.
+ * HU-704 (T704-2): el libro de auditoría. Filtros por entidad e id, usuario, acción y fechas que se combinan, y la
+ * tabla paginada del más nuevo al más viejo; el detalle de cada registro se abre completo. La entidad Torneo trae
+ * además lo suyo (partidos, rifa y custodias), y la entidad de cada fila filtra por ella al tocarla. Sigue la
+ * pantalla «Auditoría 2» del Figma (filtros arriba y la tabla de registros) con los estilos del backoffice.
  */
 
 const TAMANIO_PAGINA = 20;
@@ -40,7 +41,7 @@ const ACCIONES: Record<AccionAuditoria, string> = {
   REINTEGRO: 'Reintegro',
 };
 
-const ENTIDADES: Record<string, string> = {
+const ENTIDADES: Record<EntidadAuditoria, string> = {
   TORNEO: 'Torneo',
   PARTIDO: 'Partido',
   RIFA: 'Rifa',
@@ -50,11 +51,6 @@ const ENTIDADES: Record<string, string> = {
   USUARIO: 'Usuario',
   PARAMETRO: 'Parámetro',
 };
-
-const buscarTorneos = (q: string): Promise<OpcionFiltro[]> =>
-  torneoApi
-    .getTorneosResumen({ q, size: 8 })
-    .then((pagina) => pagina.content.map((t) => ({ id: t.id, texto: t.nombre })));
 
 const buscarUsuarios = (q: string): Promise<OpcionFiltro[]> =>
   usuarioApi
@@ -74,6 +70,14 @@ const inicioDelDia = (dia: string, diasDespues = 0): string | undefined => {
 const entidad = (r: RegistroAuditoria): string =>
   r.entidad ? `${ENTIDADES[r.entidad] ?? r.entidad} ${r.entidadId ?? ''}`.trim() : '-';
 
+/** Quién lo hizo. Un login con un usuario que no existe no tiene a quién: va lo que se escribió. */
+const quien = (r: RegistroAuditoria): string | null => {
+  if (r.username) return `@${r.username}`;
+  const identificador = r.detalle?.identificador;
+  if (r.accion === 'LOGIN_FALLIDO' && typeof identificador === 'string') return `${identificador} (no existe)`;
+  return null;
+};
+
 const resumen = (detalle: RegistroAuditoria['detalle']): string =>
   detalle
     ? Object.entries(detalle)
@@ -82,7 +86,8 @@ const resumen = (detalle: RegistroAuditoria['detalle']): string =>
     : '-';
 
 export const AuditoriaPage: React.FC = () => {
-  const [torneo, setTorneo] = useState<OpcionFiltro | null>(null);
+  const [tipoEntidad, setTipoEntidad] = useState<EntidadAuditoria | ''>('');
+  const [entidadId, setEntidadId] = useState('');
   const [usuario, setUsuario] = useState<OpcionFiltro | null>(null);
   const [accion, setAccion] = useState<AccionAuditoria | ''>('');
   const [desde, setDesde] = useState('');
@@ -91,10 +96,26 @@ export const AuditoriaPage: React.FC = () => {
   const [resultado, setResultado] = useState<PageResponse<RegistroAuditoria> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [abierto, setAbierto] = useState<RegistroAuditoria | null>(null);
+  const [idsConRegistros, setIdsConRegistros] = useState<string[]>([]);
+
+  useEffect(() => {
+    setIdsConRegistros([]);
+    if (!tipoEntidad) return;
+    let vigente = true;
+    auditoriaApi
+      .ids(tipoEntidad)
+      .then((ids) => vigente && setIdsConRegistros(ids))
+      // sin la lista igual se puede escribir el id
+      .catch(() => undefined);
+    return () => {
+      vigente = false;
+    };
+  }, [tipoEntidad]);
 
   useEffect(() => {
     const filtros: FiltrosAuditoria = {
-      torneo: torneo?.id,
+      entidad: tipoEntidad || undefined,
+      entidadId: (tipoEntidad && entidadId.trim()) || undefined,
       usuario: usuario?.id,
       accion: accion || undefined,
       desde: inicioDelDia(desde),
@@ -110,7 +131,7 @@ export const AuditoriaPage: React.FC = () => {
     return () => {
       vigente = false;
     };
-  }, [torneo, usuario, accion, desde, hasta, pagina]);
+  }, [tipoEntidad, entidadId, usuario, accion, desde, hasta, pagina]);
 
   /** Cambiar un filtro vuelve a la primera página. */
   const filtrar = <T,>(set: (valor: T) => void) => (valor: T) => {
@@ -118,16 +139,21 @@ export const AuditoriaPage: React.FC = () => {
     setPagina(0);
   };
 
+  const elegirEntidad = (tipo: EntidadAuditoria | '', id = '') => {
+    setTipoEntidad(tipo);
+    setEntidadId(id);
+    setPagina(0);
+  };
+
   const limpiar = () => {
-    setTorneo(null);
+    elegirEntidad('');
     setUsuario(null);
     setAccion('');
     setDesde('');
     setHasta('');
-    setPagina(0);
   };
 
-  const hayFiltros = !!(torneo || usuario || accion || desde || hasta);
+  const hayFiltros = !!(tipoEntidad || usuario || accion || desde || hasta);
   const total = resultado?.page.totalElements ?? 0;
   const totalPaginas = resultado?.page.totalPages ?? 1;
   const primero = total === 0 ? 0 : pagina * TAMANIO_PAGINA + 1;
@@ -144,13 +170,40 @@ export const AuditoriaPage: React.FC = () => {
 
       <Card>
         <div className="auditoria-filtros" role="search" aria-label="Filtros de la auditoría">
-          <BuscadorFiltro
-            label="Torneo"
-            placeholder="Buscar torneo..."
-            buscar={buscarTorneos}
-            elegido={torneo}
-            onElegir={filtrar(setTorneo)}
-          />
+          <Field label="Entidad">
+            <Select
+              value={tipoEntidad}
+              onChange={(e) => elegirEntidad(e.target.value as EntidadAuditoria | '')}
+            >
+              <option value="">Todas</option>
+              {Object.entries(ENTIDADES).map(([valor, texto]) => (
+                <option key={valor} value={valor}>
+                  {texto}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field
+            label={tipoEntidad === 'PARAMETRO' ? 'Clave' : 'Id'}
+            hint={tipoEntidad === 'TORNEO' ? 'Trae también sus partidos, su rifa y sus pagos.' : undefined}
+          >
+            <Select
+              value={entidadId}
+              disabled={!tipoEntidad}
+              onChange={(e) => filtrar(setEntidadId)(e.target.value)}
+            >
+              <option value="">{tipoEntidad ? 'Todos' : 'Elegí una entidad'}</option>
+              {/* el elegido tocando una fila puede no estar entre los 200 de la lista */}
+              {(entidadId && !idsConRegistros.includes(entidadId)
+                ? [entidadId, ...idsConRegistros]
+                : idsConRegistros
+              ).map((id) => (
+                <option key={id} value={id}>
+                  {id}
+                </option>
+              ))}
+            </Select>
+          </Field>
           <BuscadorFiltro
             label="Usuario"
             placeholder="Buscar por nombre o @usuario..."
@@ -214,6 +267,7 @@ export const AuditoriaPage: React.FC = () => {
                 <th>Usuario</th>
                 <th>Acción</th>
                 <th>Entidad</th>
+                <th>Descripción</th>
                 <th>IP</th>
                 <th>Detalle</th>
               </tr>
@@ -222,9 +276,23 @@ export const AuditoriaPage: React.FC = () => {
               {resultado.content.map((r) => (
                 <tr key={r.id}>
                   <td className="auditoria-fecha">{fechaHora(r.fecha)}</td>
-                  <td>{r.username ? `@${r.username}` : <span className="auditoria-sistema">Sistema</span>}</td>
+                  <td>{quien(r) ?? <span className="auditoria-sistema">Sistema</span>}</td>
                   <td>{ACCIONES[r.accion] ?? r.accion}</td>
-                  <td>{entidad(r)}</td>
+                  <td>
+                    {r.entidad && r.entidadId ? (
+                      <button
+                        type="button"
+                        className="auditoria-entidad"
+                        title="Filtrar por esta entidad"
+                        onClick={() => elegirEntidad(r.entidad!, r.entidadId!)}
+                      >
+                        {entidad(r)}
+                      </button>
+                    ) : (
+                      entidad(r)
+                    )}
+                  </td>
+                  <td>{r.descripcion ?? '-'}</td>
                   <td>{r.ip ?? '-'}</td>
                   <td>
                     <div className="auditoria-detalle">
@@ -271,11 +339,13 @@ export const AuditoriaPage: React.FC = () => {
             <dt>Fecha y hora</dt>
             <dd>{fechaHora(abierto.fecha)}</dd>
             <dt>Usuario</dt>
-            <dd>{abierto.username ? `@${abierto.username}` : 'Sistema'}</dd>
+            <dd>{quien(abierto) ?? 'Sistema'}</dd>
             <dt>Acción</dt>
             <dd>{ACCIONES[abierto.accion] ?? abierto.accion}</dd>
             <dt>Entidad</dt>
             <dd>{entidad(abierto)}</dd>
+            <dt>Descripción</dt>
+            <dd>{abierto.descripcion ?? '-'}</dd>
             <dt>IP</dt>
             <dd>{abierto.ip ?? '-'}</dd>
           </dl>

@@ -84,6 +84,17 @@
   white-space: nowrap;
 }
 
+.auditoria-entidad {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-primary);
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .auditoria-detalle {
   display: flex;
   align-items: center;

@@ -27,17 +27,33 @@ export interface RegistroAuditoria {
   usuarioId: number | null;
   username: string | null;
   accion: AccionAuditoria;
-  /** TORNEO, PARTIDO, RIFA, CUSTODIA, BILLETERA, CARGA_CRIPTO, USUARIO o PARAMETRO. */
-  entidad: string | null;
+  entidad: EntidadAuditoria | null;
   entidadId: string | null;
+  /** El nombre de la entidad (el torneo, la rifa, el @usuario...); null si no se encuentra. */
+  descripcion: string | null;
   /** Solo la guardan el login y el login fallido. */
   ip: string | null;
   detalle: Record<string, unknown> | null;
 }
 
-/** Los filtros se combinan. `desde` incluye ese instante y `hasta` no. */
+export type EntidadAuditoria =
+  | 'TORNEO'
+  | 'PARTIDO'
+  | 'RIFA'
+  | 'CUSTODIA'
+  | 'BILLETERA'
+  | 'CARGA_CRIPTO'
+  | 'USUARIO'
+  | 'PARAMETRO';
+
+/**
+ * Los filtros se combinan. `entidad` sin `entidadId` trae todas las de ese tipo; con TORNEO trae además lo suyo
+ * (partidos, rifa y custodias). `desde` incluye ese instante y `hasta` no.
+ */
 export interface FiltrosAuditoria {
-  torneo?: number;
+  entidad?: EntidadAuditoria;
+  /** El id, o la clave si es un PARAMETRO. */
+  entidadId?: string;
   usuario?: number;
   accion?: AccionAuditoria;
   desde?: string;
@@ -54,5 +70,10 @@ export const auditoriaApi = {
     return httpClient.get<PageResponse<RegistroAuditoria>>('/admin/auditoria', {
       params: { ...filtros, page, size },
     });
+  },
+
+  /** Los ids de la entidad que tienen registros, para elegir en el filtro: hasta 200. */
+  ids: async (entidad: EntidadAuditoria): Promise<string[]> => {
+    return httpClient.get<string[]>('/admin/auditoria/ids', { params: { entidad } });
   },
 };
