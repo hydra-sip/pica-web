@@ -1,20 +1,41 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { MiDesignacion, torneoApi } from '../../api/torneoApi';
-import { fechaHora } from '../../shared/formato';
+import { HonorarioDesignacion, MiDesignacion, torneoApi } from '../../api/torneoApi';
+import { fechaHora, pesos } from '../../shared/formato';
 import { mensajeDeError } from '../../shared/mensajesError';
-import { Badge, Button, Card, Field, Modal, Textarea } from '../../shared/ui';
+import { Badge, BadgeTone, Button, Card, Field, Modal, Textarea } from '../../shared/ui';
 import { IconoAlerta } from '../../shared/ui/Iconos';
 import { COMPROMISOS, ESTADO_DESIGNACION, PERMISO_DESIGNACION, periodo } from '../designaciones';
 import '../torneos.css';
 
 const MAX_MOTIVO = 500;
 
+const HONORARIO: Record<
+  HonorarioDesignacion['estado'],
+  { texto: string; tono: BadgeTone; nota: string }
+> = {
+  EN_CUSTODIA: {
+    texto: 'Retenido en custodia',
+    tono: 'solido',
+    nota: 'La liquidación te lo transfiere a tu billetera de PICA cuando finaliza el torneo.',
+  },
+  ACREDITADO: {
+    texto: 'Acreditado',
+    tono: 'exito',
+    nota: 'La liquidación ya te lo acreditó en tu billetera.',
+  },
+  REINTEGRADO: {
+    texto: 'Devuelto',
+    tono: 'neutral',
+    nota: 'El torneo se canceló y el honorario volvió al organizador.',
+  },
+};
+
 /**
  * Una designación de árbitro (HU-807, PICA-315; wireframes 48 y 49 "Aceptar Designación de Árbitro"): la ficha del
  * torneo, los permisos que propone el organizador y el código de imparcialidad, que hay que aceptar para arbitrar.
- * Rechazar pide confirmación y deja escribir un motivo, que le llega al organizador. Los honorarios del wireframe
- * son de HU-604, todavía sin hacer.
+ * Rechazar pide confirmación y deja escribir un motivo, que le llega al organizador. Arriba del código, la custodia de
+ * honorarios (HU-604): lo que el organizador le depositó, retenido hasta que la liquidación se lo acredita.
  */
 export const DesignacionPage: React.FC = () => {
   const { torneoId } = useParams();
@@ -156,69 +177,102 @@ export const DesignacionPage: React.FC = () => {
           </Card>
         </div>
 
-        <Card as="section" className="designacion-seccion designacion-respuesta">
-          <h2>Código de imparcialidad</h2>
-          {pendiente ? (
-            <>
-              <p className="designacion-dato">Para arbitrar tenés que aceptar los tres puntos.</p>
-              <ul className="designacion-compromisos">
-                {COMPROMISOS.map((texto, i) => (
-                  <li key={texto}>
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={compromisos[i]}
-                        disabled={ocupado}
-                        onChange={(e) =>
-                          setCompromisos((actuales) =>
-                            actuales.map((v, j) => (j === i ? e.target.checked : v))
-                          )
-                        }
-                      />
-                      <span>{texto}</span>
-                    </label>
-                  </li>
-                ))}
-              </ul>
-              <div className="designacion-acciones">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  disabled={ocupado}
-                  onClick={() => setRechazando(true)}
-                >
-                  Rechazar designación
-                </Button>
-                <Button
-                  type="button"
-                  disabled={ocupado || !todosAceptados}
-                  onClick={() => responder(true)}
-                >
-                  Aceptar y confirmar
-                </Button>
-              </div>
-              <p className="designacion-nota">Al responder, le avisamos al organizador por mail.</p>
-            </>
-          ) : d.estado === 'ACEPTADO' ? (
-            <>
-              <p className="designacion-dato">
-                Lo aceptaste: ya podés arbitrar con los permisos que te dieron.
+        <div className="designacion-columna">
+          <Card as="section" className="designacion-seccion">
+            <h2>Custodia de honorarios</h2>
+            <p className="designacion-dato">Fondos garantizados en la custodia del torneo.</p>
+            {d.honorario ? (
+              <>
+                <div className="designacion-honorario">
+                  <div>
+                    <span>Total de honorarios acordados</span>
+                    <strong>{pesos(d.honorario.monto)}</strong>
+                  </div>
+                  <Badge tone={HONORARIO[d.honorario.estado].tono}>
+                    {HONORARIO[d.honorario.estado].texto}
+                  </Badge>
+                </div>
+                <p className="designacion-nota">{HONORARIO[d.honorario.estado].nota}</p>
+                {d.honorario.estado === 'ACREDITADO' && (
+                  <Link to="/billetera" className="btn btn-secondary">
+                    Ver mi billetera
+                  </Link>
+                )}
+              </>
+            ) : (
+              <p className="designacion-nota">
+                El organizador todavía no depositó honorarios para vos. Cuando lo haga, quedan
+                retenidos acá y la liquidación te los acredita al finalizar el torneo.
               </p>
-              {d.permisos.includes('RESOLVER_OBJECIONES') && (
-                <Link to={`/torneos/${d.torneoId}/objeciones`} className="btn btn-secondary">
-                  Ver objeciones
-                </Link>
-              )}
-            </>
-          ) : (
-            <>
-              <p className="designacion-dato">
-                Rechazaste la designación: no vas a arbitrar este torneo.
-              </p>
-              {d.motivoRechazo && <p className="designacion-dato">Motivo: {d.motivoRechazo}</p>}
-            </>
-          )}
-        </Card>
+            )}
+          </Card>
+
+          <Card as="section" className="designacion-seccion designacion-respuesta">
+            <h2>Código de imparcialidad</h2>
+            {pendiente ? (
+              <>
+                <p className="designacion-dato">Para arbitrar tenés que aceptar los tres puntos.</p>
+                <ul className="designacion-compromisos">
+                  {COMPROMISOS.map((texto, i) => (
+                    <li key={texto}>
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={compromisos[i]}
+                          disabled={ocupado}
+                          onChange={(e) =>
+                            setCompromisos((actuales) =>
+                              actuales.map((v, j) => (j === i ? e.target.checked : v))
+                            )
+                          }
+                        />
+                        <span>{texto}</span>
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+                <div className="designacion-acciones">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={ocupado}
+                    onClick={() => setRechazando(true)}
+                  >
+                    Rechazar designación
+                  </Button>
+                  <Button
+                    type="button"
+                    disabled={ocupado || !todosAceptados}
+                    onClick={() => responder(true)}
+                  >
+                    Aceptar y confirmar
+                  </Button>
+                </div>
+                <p className="designacion-nota">
+                  Al responder, le avisamos al organizador por mail.
+                </p>
+              </>
+            ) : d.estado === 'ACEPTADO' ? (
+              <>
+                <p className="designacion-dato">
+                  Lo aceptaste: ya podés arbitrar con los permisos que te dieron.
+                </p>
+                {d.permisos.includes('RESOLVER_OBJECIONES') && (
+                  <Link to={`/torneos/${d.torneoId}/objeciones`} className="btn btn-secondary">
+                    Ver objeciones
+                  </Link>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="designacion-dato">
+                  Rechazaste la designación: no vas a arbitrar este torneo.
+                </p>
+                {d.motivoRechazo && <p className="designacion-dato">Motivo: {d.motivoRechazo}</p>}
+              </>
+            )}
+          </Card>
+        </div>
       </div>
 
       <Modal

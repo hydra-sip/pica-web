@@ -219,6 +219,31 @@
   text-underline-offset: 3px;
 }
 
+.designacion-honorario {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.designacion-honorario > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.designacion-honorario strong {
+  font-family: var(--font-mono, monospace);
+  font-size: var(--text-lg);
+  color: var(--color-text);
+}
+
 .designacion-nota {
   margin: 0;
   font-size: var(--text-xs);
@@ -649,6 +674,22 @@
   justify-content: flex-end;
 }
 
+.torneos-gasto-descripcion {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.torneos-gasto-honorario {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
 .torneos-gasto-nuevo {
   padding-top: var(--space-2);
   border-top: 1px dashed var(--color-border);
@@ -707,6 +748,11 @@
   flex-direction: column;
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+.torneos-arbitro-nombre > .badge {
+  align-self: flex-start;
+  margin-top: var(--space-1);
 }
 
 .torneos-arbitro-nombre span,
@@ -933,6 +979,22 @@
 
 .torneos-consola-aviso p {
   margin: var(--space-1) 0 0;
+}
+
+/* Honorarios arbitrales en la consola (HU-604) */
+.honorarios-ayuda {
+  margin-bottom: var(--space-4);
+}
+
+.honorarios-accion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.honorarios-cargar {
+  font-size: var(--text-sm);
 }
 
 /* HU-605: el modal de cancelación */

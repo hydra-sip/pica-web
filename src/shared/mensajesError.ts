@@ -76,6 +76,17 @@ const POR_CODIGO: Record<string, string> = {
   ARBITRO_DUPLICADO: 'Ese árbitro ya está designado en el torneo.',
   ARBITRO_NO_PERMITIDO: 'No puede arbitrar este torneo: es el organizador o está inscripto.',
   ARBITRO_CON_PARTIDOS: 'Tiene partidos asignados: reasignalos antes de quitarlo.',
+  // HU-604: identidad del árbitro y honorarios
+  IDENTIDAD_NO_VERIFICADA:
+    'El usuario propuesto debe verificar su identidad antes de arbitrar torneos con dinero.',
+  GASTO_NO_ES_HONORARIO:
+    'Ese gasto no es un honorario arbitral: un gasto común se registra con su comprobante.',
+  HONORARIO_NO_DEDUCIBLE:
+    'Los honorarios arbitrales solo son deducibles si se abonan mediante transferencia interna de la plataforma.',
+  HONORARIO_YA_DEPOSITADO:
+    'Ese honorario ya está depositado: para cambiarlo o pagárselo a otro árbitro, primero retiralo.',
+  HONORARIO_SIN_DEPOSITAR: 'Ese honorario no tiene un depósito para retirar: recargá la página.',
+  GASTO_YA_PAGADO: 'Ese gasto ya está pagado.',
   INSCRIPCION_NO_CERRADA: 'El bracket se genera cuando se cierra la inscripción.',
   PARTICIPANTES_INSUFICIENTES:
     'Hacen falta al menos 2 inscripciones confirmadas para armar el bracket.',

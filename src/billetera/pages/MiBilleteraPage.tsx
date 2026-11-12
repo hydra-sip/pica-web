@@ -7,6 +7,7 @@ import {
   ESTADO_MOVIMIENTO_LABEL,
   MovimientoBilletera,
   TIPO_MOVIMIENTO_LABEL,
+  TipoMovimientoBilletera,
 } from '../../api/billeteraApi';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { fechaHora, pesos } from '../../shared/formato';
@@ -24,6 +25,15 @@ import { useRetomarCargasCripto } from '../cripto/useRetomarCargasCripto';
 import '../billetera.css';
 
 const TAMANIO_PAGINA = 10;
+
+/** Los movimientos con un evento que además dicen qué fueron: premios, liquidaciones y honorarios. */
+const CON_DETALLE: TipoMovimientoBilletera[] = [
+  'PREMIO',
+  'LIQUIDACION',
+  'HONORARIO',
+  'PAGO_SERVICIO',
+  'REINTEGRO',
+];
 
 // HU-609: wagmi, viem y RainbowKit se bajan recién al abrir Cargar con cripto
 const CargaConCripto = lazy(() => import('../cripto/CargaConCripto'));
@@ -342,9 +352,9 @@ export const MiBilleteraPage: React.FC = () => {
                           ) : (
                             <span>{mov.descripcion || mov.referenciaExterna || '-'}</span>
                           )}
-                          {/* HU-606: lo que acredita la liquidación dice qué es ("Premio del 1.º puesto en ...") */}
+                          {/* HU-606 y HU-604: lo que acredita la liquidación y los honorarios dicen qué son */}
                           {(mov.rifa || mov.torneo) &&
-                            (mov.tipo === 'PREMIO' || mov.tipo === 'LIQUIDACION') &&
+                            CON_DETALLE.includes(mov.tipo) &&
                             mov.descripcion && (
                               <span className="billetera-movimiento-detalle">{mov.descripcion}</span>
                             )}

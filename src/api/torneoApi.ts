@@ -1,4 +1,5 @@
 import { customFetch, httpClient } from './httpClient';
+import { UsuarioPublico } from './jugadorApi';
 import { PageResponse } from './usuarioApi';
 import {
   FiltrosTorneo,
@@ -124,16 +125,35 @@ export interface EconomiaTorneoPayload {
   premios: number[];
 }
 
+/** HU-604: un honorario arbitral solo se deduce si se deposita por la plataforma; si no, queda en el pozo. */
+export type TipoGasto = 'HONORARIO_ARBITRAL' | 'OTRO';
+
+/**
+ * Dónde está el pago de un gasto (HU-604): EN_CUSTODIA un honorario depositado, ACREDITADO cuando la liquidación se
+ * lo pagó al árbitro, REINTEGRADO si el torneo se canceló y PAGADO un gasto común con su comprobante.
+ */
+export type EstadoPagoGasto = 'PENDIENTE' | 'EN_CUSTODIA' | 'ACREDITADO' | 'REINTEGRADO' | 'PAGADO';
+
 export interface GastoDetalle {
   gastoId: number;
   descripcion: string;
   monto: number;
+  tipo: TipoGasto;
+  estadoPago: EstadoPagoGasto;
+  /** El árbitro de un honorario depositado. */
+  beneficiario: UsuarioPublico | null;
+  abonadoEn: string | null;
+  comprobante: string | null;
 }
 
 export interface GastoPayload {
   descripcion: string;
   monto: number;
+  tipo?: TipoGasto;
 }
+
+/** POST /torneos/{id}/gastos/{gastoId}/pago: uno de los dos. */
+export type PagoGastoPayload = { arbitroId: number } | { comprobante: string };
 
 /** GET /torneos/{id}/resumen-economico: las cuentas del paso 3 con el cupo completo. */
 export interface ResumenEconomico {
@@ -231,6 +251,15 @@ export interface ArbitroDetalle {
   respondidoEn: string | null;
   /** El que dio al rechazar, si dio uno. */
   motivoRechazo: string | null;
+  /** Si puede arbitrar torneos con dinero y cobrar honorarios (HU-604). */
+  identidadVerificada: boolean;
+}
+
+/** Lo que el organizador depositó para el árbitro en el torneo (HU-604, wireframe 49). */
+export interface HonorarioDesignacion {
+  monto: number;
+  moneda: string;
+  estado: 'EN_CUSTODIA' | 'ACREDITADO' | 'REINTEGRADO';
 }
 
 /** GET /designaciones/mias: una designación como la ve el árbitro (HU-807, wireframes 48 y 49). */
@@ -249,6 +278,8 @@ export interface MiDesignacion {
   designadoEn: string;
   respondidoEn: string | null;
   motivoRechazo: string | null;
+  /** El honorario depositado en la custodia del torneo (HU-604); null si no hay. */
+  honorario: HonorarioDesignacion | null;
 }
 
 /** Un resultado del buscador de árbitros (GET /arbitros). */
@@ -257,6 +288,8 @@ export interface ArbitroOpcion {
   username: string;
   nombres: string;
   apellidos: string;
+  /** Email verificado, y documento y fecha de nacimiento cargados (HU-604). */
+  identidadVerificada: boolean;
 }
 
 export interface MisTorneos extends PageResponse<MiTorneoResumen> {
@@ -408,6 +441,20 @@ export const torneoApi = {
 
   eliminarGasto: async (id: number, gastoId: number): Promise<void> => {
     return httpClient.delete<void>(`/torneos/${id}/gastos/${gastoId}`);
+  },
+
+  /** HU-604: deposita un honorario para un árbitro o registra el comprobante de un gasto común. */
+  pagarGasto: async (
+    id: number,
+    gastoId: number,
+    payload: PagoGastoPayload
+  ): Promise<GastoDetalle> => {
+    return httpClient.post<GastoDetalle>(`/torneos/${id}/gastos/${gastoId}/pago`, payload);
+  },
+
+  /** HU-604: el honorario depositado vuelve a la billetera del organizador. */
+  retirarHonorario: async (id: number, gastoId: number): Promise<GastoDetalle> => {
+    return httpClient.delete<GastoDetalle>(`/torneos/${id}/gastos/${gastoId}/pago`);
   },
 
   /** Sella el esquema, genera el enlace y abre la inscripción; 409 TORNEO_INCOMPLETO si falta algo. */
