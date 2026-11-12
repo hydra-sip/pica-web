@@ -2,11 +2,12 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { TorneosCatalogo } from '../../torneos/components/TorneosCatalogo';
+import { PERMISOS_BACKOFFICE } from '../layouts/navegacion';
 import { IconoBackoffice, IconoPerfil, IconoTrofeo, IconoUsuarios, IconoEscudo, IconoPersonas } from '../ui/Iconos';
 
 export const HomePage: React.FC = () => {
   const { user, hasPermission } = useAuth();
-  const veBackoffice = hasPermission(['USUARIO_VER', 'ROL_VER', 'PERSONA_VER', 'PARAMETRO_ADMINISTRAR']);
+  const veBackoffice = hasPermission(PERMISOS_BACKOFFICE);
 
   return (
     <div

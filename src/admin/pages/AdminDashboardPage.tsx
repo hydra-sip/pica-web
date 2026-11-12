@@ -45,6 +45,7 @@ export const AdminDashboardPage: React.FC = () => {
   const veUsuarios = hasPermission('USUARIO_VER');
   const vePersonas = hasPermission('PERSONA_VER');
   const veRoles = hasPermission('ROL_VER');
+  const veReclamos = hasPermission('RECLAMO_RESOLVER');
 
   const [metricas, setMetricas] = useState<MetricaKPI[]>([]);
   const [loading, setLoading] = useState(true);
@@ -357,6 +358,20 @@ export const AdminDashboardPage: React.FC = () => {
                     <IconoRoles size={16} /> Roles y Permisos
                   </strong>
                   <span className="panel-acceso-texto">Matriz de seguridad por módulo, permisos técnicos y roles de sistema</span>
+                </span>
+                <span aria-hidden="true" style={{ fontWeight: 700, fontSize: '1.1rem' }}>→</span>
+              </Link>
+            </Card>
+          )}
+
+          {veReclamos && (
+            <Card className="panel-acceso">
+              <Link to="/admin/reclamos" className="panel-acceso-link">
+                <span>
+                  <strong style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <IconoAlerta size={16} /> Reclamos de Rifas
+                  </strong>
+                  <span className="panel-acceso-texto">Revisión de disputas sobre sorteos, verificación criptográfica y resolución</span>
                 </span>
                 <span aria-hidden="true" style={{ fontWeight: 700, fontSize: '1.1rem' }}>→</span>
               </Link>

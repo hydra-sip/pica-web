@@ -15,6 +15,9 @@ import { RolesPage } from '../admin/pages/RolesPage';
 import { PersonasPage } from '../admin/pages/PersonasPage';
 import { CancelacionesPage } from '../admin/pages/CancelacionesPage';
 import { ParametrosPage } from '../admin/pages/ParametrosPage';
+import { ReclamosPage } from '../admin/pages/ReclamosPage';
+import { ReclamoDetallePage } from '../admin/pages/ReclamoDetallePage';
+import { PERMISOS_BACKOFFICE } from '../shared/layouts/navegacion';
 import { NotFoundPage } from '../shared/pages/NotFoundPage';
 import { UnauthorizedPage } from '../shared/pages/UnauthorizedPage';
 import { RequireAuth } from '../auth/components/RequireAuth';
@@ -164,6 +167,22 @@ export const AppRoutes: React.FC = () => {
               element={
                 <RequirePermiso permisos="PARAMETRO_ADMINISTRAR">
                   <ParametrosPage />
+                </RequirePermiso>
+              }
+            />
+            <Route
+              path="reclamos"
+              element={
+                <RequirePermiso permisos="RECLAMO_RESOLVER">
+                  <ReclamosPage />
+                </RequirePermiso>
+              }
+            />
+            <Route
+              path="reclamos/:id"
+              element={
+                <RequirePermiso permisos="RECLAMO_RESOLVER">
+                  <ReclamoDetallePage />
                 </RequirePermiso>
               }
             />

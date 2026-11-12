@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import { adminHandlers } from './adminHandlers';
 import { parametroHandlers } from './parametroHandlers';
+import { crearReclamoAdminHandlers } from './reclamoAdminHandlers';
 import { crearInscripcionesHandlers } from './inscripcionesHandlers';
 import { pronosticoHandlers } from './pronosticoHandlers';
 import { torneoHandlers } from './torneoHandlers';
@@ -27,6 +28,7 @@ const PERMISOS_SUPER_USUARIO = [
   'ROL_ELIMINAR',
   'ROL_ASIGNAR',
   'PARAMETRO_ADMINISTRAR',
+  'RECLAMO_RESOLVER',
 ];
 
 // El PARTICIPANTE puede inscribirse a torneos (seed del back); el organizador de los mocks no.
@@ -86,6 +88,8 @@ export const handlers = [
   ...adminHandlers,
   // Parámetros de la plataforma (HU-702)
   ...parametroHandlers,
+  // Reclamos de rifas y resolución en el admin (HU-706 / PICA-340)
+  ...crearReclamoAdminHandlers(() => mockCurrentUserState),
   // Inscripción en dos pasos: el capitán es el usuario logueado de estos mocks. Va antes que los torneos
   // públicos: atiende los slugs de sus escenarios y deja pasar los que no conoce.
   ...crearInscripcionesHandlers(() => mockCurrentUserState),
@@ -279,11 +283,14 @@ export const handlers = [
       });
     }
 
-    // SOPORTE (HU-605): solo revisa las cancelaciones con gastos
-    if ((id === 'soporte@pica.edu.ar' || id === 'soporte') && body.password === 'sop123') {
+    // SOPORTE (HU-605 y HU-706): revisa las cancelaciones con gastos y resuelve reclamos
+    if (
+      (id === 'soporte@pica.edu.ar' || id === 'soporte') &&
+      (body.password === 'sop123' || body.password === 'soporte123')
+    ) {
       establecerUsuario({
         usuario: {
-          id: 6,
+          id: 5,
           username: 'soporte',
           email: 'soporte@pica.edu.ar',
           estado: 'ACTIVO',
@@ -299,7 +306,7 @@ export const handlers = [
           telefono: '1155667788',
         },
         roles: [{ id: 5, nombre: 'SOPORTE', nombreAmigable: 'Soporte' }],
-        permisos: ['CANCELACION_REVISAR'],
+        permisos: ['CANCELACION_REVISAR', 'RECLAMO_RESOLVER'],
         datosCompletos: true,
       });
 
