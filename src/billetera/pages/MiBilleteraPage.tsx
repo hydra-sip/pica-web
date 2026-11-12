@@ -5,7 +5,6 @@ import {
   Billetera,
   CuentaBancaria,
   esIngreso,
-  ESTADO_MOVIMIENTO_LABEL,
   estadoMovimientoLabel,
   LimitesRetiro,
   MovimientoBilletera,
