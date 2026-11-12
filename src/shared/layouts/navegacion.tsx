@@ -1,4 +1,5 @@
 import {
+  IconoAlerta,
   IconoBackoffice,
   IconoBilletera,
   IconoConfiguracion,
@@ -40,8 +41,8 @@ export const PERMISOS_BACKOFFICE = [
   'ROL_VER',
   'PERSONA_VER',
   'PARAMETRO_ADMINISTRAR',
-  // HU-605: soporte solo revisa las cancelaciones con gastos
   'CANCELACION_REVISAR',
+  'RECLAMO_RESOLVER',
 ];
 
 /**
@@ -120,6 +121,12 @@ export const NAVEGACION: Record<Seccion, ItemNavegacion[]> = {
       texto: 'Parámetros',
       icono: <IconoConfiguracion />,
       permisos: ['PARAMETRO_ADMINISTRAR'],
+    },
+    {
+      ruta: '/admin/reclamos',
+      texto: 'Reclamos',
+      icono: <IconoAlerta />,
+      permisos: ['RECLAMO_RESOLVER'],
     },
   ],
 };

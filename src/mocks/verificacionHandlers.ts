@@ -204,6 +204,76 @@ export const mockRifaVerificacion10: RifaVerificacionData = {
   ],
 };
 
+// Rifa 40 en revisión (para probar reclamos en el admin): tiene manipulación intencional en el ganador
+// (el algoritmo da #22 como primer puesto, pero figura #44) para detectar discrepancia al recalcular.
+export const mockRifaVerificacion40: RifaVerificacionData = {
+  id: 40,
+  titulo: 'Rifa en Revisión por Disputa',
+  torneoNombre: null,
+  fechaSorteo: '2026-11-08T20:00:00Z',
+  listaHash: '67bf5000e79d7cf5f6767d8544cd4479a86dbe6aab1524ce02817a63d726c0c7',
+  listaSelladaEn: '2026-11-07T20:00:00Z',
+  lista: [
+    { numero: 11, ticketCodigo: 'R40-A1B2C3' },
+    { numero: 22, ticketCodigo: 'R40-D4E5F6' },
+    { numero: 33, ticketCodigo: 'T-EN-REVISION' },
+    { numero: 44, ticketCodigo: 'R40-G7H8J9' },
+  ],
+  compromisoHash: 'dd8779308ce724faefbf2889e38ff50f0bb6c8798fced43e000c7e4f20e0db82',
+  compromisoPublicadoEn: '2026-11-07T20:00:00Z',
+  semilla: '07c97930982c1976c1294989f12a49ded2ff66ed5726a708bcd930a2ccc98cd1',
+  semillaFirma: null,
+  semillaRonda: null,
+  semillaUrl: null,
+  semillaObtenidaEn: '2026-11-08T20:00:05Z',
+  premios: [
+    {
+      puesto: 1,
+      descripcion: 'Orden de compra deportiva',
+      pct: 100,
+      numeroGanador: 44,
+      ganador: 'carlos.m',
+    },
+  ],
+};
+
+// Rifa 42 sorteada y verificada (asociada al reclamo rechazado #4)
+export const mockRifaVerificacion42: RifaVerificacionData = {
+  id: 42,
+  titulo: 'Rifa Clausura Primavera',
+  torneoNombre: 'Copa Primavera',
+  fechaSorteo: '2026-11-05T21:00:00Z',
+  listaHash: '87f3b02bbfe70b10ddf126b196833e7c519e17df396a2233968bf61f8f132fea',
+  listaSelladaEn: '2026-11-04T21:00:00Z',
+  lista: [
+    { numero: 5, ticketCodigo: 'R42-X1Y2Z3' },
+    { numero: 14, ticketCodigo: 'R42-M4N5P6' },
+    { numero: 27, ticketCodigo: 'R42-Q7R8S9' },
+  ],
+  compromisoHash: '46826de4177011f05322cd7ec34712fff807e8275ed2616414906def02e82cf5',
+  compromisoPublicadoEn: '2026-11-04T21:00:00Z',
+  semilla: '3d4889196e0474713a9475bd7fa67eb5f8ff0cef1584383cea5f1dd547286dc8',
+  semillaFirma: null,
+  semillaRonda: null,
+  semillaUrl: null,
+  semillaObtenidaEn: '2026-11-05T21:00:05Z',
+  premios: [
+    {
+      puesto: 1,
+      descripcion: 'Pelota oficial',
+      pct: 100,
+      numeroGanador: 27,
+      ganador: 'ana.torres',
+    },
+  ],
+};
+
+const sorteosRifa: Record<number, RifaVerificacionData> = {
+  10: mockRifaVerificacion10,
+  40: mockRifaVerificacion40,
+  42: mockRifaVerificacion42,
+};
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
 const lado = (inscripcionId: number, nombre: string): LadoBracket => ({
@@ -259,13 +329,14 @@ export const verificacionHandlers = [
   }),
 
   http.get(`${API_URL}/rifas/publicas/:id/sorteo`, ({ params }) => {
-    if (Number(params.id) !== mockRifaVerificacion10.id) {
+    const sorteo = sorteosRifa[Number(params.id)];
+    if (!sorteo) {
       return HttpResponse.json(
         { status: 409, codigo: 'RIFA_NO_SORTEADA', detail: 'La rifa todavía no se sorteó.' },
         { status: 409, headers: { 'Content-Type': 'application/problem+json' } }
       );
     }
-    return HttpResponse.json(mockRifaVerificacion10);
+    return HttpResponse.json(sorteo);
   }),
 
   // la ronda de drand de la rifa 10, como la devuelve drand; las demás no existen

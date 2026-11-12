@@ -12,6 +12,7 @@ export interface PermisoItem {
 }
 
 import {
+  IconoAlerta,
   IconoUsuarios,
   IconoEscudo,
   IconoPersonas,
@@ -38,6 +39,7 @@ const MODULO_UI: Record<ModuloPermisosApi['modulo'], { modulo: string; icono: Re
   INSCRIPCIONES: { modulo: 'Módulo Inscripciones', icono: <IconoDocumento size={18} /> },
   TORNEOS: { modulo: 'Módulo Torneos', icono: <IconoTrofeo size={18} /> },
   PARAMETROS: { modulo: 'Módulo Parámetros', icono: <IconoConfiguracion size={18} /> },
+  RECLAMOS: { modulo: 'Módulo Reclamos', icono: <IconoAlerta size={18} /> },
 };
 
 const aModulosUi = (catalogo: ModuloPermisosApi[]): ModuloPermisos[] =>
