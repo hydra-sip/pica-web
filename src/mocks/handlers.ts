@@ -70,6 +70,8 @@ const usuarioGuardado = (): typeof USUARIO_INICIAL | null => {
 
 let mockCurrentUserState = usuarioGuardado() ?? USUARIO_INICIAL;
 
+export const getUsuarioActualMock = () => mockCurrentUserState;
+
 const establecerUsuario = (usuario: typeof USUARIO_INICIAL) => {
   mockCurrentUserState = usuario;
   try {

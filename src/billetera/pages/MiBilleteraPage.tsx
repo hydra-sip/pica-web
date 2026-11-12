@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom';
 import {
   billeteraApi,
   Billetera,
+  CuentaBancaria,
   esIngreso,
-  ESTADO_MOVIMIENTO_LABEL,
+  estadoMovimientoLabel,
+  LimitesRetiro,
   MovimientoBilletera,
   TIPO_MOVIMIENTO_LABEL,
   TipoMovimientoBilletera,
@@ -21,6 +23,8 @@ import {
   IconoRefrescar,
   IconoTrofeo,
 } from '../../shared/ui/Iconos';
+import { CuentasBancarias } from '../components/CuentasBancarias';
+import { ModalRetiro } from '../components/ModalRetiro';
 import { useRetomarCargasCripto } from '../cripto/useRetomarCargasCripto';
 import '../billetera.css';
 
@@ -69,6 +73,15 @@ export const MiBilleteraPage: React.FC = () => {
   const [errorModal, setErrorModal] = useState<string | null>(null);
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
 
+  // Estado de cuentas bancarias y retiros (HU-607)
+  const [cuentas, setCuentas] = useState<CuentaBancaria[]>([]);
+  const [cargandoCuentas, setCargandoCuentas] = useState<boolean>(true);
+  const [limitesRetiro, setLimitesRetiro] = useState<LimitesRetiro>({
+    minimo: 1000,
+    maximo: 500000,
+  });
+  const [modalRetiroAbierto, setModalRetiroAbierto] = useState<boolean>(false);
+
   const cargarBilletera = useCallback(async () => {
     try {
       const data = await billeteraApi.obtenerBilletera();
@@ -94,6 +107,27 @@ export const MiBilleteraPage: React.FC = () => {
     }
   }, []);
 
+  const cargarCuentas = useCallback(async () => {
+    setCargandoCuentas(true);
+    try {
+      const data = await billeteraApi.listarCuentas();
+      setCuentas(data);
+    } catch {
+      // si falla la carga inicial de cuentas, dejamos lista vacía
+    } finally {
+      setCargandoCuentas(false);
+    }
+  }, []);
+
+  const cargarLimitesRetiro = useCallback(async () => {
+    try {
+      const data = await billeteraApi.obtenerLimitesRetiro();
+      setLimitesRetiro(data);
+    } catch {
+      // fallback a topes estándar si falla la API
+    }
+  }, []);
+
   useEffect(() => {
     void cargarBilletera();
   }, [cargarBilletera]);
@@ -101,6 +135,21 @@ export const MiBilleteraPage: React.FC = () => {
   useEffect(() => {
     void cargarMovimientos(pagina);
   }, [cargarMovimientos, pagina]);
+
+  useEffect(() => {
+    void cargarCuentas();
+    void cargarLimitesRetiro();
+  }, [cargarCuentas, cargarLimitesRetiro]);
+
+  const handleRetiroExitoso = useCallback(
+    async (monto: number) => {
+      setMensajeExito(
+        `Solicitud de retiro por ${pesos(monto)} enviada. Tu transferencia se encuentra en proceso.`
+      );
+      await Promise.all([cargarBilletera(), cargarMovimientos(0)]);
+    },
+    [cargarBilletera, cargarMovimientos]
+  );
 
   const [criptoAbierto, setCriptoAbierto] = useState<boolean>(false);
 
@@ -176,6 +225,14 @@ export const MiBilleteraPage: React.FC = () => {
             disabled={billetera?.estado === 'BLOQUEADA'}
           >
             Cargar saldo
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setModalRetiroAbierto(true)}
+            disabled={billetera?.estado === 'BLOQUEADA'}
+          >
+            Retirar fondos
           </button>
           <button
             type="button"
@@ -278,6 +335,19 @@ export const MiBilleteraPage: React.FC = () => {
         </Card>
       </section>
 
+      {/* Cuentas bancarias (HU-607) */}
+      <CuentasBancarias
+        cuentas={cuentas}
+        cargando={cargandoCuentas}
+        onCuentaAgregada={() => {
+          void cargarCuentas();
+        }}
+        onCuentaEliminada={() => {
+          void cargarCuentas();
+        }}
+        deshabilitado={billetera?.estado === 'BLOQUEADA'}
+      />
+
       {/* Historial de Movimientos */}
       <section className="billetera-movimientos-seccion" aria-label="Historial de movimientos">
         <h2 className="billetera-seccion-titulo">Movimientos</h2>
@@ -323,7 +393,7 @@ export const MiBilleteraPage: React.FC = () => {
                   {movimientos.map((mov) => {
                     const ingreso = esIngreso(mov.tipo);
                     const tipoLabel = TIPO_MOVIMIENTO_LABEL[mov.tipo] || mov.tipo;
-                    const estadoLabel = ESTADO_MOVIMIENTO_LABEL[mov.estado] || mov.estado;
+                    const estadoLabel = estadoMovimientoLabel(mov);
 
                     return (
                       <tr key={mov.id}>
@@ -477,6 +547,16 @@ export const MiBilleteraPage: React.FC = () => {
           </div>
         </form>
       </Modal>
+
+      {/* Modal Retiro de fondos (HU-607) */}
+      <ModalRetiro
+        isOpen={modalRetiroAbierto}
+        onClose={() => setModalRetiroAbierto(false)}
+        saldoDisponible={billetera?.saldoDisponible ?? 0}
+        cuentasValidadas={cuentas.filter((c) => c.estadoValidacion === 'VALIDADA')}
+        limites={limitesRetiro}
+        onRetiroExitoso={(monto) => void handleRetiroExitoso(monto)}
+      />
     </div>
   );
 };

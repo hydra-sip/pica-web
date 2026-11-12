@@ -1,4 +1,10 @@
-import { Billetera, CargaCripto, MovimientoBilletera } from '../api/billeteraApi';
+import {
+  Billetera,
+  CargaCripto,
+  CuentaBancaria,
+  LimitesRetiro,
+  MovimientoBilletera,
+} from '../api/billeteraApi';
 
 export const billeteraInicialMock: Billetera = {
   saldoDisponible: 15000.0,
@@ -6,6 +12,24 @@ export const billeteraInicialMock: Billetera = {
   gananciaAcumulada: 8500.0,
   moneda: 'ARS',
   estado: 'ACTIVA',
+};
+
+export const cuentasBancariasInicialesMock: CuentaBancaria[] = [
+  {
+    id: 1,
+    tipo: 'CBU',
+    valor: '0170099220000012345678',
+    titular: 'Usuario PICA',
+    cuitCuil: '20381234567',
+    estadoValidacion: 'VALIDADA',
+    validadaEn: '2026-11-01T10:00:00Z',
+    creadoEn: '2026-11-01T09:30:00Z',
+  },
+];
+
+export const limitesRetiroInicialMock: LimitesRetiro = {
+  minimo: 1000.0,
+  maximo: 500000.0,
 };
 
 export const movimientosInicialesMock: MovimientoBilletera[] = [
@@ -149,9 +173,24 @@ export const acreditarCargaCriptoMock = (carga: CargaCripto, hash: string): Movi
   return movimiento;
 };
 
+let cuentasBancariasEstado: CuentaBancaria[] = [...cuentasBancariasInicialesMock];
+let limitesRetiroEstado: LimitesRetiro = { ...limitesRetiroInicialMock };
+
+export const getCuentasBancariasMock = (): CuentaBancaria[] => [...cuentasBancariasEstado];
+export const setCuentasBancariasMock = (nuevas: CuentaBancaria[]) => {
+  cuentasBancariasEstado = [...nuevas];
+};
+
+export const getLimitesRetiroMock = (): LimitesRetiro => ({ ...limitesRetiroEstado });
+export const setLimitesRetiroMock = (limites: LimitesRetiro) => {
+  limitesRetiroEstado = { ...limites };
+};
+
 export const resetBilleteraMock = () => {
   billeteraEstado = { ...billeteraInicialMock };
   movimientosEstado = [...movimientosInicialesMock];
   cargasCripto = new Map();
+  cuentasBancariasEstado = [...cuentasBancariasInicialesMock];
+  limitesRetiroEstado = { ...limitesRetiroInicialMock };
 };
 

@@ -110,6 +110,50 @@ export const ESTADO_MOVIMIENTO_LABEL: Record<EstadoMovimientoBilletera, string> 
   REVERTIDO: 'Revertido',
 };
 
+/** HU-607: Cuentas bancarias y retiros */
+export type TipoCuenta = 'CBU' | 'CVU' | 'ALIAS';
+
+export type EstadoValidacionCuenta = 'PENDIENTE' | 'VALIDADA' | 'RECHAZADA';
+
+export interface CuentaBancaria {
+  id: number;
+  tipo: TipoCuenta;
+  valor: string;
+  titular: string;
+  cuitCuil: string;
+  estadoValidacion: EstadoValidacionCuenta;
+  validadaEn: string | null;
+  creadoEn: string;
+}
+
+export interface CrearCuentaBancariaRequest {
+  tipo: TipoCuenta;
+  valor: string;
+  titular: string;
+  cuitCuil: string;
+}
+
+export interface LimitesRetiro {
+  minimo: number;
+  maximo: number;
+}
+
+export interface SolicitarRetiroRequest {
+  cuentaId: number;
+  monto: number;
+}
+
+/**
+ * Devuelve la etiqueta legible de un movimiento, contextualizando según su tipo y estado.
+ * En particular, para retiros en proceso (RETIRO + PENDIENTE) muestra "En proceso" (HU-607).
+ */
+export const estadoMovimientoLabel = (movimiento: MovimientoBilletera): string => {
+  if (movimiento.tipo === 'RETIRO' && movimiento.estado === 'PENDIENTE') {
+    return 'En proceso';
+  }
+  return ESTADO_MOVIMIENTO_LABEL[movimiento.estado] || movimiento.estado;
+};
+
 export const billeteraApi = {
   /**
    * Obtiene los saldos (disponible, retenido, ganancia acumulada) y estado de la billetera del usuario.
@@ -151,6 +195,41 @@ export const billeteraApi = {
   cargarSaldo: async (monto: number, referencia?: string): Promise<MovimientoBilletera> => {
     const payload: CargaRequest = { monto, ...(referencia ? { referencia } : {}) };
     return httpClient.post<MovimientoBilletera>('/billetera/cargas', payload);
+  },
+
+  /**
+   * HU-607: Listar cuentas bancarias del usuario autenticado.
+   */
+  listarCuentas: async (): Promise<CuentaBancaria[]> => {
+    return httpClient.get<CuentaBancaria[]>('/billetera/cuentas');
+  },
+
+  /**
+   * HU-607: Registrar y validar una nueva cuenta bancaria para retiros.
+   */
+  crearCuenta: async (data: CrearCuentaBancariaRequest): Promise<CuentaBancaria> => {
+    return httpClient.post<CuentaBancaria>('/billetera/cuentas', data);
+  },
+
+  /**
+   * HU-607: Dar de baja lógica una cuenta bancaria del usuario.
+   */
+  eliminarCuenta: async (id: number): Promise<void> => {
+    return httpClient.delete<void>(`/billetera/cuentas/${id}`);
+  },
+
+  /**
+   * HU-607: Obtener los topes mínimo y máximo parametrizados para retiros de fondos.
+   */
+  obtenerLimitesRetiro: async (): Promise<LimitesRetiro> => {
+    return httpClient.get<LimitesRetiro>('/billetera/retiros/limites');
+  },
+
+  /**
+   * HU-607: Solicitar un retiro hacia una cuenta bancaria validada.
+   */
+  solicitarRetiro: async (data: SolicitarRetiroRequest): Promise<MovimientoBilletera> => {
+    return httpClient.post<MovimientoBilletera>('/billetera/retiros', data);
   },
 };
 
