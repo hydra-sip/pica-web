@@ -42,6 +42,8 @@ export const PERMISOS_BACKOFFICE = [
   'PARAMETRO_ADMINISTRAR',
   // HU-605: soporte solo revisa las cancelaciones con gastos
   'CANCELACION_REVISAR',
+  // HU-704: el libro de auditoría
+  'AUDITORIA_VER',
 ];
 
 /**
@@ -120,6 +122,12 @@ export const NAVEGACION: Record<Seccion, ItemNavegacion[]> = {
       texto: 'Parámetros',
       icono: <IconoConfiguracion />,
       permisos: ['PARAMETRO_ADMINISTRAR'],
+    },
+    {
+      ruta: '/admin/auditoria',
+      texto: 'Auditoría',
+      icono: <IconoEscudoCheck />,
+      permisos: ['AUDITORIA_VER'],
     },
   ],
 };

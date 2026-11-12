@@ -21,6 +21,7 @@ import {
   IconoDocumento,
   IconoTrofeo,
   IconoConfiguracion,
+  IconoEscudoCheck,
 } from '../../shared/ui/Iconos';
 
 interface ModuloPermisos {
@@ -38,6 +39,7 @@ const MODULO_UI: Record<ModuloPermisosApi['modulo'], { modulo: string; icono: Re
   INSCRIPCIONES: { modulo: 'Módulo Inscripciones', icono: <IconoDocumento size={18} /> },
   TORNEOS: { modulo: 'Módulo Torneos', icono: <IconoTrofeo size={18} /> },
   PARAMETROS: { modulo: 'Módulo Parámetros', icono: <IconoConfiguracion size={18} /> },
+  AUDITORIA: { modulo: 'Módulo Auditoría', icono: <IconoEscudoCheck size={18} /> },
 };
 
 const aModulosUi = (catalogo: ModuloPermisosApi[]): ModuloPermisos[] =>
