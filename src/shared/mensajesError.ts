@@ -129,6 +129,19 @@ const POR_CODIGO: Record<string, string> = {
     'Los fondos están en custodia y no se pueden mover hasta que termine el evento. Al terminar, la liquidación acredita lo tuyo en tu billetera.',
   CUSTODIA_LIBERADA: 'Los fondos ya se liquidaron: lo que te corresponde está en tu billetera.',
   COMPROBANTE_NO_ENCONTRADO: 'Esta inscripción no tiene un pago.',
+  // HU-607: cuentas bancarias y retiro de fondos
+  CUENTA_TITULAR_NO_COINCIDE:
+    'La cuenta destino debe estar a nombre del titular verificado en la plataforma',
+  CUENTA_BANCARIA_DUPLICADA:
+    'Ya tenés una cuenta bancaria registrada con ese CBU, CVU o alias.',
+  CUENTA_NO_VALIDADA:
+    'Solo se puede retirar a una cuenta validada.',
+  CUENTA_BANCARIA_NO_ENCONTRADA:
+    'La cuenta bancaria no existe o no te pertenece.',
+  RETIRO_FUERA_DE_TOPES:
+    'El monto debe estar dentro de los límites de retiro permitidos.',
+  DOCUMENTO_NO_CARGADO:
+    'Debés tener tu documento registrado en tu perfil para gestionar cuentas y retiros.',
   // HU-605: cancelación de torneos y revisión de soporte
   TORNEO_NO_CANCELABLE:
     'Este torneo ya no se puede cancelar: se cancela con la inscripción abierta o cerrada, o en curso.',
