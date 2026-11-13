@@ -38,6 +38,33 @@ const custodiaMock = {
 /** HU-606: el reparto de un evento que todavía no se liquidó. */
 const sinLiquidar = { liquidado: false, liquidadoEn: null, total: 0, moneda: 'ARS', lineas: [] };
 
+/** HU-608: el panel de un torneo en curso, con la cuenta de la liquidación sobre la custodia de arriba. */
+const panelEnCurso = (torneoId: number) => ({
+  torneoId,
+  torneoNombre: 'Torneo de prueba',
+  estado: 'EN_CURSO',
+  liquidado: false,
+  liquidadoEn: null,
+  moneda: 'ARS',
+  recaudado: 20000,
+  gastosAdministrativos: 2000,
+  aporteRifa: 0,
+  gastos: 5000,
+  reintegroOrganizador: 5000,
+  comprometidoEnPremios: 15000,
+  pagos: 1,
+});
+
+const sinReporteFinal = () =>
+  new HttpResponse(
+    JSON.stringify({
+      status: 409,
+      codigo: 'FONDOS_EN_CUSTODIA',
+      detail: 'El reporte de liquidación final solo se emite después de que el torneo se liquida',
+    }),
+    { status: 409, headers: { 'Content-Type': 'application/problem+json' } }
+  );
+
 const fondosEnCustodia = () =>
   new HttpResponse(
     JSON.stringify({
@@ -53,8 +80,18 @@ export const billeteraHandlers = [
   http.get(`${API_URL}/torneos/:id/custodia`, () => HttpResponse.json(custodiaMock)),
   http.get(`${API_URL}/rifas/:id/custodia`, () => HttpResponse.json(custodiaMock)),
 
-  // GET /torneos/{id}/liquidacion y /rifas/{id}/liquidacion (HU-606): sin liquidar, sin líneas
-  http.get(`${API_URL}/torneos/:id/liquidacion`, () => HttpResponse.json(sinLiquidar)),
+  // GET /torneos/{id}/panel-financiero (HU-608): en curso, con la custodia de arriba y $5000 de gastos
+  http.get(`${API_URL}/torneos/:id/panel-financiero`, ({ params }) =>
+    HttpResponse.json(panelEnCurso(Number(params.id)))
+  ),
+
+  // GET /torneos/{id}/liquidacion y /rifas/{id}/liquidacion (HU-606): sin liquidar, sin líneas; con formato
+  // (HU-608), sin liquidar no hay reporte final
+  http.get(`${API_URL}/torneos/:id/liquidacion`, ({ request }) =>
+    new URL(request.url).searchParams.has('formato')
+      ? sinReporteFinal()
+      : HttpResponse.json(sinLiquidar)
+  ),
   http.get(`${API_URL}/rifas/:id/liquidacion`, () => HttpResponse.json(sinLiquidar)),
 
   // POST .../custodia/retiro: antes del cierre, siempre 409
@@ -96,17 +133,24 @@ export const billeteraHandlers = [
   }),
 
   // POST /billetera/cargas/cripto/{referencia}/confirmar: acredita con el hash, sin mirar la red
-  http.post(`${API_URL}/billetera/cargas/cripto/:referencia/confirmar`, async ({ params, request }) => {
-    const carga = getCargaCriptoMock(params.referencia as string);
-    if (!carga) {
-      return HttpResponse.json(
-        { status: 404, codigo: 'CARGA_NO_ENCONTRADA', detail: 'No hay una carga con esa referencia' },
-        { status: 404 }
-      );
+  http.post(
+    `${API_URL}/billetera/cargas/cripto/:referencia/confirmar`,
+    async ({ params, request }) => {
+      const carga = getCargaCriptoMock(params.referencia as string);
+      if (!carga) {
+        return HttpResponse.json(
+          {
+            status: 404,
+            codigo: 'CARGA_NO_ENCONTRADA',
+            detail: 'No hay una carga con esa referencia',
+          },
+          { status: 404 }
+        );
+      }
+      const { hash } = (await request.json()) as { hash: string };
+      return HttpResponse.json(acreditarCargaCriptoMock(carga, hash));
     }
-    const { hash } = (await request.json()) as { hash: string };
-    return HttpResponse.json(acreditarCargaCriptoMock(carga, hash));
-  }),
+  ),
 
   // POST /billetera/cargas
   http.post(`${API_URL}/billetera/cargas`, async ({ request }) => {
@@ -393,4 +437,3 @@ export const billeteraHandlers = [
     return HttpResponse.json(nuevoMovimiento, { status: 201 });
   }),
 ];
-

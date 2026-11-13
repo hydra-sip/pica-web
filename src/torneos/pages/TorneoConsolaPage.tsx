@@ -17,6 +17,7 @@ import { ProgramacionPartido } from '../components/ProgramacionPartido';
 import { RifaDelTorneo } from '../components/RifaDelTorneo';
 import { CustodiaDelEvento } from '../../billetera/components/CustodiaDelEvento';
 import { RepartoDeLaLiquidacion } from '../../billetera/components/RepartoDeLaLiquidacion';
+import { PanelFinancieroDelTorneo } from '../../billetera/components/PanelFinancieroDelTorneo';
 import { abreviarHash, ESTADO_TORNEO_UI, participantes, TONO_ESTADO_TORNEO } from '../formato';
 import { formatFecha } from '../utils/formatters';
 import '../torneos.css';
@@ -33,6 +34,9 @@ const conResultados = (bracket: BracketTorneo): boolean =>
  * Con el bracket sorteado, las objeciones del torneo (PICA-247). La ventana de check-in del torneo y la fecha de cada
  * partido, en el bracket (HU-308). Si el torneo tiene rifa, lo que lleva vendido y su pozo (HU-406). Lo cobrado, en
  * custodia hasta que el torneo termine (HU-603), y los honorarios arbitrales que se depositan ahí (HU-604).
+ *
+ * Dos pestañas (HU-608): Gestión, con todo lo de arriba, y Panel financiero, con los indicadores, la custodia, el
+ * reparto de la liquidación y la descarga de la liquidación final.
  */
 export const TorneoConsolaPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -46,6 +50,7 @@ export const TorneoConsolaPage: React.FC = () => {
   const [confirmandoCierre, setConfirmandoCierre] = useState(false);
   /** Cambia para volver a pedir las inscripciones: el cierre cancela las pendientes. */
   const [recargaInscripciones, setRecargaInscripciones] = useState(0);
+  const [pestana, setPestana] = useState<'gestion' | 'finanzas'>('gestion');
 
   const recargarConsola = useCallback(() => {
     if (!id) return;
@@ -261,143 +266,179 @@ export const TorneoConsolaPage: React.FC = () => {
         </p>
       </header>
 
-      <Card>
-        <div className="torneos-consola-aviso">
-          <div>
-            <strong>
-              {abierta
-                ? 'La inscripción sigue abierta'
-                : torneo.inscripcionCerradaEn
-                  ? `Inscripción cerrada el ${formatFecha(torneo.inscripcionCerradaEn)}`
-                  : 'Inscripción cerrada'}
-            </strong>
-            <p className="torneos-subtitulo">
-              {abierta
-                ? 'Se cierra sola al completarse el cupo o al llegar la fecha de cierre, y el bracket se sortea después.'
-                : 'Los cruces y los BYE salen de un sorteo con semilla: queda registrado y cualquiera lo puede recalcular.'}
-            </p>
-            {torneo.listaHash && (
-              <p className="torneos-subtitulo">
-                Lista sellada:{' '}
-                <code title={torneo.listaHash}>{abreviarHash(torneo.listaHash)}</code>
+      <div className="torneos-pestanas" role="tablist" aria-label="Secciones de la consola">
+        {(
+          [
+            ['gestion', 'Gestión'],
+            ['finanzas', 'Panel financiero'],
+          ] as const
+        ).map(([valor, texto]) => (
+          <button
+            key={valor}
+            type="button"
+            role="tab"
+            aria-selected={pestana === valor}
+            className={`torneos-pestana ${pestana === valor ? 'activa' : ''}`}
+            onClick={() => setPestana(valor)}
+          >
+            {texto}
+          </button>
+        ))}
+      </div>
+
+      {pestana === 'finanzas' ? (
+        <>
+          <PanelFinancieroDelTorneo torneoId={torneo.id} />
+          <CustodiaDelEvento evento="torneos" id={torneo.id} />
+          <RepartoDeLaLiquidacion evento="torneos" id={torneo.id} />
+        </>
+      ) : (
+        <>
+          <Card>
+            <div className="torneos-consola-aviso">
+              <div>
+                <strong>
+                  {abierta
+                    ? 'La inscripción sigue abierta'
+                    : torneo.inscripcionCerradaEn
+                      ? `Inscripción cerrada el ${formatFecha(torneo.inscripcionCerradaEn)}`
+                      : 'Inscripción cerrada'}
+                </strong>
+                <p className="torneos-subtitulo">
+                  {abierta
+                    ? 'Se cierra sola al completarse el cupo o al llegar la fecha de cierre, y el bracket se sortea después.'
+                    : 'Los cruces y los BYE salen de un sorteo con semilla: queda registrado y cualquiera lo puede recalcular.'}
+                </p>
+                {torneo.listaHash && (
+                  <p className="torneos-subtitulo">
+                    Lista sellada:{' '}
+                    <code title={torneo.listaHash}>{abreviarHash(torneo.listaHash)}</code>
+                  </p>
+                )}
+              </div>
+              <div className="torneos-acciones">
+                {abierta && !confirmandoCierre && (
+                  <Button onClick={() => setConfirmandoCierre(true)}>Cerrar inscripción</Button>
+                )}
+                {abierta && confirmandoCierre && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      disabled={cerrando}
+                      onClick={() => setConfirmandoCierre(false)}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button loading={cerrando} onClick={() => void cerrarInscripcion()}>
+                      Sí, cerrar la inscripción
+                    </Button>
+                  </>
+                )}
+                {puedeGenerar && (
+                  <Button loading={sorteando} onClick={() => void sortear()}>
+                    Generar bracket aleatorio
+                  </Button>
+                )}
+                {puedeRegenerar && !confirmando && (
+                  <Button
+                    variant="secondary"
+                    disabled={sorteando}
+                    onClick={() => setConfirmando(true)}
+                  >
+                    Regenerar bracket
+                  </Button>
+                )}
+                {puedeRegenerar && confirmando && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      disabled={sorteando}
+                      onClick={() => setConfirmando(false)}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button loading={sorteando} onClick={() => void sortear()}>
+                      Sí, sortear de nuevo
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+            {confirmando && (
+              <p className="torneos-subtitulo" role="status">
+                El sorteo anterior queda en la auditoría junto con el nuevo.
               </p>
             )}
-          </div>
-          <div className="torneos-acciones">
-            {abierta && !confirmandoCierre && (
-              <Button onClick={() => setConfirmandoCierre(true)}>Cerrar inscripción</Button>
+            {confirmandoCierre && (
+              <p className="torneos-subtitulo" role="status">
+                Es definitivo: la lista queda fija y se cancelan los borradores y las pendientes de
+                pago.
+              </p>
             )}
-            {abierta && confirmandoCierre && (
-              <>
-                <Button
-                  variant="ghost"
-                  disabled={cerrando}
-                  onClick={() => setConfirmandoCierre(false)}
-                >
-                  Cancelar
-                </Button>
-                <Button loading={cerrando} onClick={() => void cerrarInscripcion()}>
-                  Sí, cerrar la inscripción
-                </Button>
-              </>
+            {mensaje && (
+              <div
+                className={`alerta ${mensaje.tipo === 'exito' ? 'alerta-exito' : 'alerta-peligro'}`}
+                role={mensaje.tipo === 'exito' ? 'status' : 'alert'}
+              >
+                {mensaje.texto}
+              </div>
             )}
-            {puedeGenerar && (
-              <Button loading={sorteando} onClick={() => void sortear()}>
-                Generar bracket aleatorio
-              </Button>
-            )}
-            {puedeRegenerar && !confirmando && (
-              <Button variant="secondary" disabled={sorteando} onClick={() => setConfirmando(true)}>
-                Regenerar bracket
-              </Button>
-            )}
-            {puedeRegenerar && confirmando && (
-              <>
-                <Button variant="ghost" disabled={sorteando} onClick={() => setConfirmando(false)}>
-                  Cancelar
-                </Button>
-                <Button loading={sorteando} onClick={() => void sortear()}>
-                  Sí, sortear de nuevo
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-        {confirmando && (
-          <p className="torneos-subtitulo" role="status">
-            El sorteo anterior queda en la auditoría junto con el nuevo.
-          </p>
-        )}
-        {confirmandoCierre && (
-          <p className="torneos-subtitulo" role="status">
-            Es definitivo: la lista queda fija y se cancelan los borradores y las pendientes de
-            pago.
-          </p>
-        )}
-        {mensaje && (
-          <div
-            className={`alerta ${mensaje.tipo === 'exito' ? 'alerta-exito' : 'alerta-peligro'}`}
-            role={mensaje.tipo === 'exito' ? 'status' : 'alert'}
-          >
-            {mensaje.texto}
-          </div>
-        )}
-      </Card>
+          </Card>
 
-      <CustodiaDelEvento evento="torneos" id={torneo.id} />
-      <HonorariosDelTorneo torneoId={torneo.id} estado={torneo.estado} />
-      <RepartoDeLaLiquidacion evento="torneos" id={torneo.id} />
+          <HonorariosDelTorneo torneoId={torneo.id} estado={torneo.estado} />
 
-      <RifaDelTorneo torneoId={torneo.id} />
+          <RifaDelTorneo torneoId={torneo.id} />
 
-      <InscripcionesDelTorneo torneoId={torneo.id} recarga={recargaInscripciones} />
+          <InscripcionesDelTorneo torneoId={torneo.id} recarga={recargaInscripciones} />
 
-      <Card>
-        <div className="torneos-tarjeta-titulo">
-          <h2>Estructura del bracket</h2>
-          {torneo.slug && <Link to={`/torneos/${torneo.slug}`}>Ver la ficha pública</Link>}
-        </div>
-        {sinFecha > 0 && (
-          <div className="alerta alerta-aviso" role="status">
-            {sinFecha === 1
-              ? 'Hay 1 partido sin fecha: ponéle una para que se juegue.'
-              : `Hay ${sinFecha} partidos sin fecha: ponéles una para que se jueguen.`}
-          </div>
-        )}
-        {generado ? (
-          <Bracket
-            bracket={bracket}
-            conEnlaces
-            pie={(p) => (
-              <ProgramacionPartido
-                partido={p}
-                editable={programable}
-                resaltarSinFecha={enCurso}
-                inicioTorneo={torneo.fechaInicio}
-                finTorneo={torneo.fechaFin}
-                onProgramado={programado}
+          <Card>
+            <div className="torneos-tarjeta-titulo">
+              <h2>Estructura del bracket</h2>
+              {torneo.slug && <Link to={`/torneos/${torneo.slug}`}>Ver la ficha pública</Link>}
+            </div>
+            {sinFecha > 0 && (
+              <div className="alerta alerta-aviso" role="status">
+                {sinFecha === 1
+                  ? 'Hay 1 partido sin fecha: ponéle una para que se juegue.'
+                  : `Hay ${sinFecha} partidos sin fecha: ponéles una para que se jueguen.`}
+              </div>
+            )}
+            {generado ? (
+              <Bracket
+                bracket={bracket}
+                conEnlaces
+                pie={(p) => (
+                  <ProgramacionPartido
+                    partido={p}
+                    editable={programable}
+                    resaltarSinFecha={enCurso}
+                    inicioTorneo={torneo.fechaInicio}
+                    finTorneo={torneo.fechaFin}
+                    onProgramado={programado}
+                  />
+                )}
               />
+            ) : (
+              <p className="torneos-vacio">Todavía no hay bracket.</p>
             )}
-          />
-        ) : (
-          <p className="torneos-vacio">Todavía no hay bracket.</p>
-        )}
-      </Card>
+          </Card>
 
-      <Card>
-        <div className="torneos-tarjeta-titulo">
-          <h2>Check-in</h2>
-        </div>
-        <CheckinTorneo torneo={torneo} onGuardado={setTorneo} />
-      </Card>
+          <Card>
+            <div className="torneos-tarjeta-titulo">
+              <h2>Check-in</h2>
+            </div>
+            <CheckinTorneo torneo={torneo} onGuardado={setTorneo} />
+          </Card>
 
-      {generado && (
-        <Card>
-          <div className="torneos-tarjeta-titulo">
-            <h2>Objeciones</h2>
-          </div>
-          <ObjecionesTorneo torneoId={torneo.id} />
-        </Card>
+          {generado && (
+            <Card>
+              <div className="torneos-tarjeta-titulo">
+                <h2>Objeciones</h2>
+              </div>
+              <ObjecionesTorneo torneoId={torneo.id} />
+            </Card>
+          )}
+        </>
       )}
     </div>
   );
