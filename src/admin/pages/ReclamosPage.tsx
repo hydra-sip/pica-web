@@ -167,6 +167,14 @@ export const ReclamosPage: React.FC = () => {
                         {r.resueltoPor && (
                           <span className="reclamos-celda-secundaria">Por {r.resueltoPor}</span>
                         )}
+                        {r.estado !== 'PENDIENTE' &&
+                          (r.fondosLiberadosEn ? (
+                            <span className="reclamos-celda-secundaria">Fondos liberados</span>
+                          ) : r.rifa.estado !== 'LIQUIDADA' && r.rifa.estado !== 'CANCELADA' ? (
+                            <span className="reclamos-celda-secundaria">
+                              Pendiente de liberar fondos
+                            </span>
+                          ) : null)}
                       </td>
                       <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                         <Link

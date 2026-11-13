@@ -16,6 +16,9 @@ const crearReclamosIniciales = (): ReclamoAdminResumen[] => [
     resolucion: null,
     resueltoEn: null,
     resueltoPor: null,
+    fondosLiberadosEn: null,
+    fondosLiberadosPor: null,
+    fondosLiberadosMonto: null,
     creadoEn: '2026-11-10T15:30:00Z',
     rifa: {
       id: 10,
@@ -38,6 +41,9 @@ const crearReclamosIniciales = (): ReclamoAdminResumen[] => [
     resolucion: null,
     resueltoEn: null,
     resueltoPor: null,
+    fondosLiberadosEn: null,
+    fondosLiberadosPor: null,
+    fondosLiberadosMonto: null,
     creadoEn: '2026-11-09T18:10:00Z',
     rifa: {
       id: 40,
@@ -61,6 +67,9 @@ const crearReclamosIniciales = (): ReclamoAdminResumen[] => [
       'Se verificó discrepancia en el hash de la lista sellada. Se confirma fraude y se cancela la rifa con reintegro.',
     resueltoEn: '2026-11-08T11:20:00Z',
     resueltoPor: 'soporte',
+    fondosLiberadosEn: '2026-11-08T11:25:00Z',
+    fondosLiberadosPor: 'soporte',
+    fondosLiberadosMonto: 5500,
     creadoEn: '2026-11-07T20:00:00Z',
     rifa: {
       id: 41,
@@ -83,6 +92,9 @@ const crearReclamosIniciales = (): ReclamoAdminResumen[] => [
     resolucion: 'Recalculado el sorteo con la semilla oficial; los ganadores coinciden exactamente.',
     resueltoEn: '2026-11-06T16:45:00Z',
     resueltoPor: 'admin',
+    fondosLiberadosEn: null,
+    fondosLiberadosPor: null,
+    fondosLiberadosMonto: null,
     creadoEn: '2026-11-06T14:00:00Z',
     rifa: {
       id: 42,
@@ -210,12 +222,9 @@ export const crearReclamoAdminHandlers = (
     const otrosPendientesMismaRifa = mockReclamosAdmin.some(
       (r) => r.id !== actual.id && r.rifa.id === actual.rifa.id && r.estado === 'PENDIENTE'
     );
-    const nuevoEstadoRifa =
-      decision === 'FRAUDE_CONFIRMADO'
-        ? ('CANCELADA' as const)
-        : otrosPendientesMismaRifa
-          ? ('EN_REVISION' as const)
-          : ('SORTEADA' as const);
+    const nuevoEstadoRifa = otrosPendientesMismaRifa
+      ? ('EN_REVISION' as const)
+      : ('SORTEADA' as const);
 
     mockReclamosAdmin = mockReclamosAdmin.map((r) => {
       if (r.id === actual.id) {
@@ -235,6 +244,80 @@ export const crearReclamoAdminHandlers = (
     });
 
     return HttpResponse.json(mockReclamosAdmin[idx]);
+  }),
+
+  http.post(`${API_URL}/admin/reclamos/:id/liberar`, async ({ params }) => {
+    const id = Number(params.id);
+    const actual = mockReclamosAdmin.find((r) => r.id === id);
+    if (!actual) {
+      return HttpResponse.json(
+        { codigo: 'RECLAMO_NO_ENCONTRADO', detail: `Reclamo #${params.id} no encontrado` },
+        { status: 404 }
+      );
+    }
+
+    if (
+      actual.fondosLiberadosEn !== null ||
+      actual.rifa.estado === 'LIQUIDADA' ||
+      actual.rifa.estado === 'CANCELADA'
+    ) {
+      return HttpResponse.json(
+        {
+          codigo: 'CUSTODIA_LIBERADA',
+          detail: 'Los fondos de esta rifa ya fueron liberados.',
+        },
+        { status: 409 }
+      );
+    }
+
+    if (actual.estado === 'PENDIENTE') {
+      return HttpResponse.json(
+        {
+          codigo: 'RECLAMO_NO_RESUELTO',
+          detail: 'El reclamo todavía está pendiente de resolución.',
+        },
+        { status: 409 }
+      );
+    }
+
+    const otrosPendientesMismaRifa = mockReclamosAdmin.some(
+      (r) => r.id !== actual.id && r.rifa.id === actual.rifa.id && r.estado === 'PENDIENTE'
+    );
+    if (actual.rifa.estado === 'EN_REVISION' || otrosPendientesMismaRifa) {
+      return HttpResponse.json(
+        {
+          codigo: 'FONDOS_EN_CUSTODIA',
+          detail: 'La rifa todavía tiene otros reclamos pendientes en revisión.',
+        },
+        { status: 409 }
+      );
+    }
+
+    const ahora = new Date().toISOString();
+    const ejecutor = usuarioActual().usuario.username || 'admin';
+    const nuevoEstadoRifa =
+      actual.estado === 'ACEPTADO' ? ('CANCELADA' as const) : ('LIQUIDADA' as const);
+    const monto = actual.estado === 'ACEPTADO' ? 5500 : 5000;
+
+    let actualizado: ReclamoAdminResumen | undefined;
+    mockReclamosAdmin = mockReclamosAdmin.map((r) => {
+      if (r.id === actual.id) {
+        actualizado = {
+          ...r,
+          fondosLiberadosEn: ahora,
+          fondosLiberadosPor: ejecutor,
+          fondosLiberadosMonto: monto,
+          rifa: { ...r.rifa, estado: nuevoEstadoRifa },
+        };
+        return actualizado;
+      }
+      if (r.rifa.id === actual.rifa.id) {
+        return { ...r, rifa: { ...r.rifa, estado: nuevoEstadoRifa } };
+      }
+      return r;
+    });
+
+    return HttpResponse.json(actualizado);
   }),
 ];
 

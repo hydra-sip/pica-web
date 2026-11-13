@@ -15,13 +15,13 @@ export const DECISION_RECLAMO_UI: Record<
     titulo: 'Sin fraude (rechazar reclamo)',
     resultado: 'Sin fraude — Reclamo rechazado',
     descripcion:
-      'El sorteo se verificó correctamente y no se detectaron irregularidades. El reclamo queda rechazado.',
+      'El sorteo se verificó correctamente y no se detectaron irregularidades. El reclamo queda rechazado y se habilita la liberación de fondos al ganador.',
   },
   FRAUDE_CONFIRMADO: {
     titulo: 'Fraude confirmado (aceptar reclamo)',
     resultado: 'Fraude confirmado — Reclamo aceptado',
     descripcion:
-      'Se comprobó una alteración o irregularidad en el sorteo. El reclamo queda aceptado y la rifa se cancela con reintegro a los compradores.',
+      'Se comprobó una alteración o irregularidad en el sorteo. El reclamo queda aceptado y queda habilitada la liberación de fondos con reintegro a los compradores.',
   },
 };
 

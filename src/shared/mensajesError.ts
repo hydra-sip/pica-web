@@ -160,9 +160,10 @@ const POR_CODIGO: Record<string, string> = {
   NO_ES_COMPRADOR: 'No podés reclamar: no tenés un ticket comprado para esta rifa.',
   RECLAMO_DUPLICADO: 'Ya tenés un reclamo registrado para esta rifa.',
   RIFA_NO_SORTEADA: 'La rifa todavía no fue sorteada.',
-  // HU-706 / T706-2: Reclamos y resolución en el admin
+  // HU-706 / HU-707: Reclamos, resolución y liberación de fondos en el admin
   RECLAMO_NO_ENCONTRADO: 'El reclamo no existe.',
   RECLAMO_YA_RESUELTO: 'Este reclamo ya fue resuelto anteriormente.',
+  RECLAMO_NO_RESUELTO: 'El reclamo debe estar resuelto antes de liberar los fondos.',
   // HU-504 / T504-2: Sorteo de la rifa
   SORTEO_ANTICIPADO:
     'Todavía no llegó la fecha del sorteo: la rifa se sortea en la fecha comprometida.',
