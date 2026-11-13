@@ -43,6 +43,8 @@ export const PERMISOS_BACKOFFICE = [
   'PARAMETRO_ADMINISTRAR',
   'CANCELACION_REVISAR',
   'RECLAMO_RESOLVER',
+  // HU-704: el libro de auditoría
+  'AUDITORIA_VER',
 ];
 
 /**
@@ -127,6 +129,12 @@ export const NAVEGACION: Record<Seccion, ItemNavegacion[]> = {
       texto: 'Reclamos',
       icono: <IconoAlerta />,
       permisos: ['RECLAMO_RESOLVER'],
+    },
+    {
+      ruta: '/admin/auditoria',
+      texto: 'Auditoría',
+      icono: <IconoEscudoCheck />,
+      permisos: ['AUDITORIA_VER'],
     },
   ],
 };
