@@ -196,6 +196,7 @@ const torneoInformacionMock: TorneoInformacion = {
   checkinMinAntes: null,
   checkinDuracion: null,
   checkinSinPresentes: 'REPROGRAMAR',
+  discordWebhook: null,
   economia: {
     valorInscripcion: 5000,
     moneda: 'ARS',

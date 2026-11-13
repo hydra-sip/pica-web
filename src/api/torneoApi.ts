@@ -80,6 +80,11 @@ export interface TorneoInformacion extends Omit<
   checkinDuracion: number | null;
   /** Qué pasa si no se presenta ninguno de los dos al vencer la ventana (HU-309). */
   checkinSinPresentes: CriterioSinPresentes;
+  /**
+   * El webhook del canal de Discord al que van los avisos (PICA-370), enmascarado: solo el final del token, como
+   * `https://discord.com/api/webhooks/…/••••ghij`. Null sin webhook.
+   */
+  discordWebhook: string | null;
 }
 
 /** REPROGRAMAR deja el partido sin fecha; DESCALIFICAR_AMBOS lo cierra sin ganador y el rival siguiente pasa directo. */
@@ -417,6 +422,15 @@ export const torneoApi = {
     payload: CheckinTorneoPayload
   ): Promise<TorneoInformacion> => {
     return httpClient.put<TorneoInformacion>(`/torneos/${id}/checkin`, payload);
+  },
+
+  /** El webhook de Discord del torneo (PICA-370); al guardarlo, el back manda un mensaje de prueba al canal. */
+  guardarDiscord: async (id: number, url: string): Promise<TorneoInformacion> => {
+    return httpClient.put<TorneoInformacion>(`/torneos/${id}/discord`, { url });
+  },
+
+  quitarDiscord: async (id: number): Promise<TorneoInformacion> => {
+    return httpClient.delete<TorneoInformacion>(`/torneos/${id}/discord`);
   },
 
   resumenEconomico: async (id: number): Promise<ResumenEconomico> => {

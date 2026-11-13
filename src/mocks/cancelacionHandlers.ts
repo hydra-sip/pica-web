@@ -43,6 +43,7 @@ const torneoBase: TorneoInformacion = {
   checkinMinAntes: null,
   checkinDuracion: null,
   checkinSinPresentes: 'REPROGRAMAR',
+  discordWebhook: null,
   economia: {
     valorInscripcion: 20000,
     moneda: 'ARS',
