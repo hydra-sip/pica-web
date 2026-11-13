@@ -4,6 +4,7 @@ import { afterAll, afterEach, beforeAll } from 'vitest';
 import { clearSessionTokens } from '../api/httpClient';
 import { reiniciarInscripciones } from '../mocks/inscripcionesHandlers';
 import { resetParametrosMock } from '../mocks/parametroHandlers';
+import { resetReclamosAdminMock } from '../mocks/reclamoAdminHandlers';
 import { resetPronosticosMock } from '../mocks/pronosticoHandlers';
 import { resetTicketsMock } from '../mocks/ticketHandlers';
 import { resetBilleteraMock } from '../mocks/data';
@@ -20,6 +21,7 @@ afterEach(() => {
   server.resetHandlers();
   reiniciarInscripciones();
   resetParametrosMock();
+  resetReclamosAdminMock();
   resetPronosticosMock();
   resetTicketsMock();
   resetBilleteraMock();

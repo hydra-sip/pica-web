@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import { adminHandlers } from './adminHandlers';
 import { parametroHandlers } from './parametroHandlers';
+import { crearReclamoAdminHandlers } from './reclamoAdminHandlers';
 import { auditoriaHandlers } from './auditoriaHandlers';
 import { crearInscripcionesHandlers } from './inscripcionesHandlers';
 import { pronosticoHandlers } from './pronosticoHandlers';
@@ -12,7 +13,7 @@ import { cancelacionHandlers } from './cancelacionHandlers';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
-// El admin es Super Usuario: tiene los 13 permisos del seed V4, el de parámetros de V35 y el de auditoría de V48,
+// El admin es Super Usuario: tiene los 13 permisos del seed V4, el de parámetros de V35 y el de auditoría de V49,
 // como en el back
 const PERMISOS_SUPER_USUARIO = [
   'USUARIO_VER',
@@ -29,6 +30,7 @@ const PERMISOS_SUPER_USUARIO = [
   'ROL_ELIMINAR',
   'ROL_ASIGNAR',
   'PARAMETRO_ADMINISTRAR',
+  'RECLAMO_RESOLVER',
   'AUDITORIA_VER',
 ];
 
@@ -73,6 +75,8 @@ const usuarioGuardado = (): typeof USUARIO_INICIAL | null => {
 
 let mockCurrentUserState = usuarioGuardado() ?? USUARIO_INICIAL;
 
+export const getUsuarioActualMock = () => mockCurrentUserState;
+
 const establecerUsuario = (usuario: typeof USUARIO_INICIAL) => {
   mockCurrentUserState = usuario;
   try {
@@ -87,6 +91,8 @@ export const handlers = [
   ...adminHandlers,
   // Parámetros de la plataforma (HU-702)
   ...parametroHandlers,
+  // Reclamos de rifas y resolución en el admin (HU-706 / PICA-340)
+  ...crearReclamoAdminHandlers(() => mockCurrentUserState),
   // Libro de auditoría (HU-704)
   ...auditoriaHandlers,
   // Inscripción en dos pasos: el capitán es el usuario logueado de estos mocks. Va antes que los torneos
@@ -282,11 +288,14 @@ export const handlers = [
       });
     }
 
-    // SOPORTE (HU-605): solo revisa las cancelaciones con gastos
-    if ((id === 'soporte@pica.edu.ar' || id === 'soporte') && body.password === 'sop123') {
+    // SOPORTE (HU-605 y HU-706): revisa las cancelaciones con gastos y resuelve reclamos
+    if (
+      (id === 'soporte@pica.edu.ar' || id === 'soporte') &&
+      (body.password === 'sop123' || body.password === 'soporte123')
+    ) {
       establecerUsuario({
         usuario: {
-          id: 6,
+          id: 5,
           username: 'soporte',
           email: 'soporte@pica.edu.ar',
           estado: 'ACTIVO',
@@ -302,7 +311,7 @@ export const handlers = [
           telefono: '1155667788',
         },
         roles: [{ id: 5, nombre: 'SOPORTE', nombreAmigable: 'Soporte' }],
-        permisos: ['CANCELACION_REVISAR'],
+        permisos: ['CANCELACION_REVISAR', 'RECLAMO_RESOLVER'],
         datosCompletos: true,
       });
 

@@ -18,7 +18,16 @@ export interface RolDetalle extends RolResumen {
 
 /** GET /admin/permisos: el catálogo del seed V4, agrupado por módulo. */
 export interface ModuloPermisosApi {
-  modulo: 'USUARIOS' | 'PERSONAS' | 'ROLES' | 'RIFAS' | 'INSCRIPCIONES' | 'TORNEOS' | 'PARAMETROS' | 'AUDITORIA';
+  modulo:
+    | 'USUARIOS'
+    | 'PERSONAS'
+    | 'ROLES'
+    | 'RIFAS'
+    | 'INSCRIPCIONES'
+    | 'TORNEOS'
+    | 'PARAMETROS'
+    | 'RECLAMOS'
+    | 'AUDITORIA';
   permisos: { codigo: string; descripcion: string }[];
 }
 

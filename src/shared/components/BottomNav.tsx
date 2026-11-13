@@ -1,8 +1,8 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../auth/hooks/useAuth';
-import './BottomNav.css';
 import { PERMISOS_BACKOFFICE } from '../layouts/navegacion';
+import './BottomNav.css';
 
 export const BottomNav: React.FC = () => {
   const { isAuthenticated, hasPermission } = useAuth();
