@@ -109,6 +109,9 @@ describe('HU-706 / T706-2 (PICA-340): Reclamos y resolución en el admin', () =>
       resolucion: null,
       resueltoEn: null,
       resueltoPor: null,
+      fondosLiberadosEn: null,
+      fondosLiberadosPor: null,
+      fondosLiberadosMonto: null,
       creadoEn: '2026-11-10T10:00:00Z',
       rifa: {
         id: 10,
@@ -234,7 +237,24 @@ describe('HU-706 / T706-2 (PICA-340): Reclamos y resolución en el admin', () =>
       },
     ]);
     expect(screen.getByText('Aceptado')).toBeInTheDocument();
-    expect(screen.getByText('Rifa: Cancelada')).toBeInTheDocument();
+    expect(screen.getByText('Rifa: Sorteada')).toBeInTheDocument();
+    expect(screen.getByTestId('btn-liberar-fondos')).toBeInTheDocument();
+
+    // HU-707: tras confirmar fraude, libera los fondos con reintegro total
+    await user.click(screen.getByTestId('btn-liberar-fondos'));
+    const dialogLiberacion = await screen.findByRole('dialog');
+    expect(
+      within(dialogLiberacion).getByText(/Cancelación y reintegro total a compradores/i)
+    ).toBeInTheDocument();
+    await user.click(within(dialogLiberacion).getByRole('button', { name: 'Confirmar liberación' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Rifa: Cancelada')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('btn-liberar-fondos')).not.toBeInTheDocument();
+    expect(screen.getByTestId('reclamo-fondos-ya-liberados')).toHaveTextContent(
+      /Reintegro 100% a compradores/
+    );
     expect(screen.getByTestId('reclamo-resolucion-emitida')).toHaveTextContent('soporte');
   });
 
@@ -244,6 +264,9 @@ describe('HU-706 / T706-2 (PICA-340): Reclamos y resolución en el admin', () =>
     expect(await screen.findByRole('heading', { name: 'Reclamo #3' })).toBeInTheDocument();
     expect(screen.getByText('Aceptado')).toBeInTheDocument();
     expect(screen.getByText('Rifa: Cancelada')).toBeInTheDocument();
+    expect(screen.queryByTestId('btn-liberar-fondos')).not.toBeInTheDocument();
+    expect(screen.getByTestId('reclamo-fondos-ya-liberados')).toHaveTextContent(/5\.500/);
+    expect(screen.getByTestId('reclamo-fondos-ya-liberados')).toHaveTextContent('soporte');
     const emitida = screen.getByTestId('reclamo-resolucion-emitida');
     expect(emitida).toHaveTextContent('Fraude confirmado — Reclamo aceptado');
     expect(emitida).toHaveTextContent('soporte');
@@ -311,6 +334,9 @@ describe('HU-706 / T706-2 (PICA-340): Reclamos y resolución en el admin', () =>
           resolucion: 'Resuelto por otro operador.',
           resueltoEn: '2026-11-11T12:00:00Z',
           resueltoPor: 'soporte',
+          fondosLiberadosEn: null,
+          fondosLiberadosPor: null,
+          fondosLiberadosMonto: null,
           creadoEn: '2026-11-10T15:30:00Z',
           rifa: {
             id: 10,
@@ -336,5 +362,151 @@ describe('HU-706 / T706-2 (PICA-340): Reclamos y resolución en el admin', () =>
     expect(await screen.findByTestId('reclamo-resolucion-emitida')).toHaveTextContent(
       'Resuelto por otro operador.'
     );
+  });
+});
+
+describe('HU-707 / T707-2 (PICA-22): Liberación de fondos en reclamos', () => {
+  it('oculta la liberación mientras el reclamo está PENDIENTE y liquida al ganador tras resolver SIN_FRAUDE', async () => {
+    let llamadoLiberar = 0;
+    server.use(
+      http.post(`${API_URL}/admin/reclamos/:id/liberar`, () => {
+        llamadoLiberar += 1;
+      })
+    );
+
+    const { user } = await comoUsuario('soporte', 'soporte123', '/admin/reclamos/1');
+
+    expect(await screen.findByRole('heading', { name: 'Reclamo #1' })).toBeInTheDocument();
+    expect(screen.queryByTestId('reclamo-liberacion-fondos')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('btn-liberar-fondos')).not.toBeInTheDocument();
+
+    // Resuelve SIN_FRAUDE para habilitar el paso de liberación
+    await user.click(screen.getByRole('radio', { name: /Sin fraude/i }));
+    await user.type(
+      screen.getByLabelText(/Resolución \/ Fundamentación/i),
+      'Verificado correctamente contra la semilla pública.'
+    );
+    await user.click(screen.getByRole('button', { name: 'Emitir resolución' }));
+    await user.click(
+      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Confirmar resolución' })
+    );
+
+    expect(await screen.findByTestId('reclamo-liberacion-fondos')).toBeInTheDocument();
+    await user.click(screen.getByTestId('btn-liberar-fondos'));
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText(/Liquidación normal al ganador/i)).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Confirmar liberación' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Rifa: Liquidada')).toBeInTheDocument();
+    });
+    expect(llamadoLiberar).toBe(1);
+    expect(screen.queryByTestId('btn-liberar-fondos')).not.toBeInTheDocument();
+    const liberado = screen.getByTestId('reclamo-fondos-ya-liberados');
+    expect(liberado).toHaveTextContent('Liquidación al ganador');
+    expect(liberado).toHaveTextContent(/5\.000/);
+    expect(liberado).toHaveTextContent('soporte');
+  });
+
+  it('oculta el botón de liberación cuando la rifa sigue EN_REVISION por otros reclamos pendientes', async () => {
+    server.use(
+      http.get(`${API_URL}/admin/reclamos/1`, () =>
+        HttpResponse.json({
+          id: 1,
+          motivo: 'Revisión de premio',
+          estado: 'RECHAZADO',
+          resolucion: 'Sin fraude en este reclamo.',
+          resueltoEn: '2026-11-11T12:00:00Z',
+          resueltoPor: 'soporte',
+          fondosLiberadosEn: null,
+          fondosLiberadosPor: null,
+          fondosLiberadosMonto: null,
+          creadoEn: '2026-11-10T15:30:00Z',
+          rifa: {
+            id: 10,
+            titulo: 'Rifa con reclamo paralelo',
+            estado: 'EN_REVISION',
+            torneoNombre: null,
+            fechaSorteo: '2026-10-26T21:00:00Z',
+            semillaObtenidaEn: '2026-10-26T21:00:05Z',
+          },
+          reclamante: { id: 2, username: 'jperez', email: 'juan.perez@example.com' },
+        })
+      )
+    );
+
+    await comoUsuario('soporte', 'soporte123', '/admin/reclamos/1');
+
+    const card = await screen.findByTestId('reclamo-liberacion-fondos');
+    expect(card).toHaveTextContent(/hay otros reclamos pendientes/i);
+    expect(screen.queryByTestId('btn-liberar-fondos')).not.toBeInTheDocument();
+  });
+
+  it('muestra error 409 FONDOS_EN_CUSTODIA y recarga el reclamo en 409 CUSTODIA_LIBERADA', async () => {
+    let estadoActual: 'SORTEADA' | 'LIQUIDADA' = 'SORTEADA';
+    let liberadoEn: string | null = null;
+    let liberadoPor: string | null = null;
+    let liberadoMonto: number | null = null;
+
+    server.use(
+      http.get(`${API_URL}/admin/reclamos/1`, () =>
+        HttpResponse.json({
+          id: 1,
+          motivo: 'Revisión de sorteo',
+          estado: 'RECHAZADO',
+          resolucion: 'Sin fraude.',
+          resueltoEn: '2026-11-11T12:00:00Z',
+          resueltoPor: 'soporte',
+          fondosLiberadosEn: liberadoEn,
+          fondosLiberadosPor: liberadoPor,
+          fondosLiberadosMonto: liberadoMonto,
+          creadoEn: '2026-11-10T15:30:00Z',
+          rifa: {
+            id: 10,
+            titulo: 'Gran Rifa Benéfica de la Copa',
+            estado: estadoActual,
+            torneoNombre: null,
+            fechaSorteo: '2026-10-26T21:00:00Z',
+            semillaObtenidaEn: '2026-10-26T21:00:05Z',
+          },
+          reclamante: { id: 2, username: 'jperez', email: 'juan.perez@example.com' },
+        })
+      )
+    );
+
+    const { user } = await comoUsuario('soporte', 'soporte123', '/admin/reclamos/1');
+
+    // 1. 409 FONDOS_EN_CUSTODIA (plazo de 48 h abierto)
+    server.use(
+      http.post(`${API_URL}/admin/reclamos/1/liberar`, () =>
+        problema(409, 'FONDOS_EN_CUSTODIA', 'Todavía está abierto el plazo de 48 h')
+      )
+    );
+    await user.click(await screen.findByTestId('btn-liberar-fondos'));
+    await user.click(
+      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Confirmar liberación' })
+    );
+    expect(await screen.findByRole('alert')).toHaveTextContent(/plazo de reclamo de 48 h/i);
+
+    // 2. 409 CUSTODIA_LIBERADA (otro operador liberó antes) -> muestra alerta y recarga estado
+    server.use(
+      http.post(`${API_URL}/admin/reclamos/1/liberar`, () => {
+        estadoActual = 'LIQUIDADA';
+        liberadoEn = '2026-11-12T10:00:00Z';
+        liberadoPor = 'admin';
+        liberadoMonto = 5000;
+        return problema(409, 'CUSTODIA_LIBERADA', 'Ya fue liberada');
+      })
+    );
+    await user.click(screen.getByTestId('btn-liberar-fondos'));
+    await user.click(
+      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Confirmar liberación' })
+    );
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Los fondos de esta rifa ya fueron liberados.'
+    );
+    expect(await screen.findByTestId('reclamo-fondos-ya-liberados')).toHaveTextContent('admin');
+    expect(screen.queryByTestId('btn-liberar-fondos')).not.toBeInTheDocument();
   });
 });

@@ -15,6 +15,9 @@ export interface ReclamoAdminResumen {
   resolucion: string | null;
   resueltoEn: string | null;
   resueltoPor: string | null;
+  fondosLiberadosEn: string | null;
+  fondosLiberadosPor: string | null;
+  fondosLiberadosMonto: number | null;
   creadoEn: string;
   rifa: {
     id: number;
@@ -57,6 +60,11 @@ export const reclamoAdminApi = {
     payload: ResolverReclamoPayload
   ): Promise<ReclamoAdminResumen> => {
     return httpClient.post<ReclamoAdminResumen>(`/admin/reclamos/${id}/resolucion`, payload);
+  },
+
+  /** Libera los fondos congelados de un reclamo ya resuelto (HU-707, permiso RECLAMO_RESOLVER). */
+  liberarFondos: async (id: number): Promise<ReclamoAdminResumen> => {
+    return httpClient.post<ReclamoAdminResumen>(`/admin/reclamos/${id}/liberar`);
   },
 };
 

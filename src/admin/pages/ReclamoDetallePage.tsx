@@ -7,7 +7,7 @@ import {
 } from '../../api/reclamoAdminApi';
 import { rifaPublicaApi, SorteoRifa } from '../../api/rifaApi';
 import { ESTADO_RIFA_UI, TONO_ESTADO_RIFA } from '../../rifas/formato';
-import { fechaHora } from '../../shared/formato';
+import { fechaHora, pesos } from '../../shared/formato';
 import { codigoDeError, erroresPorCampo, mensajeDeError } from '../../shared/mensajesError';
 import { Badge, Button, Card, Field, Modal, Textarea } from '../../shared/ui';
 import { IconoAlerta, IconoListo } from '../../shared/ui/Iconos';
@@ -43,6 +43,12 @@ export const ReclamoDetallePage: React.FC = () => {
   const [errorResolucion, setErrorResolucion] = useState<string | null>(null);
   const [exitoResolucion, setExitoResolucion] = useState<string | null>(null);
 
+  // Liberación de fondos (HU-707 / T707-2)
+  const [modalLiberacionAbierto, setModalLiberacionAbierto] = useState(false);
+  const [liberando, setLiberando] = useState(false);
+  const [errorLiberacion, setErrorLiberacion] = useState<string | null>(null);
+  const [exitoLiberacion, setExitoLiberacion] = useState<string | null>(null);
+
   useEffect(() => {
     if (!Number.isInteger(reclamoId) || reclamoId <= 0) {
       setError('Identificador de reclamo inválido.');
@@ -56,6 +62,11 @@ export const ReclamoDetallePage: React.FC = () => {
     setReclamo(null);
     setSorteo(null);
     setErrorSorteo(null);
+    setErrorResolucion(null);
+    setExitoResolucion(null);
+    setErrorLiberacion(null);
+    setExitoLiberacion(null);
+    setModalLiberacionAbierto(false);
 
     reclamoAdminApi
       .obtener(reclamoId)
@@ -123,6 +134,8 @@ export const ReclamoDetallePage: React.FC = () => {
       });
       setReclamo(actualizado);
       setConfirmarAbierto(false);
+      setErrorLiberacion(null);
+      setExitoLiberacion(null);
       setExitoResolucion(
         decision === 'FRAUDE_CONFIRMADO'
           ? 'Resolución registrada: se confirmó fraude y el reclamo quedó aceptado.'
@@ -142,6 +155,47 @@ export const ReclamoDetallePage: React.FC = () => {
       }
     } finally {
       setEnviando(false);
+    }
+  };
+
+  const confirmarLiberacion = async () => {
+    if (!reclamo) return;
+    setLiberando(true);
+    setErrorLiberacion(null);
+    setExitoLiberacion(null);
+
+    try {
+      const actualizado = await reclamoAdminApi.liberarFondos(reclamo.id);
+      setReclamo(actualizado);
+      setModalLiberacionAbierto(false);
+      setExitoLiberacion(
+        actualizado.rifa.estado === 'CANCELADA'
+          ? 'Fondos liberados: la rifa se canceló y se reintegró el 100% a los compradores.'
+          : 'Fondos liberados: se liquidó la rifa y se acreditó el premio al ganador.'
+      );
+    } catch (err) {
+      setModalLiberacionAbierto(false);
+      const codigo = codigoDeError(err);
+      setErrorLiberacion(
+        mensajeDeError(err, 'No se pudieron liberar los fondos de la rifa.', {
+          RECLAMO_NO_RESUELTO: 'Solo podés liberar los fondos cuando el reclamo ya esté resuelto.',
+          CUSTODIA_LIBERADA: 'Los fondos de esta rifa ya fueron liberados.',
+          FONDOS_EN_CUSTODIA:
+            'Todavía no se pueden liberar los fondos: debe vencer el plazo de reclamo de 48 h y no quedar otros reclamos pendientes.',
+        })
+      );
+      if (
+        codigo === 'CUSTODIA_LIBERADA' ||
+        codigo === 'FONDOS_EN_CUSTODIA' ||
+        codigo === 'RECLAMO_NO_RESUELTO'
+      ) {
+        reclamoAdminApi
+          .obtener(reclamo.id)
+          .then(setReclamo)
+          .catch(() => undefined);
+      }
+    } finally {
+      setLiberando(false);
     }
   };
 
@@ -175,6 +229,12 @@ export const ReclamoDetallePage: React.FC = () => {
   const rifaEstadoUi = ESTADO_RIFA_UI[reclamo.rifa.estado] ?? reclamo.rifa.estado;
   const rifaTono = TONO_ESTADO_RIFA[reclamo.rifa.estado] ?? 'neutral';
   const decisionEmitida = decisionDeEstado(reclamo.estado);
+  const esFraudeConfirmado = reclamo.estado === 'ACEPTADO';
+  const custodiaYaLiberada =
+    reclamo.fondosLiberadosEn != null ||
+    reclamo.rifa.estado === 'LIQUIDADA' ||
+    reclamo.rifa.estado === 'CANCELADA';
+  const otrosPendientesEnRifa = reclamo.rifa.estado === 'EN_REVISION';
 
   return (
     <div className="reclamos-page">
@@ -391,6 +451,105 @@ export const ReclamoDetallePage: React.FC = () => {
         )}
       </Card>
 
+      {reclamo.estado !== 'PENDIENTE' && (
+        <Card
+          as="section"
+          className="reclamo-resolucion-card"
+          aria-labelledby="reclamo-liberacion-titulo"
+          data-testid="reclamo-liberacion-fondos"
+        >
+          <h2 id="reclamo-liberacion-titulo">Liberación de fondos</h2>
+
+          {exitoLiberacion && (
+            <div
+              className="alerta alerta-exito"
+              role="status"
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            >
+              <IconoListo size={18} />
+              <span>{exitoLiberacion}</span>
+            </div>
+          )}
+
+          {errorLiberacion && (
+            <div
+              className="alerta alerta-peligro"
+              role="alert"
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            >
+              <IconoAlerta size={18} />
+              <span>{errorLiberacion}</span>
+            </div>
+          )}
+
+          {custodiaYaLiberada ? (
+            <div className="reclamo-resolucion-emitida" data-testid="reclamo-fondos-ya-liberados">
+              <p className="reclamos-subtitulo" style={{ margin: 0 }}>
+                {esFraudeConfirmado
+                  ? 'La rifa fue cancelada y los fondos recaudados fueron reintegrados a las billeteras de los compradores.'
+                  : 'La custodia fue liberada y la rifa quedó liquidada a favor del ganador.'}
+              </p>
+              <dl className="reclamo-grilla-datos" style={{ padding: 0, background: 'transparent' }}>
+                <div>
+                  <dt>Destino</dt>
+                  <dd>
+                    <strong>
+                      {esFraudeConfirmado ? 'Reintegro 100% a compradores' : 'Liquidación al ganador'}
+                    </strong>
+                  </dd>
+                </div>
+                {reclamo.fondosLiberadosMonto != null && (
+                  <div>
+                    <dt>Monto liberado</dt>
+                    <dd>{pesos(reclamo.fondosLiberadosMonto)}</dd>
+                  </div>
+                )}
+                {reclamo.fondosLiberadosPor && (
+                  <div>
+                    <dt>Ejecutado por</dt>
+                    <dd>{reclamo.fondosLiberadosPor}</dd>
+                  </div>
+                )}
+                {reclamo.fondosLiberadosEn && (
+                  <div>
+                    <dt>Fecha de liberación</dt>
+                    <dd>{fechaHora(reclamo.fondosLiberadosEn)}</dd>
+                  </div>
+                )}
+              </dl>
+            </div>
+          ) : otrosPendientesEnRifa ? (
+            <div className="alerta alerta-aviso" role="status">
+              Todavía hay otros reclamos pendientes sobre esta rifa. Resolvé todos los reclamos antes
+              de liberar los fondos.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+              <p className="reclamos-subtitulo" style={{ margin: 0 }}>
+                {esFraudeConfirmado
+                  ? 'El reclamo confirmó fraude. Al liberar los fondos, la rifa se cancelará, los números vendidos quedarán reintegrados y se devolverá el 100% de lo abonado en la billetera de cada comprador.'
+                  : 'El reclamo fue rechazado (sin fraude). Al liberar los fondos, se ejecutará la liquidación normal de la rifa al ganador una vez vencido el plazo de 48 h desde el sorteo.'}
+              </p>
+              <div className="reclamo-acciones-form">
+                <Button
+                  type="button"
+                  variant={esFraudeConfirmado ? 'danger' : 'primary'}
+                  data-testid="btn-liberar-fondos"
+                  onClick={() => {
+                    setErrorLiberacion(null);
+                    setExitoLiberacion(null);
+                    setModalLiberacionAbierto(true);
+                  }}
+                  disabled={liberando}
+                >
+                  Liberar fondos
+                </Button>
+              </div>
+            </div>
+          )}
+        </Card>
+      )}
+
       <Modal
         isOpen={confirmarAbierto}
         onClose={() => !enviando && setConfirmarAbierto(false)}
@@ -430,6 +589,52 @@ export const ReclamoDetallePage: React.FC = () => {
             <p className="reclamos-subtitulo">Esta acción es definitiva y no se puede revertir.</p>
           </div>
         )}
+      </Modal>
+
+      <Modal
+        isOpen={modalLiberacionAbierto}
+        onClose={() => !liberando && setModalLiberacionAbierto(false)}
+        closeDisabled={liberando}
+        title="Confirmar liberación de fondos"
+        size="md"
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => setModalLiberacionAbierto(false)}
+              disabled={liberando}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant={esFraudeConfirmado ? 'danger' : 'primary'}
+              loading={liberando}
+              onClick={() => void confirmarLiberacion()}
+            >
+              Confirmar liberación
+            </Button>
+          </>
+        }
+      >
+        <div className="reclamo-modal-resumen">
+          <p>
+            Vas a ejecutar la liberación de fondos para el <strong>Reclamo #{reclamo.id}</strong>{' '}
+            sobre la rifa <strong>{reclamo.rifa.titulo}</strong>.
+          </p>
+          <p>
+            <strong>
+              {esFraudeConfirmado
+                ? 'Fraude confirmado — Cancelación y reintegro total a compradores'
+                : 'Sin fraude — Liquidación normal al ganador'}
+            </strong>
+          </p>
+          <p className="reclamos-subtitulo">
+            {esFraudeConfirmado
+              ? 'La rifa pasará a Cancelada, los números vendidos quedarán Reintegrados y se acreditará el 100% de lo pagado en las billeteras de todos los compradores.'
+              : 'Se liquidará la rifa acreditando el premio correspondiente en la billetera del ganador (requiere que no queden reclamos pendientes y haya vencido la ventana de 48 h).'}
+          </p>
+          <p className="reclamos-subtitulo">Esta acción es definitiva y no se puede revertir.</p>
+        </div>
       </Modal>
     </div>
   );
