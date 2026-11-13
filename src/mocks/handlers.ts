@@ -12,7 +12,7 @@ import { cancelacionHandlers } from './cancelacionHandlers';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
-// El admin es Super Usuario: tiene los 13 permisos del seed V4, el de parámetros de V35 y el de auditoría de V46,
+// El admin es Super Usuario: tiene los 13 permisos del seed V4, el de parámetros de V35 y el de auditoría de V48,
 // como en el back
 const PERMISOS_SUPER_USUARIO = [
   'USUARIO_VER',
