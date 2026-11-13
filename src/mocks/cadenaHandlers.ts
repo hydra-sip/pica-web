@@ -32,6 +32,8 @@ interface EstadoCadena {
   /** Si está, `eth_sendTransaction` espera a que se resuelva antes de responder: la firma "abierta". */
   firma: Promise<void> | null;
   reciboExitoso: boolean;
+  /** Si está, `eth_getTransactionReceipt` responde este error: el RPC de la wallet falla al leer el recibo. */
+  errorAlLeerRecibo: ErrorRpc | null;
   /** Si está, `eth_call` responde este error: lo que dice el contrato al revertir. */
   errorDelContrato: ErrorRpc | null;
 }
@@ -43,6 +45,7 @@ const inicial = (): EstadoCadena => ({
   errorAlEnviar: null,
   firma: null,
   reciboExitoso: true,
+  errorAlLeerRecibo: null,
   errorDelContrato: null,
 });
 
@@ -144,6 +147,7 @@ const responder = async (method: string, params: unknown[]): Promise<Resultado> 
       return { result: HASH_ENVIADO };
     }
     case 'eth_getTransactionReceipt':
+      if (estado.errorAlLeerRecibo) return { error: estado.errorAlLeerRecibo };
       return { result: enviadas.length ? recibo() : null };
     case 'eth_getTransactionByHash':
       return { result: enviadas.length ? transaccion() : null };

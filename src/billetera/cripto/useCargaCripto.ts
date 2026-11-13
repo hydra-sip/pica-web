@@ -198,7 +198,16 @@ export const useCargaCripto = (
       dispatch({ tipo: 'enviada', hash });
 
       const red = getPublicClient(config, { chainId: carga.chainId })!;
-      const recibo = await red.waitForTransactionReceipt({ hash });
+      let recibo: Awaited<ReturnType<ClientePublico['waitForTransactionReceipt']>>;
+      try {
+        recibo = await red.waitForTransactionReceipt({ hash });
+      } catch {
+        // el pago ya salió pero no se pudo leer el recibo (el RPC falló o tardó demasiado): el back lee la
+        // cadena por su cuenta y dice si se acreditó, si sigue pendiente o si la transacción no sirve
+        if (cierre.current.signal.aborted) return;
+        await acreditar(carga, hash);
+        return;
+      }
       if (cierre.current.signal.aborted) return;
       if (recibo.status === 'reverted') {
         // no hay nada que acreditar

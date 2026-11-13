@@ -179,6 +179,18 @@ describe('HU-609 / T609-4 (PICA-334): Cargar con cripto desde Mi billetera', () 
       expect(await within(dialogo).findByText(/Acreditado/)).toBeInTheDocument();
     });
 
+    it('si no se puede leer el recibo, no se queda colgada: le pregunta al back y se acredita', async () => {
+      setCadenaMock({ errorAlLeerRecibo: { code: -32000, message: 'header not found' } });
+      const pedidos = confirmarResponde(pendiente);
+      const { dialogo } = await pagarDiezMil();
+
+      await waitFor(() => expect(pedidos.cantidad).toBe(1));
+      expect(within(dialogo).getByText(/Confirmando/)).toBeInTheDocument();
+      await vi.advanceTimersByTimeAsync(3000);
+
+      expect(await within(dialogo).findByText(/Acreditado/)).toBeInTheDocument();
+    });
+
     it('si el back rechaza la transacción, muestra su mensaje y deja de reintentar', async () => {
       const pedidos = confirmarResponde(() =>
         problema(400, 'MONTO_NO_COINCIDE', 'La transacción no paga el monto de la carga')
