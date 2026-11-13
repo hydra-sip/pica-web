@@ -131,14 +131,16 @@ export const PanelFinancieroDelTorneo: React.FC<PanelFinancieroDelTorneoProps> =
           <small>Los paga cada inscripto aparte; van a la plataforma</small>
         </div>
         <div className="reparto-tarjeta panel-financiero-destacada">
-          <span>Comprometido en premios</span>
+          <span>{panel.liquidado ? 'Premios acreditados' : 'Comprometido en premios'}</span>
           <strong>{pesos(panel.comprometidoEnPremios)}</strong>
           <small>
-            {panel.aporteRifa > 0
-              ? `Incluye ${pesos(panel.aporteRifa)} que aporta la rifa`
-              : panel.liquidado
-                ? 'Acreditado a los ganadores'
-                : 'Lo recaudado menos el reintegro de gastos'}
+            {panel.pozoAlOrganizador > 0
+              ? `Nadie quedó en un puesto con premio: el pozo (${pesos(panel.pozoAlOrganizador)}) fue al organizador`
+              : panel.aporteRifa > 0
+                ? `Incluye ${pesos(panel.aporteRifa)} que aporta la rifa`
+                : panel.liquidado
+                  ? 'Acreditado a los ganadores'
+                  : 'Lo recaudado menos el reintegro de gastos'}
           </small>
         </div>
       </div>

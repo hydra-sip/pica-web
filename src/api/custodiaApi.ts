@@ -60,7 +60,8 @@ export interface RepartoLiquidacion {
 
 /**
  * HU-608: cómo viene la plata del torneo, con la cuenta de la liquidación. `reintegroOrganizador` son los gastos, hasta
- * lo recaudado; `comprometidoEnPremios` = `recaudado` - `reintegroOrganizador` + `aporteRifa`.
+ * lo recaudado. En curso, `comprometidoEnPremios` = `recaudado` - `reintegroOrganizador` + `aporteRifa`; liquidado, es
+ * lo que se acreditó en premios.
  */
 export interface PanelFinanciero {
   torneoId: number;
@@ -75,6 +76,8 @@ export interface PanelFinanciero {
   gastos: number;
   reintegroOrganizador: number;
   comprometidoEnPremios: number;
+  /** Liquidado sin nadie en un puesto con premio, el pozo que fue al organizador; si no, 0. */
+  pozoAlOrganizador: number;
   /** Cuántas inscripciones pagaron. */
   pagos: number;
 }

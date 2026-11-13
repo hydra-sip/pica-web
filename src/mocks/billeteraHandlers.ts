@@ -52,6 +52,7 @@ const panelEnCurso = (torneoId: number) => ({
   gastos: 5000,
   reintegroOrganizador: 5000,
   comprometidoEnPremios: 15000,
+  pozoAlOrganizador: 0,
   pagos: 1,
 });
 

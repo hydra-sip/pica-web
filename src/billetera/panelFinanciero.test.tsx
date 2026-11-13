@@ -24,6 +24,7 @@ const liquidado: PanelFinanciero = {
   gastos: 500,
   reintegroOrganizador: 500,
   comprometidoEnPremios: 3800,
+  pozoAlOrganizador: 0,
   pagos: 4,
 };
 
@@ -65,7 +66,9 @@ describe('Panel financiero del torneo (HU-608 / T608-3)', () => {
 
     expect(await screen.findByRole('region', { name: 'Panel financiero' })).toBeInTheDocument();
     expect(await screen.findByRole('region', { name: 'Fondos en custodia' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Estructura del bracket' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: 'Estructura del bracket' })
+    ).not.toBeInTheDocument();
   });
 
   it('en curso muestra los indicadores estimados y la descarga deshabilitada con el aviso', async () => {
@@ -116,7 +119,7 @@ describe('Panel financiero del torneo (HU-608 / T608-3)', () => {
     const { user, panel } = await panelFinanciero();
 
     expect(within(panel).getByText('Liquidado')).toBeInTheDocument();
-    expect(indicador(panel, 'Comprometido en premios')).toHaveTextContent(
+    expect(indicador(panel, 'Premios acreditados')).toHaveTextContent(
       'Incluye $ 300,00 que aporta la rifa'
     );
     expect(within(panel).queryByRole('note')).not.toBeInTheDocument();
@@ -132,6 +135,31 @@ describe('Panel financiero del torneo (HU-608 / T608-3)', () => {
     );
     expect(pedidos).toContain('csv');
     expect(pedidos).toContain('pdf');
+  });
+
+  it('liquidado sin ganadores, no hay premios y dice que el pozo fue al organizador', async () => {
+    server.use(
+      http.get(`${API_URL}/torneos/${TORNEO_A_CANCELAR}/panel-financiero`, () =>
+        HttpResponse.json({
+          ...liquidado,
+          aporteRifa: 0,
+          reintegroOrganizador: 0,
+          gastos: 0,
+          comprometidoEnPremios: 0,
+          pozoAlOrganizador: 5000,
+        })
+      )
+    );
+    const { panel } = await panelFinanciero();
+
+    expect(indicador(panel, 'Reintegro de gastos al organizador')).toHaveTextContent(/\$\s0,00/);
+    expect(indicador(panel, 'Premios acreditados')).toHaveTextContent(/\$\s0,00/);
+    expect(indicador(panel, 'Premios acreditados')).toHaveTextContent(
+      'Nadie quedó en un puesto con premio: el pozo ($ 5.000,00) fue al organizador'
+    );
+    expect(indicador(panel, 'Premios acreditados')).not.toHaveTextContent(
+      'Acreditado a los ganadores'
+    );
   });
 
   it('si la descarga falla, avisa', async () => {
