@@ -18,6 +18,7 @@ import { RifaDelTorneo } from '../components/RifaDelTorneo';
 import { CustodiaDelEvento } from '../../billetera/components/CustodiaDelEvento';
 import { RepartoDeLaLiquidacion } from '../../billetera/components/RepartoDeLaLiquidacion';
 import { PanelFinancieroDelTorneo } from '../../billetera/components/PanelFinancieroDelTorneo';
+import { LibroDeIngresos } from '../../billetera/components/LibroDeIngresos';
 import { abreviarHash, ESTADO_TORNEO_UI, participantes, TONO_ESTADO_TORNEO } from '../formato';
 import { formatFecha } from '../utils/formatters';
 import '../torneos.css';
@@ -289,6 +290,7 @@ export const TorneoConsolaPage: React.FC = () => {
       {pestana === 'finanzas' ? (
         <>
           <PanelFinancieroDelTorneo torneoId={torneo.id} />
+          <LibroDeIngresos torneoId={torneo.id} />
           <CustodiaDelEvento evento="torneos" id={torneo.id} />
           <RepartoDeLaLiquidacion evento="torneos" id={torneo.id} />
         </>

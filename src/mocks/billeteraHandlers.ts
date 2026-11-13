@@ -86,6 +86,25 @@ export const billeteraHandlers = [
     HttpResponse.json(panelEnCurso(Number(params.id)))
   ),
 
+  // GET /torneos/{id}/ingresos (HU-608): el único pago de la custodia de arriba
+  http.get(`${API_URL}/torneos/:id/ingresos`, ({ params }) =>
+    HttpResponse.json([
+      {
+        movimientoId: 31,
+        comprobante: `I${params.id}-31`,
+        pagadoEn: '2026-11-05T15:00:00Z',
+        inscripcionId: 12,
+        equipoNombre: 'Los Halcones',
+        pagadorNombre: 'Juan Uno',
+        pagadorUsername: 'dev_jugador1',
+        monto: 20000,
+        gastosAdministrativos: 2000,
+        total: 22000,
+        estado: 'CONFIRMADO',
+      },
+    ])
+  ),
+
   // GET /torneos/{id}/liquidacion y /rifas/{id}/liquidacion (HU-606): sin liquidar, sin líneas; con formato
   // (HU-608), sin liquidar no hay reporte final
   http.get(`${API_URL}/torneos/:id/liquidacion`, ({ request }) =>

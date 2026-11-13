@@ -84,10 +84,33 @@ export interface PanelFinanciero {
 
 export type FormatoLiquidacion = 'csv' | 'pdf';
 
+/** HU-608: un pago de inscripción en el libro de ingresos del torneo. */
+export interface IngresoInscripcion {
+  movimientoId: number;
+  /** El número del comprobante, como lo ve quien pagó. */
+  comprobante: string;
+  pagadoEn: string;
+  inscripcionId: number | null;
+  /** Null en un torneo individual. */
+  equipoNombre: string | null;
+  /** El jugador o, en equipos, el capitán. */
+  pagadorNombre: string;
+  pagadorUsername: string;
+  monto: number;
+  gastosAdministrativos: number;
+  total: number;
+  /** REVERTIDO si se le devolvió. */
+  estado: 'PENDIENTE' | 'CONFIRMADO' | 'RECHAZADO' | 'REVERTIDO';
+}
+
 export const custodiaApi = {
   /** HU-608: el organizador o quien tiene TORNEO_ADMINISTRAR; de otro, 404. */
   panelFinanciero: async (torneoId: number): Promise<PanelFinanciero> =>
     httpClient.get<PanelFinanciero>(`/torneos/${torneoId}/panel-financiero`),
+
+  /** HU-608: cada pago de inscripción del torneo, el más nuevo primero. */
+  ingresos: async (torneoId: number): Promise<IngresoInscripcion[]> =>
+    httpClient.get<IngresoInscripcion[]>(`/torneos/${torneoId}/ingresos`),
 
   /** HU-608: la liquidación final para descargar. Sin liquidar, 409 FONDOS_EN_CUSTODIA. */
   liquidacionFinal: async (torneoId: number, formato: FormatoLiquidacion): Promise<Blob> =>
