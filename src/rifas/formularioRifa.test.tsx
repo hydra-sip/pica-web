@@ -89,7 +89,9 @@ describe('PICA-308: Errores del formulario de rifa', () => {
     );
     await completarYGuardar(pedirTorneo, enDias(1), enDias(20));
 
-    expect(await screen.findByText('La fecha debe ser anterior al inicio del torneo.')).toBeVisible();
+    expect(
+      await screen.findByText('La fecha debe ser anterior al inicio del torneo.')
+    ).toBeVisible();
     expect(screen.getByLabelText('Fin de la venta')).toHaveAttribute('aria-invalid', 'true');
     expectJuntoAlBoton('Revisá los campos marcados.');
     expect(guardar).not.toHaveBeenCalled();
@@ -130,6 +132,16 @@ describe('PICA-308: Errores del formulario de rifa', () => {
     expect(
       await screen.findByText('No puede empezar antes de que se publique el torneo.')
     ).toBeVisible();
+    expect(guardar).not.toHaveBeenCalled();
+  });
+
+  it('Con un año de más de 4 cifras, avisa sin mandar el formulario', async () => {
+    const { guardar, pedirTorneo } = conTorneo(SIN_FECHAS, () => HttpResponse.json({}));
+    await completarYGuardar(pedirTorneo, null, '20226-11-13');
+
+    expect(await screen.findByText('Fecha inválida.')).toBeVisible();
+    expect(screen.getByLabelText('Fin de la venta')).toHaveAttribute('aria-invalid', 'true');
+    expectJuntoAlBoton('Revisá los campos marcados.');
     expect(guardar).not.toHaveBeenCalled();
   });
 
@@ -207,7 +219,9 @@ describe('PICA-308: Iniciar la venta al publicar', () => {
     );
     await completarYGuardar(pedirTorneo, null, enDias(20));
 
-    expect(await screen.findByText('La fecha debe ser anterior al inicio del torneo.')).toBeVisible();
+    expect(
+      await screen.findByText('La fecha debe ser anterior al inicio del torneo.')
+    ).toBeVisible();
     expect(guardar).not.toHaveBeenCalled();
   });
 });

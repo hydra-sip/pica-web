@@ -38,6 +38,9 @@ export const ListaSellada: React.FC<ListaSelladaProps> = ({
       .catch((err) => setError(mensajeDeError(err, 'No se pudo cargar la lista sellada.')));
   };
 
+  // Desde la versión 2 del sorteo (CR-06) cada línea lleva también el comprador
+  const conComprador = lista?.some((l) => l.comprador) ?? false;
+
   return (
     <Card data-testid="rifa-lista-sellada">
       <h2 className="rifas-subtitulo-seccion">Lista sellada</h2>
@@ -77,8 +80,9 @@ export const ListaSellada: React.FC<ListaSelladaProps> = ({
         onClose={() => setAbierto(false)}
       >
         <p className="rifas-celda-secundaria">
-          Una línea <code>número;ticket</code> por cada número vendido, de menor a mayor. El SHA-256
-          de esas líneas, separadas por un salto de línea, es el hash de la lista.
+          Una línea <code>{conComprador ? 'número;ticket;comprador' : 'número;ticket'}</code> por
+          cada número vendido, de menor a mayor. El SHA-256 de esas líneas, separadas por un salto
+          de línea, es el hash de la lista.
         </p>
         {error && (
           <div className="alerta alerta-peligro" role="alert">
@@ -93,6 +97,7 @@ export const ListaSellada: React.FC<ListaSelladaProps> = ({
               <tr>
                 <th>Número</th>
                 <th>Ticket</th>
+                {conComprador && <th>Comprador</th>}
               </tr>
             </thead>
             <tbody>
@@ -102,6 +107,7 @@ export const ListaSellada: React.FC<ListaSelladaProps> = ({
                   <td>
                     <code>{l.ticketCodigo}</code>
                   </td>
+                  {conComprador && <td>{l.comprador}</td>}
                 </tr>
               ))}
             </tbody>
