@@ -265,6 +265,13 @@ export const validateDatosRifa = (
     }
   }
 
+  // El navegador deja escribir años de más de 4 cifras, que no se pueden convertir a fecha
+  for (const campo of ['ventaDesde', 'ventaHasta', 'fechaSorteo'] as const) {
+    if (datos[campo] && Number.isNaN(new Date(datos[campo]).getTime())) {
+      errores[campo] = 'Fecha inválida.';
+    }
+  }
+
   if (datos.torneoId) {
     const pct = Number(datos.pctDestinadoTorneo);
     if (!/^\d+$/.test(datos.pctDestinadoTorneo) || pct > 99) {

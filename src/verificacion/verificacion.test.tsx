@@ -335,6 +335,9 @@ describe('HU-504 / T504-3: Verificación de una rifa', () => {
     render(<VerificacionRifa datos={mockRifaVerificacion11} />);
 
     expect(screen.getByTestId('regla-sin-repetidos')).toHaveTextContent(/nadie gana dos veces/i);
+    expect(
+      screen.getByText(/"número;ticket;comprador" por cada número vendido/)
+    ).toBeInTheDocument();
 
     await user.click(screen.getByTestId('btn-recalcular-rifa'));
 
@@ -343,6 +346,21 @@ describe('HU-504 / T504-3: Verificación de una rifa', () => {
     expect(screen.getByTestId('orden-numero-35')).toHaveTextContent('C3');
     expect(screen.getByTestId('orden-numero-35')).toHaveTextContent('Salteado: ya ganó');
     expect(screen.getByTestId('orden-numero-21')).not.toHaveTextContent('Salteado');
+  });
+
+  it('CR-06: "Ver desglose" muestra cada número vendido con su ticket y su comprador', async () => {
+    const user = userEvent.setup();
+    render(<VerificacionRifa datos={mockRifaVerificacion11} />);
+
+    await user.click(screen.getByRole('button', { name: 'Ver desglose' }));
+
+    const dialogo = await screen.findByRole('dialog');
+    expect(within(dialogo).getByTestId('desglose-numero-7')).toHaveTextContent('R11-B07');
+    expect(within(dialogo).getByTestId('desglose-numero-7')).toHaveTextContent('C1');
+    expect(within(dialogo).getByTestId('desglose-numero-14')).toHaveTextContent('R11-B114');
+    expect(within(dialogo).getAllByRole('row')).toHaveLength(
+      mockRifaVerificacion11.lista.length + 1
+    );
   });
 
   it('CR-06: si la plataforma hubiera dado dos premios al mismo comprador, no coincide', async () => {

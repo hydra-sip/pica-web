@@ -45,6 +45,30 @@ describe('HU-407 / T407-2: Rifa cerrada con su hash', () => {
     expect(await screen.findByText('R7-4F2K9Q')).toBeInTheDocument();
     expect(screen.getByText('R7-8HX2LM')).toBeInTheDocument();
     expect(listaSellada).toHaveBeenCalledWith(7);
+    expect(screen.queryByRole('columnheader', { name: 'Comprador' })).not.toBeInTheDocument();
+  });
+
+  it('CR-06: con la versión 2 del sorteo, el desglose muestra el comprador de cada número', async () => {
+    vi.spyOn(rifaPublicaApi, 'listaSellada').mockResolvedValue([
+      { numero: 5, ticketCodigo: 'R7-4F2K9Q', comprador: 'C1' },
+      { numero: 12, ticketCodigo: 'R7-8HX2LM', comprador: 'C2' },
+    ]);
+    render(
+      <ListaSellada
+        rifaId={7}
+        listaHash={HASH}
+        listaSelladaEn="2026-10-30T15:30:00Z"
+        compromisoHash={null}
+        compromisoPublicadoEn={null}
+      />
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Ver desglose' }));
+
+    expect(await screen.findByRole('columnheader', { name: 'Comprador' })).toBeInTheDocument();
+    expect(screen.getByText('R7-4F2K9Q').closest('tr')).toHaveTextContent('C1');
+    expect(screen.getByText('R7-8HX2LM').closest('tr')).toHaveTextContent('C2');
+    expect(screen.getByText('número;ticket;comprador')).toBeInTheDocument();
   });
 });
 

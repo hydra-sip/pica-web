@@ -13,6 +13,7 @@ import {
   IconoRifas,
   IconoSimulacion,
 } from '../../shared/ui/Iconos';
+import { Button, Modal } from '../../shared/ui';
 import { recalcularSorteoRifa, RecalculoRifaResultado } from '../crypto/recalcularSorteo';
 import { ConsultaDrand, consultarDrand, semillaEsDeLaFirma } from '../crypto/semillaDrand';
 
@@ -25,6 +26,7 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
   const [semillaActual, setSemillaActual] = useState(datos.semilla);
   const [listaActual, setListaActual] = useState(datos.lista);
   const [modoSimulacion, setModoSimulacion] = useState(false);
+  const [desgloseAbierto, setDesgloseAbierto] = useState(false);
 
   // Estado del recálculo
   const [resultadoRecalculo, setResultadoRecalculo] = useState<RecalculoRifaResultado | null>(null);
@@ -250,9 +252,13 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
             <span className="verificacion-copiado-aviso">Copiado al portapapeles</span>
           )}
           <p className="verificacion-campo-explicacion">
-            SHA-256 de una línea &quot;número;ticket&quot; por cada número vendido, de menor a
-            mayor, fijado al cerrar la venta.
+            SHA-256 de una línea &quot;
+            {sinGanadoresRepetidos ? 'número;ticket;comprador' : 'número;ticket'}&quot; por cada
+            número vendido, de menor a mayor, fijado al cerrar la venta.
           </p>
+          <Button variant="ghost" size="sm" onClick={() => setDesgloseAbierto(true)}>
+            Ver desglose
+          </Button>
         </div>
 
         {/* Hash de compromiso previo */}
@@ -619,6 +625,38 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
           </div>
         </details>
       )}
+
+      {/* La lista publicada, con la que se calcula el hash: cada comprador encuentra su ticket */}
+      <Modal
+        isOpen={desgloseAbierto}
+        title="Desglose de la lista sellada"
+        onClose={() => setDesgloseAbierto(false)}
+      >
+        <div className="verificacion-tabla-wrapper">
+          <table className="verificacion-tabla">
+            <thead>
+              <tr>
+                <th>Número</th>
+                <th>Ticket</th>
+                {sinGanadoresRepetidos && <th>Comprador</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {[...datos.lista]
+                .sort((a, b) => a.numero - b.numero)
+                .map((l) => (
+                  <tr key={l.numero} data-testid={`desglose-numero-${l.numero}`}>
+                    <td>{l.numero}</td>
+                    <td>
+                      <code>{l.ticketCodigo}</code>
+                    </td>
+                    {sinGanadoresRepetidos && <td>{l.comprador}</td>}
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+      </Modal>
     </div>
   );
 };
