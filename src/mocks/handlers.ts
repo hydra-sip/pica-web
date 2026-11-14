@@ -2,6 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { adminHandlers } from './adminHandlers';
 import { parametroHandlers } from './parametroHandlers';
 import { crearReclamoAdminHandlers } from './reclamoAdminHandlers';
+import { auditoriaHandlers } from './auditoriaHandlers';
 import { crearInscripcionesHandlers } from './inscripcionesHandlers';
 import { pronosticoHandlers } from './pronosticoHandlers';
 import { torneoHandlers } from './torneoHandlers';
@@ -12,7 +13,8 @@ import { cancelacionHandlers } from './cancelacionHandlers';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
-// El admin es Super Usuario: tiene los 13 permisos del seed V4 y el de parámetros de V35, como en el back
+// El admin es Super Usuario: tiene los 13 permisos del seed V4, el de parámetros de V35 y el de auditoría de V49,
+// como en el back
 const PERMISOS_SUPER_USUARIO = [
   'USUARIO_VER',
   'USUARIO_CREAR',
@@ -29,6 +31,7 @@ const PERMISOS_SUPER_USUARIO = [
   'ROL_ASIGNAR',
   'PARAMETRO_ADMINISTRAR',
   'RECLAMO_RESOLVER',
+  'AUDITORIA_VER',
 ];
 
 // El PARTICIPANTE puede inscribirse a torneos (seed del back); el organizador de los mocks no.
@@ -90,6 +93,8 @@ export const handlers = [
   ...parametroHandlers,
   // Reclamos de rifas y resolución en el admin (HU-706 / PICA-340)
   ...crearReclamoAdminHandlers(() => mockCurrentUserState),
+  // Libro de auditoría (HU-704)
+  ...auditoriaHandlers,
   // Inscripción en dos pasos: el capitán es el usuario logueado de estos mocks. Va antes que los torneos
   // públicos: atiende los slugs de sus escenarios y deja pasar los que no conoce.
   ...crearInscripcionesHandlers(() => mockCurrentUserState),

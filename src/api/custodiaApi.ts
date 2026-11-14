@@ -58,7 +58,67 @@ export interface RepartoLiquidacion {
   lineas: LineaReparto[];
 }
 
+/**
+ * HU-608: cómo viene la plata del torneo, con la cuenta de la liquidación. `reintegroOrganizador` son los gastos, hasta
+ * lo recaudado. En curso, `comprometidoEnPremios` = `recaudado` - `reintegroOrganizador` + `aporteRifa`; liquidado, es
+ * lo que se acreditó en premios.
+ */
+export interface PanelFinanciero {
+  torneoId: number;
+  torneoNombre: string;
+  estado: string;
+  liquidado: boolean;
+  liquidadoEn?: string | null;
+  moneda: string;
+  recaudado: number;
+  gastosAdministrativos: number;
+  aporteRifa: number;
+  gastos: number;
+  reintegroOrganizador: number;
+  comprometidoEnPremios: number;
+  /** Liquidado sin nadie en un puesto con premio, el pozo que fue al organizador; si no, 0. */
+  pozoAlOrganizador: number;
+  /** Cuántas inscripciones pagaron. */
+  pagos: number;
+}
+
+export type FormatoLiquidacion = 'csv' | 'pdf';
+
+/** HU-608: un pago de inscripción en el libro de ingresos del torneo. */
+export interface IngresoInscripcion {
+  movimientoId: number;
+  /** El número del comprobante, como lo ve quien pagó. */
+  comprobante: string;
+  pagadoEn: string;
+  inscripcionId: number | null;
+  /** Null en un torneo individual. */
+  equipoNombre: string | null;
+  /** El jugador o, en equipos, el capitán. */
+  pagadorNombre: string;
+  pagadorUsername: string;
+  monto: number;
+  gastosAdministrativos: number;
+  total: number;
+  /** REVERTIDO si se le devolvió. */
+  estado: 'PENDIENTE' | 'CONFIRMADO' | 'RECHAZADO' | 'REVERTIDO';
+}
+
 export const custodiaApi = {
+  /** HU-608: el organizador o quien tiene TORNEO_ADMINISTRAR; de otro, 404. */
+  panelFinanciero: async (torneoId: number): Promise<PanelFinanciero> =>
+    httpClient.get<PanelFinanciero>(`/torneos/${torneoId}/panel-financiero`),
+
+  /** HU-608: cada pago de inscripción del torneo, el más nuevo primero. */
+  ingresos: async (torneoId: number): Promise<IngresoInscripcion[]> =>
+    httpClient.get<IngresoInscripcion[]>(`/torneos/${torneoId}/ingresos`),
+
+  /** HU-608: la liquidación final para descargar. Sin liquidar, 409 FONDOS_EN_CUSTODIA. */
+  liquidacionFinal: async (torneoId: number, formato: FormatoLiquidacion): Promise<Blob> =>
+    httpClient.get<Blob>(`/torneos/${torneoId}/liquidacion`, {
+      params: { formato },
+      comoBlob: true,
+    }),
+
   /** Solo el organizador del evento; de otro, 404. */
   obtener: async (evento: EventoCustodia, id: number): Promise<CustodiaResumen> =>
     httpClient.get<CustodiaResumen>(`/${evento}/${id}/custodia`),

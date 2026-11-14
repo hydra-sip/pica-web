@@ -1,0 +1,80 @@
+/* HU-608: el panel financiero del torneo. Las tarjetas son las del reparto de la liquidación (pagoConSaldo.css). */
+
+.panel-financiero h2 {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-md);
+}
+
+.panel-financiero-encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.panel-financiero-descargas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.panel-financiero-aviso {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+/* Lo comprometido en premios es lo principal, como la tarjeta oscura del wireframe */
+.reparto-tarjeta.panel-financiero-destacada {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary);
+  color: var(--color-on-primary, #fff);
+}
+
+.reparto-tarjeta.panel-financiero-destacada span,
+.reparto-tarjeta.panel-financiero-destacada small {
+  color: inherit;
+  opacity: 0.85;
+}
+
+/* El libro de ingresos por inscripción */
+.libro-ingresos h2 {
+  margin: 0;
+  font-size: var(--text-md);
+}
+
+.libro-ingresos-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.libro-ingresos-filtros input {
+  min-width: 16rem;
+}
+
+.libro-ingresos-filtros select {
+  width: auto;
+}
+
+.libro-ingresos .table-wrapper,
+.libro-ingresos table {
+  margin-top: var(--space-3);
+}
+
+.libro-ingresos-usuario {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
+.libro-ingresos-paginacion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}

@@ -26,7 +26,8 @@ export interface ModuloPermisosApi {
     | 'INSCRIPCIONES'
     | 'TORNEOS'
     | 'PARAMETROS'
-    | 'RECLAMOS';
+    | 'RECLAMOS'
+    | 'AUDITORIA';
   permisos: { codigo: string; descripcion: string }[];
 }
 
