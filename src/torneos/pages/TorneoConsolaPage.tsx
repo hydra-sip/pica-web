@@ -10,6 +10,7 @@ import { Badge, Button, Card } from '../../shared/ui';
 import { Bracket } from '../components/Bracket';
 import { CancelarTorneo } from '../components/CancelarTorneo';
 import { CheckinTorneo } from '../components/CheckinTorneo';
+import { DiscordTorneo } from '../components/DiscordTorneo';
 import { HonorariosDelTorneo } from '../components/HonorariosDelTorneo';
 import { EstadoDeLaCancelacion } from '../components/EstadoDeLaCancelacion';
 import { InscripcionesDelTorneo } from '../components/InscripcionesDelTorneo';
@@ -430,6 +431,13 @@ export const TorneoConsolaPage: React.FC = () => {
               <h2>Check-in</h2>
             </div>
             <CheckinTorneo torneo={torneo} onGuardado={setTorneo} />
+          </Card>
+
+          <Card>
+            <div className="torneos-tarjeta-titulo">
+              <h2>Avisos en Discord</h2>
+            </div>
+            <DiscordTorneo torneo={torneo} onGuardado={setTorneo} />
           </Card>
 
           {generado && (
