@@ -50,6 +50,13 @@ export const TorneoEstadoBadge: React.FC<TorneoEstadoBadgeProps> = ({
       border = 'rgba(148, 163, 184, 0.25)';
       dotColor = '#94a3b8';
       break;
+    case 'CANCELACION_EN_REVISION':
+      label = 'Cancelación en revisión';
+      bg = 'rgba(245, 158, 11, 0.15)';
+      color = '#f59e0b';
+      border = 'rgba(245, 158, 11, 0.35)';
+      dotColor = '#f59e0b';
+      break;
     case 'CANCELADO':
       label = 'Cancelado';
       bg = 'rgba(239, 68, 68, 0.15)';

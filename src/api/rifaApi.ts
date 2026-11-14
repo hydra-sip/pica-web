@@ -137,6 +137,8 @@ export interface TicketDetalle {
   ventanaReclamoAbierta: boolean;
   /** HU-504: los premios que ganó alguno de sus números; vacío antes del sorteo o si no ganó. */
   premiosGanados: PremioRifa[];
+  /** HU-606: lo que la liquidación le acreditó por esos premios; null mientras no se liquidó o si no ganó. */
+  premioAcreditado?: number | null;
 }
 
 // PICA-226, PICA-227, PICA-219, PICA-218: todas exigen RIFA_GESTIONAR y cada organizador ve solo las suyas.
@@ -271,6 +273,8 @@ export interface NumeroOcupado {
 export interface LineaListaSellada {
   numero: number;
   ticketCodigo: string;
+  /** CR-06: el comprador anónimo de la rifa (C1, C2...); null en las rifas de la versión 1. */
+  comprador?: string | null;
 }
 
 /** Fila de GET /rifas/publicas/sorteadas; `semillaObtenidaEn` es cuándo se sorteó. */
@@ -294,6 +298,8 @@ export interface SorteoRifa {
   fechaSorteo: string;
   listaHash: string;
   listaSelladaEn: string;
+  /** 1: el orden reparte los premios tal cual; 2 (CR-06): se saltea al comprador que ya ganó. */
+  versionSorteo: number;
   lista: LineaListaSellada[];
   compromisoHash: string;
   compromisoPublicadoEn: string;

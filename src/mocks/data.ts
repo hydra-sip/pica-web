@@ -1,4 +1,10 @@
-import { Billetera, MovimientoBilletera } from '../api/billeteraApi';
+import {
+  Billetera,
+  CargaCripto,
+  CuentaBancaria,
+  LimitesRetiro,
+  MovimientoBilletera,
+} from '../api/billeteraApi';
 
 export const billeteraInicialMock: Billetera = {
   saldoDisponible: 15000.0,
@@ -6,6 +12,24 @@ export const billeteraInicialMock: Billetera = {
   gananciaAcumulada: 8500.0,
   moneda: 'ARS',
   estado: 'ACTIVA',
+};
+
+export const cuentasBancariasInicialesMock: CuentaBancaria[] = [
+  {
+    id: 1,
+    tipo: 'CBU',
+    valor: '0170099220000012345678',
+    titular: 'Usuario PICA',
+    cuitCuil: '20381234567',
+    estadoValidacion: 'VALIDADA',
+    validadaEn: '2026-11-01T10:00:00Z',
+    creadoEn: '2026-11-01T09:30:00Z',
+  },
+];
+
+export const limitesRetiroInicialMock: LimitesRetiro = {
+  minimo: 1000.0,
+  maximo: 500000.0,
 };
 
 export const movimientosInicialesMock: MovimientoBilletera[] = [
@@ -116,8 +140,57 @@ export const cargarSaldoMock = (monto: number, referencia?: string): MovimientoB
   return nuevoMovimiento;
 };
 
+/** HU-609: el contrato PasarelaCargas de Base Sepolia (PICA-328) y la cotización fija de testnet del back. */
+export const CONTRATO_PASARELA = '0x36e633eDD1E79Ef2b9A3c6A099D873D52e44EDF0';
+const WEI_POR_CENTAVO = 100_000_000n;
+
+let cargasCripto = new Map<string, CargaCripto>();
+
+export const iniciarCargaCriptoMock = (monto: number): CargaCripto => {
+  const numero = (cargasCripto.size + 1).toString(16).padStart(64, '0');
+  const carga: CargaCripto = {
+    referencia: `0x${numero}`,
+    contrato: CONTRATO_PASARELA,
+    chainId: 84532,
+    montoWei: (BigInt(Math.round(monto * 100)) * WEI_POR_CENTAVO).toString(),
+    montoPesos: monto,
+  };
+  cargasCripto.set(carga.referencia, carga);
+  return carga;
+};
+
+export const getCargaCriptoMock = (referencia: string): CargaCripto | undefined =>
+  cargasCripto.get(referencia);
+
+/** Acredita la carga como el back: el hash queda de referencia externa, con su enlace a BaseScan. */
+export const acreditarCargaCriptoMock = (carga: CargaCripto, hash: string): MovimientoBilletera => {
+  const movimiento: MovimientoBilletera = {
+    ...cargarSaldoMock(carga.montoPesos, hash),
+    descripcion: 'Carga de saldo con cripto',
+    enlaceExplorador: `https://sepolia.basescan.org/tx/${hash}`,
+  };
+  movimientosEstado = [movimiento, ...movimientosEstado.slice(1)];
+  return movimiento;
+};
+
+let cuentasBancariasEstado: CuentaBancaria[] = [...cuentasBancariasInicialesMock];
+let limitesRetiroEstado: LimitesRetiro = { ...limitesRetiroInicialMock };
+
+export const getCuentasBancariasMock = (): CuentaBancaria[] => [...cuentasBancariasEstado];
+export const setCuentasBancariasMock = (nuevas: CuentaBancaria[]) => {
+  cuentasBancariasEstado = [...nuevas];
+};
+
+export const getLimitesRetiroMock = (): LimitesRetiro => ({ ...limitesRetiroEstado });
+export const setLimitesRetiroMock = (limites: LimitesRetiro) => {
+  limitesRetiroEstado = { ...limites };
+};
+
 export const resetBilleteraMock = () => {
   billeteraEstado = { ...billeteraInicialMock };
   movimientosEstado = [...movimientosInicialesMock];
+  cargasCripto = new Map();
+  cuentasBancariasEstado = [...cuentasBancariasInicialesMock];
+  limitesRetiroEstado = { ...limitesRetiroInicialMock };
 };
 

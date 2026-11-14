@@ -1,16 +1,20 @@
 import { http, HttpResponse } from 'msw';
 import { adminHandlers } from './adminHandlers';
 import { parametroHandlers } from './parametroHandlers';
+import { crearReclamoAdminHandlers } from './reclamoAdminHandlers';
+import { auditoriaHandlers } from './auditoriaHandlers';
 import { crearInscripcionesHandlers } from './inscripcionesHandlers';
 import { pronosticoHandlers } from './pronosticoHandlers';
 import { torneoHandlers } from './torneoHandlers';
 import { verificacionHandlers } from './verificacionHandlers';
 import { ticketHandlers } from './ticketHandlers';
 import { billeteraHandlers } from './billeteraHandlers';
+import { cancelacionHandlers } from './cancelacionHandlers';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
-// El admin es Super Usuario: tiene los 13 permisos del seed V4 y el de parámetros de V35, como en el back
+// El admin es Super Usuario: tiene los 13 permisos del seed V4, el de parámetros de V35 y el de auditoría de V49,
+// como en el back
 const PERMISOS_SUPER_USUARIO = [
   'USUARIO_VER',
   'USUARIO_CREAR',
@@ -26,6 +30,8 @@ const PERMISOS_SUPER_USUARIO = [
   'ROL_ELIMINAR',
   'ROL_ASIGNAR',
   'PARAMETRO_ADMINISTRAR',
+  'RECLAMO_RESOLVER',
+  'AUDITORIA_VER',
 ];
 
 // El PARTICIPANTE puede inscribirse a torneos (seed del back); el organizador de los mocks no.
@@ -69,6 +75,8 @@ const usuarioGuardado = (): typeof USUARIO_INICIAL | null => {
 
 let mockCurrentUserState = usuarioGuardado() ?? USUARIO_INICIAL;
 
+export const getUsuarioActualMock = () => mockCurrentUserState;
+
 const establecerUsuario = (usuario: typeof USUARIO_INICIAL) => {
   mockCurrentUserState = usuario;
   try {
@@ -83,6 +91,10 @@ export const handlers = [
   ...adminHandlers,
   // Parámetros de la plataforma (HU-702)
   ...parametroHandlers,
+  // Reclamos de rifas y resolución en el admin (HU-706 / PICA-340)
+  ...crearReclamoAdminHandlers(() => mockCurrentUserState),
+  // Libro de auditoría (HU-704)
+  ...auditoriaHandlers,
   // Inscripción en dos pasos: el capitán es el usuario logueado de estos mocks. Va antes que los torneos
   // públicos: atiende los slugs de sus escenarios y deja pasar los que no conoce.
   ...crearInscripcionesHandlers(() => mockCurrentUserState),
@@ -101,6 +113,7 @@ export const handlers = [
 
   // Billetera virtual y movimientos (HU-602 / T602-3)
   ...billeteraHandlers,
+  ...cancelacionHandlers,
 
   // Auth: Registro Endpoint (POST /auth/registro) -> 201 { id }
   http.post(`${API_URL}/auth/registro`, async ({ request }) => {
@@ -262,13 +275,49 @@ export const handlers = [
           telefono: '1133221100',
         },
         roles: [{ id: 4, nombre: 'ORGANIZADOR', nombreAmigable: 'Organizador de Eventos' }],
-        permisos: ['USUARIO_VER', 'PERSONA_VER'],
+        // TORNEO_GESTIONAR, como el rol ORGANIZADOR del back: entra a Mis torneos y a la consola
+        permisos: ['USUARIO_VER', 'PERSONA_VER', 'TORNEO_GESTIONAR'],
         datosCompletos: true,
       });
 
       return HttpResponse.json({
         accessToken: 'mock-jwt-access-token-organizador-12345',
         refreshToken: 'mock-jwt-refresh-token-organizador-67890',
+        tokenType: 'Bearer',
+        expiresIn: 3600,
+      });
+    }
+
+    // SOPORTE (HU-605 y HU-706): revisa las cancelaciones con gastos y resuelve reclamos
+    if (
+      (id === 'soporte@pica.edu.ar' || id === 'soporte') &&
+      (body.password === 'sop123' || body.password === 'soporte123')
+    ) {
+      establecerUsuario({
+        usuario: {
+          id: 5,
+          username: 'soporte',
+          email: 'soporte@pica.edu.ar',
+          estado: 'ACTIVO',
+          tieneContrasena: true,
+        },
+        persona: {
+          nombres: 'Sofía',
+          apellidos: 'Soporte',
+          tipoDoc: 'DNI',
+          nroDoc: '36777888',
+          fechaNacimiento: '1990-08-10',
+          domicilioPostal: 'Rivadavia 300, Luján',
+          telefono: '1155667788',
+        },
+        roles: [{ id: 5, nombre: 'SOPORTE', nombreAmigable: 'Soporte' }],
+        permisos: ['CANCELACION_REVISAR', 'RECLAMO_RESOLVER'],
+        datosCompletos: true,
+      });
+
+      return HttpResponse.json({
+        accessToken: 'mock-jwt-access-token-soporte-12345',
+        refreshToken: 'mock-jwt-refresh-token-soporte-67890',
         tokenType: 'Bearer',
         expiresIn: 3600,
       });

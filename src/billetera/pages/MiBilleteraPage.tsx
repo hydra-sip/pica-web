@@ -1,13 +1,17 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   billeteraApi,
   Billetera,
+  CuentaBancaria,
   esIngreso,
-  ESTADO_MOVIMIENTO_LABEL,
+  estadoMovimientoLabel,
+  LimitesRetiro,
   MovimientoBilletera,
   TIPO_MOVIMIENTO_LABEL,
+  TipoMovimientoBilletera,
 } from '../../api/billeteraApi';
+import { useAuth } from '../../auth/hooks/useAuth';
 import { fechaHora, pesos } from '../../shared/formato';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { Badge, BadgeTone, Card, Modal } from '../../shared/ui';
@@ -19,9 +23,24 @@ import {
   IconoRefrescar,
   IconoTrofeo,
 } from '../../shared/ui/Iconos';
+import { CuentasBancarias } from '../components/CuentasBancarias';
+import { ModalRetiro } from '../components/ModalRetiro';
+import { useRetomarCargasCripto } from '../cripto/useRetomarCargasCripto';
 import '../billetera.css';
 
 const TAMANIO_PAGINA = 10;
+
+/** Los movimientos con un evento que además dicen qué fueron: premios, liquidaciones y honorarios. */
+const CON_DETALLE: TipoMovimientoBilletera[] = [
+  'PREMIO',
+  'LIQUIDACION',
+  'HONORARIO',
+  'PAGO_SERVICIO',
+  'REINTEGRO',
+];
+
+// HU-609: wagmi, viem y RainbowKit se bajan recién al abrir Cargar con cripto
+const CargaConCripto = lazy(() => import('../cripto/CargaConCripto'));
 
 const tonoEstado = (estado: string): BadgeTone => {
   switch (estado) {
@@ -54,6 +73,15 @@ export const MiBilleteraPage: React.FC = () => {
   const [errorModal, setErrorModal] = useState<string | null>(null);
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
 
+  // Estado de cuentas bancarias y retiros (HU-607)
+  const [cuentas, setCuentas] = useState<CuentaBancaria[]>([]);
+  const [cargandoCuentas, setCargandoCuentas] = useState<boolean>(true);
+  const [limitesRetiro, setLimitesRetiro] = useState<LimitesRetiro>({
+    minimo: 1000,
+    maximo: 500000,
+  });
+  const [modalRetiroAbierto, setModalRetiroAbierto] = useState<boolean>(false);
+
   const cargarBilletera = useCallback(async () => {
     try {
       const data = await billeteraApi.obtenerBilletera();
@@ -79,6 +107,27 @@ export const MiBilleteraPage: React.FC = () => {
     }
   }, []);
 
+  const cargarCuentas = useCallback(async () => {
+    setCargandoCuentas(true);
+    try {
+      const data = await billeteraApi.listarCuentas();
+      setCuentas(data);
+    } catch {
+      // si falla la carga inicial de cuentas, dejamos lista vacía
+    } finally {
+      setCargandoCuentas(false);
+    }
+  }, []);
+
+  const cargarLimitesRetiro = useCallback(async () => {
+    try {
+      const data = await billeteraApi.obtenerLimitesRetiro();
+      setLimitesRetiro(data);
+    } catch {
+      // fallback a topes estándar si falla la API
+    }
+  }, []);
+
   useEffect(() => {
     void cargarBilletera();
   }, [cargarBilletera]);
@@ -86,6 +135,40 @@ export const MiBilleteraPage: React.FC = () => {
   useEffect(() => {
     void cargarMovimientos(pagina);
   }, [cargarMovimientos, pagina]);
+
+  useEffect(() => {
+    void cargarCuentas();
+    void cargarLimitesRetiro();
+  }, [cargarCuentas, cargarLimitesRetiro]);
+
+  const handleRetiroExitoso = useCallback(
+    async (monto: number) => {
+      setMensajeExito(
+        `Solicitud de retiro por ${pesos(monto)} enviada. Tu transferencia se encuentra en proceso.`
+      );
+      await Promise.all([cargarBilletera(), cargarMovimientos(0)]);
+    },
+    [cargarBilletera, cargarMovimientos]
+  );
+
+  const [criptoAbierto, setCriptoAbierto] = useState<boolean>(false);
+
+  const cargaCriptoAcreditada = useCallback(
+    async (movimiento: MovimientoBilletera) => {
+      setMensajeExito(`Se acreditaron ${pesos(movimiento.monto)} en tu billetera con cripto.`);
+      await Promise.all([cargarBilletera(), cargarMovimientos(0)]);
+    },
+    [cargarBilletera, cargarMovimientos]
+  );
+
+  const { user } = useAuth();
+  const retomadas = useRetomarCargasCripto(
+    user?.id,
+    criptoAbierto,
+    (movimiento) => void cargaCriptoAcreditada(movimiento),
+    setError
+  );
+  const montoRetomado = retomadas.pendientes.reduce((total, c) => total + c.montoPesos, 0);
 
   const abrirModalCarga = () => {
     setMontoInput('');
@@ -143,7 +226,22 @@ export const MiBilleteraPage: React.FC = () => {
           >
             Cargar saldo
           </button>
-          {/* Espacio reservado para el futuro botón "Cargar con cripto" de T609-4 */}
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setModalRetiroAbierto(true)}
+            disabled={billetera?.estado === 'BLOQUEADA'}
+          >
+            Retirar fondos
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setCriptoAbierto(true)}
+            disabled={billetera?.estado === 'BLOQUEADA'}
+          >
+            Cargar con cripto
+          </button>
         </div>
       </header>
 
@@ -154,6 +252,26 @@ export const MiBilleteraPage: React.FC = () => {
             Tu billetera está bloqueada temporalmente. No es posible realizar cargas ni operaciones.
             Contactate con soporte si creés que se trata de un error.
           </span>
+        </div>
+      )}
+
+      {retomadas.pendientes.length > 0 && (
+        <div role="status" className="alerta alerta-aviso">
+          <IconoEspera size={20} />
+          <span>
+            {retomadas.demorada
+              ? `Tu carga con cripto de ${pesos(montoRetomado)} todavía no se confirmó: la red puede tardar más de lo normal.`
+              : `Tenés una carga con cripto confirmándose: ${pesos(montoRetomado)}.`}
+          </span>
+          {retomadas.demorada && (
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={retomadas.reintentar}
+            >
+              Reintentar
+            </button>
+          )}
         </div>
       )}
 
@@ -217,6 +335,19 @@ export const MiBilleteraPage: React.FC = () => {
         </Card>
       </section>
 
+      {/* Cuentas bancarias (HU-607) */}
+      <CuentasBancarias
+        cuentas={cuentas}
+        cargando={cargandoCuentas}
+        onCuentaAgregada={() => {
+          void cargarCuentas();
+        }}
+        onCuentaEliminada={() => {
+          void cargarCuentas();
+        }}
+        deshabilitado={billetera?.estado === 'BLOQUEADA'}
+      />
+
       {/* Historial de Movimientos */}
       <section className="billetera-movimientos-seccion" aria-label="Historial de movimientos">
         <h2 className="billetera-seccion-titulo">Movimientos</h2>
@@ -262,7 +393,7 @@ export const MiBilleteraPage: React.FC = () => {
                   {movimientos.map((mov) => {
                     const ingreso = esIngreso(mov.tipo);
                     const tipoLabel = TIPO_MOVIMIENTO_LABEL[mov.tipo] || mov.tipo;
-                    const estadoLabel = ESTADO_MOVIMIENTO_LABEL[mov.estado] || mov.estado;
+                    const estadoLabel = estadoMovimientoLabel(mov);
 
                     return (
                       <tr key={mov.id}>
@@ -276,19 +407,36 @@ export const MiBilleteraPage: React.FC = () => {
                           </span>
                         </td>
                         <td>
-                          {mov.torneo ? (
+                          {/* la rifa primero: si tiene torneo, el movimiento trae los dos */}
+                          {mov.rifa ? (
+                            <Link to={`/rifas/${mov.rifa.id}`} className="billetera-enlace">
+                              {mov.rifa.titulo}
+                            </Link>
+                          ) : mov.torneo ? (
                             <Link
                               to={`/torneos/${mov.torneo.slug || mov.torneo.id}`}
                               className="billetera-enlace"
                             >
                               {mov.torneo.titulo || mov.torneo.nombre}
                             </Link>
-                          ) : mov.rifa ? (
-                            <Link to={`/rifas/${mov.rifa.id}`} className="billetera-enlace">
-                              {mov.rifa.titulo}
-                            </Link>
                           ) : (
                             <span>{mov.descripcion || mov.referenciaExterna || '-'}</span>
+                          )}
+                          {/* HU-606 y HU-604: lo que acredita la liquidación y los honorarios dicen qué son */}
+                          {(mov.rifa || mov.torneo) &&
+                            CON_DETALLE.includes(mov.tipo) &&
+                            mov.descripcion && (
+                              <span className="billetera-movimiento-detalle">{mov.descripcion}</span>
+                            )}
+                          {mov.enlaceExplorador && (
+                            <a
+                              href={mov.enlaceExplorador}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="billetera-enlace billetera-movimiento-detalle"
+                            >
+                              Ver en BaseScan
+                            </a>
                           )}
                         </td>
                         <td>
@@ -333,6 +481,16 @@ export const MiBilleteraPage: React.FC = () => {
           </Card>
         )}
       </section>
+
+      {criptoAbierto && (
+        <Suspense fallback={null}>
+          <CargaConCripto
+            usuarioId={user?.id ?? ''}
+            onCerrar={() => setCriptoAbierto(false)}
+            onAcreditada={(movimiento) => void cargaCriptoAcreditada(movimiento)}
+          />
+        </Suspense>
+      )}
 
       {/* Modal Cargar saldo */}
       <Modal
@@ -389,6 +547,16 @@ export const MiBilleteraPage: React.FC = () => {
           </div>
         </form>
       </Modal>
+
+      {/* Modal Retiro de fondos (HU-607) */}
+      <ModalRetiro
+        isOpen={modalRetiroAbierto}
+        onClose={() => setModalRetiroAbierto(false)}
+        saldoDisponible={billetera?.saldoDisponible ?? 0}
+        cuentasValidadas={cuentas.filter((c) => c.estadoValidacion === 'VALIDADA')}
+        limites={limitesRetiro}
+        onRetiroExitoso={(monto) => void handleRetiroExitoso(monto)}
+      />
     </div>
   );
 };

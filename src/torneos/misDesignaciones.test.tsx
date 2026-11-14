@@ -23,6 +23,7 @@ const designacion: MiDesignacion = {
   designadoEn: '2026-11-04T12:00:00Z',
   respondidoEn: null,
   motivoRechazo: null,
+  honorario: null,
 };
 
 /** Las designaciones del árbitro en el back; guarda lo que mandó al aceptar o rechazar. */
@@ -149,12 +150,21 @@ describe('Paso 2: árbitros que rechazaron (HU-807)', () => {
       designadoEn: '2026-11-04T12:00:00Z',
       respondidoEn: '2026-11-04T13:00:00Z',
       motivoRechazo: 'Viajo ese fin de semana',
+      identidadVerificada: true,
     };
     server.use(
       http.get(`${API_URL}/torneos/1/arbitros`, () => HttpResponse.json([rechazo])),
       http.get(`${API_URL}/arbitros`, () =>
         HttpResponse.json({
-          content: [{ id: 7, username: 'juez', nombres: 'Juan', apellidos: 'Pérez' }],
+          content: [
+            {
+              id: 7,
+              username: 'juez',
+              nombres: 'Juan',
+              apellidos: 'Pérez',
+              identidadVerificada: true,
+            },
+          ],
           totalElements: 1,
           totalPages: 1,
           number: 0,
@@ -168,7 +178,7 @@ describe('Paso 2: árbitros que rechazaron (HU-807)', () => {
         )
       )
     );
-    render(<ArbitrosTorneo torneoId={1} habilitado />);
+    render(<ArbitrosTorneo torneoId={1} habilitado conDinero={false} />);
 
     expect(await screen.findByText('Rechazó')).toBeInTheDocument();
     expect(screen.getByText('Motivo: Viajo ese fin de semana')).toBeInTheDocument();

@@ -76,6 +76,17 @@ const POR_CODIGO: Record<string, string> = {
   ARBITRO_DUPLICADO: 'Ese árbitro ya está designado en el torneo.',
   ARBITRO_NO_PERMITIDO: 'No puede arbitrar este torneo: es el organizador o está inscripto.',
   ARBITRO_CON_PARTIDOS: 'Tiene partidos asignados: reasignalos antes de quitarlo.',
+  // HU-604: identidad del árbitro y honorarios
+  IDENTIDAD_NO_VERIFICADA:
+    'El usuario propuesto debe verificar su identidad antes de arbitrar torneos con dinero.',
+  GASTO_NO_ES_HONORARIO:
+    'Ese gasto no es un honorario arbitral: un gasto común se registra con su comprobante.',
+  HONORARIO_NO_DEDUCIBLE:
+    'Los honorarios arbitrales solo son deducibles si se abonan mediante transferencia interna de la plataforma.',
+  HONORARIO_YA_DEPOSITADO:
+    'Ese honorario ya está depositado: para cambiarlo o pagárselo a otro árbitro, primero retiralo.',
+  HONORARIO_SIN_DEPOSITAR: 'Ese honorario no tiene un depósito para retirar: recargá la página.',
+  GASTO_YA_PAGADO: 'Ese gasto ya está pagado.',
   INSCRIPCION_NO_CERRADA: 'El bracket se genera cuando se cierra la inscripción.',
   PARTICIPANTES_INSUFICIENTES:
     'Hacen falta al menos 2 inscripciones confirmadas para armar el bracket.',
@@ -118,6 +129,27 @@ const POR_CODIGO: Record<string, string> = {
     'Los fondos están en custodia y no se pueden mover hasta que termine el evento. Al terminar, la liquidación acredita lo tuyo en tu billetera.',
   CUSTODIA_LIBERADA: 'Los fondos ya se liquidaron: lo que te corresponde está en tu billetera.',
   COMPROBANTE_NO_ENCONTRADO: 'Esta inscripción no tiene un pago.',
+  // HU-607: cuentas bancarias y retiro de fondos
+  CUENTA_TITULAR_NO_COINCIDE:
+    'La cuenta destino debe estar a nombre del titular verificado en la plataforma',
+  CUENTA_BANCARIA_DUPLICADA:
+    'Ya tenés una cuenta bancaria registrada con ese CBU, CVU o alias.',
+  CUENTA_NO_VALIDADA:
+    'Solo se puede retirar a una cuenta validada.',
+  CUENTA_BANCARIA_NO_ENCONTRADA:
+    'La cuenta bancaria no existe o no te pertenece.',
+  RETIRO_FUERA_DE_TOPES:
+    'El monto debe estar dentro de los límites de retiro permitidos.',
+  DOCUMENTO_NO_CARGADO:
+    'Debés tener tu documento registrado en tu perfil para gestionar cuentas y retiros.',
+  // HU-605: cancelación de torneos y revisión de soporte
+  TORNEO_NO_CANCELABLE:
+    'Este torneo ya no se puede cancelar: se cancela con la inscripción abierta o cerrada, o en curso.',
+  GASTOS_SOBRE_TOPE:
+    'Los gastos a retener superan el máximo permitido. El monto excedente debe ser devuelto a los participantes.',
+  CANCELACION_YA_RESUELTA: 'Esta cancelación ya se resolvió.',
+  CANCELACION_PROPIA: 'No podés revisar la cancelación de un torneo que organizás.',
+  CANCELACION_NO_ENCONTRADA: 'Este torneo no tiene una cancelación.',
   INSCRIPCION_NO_PERMITIDA_EN_TORNEO:
     'El organizador y los árbitros de un torneo no pueden inscribirse en él.',
   PRONOSTICO_FUERA_DE_VENTANA:
@@ -128,6 +160,10 @@ const POR_CODIGO: Record<string, string> = {
   NO_ES_COMPRADOR: 'No podés reclamar: no tenés un ticket comprado para esta rifa.',
   RECLAMO_DUPLICADO: 'Ya tenés un reclamo registrado para esta rifa.',
   RIFA_NO_SORTEADA: 'La rifa todavía no fue sorteada.',
+  // HU-706 / HU-707: Reclamos, resolución y liberación de fondos en el admin
+  RECLAMO_NO_ENCONTRADO: 'El reclamo no existe.',
+  RECLAMO_YA_RESUELTO: 'Este reclamo ya fue resuelto anteriormente.',
+  RECLAMO_NO_RESUELTO: 'El reclamo debe estar resuelto antes de liberar los fondos.',
   // HU-504 / T504-2: Sorteo de la rifa
   SORTEO_ANTICIPADO:
     'Todavía no llegó la fecha del sorteo: la rifa se sortea en la fecha comprometida.',

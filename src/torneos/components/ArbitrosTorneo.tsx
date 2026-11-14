@@ -26,14 +26,23 @@ interface ArbitrosTorneoProps {
   /** Null mientras el torneo no se guardó: los árbitros se designan sobre un borrador que ya existe. */
   torneoId: number | null;
   habilitado: boolean;
+  /** Cobra inscripción: solo se designa a quien tiene la identidad verificada (HU-604). */
+  conDinero: boolean;
 }
+
+const SIN_IDENTIDAD = 'Identidad sin verificar';
 
 /**
  * "Designación de árbitros" del paso 2 (HU-203, wireframe "Wizard Paso 2 Cupos y Árbitros"). Cada designación
  * se guarda en el momento, como los gastos del paso 3. Sin datos de matrícula ni disponibilidad, cada árbitro
- * muestra los permisos que se le dieron.
+ * muestra los permisos que se le dieron. En un torneo con inscripción paga, solo se designa a quien tiene la identidad
+ * verificada (HU-604): los demás figuran en el buscador pero no se pueden elegir.
  */
-export const ArbitrosTorneo: React.FC<ArbitrosTorneoProps> = ({ torneoId, habilitado }) => {
+export const ArbitrosTorneo: React.FC<ArbitrosTorneoProps> = ({
+  torneoId,
+  habilitado,
+  conDinero,
+}) => {
   const [arbitros, setArbitros] = useState<ArbitroDetalle[]>([]);
   const [busqueda, setBusqueda] = useState('');
   const [opciones, setOpciones] = useState<ArbitroOpcion[]>([]);
@@ -127,6 +136,8 @@ export const ArbitrosTorneo: React.FC<ArbitrosTorneoProps> = ({ torneoId, habili
         A cada árbitro le llega un aviso para aceptar la designación. Solo los que aceptan cargan
         resultados y resuelven objeciones, según los permisos que les des, y para generar el bracket
         hace falta al menos uno que haya aceptado.
+        {conDinero &&
+          ' Como el torneo cobra inscripción, solo podés designar árbitros con la identidad verificada (email, documento y fecha de nacimiento cargados).'}
       </p>
 
       {!torneoId ? (
@@ -140,6 +151,7 @@ export const ArbitrosTorneo: React.FC<ArbitrosTorneoProps> = ({ torneoId, habili
                   <span className="torneos-arbitro-nombre">
                     <strong>{nombre(a)}</strong>
                     <span>@{a.username}</span>
+                    {!a.identidadVerificada && <Badge tone="aviso">{SIN_IDENTIDAD}</Badge>}
                   </span>
                   <span className="torneos-arbitro-permisos">
                     {PERMISOS.filter((p) => a.permisos.includes(p.codigo))
@@ -204,12 +216,18 @@ export const ArbitrosTorneo: React.FC<ArbitrosTorneoProps> = ({ torneoId, habili
                       <span className="torneos-arbitro-nombre">
                         <strong>{nombre(o)}</strong>
                         <span>@{o.username}</span>
+                        {!o.identidadVerificada && <Badge tone="aviso">{SIN_IDENTIDAD}</Badge>}
                       </span>
                       <Button
                         type="button"
                         variant="secondary"
                         size="sm"
-                        disabled={ocupado || permisos.length === 0 || designados.has(o.id)}
+                        disabled={
+                          ocupado ||
+                          permisos.length === 0 ||
+                          designados.has(o.id) ||
+                          (conDinero && !o.identidadVerificada)
+                        }
                         onClick={() => designar(o)}
                       >
                         {designados.has(o.id)

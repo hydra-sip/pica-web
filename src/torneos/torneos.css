@@ -219,6 +219,31 @@
   text-underline-offset: 3px;
 }
 
+.designacion-honorario {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.designacion-honorario > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+.designacion-honorario strong {
+  font-family: var(--font-mono, monospace);
+  font-size: var(--text-lg);
+  color: var(--color-text);
+}
+
 .designacion-nota {
   margin: 0;
   font-size: var(--text-xs);
@@ -649,6 +674,22 @@
   justify-content: flex-end;
 }
 
+.torneos-gasto-descripcion {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.torneos-gasto-honorario {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
 .torneos-gasto-nuevo {
   padding-top: var(--space-2);
   border-top: 1px dashed var(--color-border);
@@ -707,6 +748,11 @@
   flex-direction: column;
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+.torneos-arbitro-nombre > .badge {
+  align-self: flex-start;
+  margin-top: var(--space-1);
 }
 
 .torneos-arbitro-nombre span,
@@ -933,4 +979,109 @@
 
 .torneos-consola-aviso p {
   margin: var(--space-1) 0 0;
+}
+
+/* Honorarios arbitrales en la consola (HU-604) */
+.honorarios-ayuda {
+  margin-bottom: var(--space-4);
+}
+
+.honorarios-accion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.honorarios-cargar {
+  font-size: var(--text-sm);
+}
+
+/* HU-605: el modal de cancelación */
+.torneos-cancelacion-resumen {
+  display: grid;
+  gap: 0.4rem;
+  margin: 1rem 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-subtle);
+}
+
+.torneos-cancelacion-resumen div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.torneos-cancelacion-resumen dt {
+  color: var(--text-muted);
+}
+
+.torneos-cancelacion-resumen dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+
+.torneos-cancelacion-confirmo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+  cursor: pointer;
+}
+
+.torneos-consola-cancelar {
+  margin-left: auto;
+}
+
+.torneos-cancelacion-gastos {
+  display: grid;
+  gap: 0.6rem;
+  margin: 1rem 0;
+}
+
+.torneos-cancelacion-gastos h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.torneos-cancelacion-gasto {
+  display: grid;
+  grid-template-columns: 2fr 1fr 2fr auto;
+  gap: 0.5rem;
+  align-items: end;
+}
+
+@media (max-width: 640px) {
+  .torneos-cancelacion-gasto {
+    grid-template-columns: 1fr;
+  }
+}
+
+.torneos-cancelacion-subtitulo {
+  margin: 1rem 0 0.35rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.torneos-cancelacion-lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.torneos-cancelacion-lista li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.torneos-cancelacion-total {
+  font-weight: 700;
 }

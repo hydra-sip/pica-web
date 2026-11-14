@@ -12,6 +12,7 @@ export interface PermisoItem {
 }
 
 import {
+  IconoAlerta,
   IconoUsuarios,
   IconoEscudo,
   IconoPersonas,
@@ -21,6 +22,7 @@ import {
   IconoDocumento,
   IconoTrofeo,
   IconoConfiguracion,
+  IconoEscudoCheck,
 } from '../../shared/ui/Iconos';
 
 interface ModuloPermisos {
@@ -38,6 +40,8 @@ const MODULO_UI: Record<ModuloPermisosApi['modulo'], { modulo: string; icono: Re
   INSCRIPCIONES: { modulo: 'Módulo Inscripciones', icono: <IconoDocumento size={18} /> },
   TORNEOS: { modulo: 'Módulo Torneos', icono: <IconoTrofeo size={18} /> },
   PARAMETROS: { modulo: 'Módulo Parámetros', icono: <IconoConfiguracion size={18} /> },
+  RECLAMOS: { modulo: 'Módulo Reclamos', icono: <IconoAlerta size={18} /> },
+  AUDITORIA: { modulo: 'Módulo Auditoría', icono: <IconoEscudoCheck size={18} /> },
 };
 
 const aModulosUi = (catalogo: ModuloPermisosApi[]): ModuloPermisos[] =>
@@ -256,7 +260,10 @@ export const RolesPage: React.FC = () => {
         nombre: formModalState.selectedRol.nombre || '',
         nombreAmigable: formData.nombreAmigable || formModalState.selectedRol.nombreAmigable || '',
         descripcion: formData.descripcion || null,
-        estado: (formData.estado as 'ACTIVO' | 'INACTIVO') || formModalState.selectedRol.estado || 'ACTIVO',
+        estado:
+          (formData.estado as 'ACTIVO' | 'INACTIVO') ||
+          formModalState.selectedRol.estado ||
+          'ACTIVO',
       });
     }
     setFormModalState({ isOpen: false, mode: 'create' });
@@ -281,7 +288,9 @@ export const RolesPage: React.FC = () => {
   // Quick Action: Select Only Read-Only Permisos (*_VER)
   const handleSelectReadOnlyPermisos = () => {
     setSelectedPermisos(
-      modulosPermisos.flatMap((m) => m.permisos.map((p) => p.id)).filter((id) => id.endsWith('_VER'))
+      modulosPermisos
+        .flatMap((m) => m.permisos.map((p) => p.id))
+        .filter((id) => id.endsWith('_VER'))
     );
   };
 
@@ -350,10 +359,30 @@ export const RolesPage: React.FC = () => {
       {aviso && (
         <div
           role="alert"
-          style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', background: 'var(--color-danger-bg)', border: '1px solid var(--color-danger-border)', color: 'var(--color-danger)', padding: '0.75rem', borderRadius: 'var(--radius-sm)' }}
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: '1rem',
+            background: 'var(--color-danger-bg)',
+            border: '1px solid var(--color-danger-border)',
+            color: 'var(--color-danger)',
+            padding: '0.75rem',
+            borderRadius: 'var(--radius-sm)',
+          }}
         >
           <span>{aviso}</span>
-          <button type="button" onClick={() => setAviso(null)} style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+          <button
+            type="button"
+            onClick={() => setAviso(null)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'inherit',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
             <IconoCruz size={14} />
           </button>
         </div>
@@ -407,8 +436,8 @@ export const RolesPage: React.FC = () => {
           formModalState.mode === 'create'
             ? 'Crear Nuevo Rol'
             : formModalState.mode === 'edit'
-            ? `Editar Rol ${formModalState.selectedRol?.nombreAmigable}`
-            : `Detalles del Rol ${formModalState.selectedRol?.nombreAmigable}`
+              ? `Editar Rol ${formModalState.selectedRol?.nombreAmigable}`
+              : `Detalles del Rol ${formModalState.selectedRol?.nombreAmigable}`
         }
         mode={formModalState.mode}
         fields={formFields}
@@ -426,7 +455,11 @@ export const RolesPage: React.FC = () => {
         closeDisabled={isSavingPermisos}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setPermisosModalRol(null)} disabled={isSavingPermisos}>
+            <Button
+              variant="secondary"
+              onClick={() => setPermisosModalRol(null)}
+              disabled={isSavingPermisos}
+            >
               Cancelar
             </Button>
             <Button onClick={handleSavePermisos} loading={isSavingPermisos}>
@@ -451,7 +484,14 @@ export const RolesPage: React.FC = () => {
                 alignItems: 'center',
               }}
             >
-              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-text-secondary)', marginRight: '0.25rem' }}>
+              <span
+                style={{
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  color: 'var(--color-text-secondary)',
+                  marginRight: '0.25rem',
+                }}
+              >
                 Marcar:
               </span>
               <Button size="sm" variant="secondary" onClick={handleSelectReadOnlyPermisos}>
@@ -475,7 +515,14 @@ export const RolesPage: React.FC = () => {
             )}
 
             {/* Módulos de Permisos */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBottom: '1.5rem' }}>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1.25rem',
+                marginBottom: '1.5rem',
+              }}
+            >
               {modulosPermisos.map((mod) => {
                 const modPermisoIds = mod.permisos.map((p) => p.id);
                 const allModSelected = modPermisoIds.every((id) => selectedPermisos.includes(id));
@@ -485,7 +532,9 @@ export const RolesPage: React.FC = () => {
                     const union = Array.from(new Set([...selectedPermisos, ...modPermisoIds]));
                     setSelectedPermisos(union);
                   } else {
-                    setSelectedPermisos(selectedPermisos.filter((id) => !modPermisoIds.includes(id)));
+                    setSelectedPermisos(
+                      selectedPermisos.filter((id) => !modPermisoIds.includes(id))
+                    );
                   }
                 };
 
@@ -511,10 +560,21 @@ export const RolesPage: React.FC = () => {
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <span style={{ fontSize: '1.1rem' }}>{mod.icono}</span>
-                        <h4 style={{ fontSize: '0.95rem', color: 'var(--color-text)' }}>{mod.modulo}</h4>
+                        <h4 style={{ fontSize: '0.95rem', color: 'var(--color-text)' }}>
+                          {mod.modulo}
+                        </h4>
                       </div>
 
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer', fontSize: '0.775rem', color: 'var(--color-text-secondary)' }}>
+                      <label
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          cursor: 'pointer',
+                          fontSize: '0.775rem',
+                          color: 'var(--color-text-secondary)',
+                        }}
+                      >
                         <input
                           type="checkbox"
                           checked={allModSelected}
@@ -525,7 +585,13 @@ export const RolesPage: React.FC = () => {
                       </label>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '0.65rem' }}>
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                        gap: '0.65rem',
+                      }}
+                    >
                       {mod.permisos.map((perm) => {
                         const isChecked = selectedPermisos.includes(perm.id);
                         return (
@@ -537,8 +603,12 @@ export const RolesPage: React.FC = () => {
                               gap: '0.6rem',
                               padding: '0.5rem 0.65rem',
                               borderRadius: 'var(--radius-sm)',
-                              backgroundColor: isChecked ? 'var(--color-surface)' : 'var(--color-surface)',
-                              border: isChecked ? '1px solid var(--color-border-strong)' : '1px solid transparent',
+                              backgroundColor: isChecked
+                                ? 'var(--color-surface)'
+                                : 'var(--color-surface)',
+                              border: isChecked
+                                ? '1px solid var(--color-border-strong)'
+                                : '1px solid transparent',
                               cursor: 'pointer',
                               fontSize: '0.825rem',
                             }}
@@ -550,16 +620,27 @@ export const RolesPage: React.FC = () => {
                                 if (e.target.checked) {
                                   setSelectedPermisos([...selectedPermisos, perm.id]);
                                 } else {
-                                  setSelectedPermisos(selectedPermisos.filter((id) => id !== perm.id));
+                                  setSelectedPermisos(
+                                    selectedPermisos.filter((id) => id !== perm.id)
+                                  );
                                 }
                               }}
                               style={{ marginTop: '0.15rem', accentColor: 'var(--color-primary)' }}
                             />
                             <div>
-                              <code style={{ fontSize: '0.75rem', color: isChecked ? 'var(--color-text-secondary)' : 'var(--color-text-secondary)' }}>
+                              <code
+                                style={{
+                                  fontSize: '0.75rem',
+                                  color: isChecked
+                                    ? 'var(--color-text-secondary)'
+                                    : 'var(--color-text-secondary)',
+                                }}
+                              >
                                 {perm.id}
                               </code>
-                              <div style={{ fontSize: '0.775rem', color: 'var(--color-text)' }}>{perm.label}</div>
+                              <div style={{ fontSize: '0.775rem', color: 'var(--color-text)' }}>
+                                {perm.label}
+                              </div>
                             </div>
                           </label>
                         );
@@ -569,7 +650,6 @@ export const RolesPage: React.FC = () => {
                 );
               })}
             </div>
-
           </>
         )}
       </Modal>

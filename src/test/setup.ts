@@ -4,9 +4,12 @@ import { afterAll, afterEach, beforeAll } from 'vitest';
 import { clearSessionTokens } from '../api/httpClient';
 import { reiniciarInscripciones } from '../mocks/inscripcionesHandlers';
 import { resetParametrosMock } from '../mocks/parametroHandlers';
+import { resetReclamosAdminMock } from '../mocks/reclamoAdminHandlers';
 import { resetPronosticosMock } from '../mocks/pronosticoHandlers';
 import { resetTicketsMock } from '../mocks/ticketHandlers';
 import { resetBilleteraMock } from '../mocks/data';
+import { resetCadenaMock } from '../mocks/cadenaHandlers';
+import { resetCancelacionMock } from '../mocks/cancelacionHandlers';
 import { server } from '../mocks/server';
 import { resetRealtime } from '../realtime/websocketService';
 
@@ -18,13 +21,15 @@ afterEach(() => {
   server.resetHandlers();
   reiniciarInscripciones();
   resetParametrosMock();
+  resetReclamosAdminMock();
   resetPronosticosMock();
   resetTicketsMock();
   resetBilleteraMock();
+  resetCadenaMock();
+  resetCancelacionMock();
   clearSessionTokens();
   localStorage.clear();
   resetRealtime();
 });
-
 
 afterAll(() => server.close());

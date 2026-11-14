@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { AppLayout } from '../shared/layouts/AppLayout';
+import { PERMISOS_BACKOFFICE } from '../shared/layouts/navegacion';
 import { HomePage } from '../shared/pages/HomePage';
 import { LoginPage } from '../auth/pages/LoginPage';
 import { RegisterPage } from '../auth/pages/RegisterPage';
@@ -12,7 +13,11 @@ import { AdminDashboardPage } from '../admin/pages/AdminDashboardPage';
 import { UsuariosPage } from '../admin/pages/UsuariosPage';
 import { RolesPage } from '../admin/pages/RolesPage';
 import { PersonasPage } from '../admin/pages/PersonasPage';
+import { CancelacionesPage } from '../admin/pages/CancelacionesPage';
 import { ParametrosPage } from '../admin/pages/ParametrosPage';
+import { ReclamosPage } from '../admin/pages/ReclamosPage';
+import { ReclamoDetallePage } from '../admin/pages/ReclamoDetallePage';
+import { AuditoriaPage } from '../admin/pages/AuditoriaPage';
 import { NotFoundPage } from '../shared/pages/NotFoundPage';
 import { UnauthorizedPage } from '../shared/pages/UnauthorizedPage';
 import { RequireAuth } from '../auth/components/RequireAuth';
@@ -118,9 +123,7 @@ export const AppRoutes: React.FC = () => {
       <Route element={<RequireAuth />}>
         <Route
           element={
-            <RequirePermiso
-              permisos={['USUARIO_VER', 'ROL_VER', 'PERSONA_VER', 'PARAMETRO_ADMINISTRAR']}
-            >
+            <RequirePermiso permisos={PERMISOS_BACKOFFICE}>
               <AppLayout seccion="admin" />
             </RequirePermiso>
           }
@@ -152,10 +155,42 @@ export const AppRoutes: React.FC = () => {
               }
             />
             <Route
+              path="cancelaciones"
+              element={
+                <RequirePermiso permisos="CANCELACION_REVISAR">
+                  <CancelacionesPage />
+                </RequirePermiso>
+              }
+            />
+            <Route
               path="parametros"
               element={
                 <RequirePermiso permisos="PARAMETRO_ADMINISTRAR">
                   <ParametrosPage />
+                </RequirePermiso>
+              }
+            />
+            <Route
+              path="reclamos"
+              element={
+                <RequirePermiso permisos="RECLAMO_RESOLVER">
+                  <ReclamosPage />
+                </RequirePermiso>
+              }
+            />
+            <Route
+              path="reclamos/:id"
+              element={
+                <RequirePermiso permisos="RECLAMO_RESOLVER">
+                  <ReclamoDetallePage />
+                </RequirePermiso>
+              }
+            />
+            <Route
+              path="auditoria"
+              element={
+                <RequirePermiso permisos="AUDITORIA_VER">
+                  <AuditoriaPage />
                 </RequirePermiso>
               }
             />

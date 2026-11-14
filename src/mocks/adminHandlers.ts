@@ -88,6 +88,15 @@ const CATALOGO = [
       { codigo: 'ROL_ASIGNAR', descripcion: 'Asignar y quitar roles a usuarios' },
     ],
   },
+  {
+    modulo: 'RECLAMOS',
+    permisos: [
+      {
+        codigo: 'RECLAMO_RESOLVER',
+        descripcion: 'Revisar y resolver reclamos sobre sorteos de rifas',
+      },
+    ],
+  },
 ];
 const TODOS_LOS_PERMISOS = CATALOGO.flatMap((m) => m.permisos.map((p) => p.codigo));
 
@@ -126,7 +135,7 @@ const roles: RolMock[] = [
   ),
   rol(3, 'ORGANIZADOR', 'Organizador'),
   rol(4, 'ARBITRO', 'Árbitro'),
-  rol(5, 'SOPORTE', 'Soporte'),
+  rol(5, 'SOPORTE', 'Soporte', ['RECLAMO_RESOLVER']),
   rol(6, 'PARTICIPANTE', 'Participante'),
 ];
 
