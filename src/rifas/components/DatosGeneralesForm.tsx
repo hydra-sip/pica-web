@@ -313,26 +313,26 @@ export const DatosGeneralesForm = forwardRef<PasoGuardable, DatosGeneralesFormPr
 
         <fieldset className="rifas-opciones">
           <legend>Inicio de la venta</legend>
-          <label>
-            <input
-              type="radio"
-              name="inicioVenta"
-              checked={form.inicioVenta === 'FECHA'}
-              onChange={() => elegirInicioVenta('FECHA')}
+          <div className="chips-estado">
+            <button
+              type="button"
+              className={`chip-estado${form.inicioVenta === 'FECHA' ? ' activo' : ''}`}
+              aria-pressed={form.inicioVenta === 'FECHA'}
+              onClick={() => elegirInicioVenta('FECHA')}
               disabled={bloqueado}
-            />
-            <span>Indicar fecha de inicio</span>
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="inicioVenta"
-              checked={form.inicioVenta === 'AL_PUBLICAR'}
-              onChange={() => elegirInicioVenta('AL_PUBLICAR')}
+            >
+              Indicar fecha de inicio
+            </button>
+            <button
+              type="button"
+              className={`chip-estado${form.inicioVenta === 'AL_PUBLICAR' ? ' activo' : ''}`}
+              aria-pressed={form.inicioVenta === 'AL_PUBLICAR'}
+              onClick={() => elegirInicioVenta('AL_PUBLICAR')}
               disabled={bloqueado}
-            />
-            <span>Iniciar la venta al publicar</span>
-          </label>
+            >
+              Iniciar la venta al publicar
+            </button>
+          </div>
         </fieldset>
 
         <div className="rifas-grilla">

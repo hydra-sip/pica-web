@@ -63,7 +63,7 @@ const completarYGuardar = async (
   await user.type(screen.getByLabelText(/Número hasta/), '100');
   await user.type(screen.getByLabelText(/Precio por número/), '500');
   if (ventaDesde === null) {
-    await user.click(screen.getByRole('radio', { name: 'Iniciar la venta al publicar' }));
+    await user.click(screen.getByRole('button', { name: 'Iniciar la venta al publicar' }));
   } else {
     fireEvent.change(screen.getByLabelText('Fecha de inicio de la venta'), {
       target: { value: ventaDesde },
