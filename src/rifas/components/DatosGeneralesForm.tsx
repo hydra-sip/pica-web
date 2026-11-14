@@ -32,7 +32,6 @@ interface TorneoOpcion {
 const CAMPO_POR_CODIGO = {
   TORNEO_NO_ENCONTRADO: 'torneoId',
   TORNEO_NO_ADMITE_RIFA: 'torneoId',
-  TORNEO_CON_RIFA: 'torneoId',
 };
 
 const desdeRifa = (rifa: RifaDetalle | null, torneoInicial?: number): Formulario => ({

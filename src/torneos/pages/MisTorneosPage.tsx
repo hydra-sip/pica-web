@@ -60,7 +60,7 @@ export const MisTorneosPage: React.FC = () => {
   const [datos, setDatos] = useState<MisTorneos | null>(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [rifaDeTorneo, setRifaDeTorneo] = useState<Map<number, number> | null>(null);
+  const [rifasDeTorneo, setRifasDeTorneo] = useState<Map<number, number[]> | null>(null);
 
   // La búsqueda se manda cuando se deja de escribir.
   useEffect(() => {
@@ -93,20 +93,20 @@ export const MisTorneosPage: React.FC = () => {
     };
   }, [q, estado, disciplina, pagina]);
 
-  // La rifa de cada torneo, para ofrecer "Ver rifa" en lugar de "Crear rifa" (PICA-220)
+  // Las rifas de cada torneo, para ofrecer "Ver rifa" además de "Crear rifa" (PICA-220, CR-06)
   useEffect(() => {
     let vigente = true;
     rifaApi
       .listarMias({ size: 100 })
-      .then(
-        (p) =>
-          vigente &&
-          setRifaDeTorneo(
-            new Map(p.content.flatMap((r) => (r.torneoId ? [[r.torneoId, r.id] as const] : [])))
-          )
-      )
+      .then((p) => {
+        const porTorneo = new Map<number, number[]>();
+        p.content.forEach((r) => {
+          if (r.torneoId) porTorneo.set(r.torneoId, [...(porTorneo.get(r.torneoId) ?? []), r.id]);
+        });
+        if (vigente) setRifasDeTorneo(porTorneo);
+      })
       // Sin acceso a las rifas no se ofrece ninguna de las dos
-      .catch(() => vigente && setRifaDeTorneo(null));
+      .catch(() => vigente && setRifasDeTorneo(null));
     return () => {
       vigente = false;
     };
@@ -261,23 +261,27 @@ export const MisTorneosPage: React.FC = () => {
                         </td>
                         <td>{t.estado === 'BORRADOR' ? 'Sin publicar' : fecha(t.fechaInicio)}</td>
                         <td style={{ textAlign: 'right' }}>
-                          {rifaDeTorneo?.has(t.id) ? (
+                          {/* Con varias rifas (CR-06), se ven todas en Mis rifas */}
+                          {rifasDeTorneo?.get(t.id)?.length === 1 && (
                             <Link
-                              to={`/rifas/${rifaDeTorneo.get(t.id)}/editar`}
+                              to={`/rifas/${rifasDeTorneo.get(t.id)?.[0]}/editar`}
                               className="btn btn-sm btn-ghost"
                             >
                               Ver rifa
                             </Link>
-                          ) : (
-                            rifaDeTorneo &&
-                            ESTADOS_TORNEO_CON_RIFA.includes(t.estado) && (
-                              <Link
-                                to={`/rifas/nueva?torneo=${t.id}`}
-                                className="btn btn-sm btn-ghost"
-                              >
-                                Crear rifa
-                              </Link>
-                            )
+                          )}
+                          {(rifasDeTorneo?.get(t.id)?.length ?? 0) > 1 && (
+                            <Link to="/mis-rifas" className="btn btn-sm btn-ghost">
+                              Ver rifas
+                            </Link>
+                          )}
+                          {rifasDeTorneo && ESTADOS_TORNEO_CON_RIFA.includes(t.estado) && (
+                            <Link
+                              to={`/rifas/nueva?torneo=${t.id}`}
+                              className="btn btn-sm btn-ghost"
+                            >
+                              Crear rifa
+                            </Link>
                           )}
                           {(t.estado === 'INSCRIPCION_ABIERTA' ||
                             t.estado === 'INSCRIPCION_CERRADA') && (

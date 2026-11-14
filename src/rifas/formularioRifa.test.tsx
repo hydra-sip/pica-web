@@ -89,7 +89,9 @@ describe('PICA-308: Errores del formulario de rifa', () => {
     );
     await completarYGuardar(pedirTorneo, enDias(1), enDias(20));
 
-    expect(await screen.findByText('La fecha debe ser anterior al inicio del torneo.')).toBeVisible();
+    expect(
+      await screen.findByText('La fecha debe ser anterior al inicio del torneo.')
+    ).toBeVisible();
     expect(screen.getByLabelText('Fin de la venta')).toHaveAttribute('aria-invalid', 'true');
     expectJuntoAlBoton('Revisá los campos marcados.');
     expect(guardar).not.toHaveBeenCalled();
@@ -164,15 +166,16 @@ describe('PICA-308: Errores del formulario de rifa', () => {
   it('Un error del back sin campo sobre el torneo se ve en el selector y junto al botón', async () => {
     const { pedirTorneo } = conTorneo(SIN_FECHAS, () =>
       HttpResponse.json(
-        { status: 409, codigo: 'TORNEO_CON_RIFA', detail: 'El torneo 100 ya tiene la rifa 7' },
+        { status: 409, codigo: 'TORNEO_NO_ADMITE_RIFA', detail: 'El torneo 100 está EN_CURSO' },
         { status: 409 }
       )
     );
     await completarYGuardar(pedirTorneo, enDias(1), enDias(5));
 
-    expect(await screen.findAllByText('Ese torneo ya tiene una rifa.')).toHaveLength(2);
+    const mensaje = 'Ese torneo ya empezó o terminó: no se le puede asociar una rifa.';
+    expect(await screen.findAllByText(mensaje)).toHaveLength(2);
     expect(screen.getByLabelText(/Torneo/)).toHaveAttribute('aria-invalid', 'true');
-    expectJuntoAlBoton('Ese torneo ya tiene una rifa.');
+    expectJuntoAlBoton(mensaje);
   });
 
   it('Un error del back sin campo ni torneo igual se ve junto al botón', async () => {
@@ -207,7 +210,9 @@ describe('PICA-308: Iniciar la venta al publicar', () => {
     );
     await completarYGuardar(pedirTorneo, null, enDias(20));
 
-    expect(await screen.findByText('La fecha debe ser anterior al inicio del torneo.')).toBeVisible();
+    expect(
+      await screen.findByText('La fecha debe ser anterior al inicio del torneo.')
+    ).toBeVisible();
     expect(guardar).not.toHaveBeenCalled();
   });
 });
