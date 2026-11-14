@@ -421,12 +421,6 @@
   font-weight: 600;
 }
 
-.rifas-opciones label {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
 .rifas-fecha-hora {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 7.5rem;

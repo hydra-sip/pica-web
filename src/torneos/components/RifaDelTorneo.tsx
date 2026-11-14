@@ -9,37 +9,41 @@ interface RifaDelTorneoProps {
 }
 
 /**
- * HU-406: en la consola, la rifa que recauda para el torneo con sus vendidos sobre el total y el pozo desglosado.
- * Sin rifa, o sin acceso a las rifas, no se muestra.
+ * HU-406: en la consola, las rifas que recaudan para el torneo (CR-06: puede tener varias), cada una con sus vendidos
+ * sobre el total y el pozo desglosado. Sin rifas, o sin acceso a las rifas, no se muestra.
  */
 export const RifaDelTorneo: React.FC<RifaDelTorneoProps> = ({ torneoId }) => {
-  const [rifa, setRifa] = useState<RifaDetalle | null>(null);
+  const [rifas, setRifas] = useState<RifaDetalle[]>([]);
 
   useEffect(() => {
     let vigente = true;
     rifaApi
       .listarMias({ size: 100 })
-      .then((p) => {
-        const delTorneo = p.content.find((r) => r.torneoId === torneoId);
-        return delTorneo ? rifaApi.obtener(delTorneo.id) : null;
-      })
-      .then((detalle) => vigente && setRifa(detalle))
-      .catch(() => vigente && setRifa(null));
+      .then((p) =>
+        Promise.all(
+          p.content.filter((r) => r.torneoId === torneoId).map((r) => rifaApi.obtener(r.id))
+        )
+      )
+      .then((detalles) => vigente && setRifas(detalles))
+      .catch(() => vigente && setRifas([]));
     return () => {
       vigente = false;
     };
   }, [torneoId]);
 
-  if (!rifa) return null;
-
   return (
-    <RecaudadoRifa
-      titulo={`Rifa: ${rifa.titulo}`}
-      reparto={rifa.reparto}
-      torneoNombre={rifa.torneoNombre}
-      pctDestinadoTorneo={rifa.pctDestinadoTorneo}
-      vendidos={`${rifa.numerosVendidos} de ${rifa.numeroHasta - rifa.numeroDesde + 1}`}
-      accion={<Link to={`/rifas/${rifa.id}/editar`}>Ver rifa</Link>}
-    />
+    <>
+      {rifas.map((rifa) => (
+        <RecaudadoRifa
+          key={rifa.id}
+          titulo={`Rifa: ${rifa.titulo}`}
+          reparto={rifa.reparto}
+          torneoNombre={rifa.torneoNombre}
+          pctDestinadoTorneo={rifa.pctDestinadoTorneo}
+          vendidos={`${rifa.numerosVendidos} de ${rifa.numeroHasta - rifa.numeroDesde + 1}`}
+          accion={<Link to={`/rifas/${rifa.id}/editar`}>Ver rifa</Link>}
+        />
+      ))}
+    </>
   );
 };

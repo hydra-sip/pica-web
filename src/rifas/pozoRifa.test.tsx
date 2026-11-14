@@ -108,6 +108,31 @@ describe('HU-406 / T406-1: Pozo de la rifa y avance de la venta', () => {
     expect(screen.queryByTestId('rifa-recaudado')).not.toBeInTheDocument();
   });
 
+  it('CR-06: un torneo con varias rifas muestra una card por cada una', async () => {
+    const segunda = { ...rifa, id: 201, titulo: 'Rifa de la final', numerosVendidos: 4 };
+    const deOtroTorneo = { ...rifa, id: 300, titulo: 'Rifa de otro torneo', torneoId: 999 };
+    server.use(
+      http.get(`${API_URL}/rifas/mis-rifas`, () =>
+        HttpResponse.json({
+          content: [rifa, segunda, deOtroTorneo],
+          page: { size: 100, number: 0, totalElements: 3, totalPages: 1 },
+        })
+      ),
+      http.get(`${API_URL}/rifas/:id`, ({ params }) =>
+        HttpResponse.json([rifa, segunda, deOtroTorneo].find((r) => r.id === Number(params.id)))
+      )
+    );
+    renderConsola();
+
+    expect(await screen.findByText('Rifa: Gran Rifa Copa Primavera')).toBeInTheDocument();
+    expect(screen.getByText('Rifa: Rifa de la final')).toBeInTheDocument();
+    expect(screen.getByText('4 de 100')).toBeInTheDocument();
+    expect(screen.queryByText('Rifa: Rifa de otro torneo')).not.toBeInTheDocument();
+    expect(
+      screen.getAllByRole('link', { name: 'Ver rifa' }).map((l) => l.getAttribute('href'))
+    ).toEqual(['/rifas/200/editar', '/rifas/201/editar']);
+  });
+
   it('El pago de la compra muestra el resumen y confirma con el total, como la inscripción', async () => {
     const user = userEvent.setup();
     const onPagar = vi.fn();

@@ -55,7 +55,6 @@ const POR_CODIGO: Record<string, string> = {
   RIFA_NO_ENCONTRADA: 'La rifa no existe o no es tuya.',
   RIFA_NO_EDITABLE: 'La rifa ya no está en borrador: no se puede modificar.',
   RIFA_INCOMPLETA: 'A la rifa le falta completar datos para publicarse.',
-  TORNEO_CON_RIFA: 'Ese torneo ya tiene una rifa.',
   TORNEO_NO_ADMITE_RIFA: 'Ese torneo ya empezó o terminó: no se le puede asociar una rifa.',
   NUMERO_NO_DISPONIBLE: 'Alguno de los números ya no está disponible: elegí otros.',
   VENTA_CERRADA: 'La venta de esta rifa no está abierta.',
@@ -132,14 +131,10 @@ const POR_CODIGO: Record<string, string> = {
   // HU-607: cuentas bancarias y retiro de fondos
   CUENTA_TITULAR_NO_COINCIDE:
     'La cuenta destino debe estar a nombre del titular verificado en la plataforma',
-  CUENTA_BANCARIA_DUPLICADA:
-    'Ya tenés una cuenta bancaria registrada con ese CBU, CVU o alias.',
-  CUENTA_NO_VALIDADA:
-    'Solo se puede retirar a una cuenta validada.',
-  CUENTA_BANCARIA_NO_ENCONTRADA:
-    'La cuenta bancaria no existe o no te pertenece.',
-  RETIRO_FUERA_DE_TOPES:
-    'El monto debe estar dentro de los límites de retiro permitidos.',
+  CUENTA_BANCARIA_DUPLICADA: 'Ya tenés una cuenta bancaria registrada con ese CBU, CVU o alias.',
+  CUENTA_NO_VALIDADA: 'Solo se puede retirar a una cuenta validada.',
+  CUENTA_BANCARIA_NO_ENCONTRADA: 'La cuenta bancaria no existe o no te pertenece.',
+  RETIRO_FUERA_DE_TOPES: 'El monto debe estar dentro de los límites de retiro permitidos.',
   DOCUMENTO_NO_CARGADO:
     'Debés tener tu documento registrado en tu perfil para gestionar cuentas y retiros.',
   // HU-605: cancelación de torneos y revisión de soporte
