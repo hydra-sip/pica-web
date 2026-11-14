@@ -151,16 +151,20 @@ export interface PremioEntrada {
   pct: number;
 }
 
-/** Una línea de la lista sellada: el número vendido y el código de su ticket. */
+/** Una línea de la lista sellada: el número vendido, el código de su ticket y, desde la versión 2, su comprador. */
 export interface LineaEntrada {
   numero: number;
   ticketCodigo: string;
+  comprador?: string | null;
 }
 
 export interface NumeroConHash {
   numero: number;
   hash: string;
   posicionOrden: number;
+  comprador: string | null;
+  /** Versión 2: se salteó porque su comprador ya había ganado un premio. */
+  salteado: boolean;
 }
 
 export interface GanadorRecalculado {
@@ -169,6 +173,7 @@ export interface GanadorRecalculado {
   pct: number;
   numeroGanador: number | null;
   hashGanador: string | null;
+  comprador: string | null;
 }
 
 export interface RecalculoRifaResultado {
@@ -181,22 +186,24 @@ export interface RecalculoRifaResultado {
 }
 
 /**
- * Recalcula el sorteo de una rifa igual que SelloRifa.java y SorteoRifa.java (HU-504):
- * 1. El hash de la lista: SHA-256 de una línea "numero;ticketCodigo" por vendido, de menor a mayor,
- *    separadas con "\n" y sin salto al final.
+ * Recalcula el sorteo de una rifa igual que SelloRifa.java y SorteoRifa.java (HU-504, CR-06):
+ * 1. El hash de la lista: SHA-256 de una línea por vendido, de menor a mayor, separadas con "\n" y sin
+ *    salto al final: "numero;ticketCodigo" en la versión 1 y "numero;ticketCodigo;comprador" en la 2.
  * 2. El compromiso: SHA-256(listaHash + ":" + fechaSorteo), con la fecha como la devuelve la API.
  * 3. Ordena los vendidos por SHA-256(semilla + ":" + numero) de menor a mayor (desempate por número)
- *    y asigna los ganadores en ese orden a los premios por puesto; los que sobran quedan sin ganador.
+ *    y asigna los ganadores en ese orden a los premios por puesto. En la versión 2 nadie gana dos veces:
+ *    se saltean los números de un comprador que ya ganó. Los premios que sobran quedan sin ganador.
  */
 export async function recalcularSorteoRifa(
   semilla: string,
   lista: LineaEntrada[],
   fechaSorteo: string,
-  premios: PremioEntrada[]
+  premios: PremioEntrada[],
+  version = 1
 ): Promise<RecalculoRifaResultado> {
   const texto = [...lista]
     .sort((a, b) => a.numero - b.numero)
-    .map((l) => `${l.numero};${l.ticketCodigo}`)
+    .map((l) => `${l.numero};${l.ticketCodigo}` + (version >= 2 ? `;${l.comprador ?? ''}` : ''))
     .join('\n');
   const listaHashCalculado = await calcularSha256(texto);
   const compromisoCalculado = await calcularSha256(`${listaHashCalculado}:${fechaSorteo}`);
@@ -206,6 +213,8 @@ export async function recalcularSorteoRifa(
       numero: l.numero,
       hash: await calcularSha256(`${semilla}:${l.numero}`),
       posicionOrden: 0,
+      comprador: version >= 2 ? (l.comprador ?? null) : null,
+      salteado: false,
     }))
   );
 
@@ -222,14 +231,30 @@ export async function recalcularSorteoRifa(
 
   const premiosOrdenados = [...premios].sort((a, b) => a.puesto - b.puesto);
 
+  // se recorre el orden; en la versión 2 se saltea al comprador que ya ganó
+  const numerosGanadores: NumeroConHash[] = [];
+  const yaGanaron = new Set<string | null>();
+  for (const item of orden) {
+    if (numerosGanadores.length === premiosOrdenados.length) break;
+    if (version >= 2) {
+      if (yaGanaron.has(item.comprador)) {
+        item.salteado = true;
+        continue;
+      }
+      yaGanaron.add(item.comprador);
+    }
+    numerosGanadores.push(item);
+  }
+
   const ganadores: GanadorRecalculado[] = premiosOrdenados.map((premio, idx) => {
-    const item = orden[idx];
+    const item = numerosGanadores[idx];
     return {
       puesto: premio.puesto,
       descripcion: premio.descripcion || `Premio ${premio.puesto}`,
       pct: premio.pct,
       numeroGanador: item ? item.numero : null,
       hashGanador: item ? item.hash : null,
+      comprador: item ? item.comprador : null,
     };
   });
 

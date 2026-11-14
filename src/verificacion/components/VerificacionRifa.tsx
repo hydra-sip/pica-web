@@ -58,7 +58,8 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
         semillaActual,
         listaActual,
         datos.fechaSorteo,
-        datos.premios
+        datos.premios,
+        datos.versionSorteo
       );
       setVerificacionDrand(
         esDeDrand
@@ -79,6 +80,8 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
     }
   };
 
+  // CR-06: desde la versión 2 nadie gana dos veces y cada número lleva su comprador anónimo
+  const sinGanadoresRepetidos = datos.versionSorteo >= 2;
   const ganadoresOficiales = [...datos.premios].sort((a, b) => a.puesto - b.puesto);
   const ganadoresRecalculados = resultadoRecalculo?.ganadores || [];
 
@@ -307,9 +310,9 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
           {esDeDrand ? (
             <p className="verificacion-campo-explicacion">
               Valor público de drand (League of Entropy): el <code>randomness</code> de la ronda{' '}
-              <strong data-testid="semilla-ronda-rifa">{semillaRonda}</strong>, la vigente en la fecha
-              del sorteo, que sale después de publicado el compromiso. Nadie de la plataforma puede
-              elegirlo.{' '}
+              <strong data-testid="semilla-ronda-rifa">{semillaRonda}</strong>, la vigente en la
+              fecha del sorteo, que sale después de publicado el compromiso. Nadie de la plataforma
+              puede elegirlo.{' '}
               <a
                 href={semillaUrl}
                 target="_blank"
@@ -452,15 +455,18 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
       )}
 
       {resultadoRecalculo && verificacionDrand?.consulta === 'sin-respuesta' && (
-        <div className="verificacion-banner-status discrepancia" data-testid="banner-drand-sin-respuesta">
+        <div
+          className="verificacion-banner-status discrepancia"
+          data-testid="banner-drand-sin-respuesta"
+        >
           <div className="verificacion-banner-icono">
             <IconoAlerta size={24} />
           </div>
           <div className="verificacion-banner-contenido">
             <h4 className="verificacion-banner-titulo">No se pudo consultar drand</h4>
             <p className="verificacion-banner-desc">
-              No se comparó la semilla con la que publica drand. Podés abrir la ronda con el link de la
-              semilla o volver a verificar más tarde.
+              No se comparó la semilla con la que publica drand. Podés abrir la ronda con el link de
+              la semilla o volver a verificar más tarde.
             </p>
           </div>
         </div>
@@ -479,6 +485,13 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
       >
         <span>Resultado Obtenido: Números Ganadores por Premio</span>
       </h3>
+      {sinGanadoresRepetidos && (
+        <p className="verificacion-nota" data-testid="regla-sin-repetidos">
+          Nadie gana dos veces: los premios se asignan en el orden del sorteo y se saltean los
+          números de un comprador que ya ganó. El comprador de cada número es anónimo (C1, C2…) y
+          está sellado en la lista desde el cierre de la venta, antes de conocerse la semilla.
+        </p>
+      )}
 
       <div className="verificacion-tabla-wrapper">
         <table className="verificacion-tabla" data-testid="tabla-ganadores-rifa">
@@ -575,18 +588,27 @@ export const VerificacionRifa: React.FC<Props> = ({ datos }) => {
                 <tr>
                   <th>Orden</th>
                   <th>Número de Boleto</th>
+                  {sinGanadoresRepetidos && <th>Comprador</th>}
                   <th>SHA-256(Semilla + ":" + Número)</th>
                 </tr>
               </thead>
               <tbody>
                 {resultadoRecalculo.orden.map((item) => (
-                  <tr key={item.numero}>
+                  <tr key={item.numero} data-testid={`orden-numero-${item.numero}`}>
                     <td>
                       <strong>#{item.posicionOrden}</strong>
                     </td>
                     <td>
                       <strong>Boleto {item.numero}</strong>
                     </td>
+                    {sinGanadoresRepetidos && (
+                      <td>
+                        {item.comprador ?? '-'}
+                        {item.salteado && (
+                          <span className="verificacion-salteado"> · Salteado: ya ganó</span>
+                        )}
+                      </td>
+                    )}
                     <td className="verificacion-hash-celda" title={item.hash}>
                       {item.hash}
                     </td>

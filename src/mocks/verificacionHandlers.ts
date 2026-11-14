@@ -158,6 +158,7 @@ export const mockRifaVerificacion10: RifaVerificacionData = {
   fechaSorteo: '2026-10-26T21:00:00Z',
   listaHash: '059f191ae46c2ce332ebaf49f125bcb3fc89308049e1700a98d7a87b3d36a07d',
   listaSelladaEn: '2026-10-25T21:00:00Z',
+  versionSorteo: 1,
   lista: [
     { numero: 7, ticketCodigo: 'R10-K7MPQ2' },
     { numero: 14, ticketCodigo: 'R10-K7MPQ2' },
@@ -213,6 +214,7 @@ export const mockRifaVerificacion40: RifaVerificacionData = {
   fechaSorteo: '2026-11-08T20:00:00Z',
   listaHash: '67bf5000e79d7cf5f6767d8544cd4479a86dbe6aab1524ce02817a63d726c0c7',
   listaSelladaEn: '2026-11-07T20:00:00Z',
+  versionSorteo: 1,
   lista: [
     { numero: 11, ticketCodigo: 'R40-A1B2C3' },
     { numero: 22, ticketCodigo: 'R40-D4E5F6' },
@@ -245,6 +247,7 @@ export const mockRifaVerificacion42: RifaVerificacionData = {
   fechaSorteo: '2026-11-05T21:00:00Z',
   listaHash: '87f3b02bbfe70b10ddf126b196833e7c519e17df396a2233968bf61f8f132fea',
   listaSelladaEn: '2026-11-04T21:00:00Z',
+  versionSorteo: 1,
   lista: [
     { numero: 5, ticketCodigo: 'R42-X1Y2Z3' },
     { numero: 14, ticketCodigo: 'R42-M4N5P6' },
@@ -268,8 +271,45 @@ export const mockRifaVerificacion42: RifaVerificacionData = {
   ],
 };
 
+// Rifa 11 sorteada con la versión 2 (CR-06): nadie gana dos veces. El orden es 21, 35, 59, 88...; el 21 y el
+// 35 son de C3, así que el 35 se saltea y los ganadores son 21, 59 y 88. Hashes reales del algoritmo.
+export const mockRifaVerificacion11: RifaVerificacionData = {
+  id: 11,
+  titulo: 'Rifa de Apertura',
+  torneoNombre: 'Copa PICA 2026 - Eliminación Directa',
+  fechaSorteo: '2026-11-12T21:00:00Z',
+  listaHash: 'ccfc86df350372b66f17fe4e2535776287e67a6175bf80ce7f05ff9a405f2eaa',
+  listaSelladaEn: '2026-11-11T21:00:00Z',
+  versionSorteo: 2,
+  lista: [
+    { numero: 7, ticketCodigo: 'R11-B07', comprador: 'C1' },
+    { numero: 14, ticketCodigo: 'R11-B114', comprador: 'C2' },
+    { numero: 21, ticketCodigo: 'R11-A21', comprador: 'C3' },
+    { numero: 35, ticketCodigo: 'R11-A35', comprador: 'C3' },
+    { numero: 42, ticketCodigo: 'R11-B242', comprador: 'C4' },
+    { numero: 59, ticketCodigo: 'R11-B059', comprador: 'C1' },
+    { numero: 73, ticketCodigo: 'R11-B173', comprador: 'C2' },
+    { numero: 88, ticketCodigo: 'R11-B288', comprador: 'C4' },
+    { numero: 92, ticketCodigo: 'R11-B092', comprador: 'C1' },
+    { numero: 105, ticketCodigo: 'R11-B1105', comprador: 'C2' },
+  ],
+  compromisoHash: '98927b014ef934c6d61de980acff1f09a63c97f1d4f7e07717ed3a8a0df7f860',
+  compromisoPublicadoEn: '2026-11-11T21:00:00Z',
+  semilla: '56fd616b0613c580959b28f96b9a365138ad4245b10db62d72e0288207efd3b1',
+  semillaFirma: null,
+  semillaRonda: null,
+  semillaUrl: null,
+  semillaObtenidaEn: '2026-11-12T21:00:05Z',
+  premios: [
+    { puesto: 1, descripcion: 'Camiseta oficial', pct: 50, numeroGanador: 21, ganador: 'juan.uno' },
+    { puesto: 2, descripcion: 'Pelota', pct: 30, numeroGanador: 59, ganador: 'ana.torres' },
+    { puesto: 3, descripcion: 'Entradas', pct: 20, numeroGanador: 88, ganador: 'lucia.fer' },
+  ],
+};
+
 const sorteosRifa: Record<number, RifaVerificacionData> = {
   10: mockRifaVerificacion10,
+  11: mockRifaVerificacion11,
   40: mockRifaVerificacion40,
   42: mockRifaVerificacion42,
 };
