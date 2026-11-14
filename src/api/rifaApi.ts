@@ -273,6 +273,8 @@ export interface NumeroOcupado {
 export interface LineaListaSellada {
   numero: number;
   ticketCodigo: string;
+  /** CR-06: el comprador anónimo de la rifa (C1, C2...); null en las rifas de la versión 1. */
+  comprador?: string | null;
 }
 
 /** Fila de GET /rifas/publicas/sorteadas; `semillaObtenidaEn` es cuándo se sorteó. */
@@ -296,6 +298,8 @@ export interface SorteoRifa {
   fechaSorteo: string;
   listaHash: string;
   listaSelladaEn: string;
+  /** 1: el orden reparte los premios tal cual; 2 (CR-06): se saltea al comprador que ya ganó. */
+  versionSorteo: number;
   lista: LineaListaSellada[];
   compromisoHash: string;
   compromisoPublicadoEn: string;

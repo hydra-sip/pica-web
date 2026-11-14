@@ -287,7 +287,9 @@
   display: inline-flex;
   align-items: center;
   border-radius: 4px;
-  transition: color 0.2s, background 0.2s;
+  transition:
+    color 0.2s,
+    background 0.2s;
 }
 
 .verificacion-btn-copiar:hover {
@@ -506,4 +508,17 @@
   font-size: 0.75rem;
   color: #22c55e;
   font-weight: 600;
+}
+
+/* CR-06: la regla de la versión 2 y los números salteados porque su comprador ya ganó */
+.verificacion-nota {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.verificacion-salteado {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  font-style: italic;
 }

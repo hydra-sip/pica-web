@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 import { RifaVerificacionData } from '../api/verificacionApi';
 import { server } from '../mocks/server';
-import { mockRifaVerificacion10 } from '../mocks/verificacionHandlers';
+import { mockRifaVerificacion10, mockRifaVerificacion11 } from '../mocks/verificacionHandlers';
 import { renderRuta } from '../test/renderRuta';
 import { VerificacionRifa } from './components/VerificacionRifa';
 import {
@@ -81,6 +81,30 @@ describe('HU-505 / T505-1: Motor Criptográfico (Unitario)', () => {
     const res = await recalcularSorteoRifa('abc', lista, '2026-10-31T15:00:00Z', premios);
 
     expect(res.ganadores.map((g) => g.numeroGanador)).toEqual([3, null]);
+  });
+
+  it('CR-06: con la versión 2 sella el comprador y saltea al que ya ganó', async () => {
+    const { semilla, lista, fechaSorteo, premios, listaHash, compromisoHash, versionSorteo } =
+      mockRifaVerificacion11;
+
+    const res = await recalcularSorteoRifa(semilla, lista, fechaSorteo, premios, versionSorteo);
+
+    expect(res.listaHashCalculado).toBe(listaHash);
+    expect(res.compromisoCalculado).toBe(compromisoHash);
+    // el orden es 21, 35, 59, 88...: el 35 es de C3, que ya ganó con el 21
+    expect(res.orden.slice(0, 4).map((o) => o.numero)).toEqual([21, 35, 59, 88]);
+    expect(res.ganadores.map((g) => g.numeroGanador)).toEqual([21, 59, 88]);
+    expect(res.ganadores.map((g) => g.comprador)).toEqual(['C3', 'C1', 'C4']);
+    expect(res.orden.filter((o) => o.salteado).map((o) => o.numero)).toEqual([35]);
+  });
+
+  it('CR-06: la misma lista con las reglas de la versión 1 da otro sello y otros ganadores', async () => {
+    const { semilla, lista, fechaSorteo, premios, listaHash } = mockRifaVerificacion11;
+
+    const res = await recalcularSorteoRifa(semilla, lista, fechaSorteo, premios, 1);
+
+    expect(res.listaHashCalculado).not.toBe(listaHash);
+    expect(res.ganadores.map((g) => g.numeroGanador)).toEqual([21, 35, 59]);
   });
 });
 
@@ -302,6 +326,39 @@ describe('HU-504 / T504-3: Verificación de una rifa', () => {
     expect(await screen.findByTestId('banner-discrepancia-detectada-rifa')).toHaveTextContent(
       /la lista de números vendidos fue modificada/i
     );
+    // una rifa de la versión 1 no explica la regla de no repetir ganadores
+    expect(screen.queryByTestId('regla-sin-repetidos')).not.toBeInTheDocument();
+  });
+
+  it('CR-06: verifica una rifa sin ganadores repetidos y muestra a quién se salteó', async () => {
+    const user = userEvent.setup();
+    render(<VerificacionRifa datos={mockRifaVerificacion11} />);
+
+    expect(screen.getByTestId('regla-sin-repetidos')).toHaveTextContent(/nadie gana dos veces/i);
+
+    await user.click(screen.getByTestId('btn-recalcular-rifa'));
+
+    expect(await screen.findByTestId('banner-verificacion-exitosa-rifa')).toBeInTheDocument();
+    expect(screen.getAllByText('Coincide')).toHaveLength(3);
+    expect(screen.getByTestId('orden-numero-35')).toHaveTextContent('C3');
+    expect(screen.getByTestId('orden-numero-35')).toHaveTextContent('Salteado: ya ganó');
+    expect(screen.getByTestId('orden-numero-21')).not.toHaveTextContent('Salteado');
+  });
+
+  it('CR-06: si la plataforma hubiera dado dos premios al mismo comprador, no coincide', async () => {
+    const user = userEvent.setup();
+    const conRepetido = {
+      ...mockRifaVerificacion11,
+      premios: mockRifaVerificacion11.premios.map((p) =>
+        p.puesto === 2 ? { ...p, numeroGanador: 35 } : p
+      ),
+    };
+    render(<VerificacionRifa datos={conRepetido} />);
+
+    await user.click(screen.getByTestId('btn-recalcular-rifa'));
+
+    expect(await screen.findByTestId('banner-discrepancia-detectada-rifa')).toBeInTheDocument();
+    expect(screen.getByTestId('fila-premio-2')).toHaveClass('mismatch');
   });
 });
 
