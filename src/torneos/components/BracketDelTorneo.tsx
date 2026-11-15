@@ -9,7 +9,11 @@ import { Bracket } from './Bracket';
  * Suscripto a `/topic/torneos/{id}` para reflejar avances y confirmaciones de resultados en tiempo real
  * sin recargar la página. Al reconectarse recarga el estado desde el servidor.
  */
-export const BracketDelTorneo: React.FC<{ torneoId: number }> = ({ torneoId }) => {
+export const BracketDelTorneo: React.FC<{
+  torneoId: number;
+  /** Con fase de grupos (CR-02): es la llave de los que pasan, con cruces fijos; lo sorteado son los grupos. */
+  conGrupos?: boolean;
+}> = ({ torneoId, conGrupos = false }) => {
   const [bracket, setBracket] = useState<BracketTorneo | null>(null);
 
   const cargarBracket = useCallback(() => {
@@ -65,29 +69,31 @@ export const BracketDelTorneo: React.FC<{ torneoId: number }> = ({ torneoId }) =
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <IconoTrofeo size={20} />
-          <span>Bracket</span>
+          <span>{conGrupos ? 'Llave' : 'Bracket'}</span>
         </div>
-        <a
-          href={`/verificacion?tipo=torneo&id=${torneoId}`}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.35rem',
-            fontSize: '0.85rem',
-            fontWeight: 500,
-            color: 'var(--color-primario, #2563eb)',
-            textDecoration: 'none',
-          }}
-          title="Verificar y recalcular sorteo en el portal público"
-          data-testid="link-verificar-bracket"
-        >
-          <IconoEscudoCheck size={16} />
-          <span>Verificar sorteo</span>
-        </a>
+        {conGrupos ? (
+          <span className="torneos-subtitulo">Cruces fijos: 1A–2B, 1B–2A…</span>
+        ) : (
+          <a
+            href={`/verificacion?tipo=torneo&id=${torneoId}`}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              fontSize: '0.85rem',
+              fontWeight: 500,
+              color: 'var(--color-primario, #2563eb)',
+              textDecoration: 'none',
+            }}
+            title="Verificar y recalcular sorteo en el portal público"
+            data-testid="link-verificar-bracket"
+          >
+            <IconoEscudoCheck size={16} />
+            <span>Verificar sorteo</span>
+          </a>
+        )}
       </div>
       <Bracket bracket={bracket} />
     </div>
   );
 };
-
-
