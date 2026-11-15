@@ -82,7 +82,8 @@ const PorAusencia: React.FC<{ partido: PartidoBracket; descalificados: boolean }
   );
 };
 
-const Partido: React.FC<{ partido: PartidoBracket }> = ({ partido }) => {
+/** Un partido como en el bracket: los dos lados con su marcador, el BYE o la ausencia. */
+export const Partido: React.FC<{ partido: PartidoBracket }> = ({ partido }) => {
   const cierre = cierrePorAusencia(partido);
   if (partido.bye) return <SinRival partido={partido} chip="BYE →" vacio="Sin rival (avanza)" />;
   if (cierre === 'PASE_DIRECTO') {

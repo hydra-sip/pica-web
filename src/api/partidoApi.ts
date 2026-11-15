@@ -4,14 +4,18 @@ import { EstadoPartido, LadoBracket } from './torneoApi';
 export type Lado = 'LOCAL' | 'VISITANTE';
 
 /** GET /partidos/{id} (HU-301): el partido con lo que hace falta para cargar, aceptar, objetar o laudar el resultado. */
+export type FasePartido = 'GRUPOS' | 'DESEMPATE' | 'ELIMINACION';
+
 export interface PartidoDetalle {
   id: number;
   torneoId: number;
   torneo: string;
   torneoSlug: string | null;
   ronda: number;
-  /** "Final", "Semifinal"... como en el bracket. */
+  /** "Final", "Semifinal"... como en el bracket; en la fase de grupos, «Grupo A · Fecha 2». */
   nombreRonda: string;
+  /** CR-02: en GRUPOS se puede empatar y no hay penales; DESEMPATE y ELIMINACION, como la llave. */
+  fase: FasePartido;
   posicion: number;
   estado: EstadoPartido;
   bye: boolean;

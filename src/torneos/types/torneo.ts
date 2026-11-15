@@ -1,3 +1,5 @@
+import type { ReglasGrupos } from '../../api/torneoApi';
+
 export type EstadoTorneo =
   | 'INSCRIPCION_ABIERTA'
   | 'INSCRIPCION_CERRADA'
@@ -57,6 +59,8 @@ export interface TorneoDetalle {
   descripcion: string | null;
   disciplina: string;
   formato: FormatoTorneo;
+  /** Las de la fase de grupos, selladas (CR-02); null en eliminación directa. */
+  reglasGrupos?: ReglasGrupos | null;
   modalidad: ModalidadTorneo;
   tipoParticipante: TipoParticipante;
   sede: string | null;

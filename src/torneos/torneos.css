@@ -1085,3 +1085,67 @@
 .torneos-cancelacion-total {
   font-weight: 700;
 }
+
+/* CR-02: cómo queda la fase de grupos con el cupo elegido */
+.torneos-ayuda {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+/* CR-02: la fase de grupos en la consola y en la ficha */
+.grupos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6, 1.5rem);
+}
+
+.grupos-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 0.75rem);
+}
+
+.grupos-tabla-caja {
+  overflow-x: auto;
+}
+
+.grupos-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.grupos-tabla th,
+.grupos-tabla td {
+  padding: 0.4rem 0.5rem;
+  text-align: center;
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.grupos-tabla th:nth-child(2),
+.grupos-tabla td:nth-child(2),
+.grupos-criterio {
+  text-align: left;
+}
+
+.grupos-clasifica td:first-child {
+  box-shadow: inset 3px 0 0 var(--color-success, #16a34a);
+}
+
+.grupos-pasa,
+.grupos-criterio {
+  color: var(--color-text-secondary);
+}
+
+.grupos-fecha h4 {
+  margin: 0 0 0.5rem;
+  font-size: var(--text-sm);
+}
+
+.grupos-partidos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-3, 0.75rem);
+}

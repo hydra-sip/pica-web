@@ -2,7 +2,7 @@ import React from 'react';
 import { CampoTorneo } from '../../api/torneoApi';
 import { Field, Input } from '../../shared/ui';
 import { participantes } from '../formato';
-import { ErroresTorneo, FormTorneo } from '../validacion';
+import { ErroresTorneo, FormTorneo, resumenGrupos } from '../validacion';
 
 interface PasoCuposProps {
   form: FormTorneo;
@@ -100,6 +100,10 @@ export const PasoCupos: React.FC<PasoCuposProps> = ({
         </Field>
       </div>
 
+      {form.formato === 'GRUPOS_Y_ELIMINACION' && (
+        <ReglasDeGrupos form={form} errores={errores} numero={numero} puede={puede} />
+      )}
+
       {form.tipoParticipante === 'EQUIPO' ? (
         <div className="torneos-grilla">
           <Field
@@ -141,5 +145,84 @@ export const PasoCupos: React.FC<PasoCuposProps> = ({
         )
       )}
     </>
+  );
+};
+
+/**
+ * Las reglas de la fase de grupos (CR-02): tamaño, cuántos pasan y los puntos. Quedan selladas al publicar. Abajo, cómo
+ * queda el torneo con el cupo elegido.
+ */
+const ReglasDeGrupos: React.FC<{
+  form: FormTorneo;
+  errores: ErroresTorneo;
+  numero: (campo: keyof FormTorneo) => (e: React.ChangeEvent<HTMLInputElement>) => void;
+  puede: (campo: CampoTorneo) => boolean;
+}> = ({ form, errores, numero, puede }) => {
+  const resumen = resumenGrupos(form);
+  const editable = puede('reglasGrupos');
+  return (
+    <fieldset className="torneos-opciones">
+      <legend>Fase de grupos</legend>
+      <div className="torneos-grilla">
+        <Field label="Integrantes por grupo" required hint="De 3 a 8." error={errores.tamanioGrupo}>
+          <Input
+            type="number"
+            min={3}
+            max={8}
+            step={1}
+            value={form.tamanioGrupo}
+            onChange={numero('tamanioGrupo')}
+            disabled={!editable}
+          />
+        </Field>
+        <Field
+          label="Pasan a la llave por grupo"
+          required
+          hint="Los primeros de cada grupo."
+          error={errores.clasificanPorGrupo}
+        >
+          <Input
+            type="number"
+            min={1}
+            step={1}
+            value={form.clasificanPorGrupo}
+            onChange={numero('clasificanPorGrupo')}
+            disabled={!editable}
+          />
+        </Field>
+        <Field label="Puntos por ganar" required error={errores.puntosVictoria}>
+          <Input
+            type="number"
+            min={1}
+            max={10}
+            step={1}
+            value={form.puntosVictoria}
+            onChange={numero('puntosVictoria')}
+            disabled={!editable}
+          />
+        </Field>
+        <Field
+          label="Puntos por empatar"
+          required
+          hint="En grupos se puede empatar; perder da 0."
+          error={errores.puntosEmpate}
+        >
+          <Input
+            type="number"
+            min={0}
+            step={1}
+            value={form.puntosEmpate}
+            onChange={numero('puntosEmpate')}
+            disabled={!editable}
+          />
+        </Field>
+      </div>
+      <p className="torneos-ayuda">
+        {resumen
+          ? `Con este cupo: ${resumen.grupos} grupos y ${resumen.aLaLlave} pasan a la llave, con cruces fijos (1A–2B, 1B–2A…). `
+          : 'El cupo máximo tiene que ser múltiplo de los integrantes por grupo. '}
+        Desempate: puntos, resultado entre sí, partidos ganados y, si sigue, partido de desempate.
+      </p>
+    </fieldset>
   );
 };

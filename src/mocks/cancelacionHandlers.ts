@@ -16,6 +16,7 @@ const torneoBase: TorneoInformacion = {
   disciplina: 'Fútbol 5',
   descripcion: null,
   formato: 'ELIMINACION_DIRECTA',
+  reglasGrupos: null,
   modalidad: 'PRESENCIAL',
   tipoParticipante: 'EQUIPO',
   sede: 'Club Mercedes',

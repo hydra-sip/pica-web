@@ -93,6 +93,10 @@ const POR_CODIGO: Record<string, string> = {
   SIN_ARBITROS:
     'Hace falta al menos un árbitro que haya aceptado la designación: cada partido necesita uno.',
   BRACKET_CON_RESULTADOS: 'Ya hay resultados cargados: el bracket no se puede volver a sortear.',
+  SEMILLA_NO_DISPONIBLE:
+    'La ronda de drand del sorteo todavía no salió: probá de nuevo en unos segundos.',
+  GRUPOS_YA_SORTEADOS:
+    'Los grupos ya se sortearon: salen de drand, así que no se vuelven a sortear.',
   PARTIDO_NO_ENCONTRADO: 'El partido no existe.',
   EVIDENCIA_NO_ENCONTRADA: 'Ese archivo ya no está: recargá la página.',
   PARTIDO_NO_EN_JUEGO: 'Este partido no está en juego: ya tiene resultado o falta el rival.',
