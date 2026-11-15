@@ -8,6 +8,7 @@ import { useTorneoRealtime } from '../../realtime/useTorneoRealtime';
 import { StatusChip } from '../../admin/components/StatusChip';
 import { TorneoPremiosList } from '../components/TorneoPremiosList';
 import { BracketDelTorneo } from '../components/BracketDelTorneo';
+import { GruposPublicos } from '../components/GruposPublicos';
 import { TuProximoCruce } from '../../partidos/components/TuProximoCruce';
 import { TorneoDetalleSkeleton } from '../components/TorneoSkeleton';
 import { useAuth } from '../../auth/hooks/useAuth';
@@ -250,11 +251,11 @@ export const TorneoDetallePage: React.FC = () => {
   // Lógica de organizador, cupos e inscripción
   const isOrganizador = Boolean(
     user &&
-      torneo.organizador &&
-      (String(user.id) === String(torneo.organizador.id) ||
-        (user.username &&
-          torneo.organizador.username &&
-          user.username.toLowerCase() === torneo.organizador.username.toLowerCase()))
+    torneo.organizador &&
+    (String(user.id) === String(torneo.organizador.id) ||
+      (user.username &&
+        torneo.organizador.username &&
+        user.username.toLowerCase() === torneo.organizador.username.toLowerCase()))
   );
 
   const fechaCierre = torneo.cierreInscripcionEn ? new Date(torneo.cierreInscripcionEn) : null;
@@ -333,6 +334,13 @@ export const TorneoDetallePage: React.FC = () => {
           }}
         >
           <span className="badge">Formato: {formatFormatoTorneo(torneo.formato)}</span>
+          {torneo.reglasGrupos && (
+            <span className="badge">
+              Grupos de {torneo.reglasGrupos.tamanioGrupo} · pasan{' '}
+              {torneo.reglasGrupos.clasificanPorGrupo} · {torneo.reglasGrupos.puntosVictoria}/
+              {torneo.reglasGrupos.puntosEmpate}/0 puntos
+            </span>
+          )}
           <span className="badge">Modalidad: {formatModalidad(torneo.modalidad)}</span>
           <span className="badge">
             Modalidad de juego:{' '}
@@ -721,7 +729,9 @@ export const TorneoDetallePage: React.FC = () => {
       {torneo.estado !== 'INSCRIPCION_ABIERTA' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--color-text)' }}>
+            <span
+              style={{ fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--color-text)' }}
+            >
               Cuadro del Torneo
             </span>
             <Link
@@ -733,7 +743,11 @@ export const TorneoDetallePage: React.FC = () => {
               <span>Pronosticar Cruces</span>
             </Link>
           </div>
-          <BracketDelTorneo torneoId={torneo.id} />
+          {torneo.formato === 'GRUPOS_Y_ELIMINACION' && <GruposPublicos torneoId={torneo.id} />}
+          <BracketDelTorneo
+            torneoId={torneo.id}
+            conGrupos={torneo.formato === 'GRUPOS_Y_ELIMINACION'}
+          />
         </div>
       )}
     </div>

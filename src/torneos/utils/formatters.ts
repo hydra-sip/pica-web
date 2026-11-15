@@ -43,6 +43,7 @@ export const formatFormatoTorneo = (formato: string): string => {
     case 'ELIMINACION_DIRECTA':
       return 'Eliminación Directa';
     case 'FASE_GRUPOS_ELIMINACION':
+    case 'GRUPOS_Y_ELIMINACION':
       return 'Fase de Grupos y Eliminación';
     case 'TODOS_CONTRA_TODOS':
       return 'Todos contra Todos';
