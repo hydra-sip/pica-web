@@ -1,7 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { PartidoDetalle } from '../../api/partidoApi';
-import { BracketTorneo, EstadoTorneo, torneoApi, TorneoInformacion } from '../../api/torneoApi';
+import {
+  BracketTorneo,
+  EstadoTorneo,
+  GruposTorneo,
+  torneoApi,
+  TorneoInformacion,
+} from '../../api/torneoApi';
 import { useTorneoRealtime } from '../../realtime/useTorneoRealtime';
 import { ObjecionesTorneo } from '../../partidos/components/ObjecionesTorneo';
 import { sinFechaParaJugar } from '../../partidos/formato';
@@ -11,6 +17,7 @@ import { Bracket } from '../components/Bracket';
 import { CancelarTorneo } from '../components/CancelarTorneo';
 import { CheckinTorneo } from '../components/CheckinTorneo';
 import { DiscordTorneo } from '../components/DiscordTorneo';
+import { GruposDelTorneo } from '../components/GruposDelTorneo';
 import { HonorariosDelTorneo } from '../components/HonorariosDelTorneo';
 import { EstadoDeLaCancelacion } from '../components/EstadoDeLaCancelacion';
 import { InscripcionesDelTorneo } from '../components/InscripcionesDelTorneo';
@@ -53,6 +60,8 @@ export const TorneoConsolaPage: React.FC = () => {
   /** Cambia para volver a pedir las inscripciones: el cierre cancela las pendientes. */
   const [recargaInscripciones, setRecargaInscripciones] = useState(0);
   const [pestana, setPestana] = useState<'gestion' | 'finanzas'>('gestion');
+  /** Con fase de grupos (CR-02): los grupos como llegaron, para contar los partidos sin fecha. */
+  const [grupos, setGrupos] = useState<GruposTorneo | null>(null);
 
   const recargarConsola = useCallback(() => {
     if (!id) return;
@@ -122,18 +131,24 @@ export const TorneoConsolaPage: React.FC = () => {
     return <Navigate to={`/torneos/${torneo.id}/editar`} replace />;
   }
 
+  const conGrupos = torneo.formato === 'GRUPOS_Y_ELIMINACION';
   const generado = bracket.rondas.length > 0;
   const puedeGenerar = torneo.estado === 'INSCRIPCION_CERRADA' && !generado;
+  // los grupos salen de drand: con la misma lista sale lo mismo, no se vuelven a sortear
   const puedeRegenerar =
+    !conGrupos &&
     generado &&
     (torneo.estado === 'INSCRIPCION_CERRADA' || torneo.estado === 'EN_CURSO') &&
     !conResultados(bracket);
 
   const programable = torneo.estado === 'INSCRIPCION_CERRADA' || torneo.estado === 'EN_CURSO';
   const enCurso = torneo.estado === 'EN_CURSO';
+  const deGrupos = (grupos?.grupos ?? []).flatMap((g) => [...g.partidos, ...g.desempate]);
   const sinFecha = enCurso
-    ? bracket.rondas.flatMap((r) => r.partidos).filter(sinFechaParaJugar).length
+    ? [...bracket.rondas.flatMap((r) => r.partidos), ...deGrupos].filter(sinFechaParaJugar).length
     : 0;
+  // la llave de un torneo con grupos se llena sola cuando terminan los grupos
+  const llaveVacia = bracket.rondas.every((r) => r.partidos.every((p) => !p.local && !p.visitante));
 
   const programado = (partido: PartidoDetalle) =>
     setBracket({
@@ -158,7 +173,11 @@ export const TorneoConsolaPage: React.FC = () => {
       setTorneo(await torneoApi.obtener(torneo.id));
       setMensaje({
         tipo: 'exito',
-        texto: generado ? 'Bracket sorteado de nuevo.' : 'Bracket generado.',
+        texto: conGrupos
+          ? 'Grupos sorteados: ya están los partidos de cada grupo.'
+          : generado
+            ? 'Bracket sorteado de nuevo.'
+            : 'Bracket generado.',
       });
     } catch (err) {
       setMensaje({ tipo: 'error', texto: mensajeDeError(err, 'No se pudo sortear el bracket.') });
@@ -310,7 +329,9 @@ export const TorneoConsolaPage: React.FC = () => {
                 <p className="torneos-subtitulo">
                   {abierta
                     ? 'Se cierra sola al completarse el cupo o al llegar la fecha de cierre, y el bracket se sortea después.'
-                    : 'Los cruces y los BYE salen de un sorteo con semilla: queda registrado y cualquiera lo puede recalcular.'}
+                    : conGrupos
+                      ? 'Los grupos salen de drand: la ronda quedó fijada al cerrar la inscripción, así que nadie elige la semilla. Cualquiera lo verifica en el portal.'
+                      : 'Los cruces y los BYE salen de un sorteo con semilla: queda registrado y cualquiera lo puede recalcular.'}
                 </p>
                 {torneo.listaHash && (
                   <p className="torneos-subtitulo">
@@ -339,7 +360,7 @@ export const TorneoConsolaPage: React.FC = () => {
                 )}
                 {puedeGenerar && (
                   <Button loading={sorteando} onClick={() => void sortear()}>
-                    Generar bracket aleatorio
+                    {conGrupos ? 'Sortear los grupos' : 'Generar bracket aleatorio'}
                   </Button>
                 )}
                 {puedeRegenerar && !confirmando && (
@@ -394,11 +415,43 @@ export const TorneoConsolaPage: React.FC = () => {
 
           <InscripcionesDelTorneo torneoId={torneo.id} recarga={recargaInscripciones} />
 
+          {conGrupos && generado && (
+            <Card>
+              <div className="torneos-tarjeta-titulo">
+                <h2>Fase de grupos</h2>
+                {torneo.slug && <Link to={`/torneos/${torneo.slug}`}>Ver la ficha pública</Link>}
+              </div>
+              <GruposDelTorneo
+                torneoId={torneo.id}
+                conEnlaces
+                version={bracket}
+                onCargados={setGrupos}
+                pie={(p) => (
+                  <ProgramacionPartido
+                    partido={p}
+                    editable={programable}
+                    resaltarSinFecha={enCurso}
+                    inicioTorneo={torneo.fechaInicio}
+                    finTorneo={torneo.fechaFin}
+                    onProgramado={programado}
+                  />
+                )}
+              />
+            </Card>
+          )}
+
           <Card>
             <div className="torneos-tarjeta-titulo">
-              <h2>Estructura del bracket</h2>
-              {torneo.slug && <Link to={`/torneos/${torneo.slug}`}>Ver la ficha pública</Link>}
+              <h2>{conGrupos ? 'Llave' : 'Estructura del bracket'}</h2>
+              {!conGrupos && torneo.slug && (
+                <Link to={`/torneos/${torneo.slug}`}>Ver la ficha pública</Link>
+              )}
             </div>
+            {conGrupos && generado && llaveVacia && (
+              <div className="alerta alerta-info" role="status">
+                La llave se arma sola cuando terminan los grupos, con cruces fijos: 1A–2B, 1B–2A…
+              </div>
+            )}
             {sinFecha > 0 && (
               <div className="alerta alerta-aviso" role="status">
                 {sinFecha === 1

@@ -8,6 +8,8 @@ interface CamposMarcadorProps {
   nombreLocal?: string;
   nombreVisitante?: string;
   onChange: (marcador: Marcador) => void;
+  /** En la fase de grupos (CR-02) se puede empatar: no hay penales. */
+  conEmpate?: boolean;
 }
 
 /** Los dos puntajes enfrentados y, si empatan, los penales. Lo usan la carga y la objeción. */
@@ -17,6 +19,7 @@ export const CamposMarcador: React.FC<CamposMarcadorProps> = ({
   nombreLocal,
   nombreVisitante,
   onChange,
+  conEmpate = false,
 }) => {
   const campo = (nombre: keyof Marcador, label: React.ReactNode, error: string | undefined) => (
     <Field label={label} error={error}>
@@ -39,7 +42,7 @@ export const CamposMarcador: React.FC<CamposMarcadorProps> = ({
         </span>
         {campo('visitante', nombreVisitante, errores.puntajeVisitante)}
       </div>
-      {esEmpate(marcador) && (
+      {esEmpate(marcador) && !conEmpate && (
         <div className="partido-marcador">
           {campo('penalesLocal', 'Penales local', errores.penalesLocal)}
           <span className="partido-guion" aria-hidden="true">

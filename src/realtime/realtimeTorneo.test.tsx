@@ -169,6 +169,7 @@ const torneoInformacionMock: TorneoInformacion = {
   disciplina: 'Fútbol 5',
   descripcion: 'Torneo con actualización en vivo.',
   formato: 'ELIMINACION_DIRECTA',
+  reglasGrupos: null,
   modalidad: 'PRESENCIAL',
   tipoParticipante: 'EQUIPO',
   sede: 'Club UNLu',
