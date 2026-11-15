@@ -3,10 +3,12 @@ import { useSearchParams } from 'react-router-dom';
 import {
   RifaVerificacionData,
   SorteoItemResumen,
+  tipoDeSorteo,
   TipoSorteo,
   TorneoVerificacionData,
   verificacionApi,
 } from '../../api/verificacionApi';
+import { SorteoGrupos } from '../../api/torneoApi';
 import { mensajeDeError } from '../../shared/mensajesError';
 import {
   IconoAlerta,
@@ -16,6 +18,7 @@ import {
   IconoRifas,
   IconoTrofeo,
 } from '../../shared/ui/Iconos';
+import { VerificacionGrupos } from '../components/VerificacionGrupos';
 import { VerificacionRifa } from '../components/VerificacionRifa';
 import { VerificacionTorneo } from '../components/VerificacionTorneo';
 import '../verificacion.css';
@@ -24,8 +27,7 @@ export const PortalVerificacionPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Tipo seleccionado: TORNEO o RIFA
-  const tipoParam = searchParams.get('tipo');
-  const tipoInicial: TipoSorteo = tipoParam?.toUpperCase() === 'RIFA' ? 'RIFA' : 'TORNEO';
+  const tipoInicial: TipoSorteo = tipoDeSorteo(searchParams.get('tipo'));
   const [tipoSeleccionado, setTipoSeleccionado] = useState<TipoSorteo>(tipoInicial);
 
   // Torneos con el bracket sorteado o rifas sorteadas, según la pestaña
@@ -38,6 +40,7 @@ export const PortalVerificacionPage: React.FC = () => {
   // Datos del sorteo consultado
   const [datosTorneo, setDatosTorneo] = useState<TorneoVerificacionData | null>(null);
   const [datosRifa, setDatosRifa] = useState<RifaVerificacionData | null>(null);
+  const [datosGrupos, setDatosGrupos] = useState<SorteoGrupos | null>(null);
   const [cargandoSorteo, setCargandoSorteo] = useState(false);
   const [errorConsulta, setErrorConsulta] = useState<string | null>(null);
   // Consultar cambia la URL y la URL vuelve a disparar el efecto: así no se pide dos veces
@@ -47,7 +50,10 @@ export const PortalVerificacionPage: React.FC = () => {
   useEffect(() => {
     let vigente = true;
     setCargandoLista(true);
-    (tipoSeleccionado === 'RIFA' ? verificacionApi.listarRifas() : verificacionApi.listarTorneos())
+    (tipoSeleccionado === 'RIFA'
+      ? verificacionApi.listarRifas()
+      : verificacionApi.listarTorneos(tipoSeleccionado === 'GRUPOS')
+    )
       .then((items) => {
         if (!vigente) return;
         setSorteosDisponibles(items);
@@ -85,6 +91,8 @@ export const PortalVerificacionPage: React.FC = () => {
       try {
         if (tipo === 'RIFA') {
           setDatosRifa(await verificacionApi.obtenerRifa(id));
+        } else if (tipo === 'GRUPOS') {
+          setDatosGrupos(await verificacionApi.obtenerGrupos(id));
         } else {
           setDatosTorneo(await verificacionApi.obtenerTorneo(id));
         }
@@ -92,6 +100,7 @@ export const PortalVerificacionPage: React.FC = () => {
         setErrorConsulta(mensajeDeError(err, 'No se pudo cargar el sorteo especificado.'));
         setDatosTorneo(null);
         setDatosRifa(null);
+        setDatosGrupos(null);
       } finally {
         setCargandoSorteo(false);
       }
@@ -103,8 +112,7 @@ export const PortalVerificacionPage: React.FC = () => {
   useEffect(() => {
     const idUrl = searchParams.get('id');
     if (idUrl) {
-      const tipoUrl: TipoSorteo =
-        searchParams.get('tipo')?.toUpperCase() === 'RIFA' ? 'RIFA' : 'TORNEO';
+      const tipoUrl = tipoDeSorteo(searchParams.get('tipo'));
       if (`${tipoUrl}-${idUrl}` === ultimoConsultado.current) return;
       setIdConsultado(idUrl);
       setTipoSeleccionado(tipoUrl);
@@ -120,6 +128,7 @@ export const PortalVerificacionPage: React.FC = () => {
     setErrorConsulta(null);
     setDatosTorneo(null);
     setDatosRifa(null);
+    setDatosGrupos(null);
     setIdConsultado('');
     ultimoConsultado.current = null;
     // sin id: cuando llega la lista de la pestaña se consulta el primero
@@ -170,6 +179,15 @@ export const PortalVerificacionPage: React.FC = () => {
           >
             <IconoTrofeo size={18} />
             <span>Sorteo de Torneo (Bracket)</span>
+          </button>
+          <button
+            type="button"
+            className={`verificacion-tab-btn ${tipoSeleccionado === 'GRUPOS' ? 'activo' : ''}`}
+            onClick={() => cambiarTipo('GRUPOS')}
+            data-testid="tab-grupos"
+          >
+            <IconoTrofeo size={18} />
+            <span>Sorteo de grupos</span>
           </button>
           <button
             type="button"
@@ -265,6 +283,10 @@ export const PortalVerificacionPage: React.FC = () => {
           nombre={torneoConsultado?.titulo ?? `Torneo #${datosTorneo.id}`}
           disciplina={torneoConsultado?.disciplinaOInfo ?? null}
         />
+      )}
+
+      {!cargandoSorteo && !errorConsulta && tipoSeleccionado === 'GRUPOS' && datosGrupos && (
+        <VerificacionGrupos key={datosGrupos.torneoId} datos={datosGrupos} />
       )}
 
       {!cargandoSorteo && !errorConsulta && tipoSeleccionado === 'RIFA' && datosRifa && (
