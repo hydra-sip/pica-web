@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw';
 import type { ClaveParametro, ParametroDetalle } from '../api/parametroApi';
 import { ErrorCampo, validacion } from './adminHandlers';
 
-// Parámetros de la plataforma en memoria (HU-702), con los valores de las migraciones V26, V33 y V35 del back
+// Parámetros de la plataforma en memoria (HU-702), con los valores de las migraciones V26, V33, V35 y V57 del back
 // y las mismas reglas de PUT /admin/parametros. Se reinician entre test y test.
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
@@ -36,6 +36,13 @@ const iniciales = (): ParametroDetalle[] =>
       ],
       ['RETIRO_MINIMO', 'PESOS', 1000, 'Monto mínimo en pesos de un retiro de la billetera'],
       ['RETIRO_MAXIMO', 'PESOS', 500000, 'Monto máximo en pesos de un retiro de la billetera'],
+      ['FAIR_PLAY_INICIAL', 'PUNTOS', 100, 'Índice de fair play con el que arranca cada jugador'],
+      ['FAIR_PLAY_MAXIMO', 'PUNTOS', 100, 'Índice de fair play máximo: los check-ins no lo pasan'],
+      ['FAIR_PLAY_CHECKIN', 'PUNTOS', 1, 'Puntos de fair play que suma cada check-in cumplido'],
+      ['FAIR_PLAY_AUSENCIA', 'PUNTOS', 10, 'Puntos de fair play que resta cada ausencia sin aviso'],
+      ['FAIR_PLAY_SANCION_LEVE', 'PUNTOS', 5, 'Puntos de fair play que resta una sanción leve'],
+      ['FAIR_PLAY_SANCION_MEDIA', 'PUNTOS', 15, 'Puntos de fair play que resta una sanción media'],
+      ['FAIR_PLAY_SANCION_GRAVE', 'PUNTOS', 30, 'Puntos de fair play que resta una sanción grave'],
     ] as const
   ).map(([clave, unidad, valor, descripcion]) => ({
     clave,
@@ -78,6 +85,16 @@ const errores = (pedidos: Record<string, unknown>): ErrorCampo[] => {
         codigo: 'RANGO_INVALIDO',
         mensaje: 'Tiene que estar entre 0 y 100',
       });
+    } else if (p.unidad === 'PUNTOS' && !Number.isInteger(valor)) {
+      lista.push({ campo: clave, codigo: 'FORMATO_INVALIDO', mensaje: 'Son puntos enteros' });
+    } else if (p.unidad === 'PUNTOS' && (valor < 0 || valor > 1000)) {
+      lista.push({
+        campo: clave,
+        codigo: 'RANGO_INVALIDO',
+        mensaje: 'Tiene que estar entre 0 y 1000',
+      });
+    } else if (p.unidad === 'PUNTOS') {
+      // en rango y entero: no le corren las reglas de abajo
     } else if (p.unidad === 'MINUTOS' && !Number.isInteger(valor)) {
       lista.push({ campo: clave, codigo: 'FORMATO_INVALIDO', mensaje: 'Son minutos enteros' });
     } else if (
@@ -122,6 +139,24 @@ const errores = (pedidos: Record<string, unknown>): ErrorCampo[] => {
     'RETIRO_MAXIMO',
     'No puede superar el retiro máximo',
     'No puede ser menor que el retiro mínimo'
+  );
+  noSupera(
+    'FAIR_PLAY_INICIAL',
+    'FAIR_PLAY_MAXIMO',
+    'No puede superar el índice máximo',
+    'No puede ser menor que el índice inicial'
+  );
+  noSupera(
+    'FAIR_PLAY_SANCION_LEVE',
+    'FAIR_PLAY_SANCION_MEDIA',
+    'No puede restar más que una sanción media',
+    'No puede restar menos que una sanción leve'
+  );
+  noSupera(
+    'FAIR_PLAY_SANCION_MEDIA',
+    'FAIR_PLAY_SANCION_GRAVE',
+    'No puede restar más que una sanción grave',
+    'No puede restar menos que una sanción media'
   );
   return lista;
 };

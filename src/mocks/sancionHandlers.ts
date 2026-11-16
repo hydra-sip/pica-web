@@ -4,7 +4,7 @@ import { JugadorSancionable, SancionDetalle, SancionRequest } from '../api/sanci
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
-/** HU-803: quien sanciona en los mocks. */
+/** HU-803 y HU-802. Quien sanciona en los mocks. */
 const ORGANIZADOR: UsuarioPublico = {
   id: 3,
   username: 'organizador',
@@ -43,6 +43,16 @@ const problema = (status: number, codigo: string, detail: string, errores?: unkn
   HttpResponse.json({ status, codigo, detail, ...(errores ? { errores } : {}) }, { status });
 
 export const sancionHandlers = [
+  // HU-802: en los mocks nadie movió su índice todavía
+  http.get(`${API_URL}/usuarios/:id/fair-play`, ({ params }) =>
+    HttpResponse.json({
+      usuarioId: Number(params.id),
+      valor: 100,
+      actualizadoEn: null,
+      historial: [],
+    })
+  ),
+
   http.get(`${API_URL}/torneos/:id/sanciones/jugadores`, () =>
     HttpResponse.json(JUGADORES_SANCIONABLES)
   ),
