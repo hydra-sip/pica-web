@@ -17,6 +17,7 @@ import {
   IconoCheck,
   IconoAlerta,
 } from '../../shared/ui/Iconos';
+import { MisSanciones } from '../../reputacion/components/MisSanciones';
 import '../auth.css';
 
 export const ProfilePage: React.FC = () => {
@@ -259,6 +260,9 @@ export const ProfilePage: React.FC = () => {
           Mis inscripciones
         </Link>
       </div>
+
+      {/* HU-803: las sanciones que recibió */}
+      <MisSanciones />
 
       {/* Profile Form: Datos Personales */}
       <div className="pica-card hydra-card" style={{ padding: '1.75rem' }}>

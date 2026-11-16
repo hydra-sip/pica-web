@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { SancionDetalle } from '../../api/sancionApi';
 import { EstadoInscripcion, InscripcionDelTorneo, torneoApi } from '../../api/torneoApi';
 import { PageResponse } from '../../api/usuarioApi';
 import { ESTADO_INSCRIPCION } from '../../inscripciones/formato';
+import { SancionarJugador } from '../../reputacion/components/SancionarJugador';
+import { nombreCompleto } from '../../reputacion/formato';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { Badge, Button, Card, Table } from '../../shared/ui';
 import { formatFecha } from '../utils/formatters';
@@ -31,6 +34,9 @@ interface InscripcionesDelTorneoProps {
   torneoId: number;
   /** Cambia para volver a pedir la lista: por ejemplo, después de cerrar la inscripción. */
   recarga: number;
+  /** HU-803: con el torneo publicado, el organizador sanciona desde cada inscripción confirmada. */
+  puedeSancionar?: boolean;
+  onSancionada?: (sancion: SancionDetalle) => void;
 }
 
 /**
@@ -40,12 +46,15 @@ interface InscripcionesDelTorneoProps {
 export const InscripcionesDelTorneo: React.FC<InscripcionesDelTorneoProps> = ({
   torneoId,
   recarga,
+  puedeSancionar = false,
+  onSancionada,
 }) => {
   const [estado, setEstado] = useState<EstadoInscripcion | null>(null);
   const [pagina, setPagina] = useState(0);
   const [datos, setDatos] = useState<PageResponse<InscripcionDelTorneo> | null>(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sancionada, setSancionada] = useState<string | null>(null);
 
   useEffect(() => {
     let vigente = true;
@@ -70,6 +79,11 @@ export const InscripcionesDelTorneo: React.FC<InscripcionesDelTorneoProps> = ({
   };
 
   const desde = pagina * TAMANIO_PAGINA;
+
+  const alSancionar = (s: SancionDetalle) => {
+    setSancionada(`Sanción aplicada a ${nombreCompleto(s.jugador)}.`);
+    onSancionada?.(s);
+  };
 
   return (
     <Card>
@@ -99,6 +113,12 @@ export const InscripcionesDelTorneo: React.FC<InscripcionesDelTorneoProps> = ({
         ))}
       </div>
 
+      {sancionada && (
+        <div className="alerta alerta-exito" role="status">
+          {sancionada}
+        </div>
+      )}
+
       {error ? (
         <div className="alerta alerta-peligro" role="alert">
           {error}
@@ -121,6 +141,7 @@ export const InscripcionesDelTorneo: React.FC<InscripcionesDelTorneoProps> = ({
                 <th scope="col">Participante</th>
                 <th scope="col">Estado</th>
                 <th scope="col">Inscripción</th>
+                {puedeSancionar && <th scope="col">Acciones</th>}
               </tr>
             </thead>
             <tbody>
@@ -138,6 +159,19 @@ export const InscripcionesDelTorneo: React.FC<InscripcionesDelTorneoProps> = ({
                       </Badge>
                     </td>
                     <td>{formatFecha(i.creadoEn)}</td>
+                    {puedeSancionar && (
+                      <td>
+                        {i.estado === 'CONFIRMADA' && (
+                          <SancionarJugador
+                            torneoId={torneoId}
+                            inscripcionId={i.id}
+                            size="sm"
+                            ariaLabel={`Sancionar en la inscripción de ${nombre}`}
+                            onSancionada={alSancionar}
+                          />
+                        )}
+                      </td>
+                    )}
                   </tr>
                 );
               })}

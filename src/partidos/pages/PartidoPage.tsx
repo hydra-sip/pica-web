@@ -9,6 +9,8 @@ import {
 } from '../../api/partidoApi';
 import { LadoBracket, torneoApi } from '../../api/torneoApi';
 import { useTorneoRealtime } from '../../realtime/useTorneoRealtime';
+import { SancionarJugador } from '../../reputacion/components/SancionarJugador';
+import { nombreCompleto } from '../../reputacion/formato';
 import { erroresPorCampo, mensajeDeError } from '../../shared/mensajesError';
 import { Badge, Button, Card } from '../../shared/ui';
 import { CamposMarcador } from '../components/CamposMarcador';
@@ -254,6 +256,20 @@ export const PartidoPage: React.FC = () => {
           <Link to={`/torneos/${partido.torneoId}/objeciones`} className="partido-volver">
             Ver todas las objeciones del torneo →
           </Link>
+        )}
+        {partido.puedoSancionar && (partido.local || partido.visitante) && (
+          <div className="partido-sancionar">
+            <SancionarJugador
+              torneoId={partido.torneoId}
+              partidoId={partido.id}
+              onSancionada={(s) =>
+                setMensaje({
+                  tipo: 'exito',
+                  texto: `Sanción aplicada a ${nombreCompleto(s.jugador)}.`,
+                })
+              }
+            />
+          </div>
         )}
       </header>
 

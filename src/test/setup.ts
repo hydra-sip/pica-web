@@ -10,6 +10,7 @@ import { resetTicketsMock } from '../mocks/ticketHandlers';
 import { resetBilleteraMock } from '../mocks/data';
 import { resetCadenaMock } from '../mocks/cadenaHandlers';
 import { resetCancelacionMock } from '../mocks/cancelacionHandlers';
+import { resetSancionesMock } from '../mocks/sancionHandlers';
 import { server } from '../mocks/server';
 import { resetRealtime } from '../realtime/websocketService';
 
@@ -27,6 +28,7 @@ afterEach(() => {
   resetBilleteraMock();
   resetCadenaMock();
   resetCancelacionMock();
+  resetSancionesMock();
   clearSessionTokens();
   localStorage.clear();
   resetRealtime();

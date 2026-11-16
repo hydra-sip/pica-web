@@ -1,0 +1,45 @@
+/* HU-803 y HU-802: sanciones e índice de fair play */
+.reputacion-tarjeta {
+  padding: 1.75rem;
+}
+
+.reputacion-tarjeta h2 {
+  font-size: var(--text-lg);
+  font-weight: 800;
+  margin: 0 0 0.75rem;
+}
+
+.reputacion-ayuda {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.reputacion-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.reputacion-sancion {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+}
+
+.reputacion-sancion-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.reputacion-motivo {
+  font-weight: 700;
+  margin: 0.5rem 0 0.25rem;
+  overflow-wrap: anywhere;
+}
