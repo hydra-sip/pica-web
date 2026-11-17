@@ -52,6 +52,8 @@ export const UsuariosPage: React.FC = () => {
     usuarioLogueado != null && String(usuarioLogueado.id) === String(u.id);
   const puedeCrear = hasPermission('USUARIO_CREAR');
   const puedeEditar = hasPermission('USUARIO_EDITAR');
+  // HU-703: bloquear tiene permiso propio, así soporte sanciona sin poder editar cuentas
+  const puedeBloquear = hasPermission('USUARIO_BLOQUEAR');
   const puedeEliminar = hasPermission('USUARIO_ELIMINAR');
   const puedeAsignarRoles = hasPermission('ROL_ASIGNAR');
   const puedeCrearPersona = hasPermission('PERSONA_CREAR');
@@ -535,7 +537,7 @@ export const UsuariosPage: React.FC = () => {
             Motivo
           </Button>
         ) : (
-          puedeEditar && (
+          puedeBloquear && (
             <Button
               size="sm"
               variant="danger"
@@ -659,7 +661,7 @@ export const UsuariosPage: React.FC = () => {
       <BloqueoModal usuario={aBloquear} onClose={() => setABloquear(null)} onBloqueado={fetchUsuarios} />
       <MotivoBloqueoModal
         usuario={motivoDe}
-        puedeLevantar={puedeEditar}
+        puedeLevantar={puedeBloquear}
         onClose={() => setMotivoDe(null)}
         onLevantado={fetchUsuarios}
       />
