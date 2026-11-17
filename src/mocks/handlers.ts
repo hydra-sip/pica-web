@@ -10,6 +10,7 @@ import { verificacionHandlers } from './verificacionHandlers';
 import { ticketHandlers } from './ticketHandlers';
 import { billeteraHandlers } from './billeteraHandlers';
 import { cancelacionHandlers } from './cancelacionHandlers';
+import { sancionHandlers } from './sancionHandlers';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
@@ -114,6 +115,7 @@ export const handlers = [
   // Billetera virtual y movimientos (HU-602 / T602-3)
   ...billeteraHandlers,
   ...cancelacionHandlers,
+  ...sancionHandlers,
 
   // Auth: Registro Endpoint (POST /auth/registro) -> 201 { id }
   http.post(`${API_URL}/auth/registro`, async ({ request }) => {

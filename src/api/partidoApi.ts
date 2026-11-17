@@ -35,6 +35,8 @@ export interface PartidoDetalle {
   objecion: ObjecionDetalle | null;
   /** Con el partido objetado, si quien consulta lo puede laudar: el organizador o un árbitro con permiso. */
   puedoResolver: boolean;
+  /** Si quien consulta puede sancionar a sus jugadores (HU-803): el organizador o un árbitro que aceptó. */
+  puedoSancionar: boolean;
 }
 
 /** La objeción: quién objetó, por qué y el resultado que propone; y el laudo, si ya se resolvió. */

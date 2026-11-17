@@ -21,6 +21,7 @@ import { GruposDelTorneo } from '../components/GruposDelTorneo';
 import { HonorariosDelTorneo } from '../components/HonorariosDelTorneo';
 import { EstadoDeLaCancelacion } from '../components/EstadoDeLaCancelacion';
 import { InscripcionesDelTorneo } from '../components/InscripcionesDelTorneo';
+import { SancionesDelTorneo } from '../../reputacion/components/SancionesDelTorneo';
 import { ProgramacionPartido } from '../components/ProgramacionPartido';
 import { RifaDelTorneo } from '../components/RifaDelTorneo';
 import { CustodiaDelEvento } from '../../billetera/components/CustodiaDelEvento';
@@ -59,6 +60,7 @@ export const TorneoConsolaPage: React.FC = () => {
   const [confirmandoCierre, setConfirmandoCierre] = useState(false);
   /** Cambia para volver a pedir las inscripciones: el cierre cancela las pendientes. */
   const [recargaInscripciones, setRecargaInscripciones] = useState(0);
+  const [recargaSanciones, setRecargaSanciones] = useState(0);
   const [pestana, setPestana] = useState<'gestion' | 'finanzas'>('gestion');
   /** Con fase de grupos (CR-02): los grupos como llegaron, para contar los partidos sin fecha. */
   const [grupos, setGrupos] = useState<GruposTorneo | null>(null);
@@ -413,7 +415,14 @@ export const TorneoConsolaPage: React.FC = () => {
 
           <RifaDelTorneo torneoId={torneo.id} />
 
-          <InscripcionesDelTorneo torneoId={torneo.id} recarga={recargaInscripciones} />
+          <InscripcionesDelTorneo
+            torneoId={torneo.id}
+            recarga={recargaInscripciones}
+            puedeSancionar
+            onSancionada={() => setRecargaSanciones((n) => n + 1)}
+          />
+
+          <SancionesDelTorneo torneoId={torneo.id} recarga={recargaSanciones} />
 
           {conGrupos && generado && (
             <Card>
