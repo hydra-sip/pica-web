@@ -90,6 +90,39 @@ describe('Parámetros de la plataforma (HU-702)', () => {
     expect(checkin).toHaveValue(60);
   });
 
+  it('los del fair play (HU-802) van en su grupo, en puntos, y una leve no puede restar más que una media', async () => {
+    const cuerpos = espiarGuardado();
+    const { user } = await comoAdmin('/admin/parametros');
+
+    const fairPlay = (await screen.findByRole('heading', { name: 'Fair play' })).closest(
+      'section'
+    )!;
+    expect(within(fairPlay).getByLabelText(/Índice inicial \(puntos\)/)).toHaveValue(100);
+    expect(within(fairPlay).getByLabelText(/Resta por ausencia sin aviso \(puntos\)/)).toHaveValue(
+      10
+    );
+    expect(within(fairPlay).getByLabelText(/Resta por sanción grave \(puntos\)/)).toHaveValue(30);
+
+    const leve = within(fairPlay).getByLabelText(/Resta por sanción leve/);
+    await user.clear(leve);
+    await user.type(leve, '20');
+    await user.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+
+    expect(
+      await screen.findByText('No se guardó ningún cambio: revisá los campos marcados.')
+    ).toBeInTheDocument();
+    expect(leve).toHaveAccessibleDescription('No puede restar más que una sanción media.');
+
+    await user.clear(leve);
+    await user.type(leve, '8');
+    await user.click(screen.getByRole('button', { name: 'Guardar cambios' }));
+    expect(await screen.findByRole('status')).toHaveTextContent('Parámetros guardados');
+    expect(cuerpos).toEqual([
+      { valores: { FAIR_PLAY_SANCION_LEVE: 20 } },
+      { valores: { FAIR_PLAY_SANCION_LEVE: 8 } },
+    ]);
+  });
+
   it('sin el permiso no aparece en el menú', async () => {
     await renderRuta('/', { usuario: 'participante' });
 

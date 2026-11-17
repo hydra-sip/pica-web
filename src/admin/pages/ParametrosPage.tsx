@@ -29,6 +29,20 @@ const GRUPOS: { titulo: string; ayuda: string; claves: ClaveParametro[] }[] = [
     ayuda: 'Los topes de cada retiro de la billetera a una cuenta propia.',
     claves: ['RETIRO_MINIMO', 'RETIRO_MAXIMO'],
   },
+  {
+    titulo: 'Fair play',
+    ayuda:
+      'El índice de cada jugador (HU-802). Un cambio rige desde que se guarda: lo que ya pasó no se recalcula.',
+    claves: [
+      'FAIR_PLAY_INICIAL',
+      'FAIR_PLAY_MAXIMO',
+      'FAIR_PLAY_CHECKIN',
+      'FAIR_PLAY_AUSENCIA',
+      'FAIR_PLAY_SANCION_LEVE',
+      'FAIR_PLAY_SANCION_MEDIA',
+      'FAIR_PLAY_SANCION_GRAVE',
+    ],
+  },
 ];
 
 const ETIQUETA: Record<ClaveParametro, string> = {
@@ -38,12 +52,20 @@ const ETIQUETA: Record<ClaveParametro, string> = {
   CHECKIN_DURACION_MAX_MIN: 'Duración máxima de la ventana de check-in',
   RETIRO_MINIMO: 'Retiro mínimo',
   RETIRO_MAXIMO: 'Retiro máximo',
+  FAIR_PLAY_INICIAL: 'Índice inicial',
+  FAIR_PLAY_MAXIMO: 'Índice máximo',
+  FAIR_PLAY_CHECKIN: 'Suma por check-in cumplido',
+  FAIR_PLAY_AUSENCIA: 'Resta por ausencia sin aviso',
+  FAIR_PLAY_SANCION_LEVE: 'Resta por sanción leve',
+  FAIR_PLAY_SANCION_MEDIA: 'Resta por sanción media',
+  FAIR_PLAY_SANCION_GRAVE: 'Resta por sanción grave',
 };
 
 const UNIDAD: Record<UnidadParametro, { sufijo: string; paso: string }> = {
   PORCENTAJE: { sufijo: '%', paso: '0.01' },
   MINUTOS: { sufijo: 'min', paso: '1' },
   PESOS: { sufijo: '$', paso: '0.01' },
+  PUNTOS: { sufijo: 'puntos', paso: '1' },
 };
 
 /**

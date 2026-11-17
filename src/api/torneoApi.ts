@@ -393,6 +393,8 @@ export interface InscripcionDelTorneo {
   equipo: { id: number; nombre: string } | null;
   capitan: UsuarioInscripto | null;
   jugadores: number | null;
+  /** HU-802: el índice de fair play del inscripto o, en un equipo, del capitán. */
+  fairPlay: number;
 }
 
 /** GET /torneos/{id}/bracket (HU-207): sin generar, `rondas` vacío. */

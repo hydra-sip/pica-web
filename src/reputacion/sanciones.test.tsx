@@ -27,6 +27,7 @@ const inscripcion = (cambios: Partial<InscripcionDelTorneo>): InscripcionDelTorn
   equipo: null,
   capitan: null,
   jugadores: null,
+  fairPlay: 100,
   ...cambios,
 });
 

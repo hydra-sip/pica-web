@@ -3,6 +3,7 @@ import { SancionDetalle } from '../../api/sancionApi';
 import { EstadoInscripcion, InscripcionDelTorneo, torneoApi } from '../../api/torneoApi';
 import { PageResponse } from '../../api/usuarioApi';
 import { ESTADO_INSCRIPCION } from '../../inscripciones/formato';
+import { IndiceFairPlay } from '../../reputacion/components/IndiceFairPlay';
 import { SancionarJugador } from '../../reputacion/components/SancionarJugador';
 import { nombreCompleto } from '../../reputacion/formato';
 import { mensajeDeError } from '../../shared/mensajesError';
@@ -41,7 +42,7 @@ interface InscripcionesDelTorneoProps {
 
 /**
  * Las inscripciones del torneo en la consola (HU-206, PICA-214), de la más vieja a la más nueva, con un filtro por
- * estado. Filtra y pagina el back. Sin link a la nómina: "Mi inscripción" supone que quien mira es el capitán.
+ * estado y el índice de fair play de cada uno (HU-802; en un equipo, el del capitán). Filtra y pagina el back. Sin link a la nómina: "Mi inscripción" supone que quien mira es el capitán.
  */
 export const InscripcionesDelTorneo: React.FC<InscripcionesDelTorneoProps> = ({
   torneoId,
@@ -141,6 +142,7 @@ export const InscripcionesDelTorneo: React.FC<InscripcionesDelTorneoProps> = ({
                 <th scope="col">Participante</th>
                 <th scope="col">Estado</th>
                 <th scope="col">Inscripción</th>
+                <th scope="col">Fair play</th>
                 {puedeSancionar && <th scope="col">Acciones</th>}
               </tr>
             </thead>
@@ -159,6 +161,9 @@ export const InscripcionesDelTorneo: React.FC<InscripcionesDelTorneoProps> = ({
                       </Badge>
                     </td>
                     <td>{formatFecha(i.creadoEn)}</td>
+                    <td>
+                      <IndiceFairPlay valor={i.fairPlay} />
+                    </td>
                     {puedeSancionar && (
                       <td>
                         {i.estado === 'CONFIRMADA' && (
