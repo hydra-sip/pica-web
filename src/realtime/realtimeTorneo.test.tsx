@@ -24,6 +24,7 @@ const bracketInicial: BracketTorneo = {
   torneoId: 100,
   semilla: 'abc12345',
   listaHash: 'def67890',
+  version: 1,
   rondas: [
     {
       numero: 1,
