@@ -49,7 +49,7 @@ const POR_CODIGO: Record<string, string> = {
     'El usuario ya está bloqueado. Para cambiar el motivo o la duración, levantá el bloqueo y volvé a bloquearlo.',
   // HU-703: el organizador del torneo o de la rifa está bloqueado
   ORGANIZADOR_BLOQUEADO:
-    'El organizador del torneo está bloqueado: por ahora no se puede inscribir nadie.',
+    'El organizador está bloqueado: por ahora no se puede inscribir ni comprar.',
   // HU-703: el PUT y el alta no bloquean ni desbloquean
   BLOQUEO_POR_ENDPOINT_PROPIO: 'Para bloquear o desbloquear, usá Bloquear o Motivo en la tabla.',
   USUARIO_PROTEGIDO: 'El usuario Admin del sistema no se puede modificar.',
