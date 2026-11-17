@@ -33,6 +33,9 @@ import { getBilleteraMock, setBilleteraMock } from './data';
 //   copa-sin-lugar         Por equipos, abierto pero con el cupo completo: Los Galácticos confirmados
 //                          (inscripción 903) ocupan el último lugar. Reemplazar responde 409
 //                          INSCRIPCION_NO_ABIERTA.
+//   copa-suspendida        Individual con costo y la inscripción abierta, pero con el organizador bloqueado
+//                          (HU-703): la ficha trae inscripcionSuspendida y crear, confirmar y pagar
+//                          responden 409 ORGANIZADOR_BLOQUEADO.
 //   copa-cerrada           Por equipos con la inscripción cerrada (antes de la fecha de cierre): Los
 //                          Galácticos confirmados (inscripción 904). Reemplazar responde 409
 //                          INSCRIPCION_NO_ABIERTA.
@@ -168,6 +171,7 @@ const torneo = (
   organizador: { id: 4, nombreCompleto: 'Organizador Eventos', username: 'organizador' },
   publicadoEn: HACE_UN_RATO,
   estado: 'INSCRIPCION_ABIERTA',
+  inscripcionSuspendida: false,
   ocupadasAparte: 0,
   ...extra,
 });
@@ -227,6 +231,7 @@ const TORNEOS: TorneoMock[] = [
     ocupadasAparte: 7,
   }),
   torneo(10, 'copa-cerrada', 'Copa Cerrada', { estado: 'INSCRIPCION_CERRADA' }),
+  torneo(11, 'copa-suspendida', 'Copa Suspendida', { ...INDIVIDUAL, inscripcionSuspendida: true }),
 ];
 
 const jugador = (
@@ -382,6 +387,9 @@ const pagina = <T>(items: T[], url: URL) => {
 const conflicto = (codigo: string, detail: string) => problema(409, codigo, detail);
 const prohibido = (codigo: string, detail: string) => problema(403, codigo, detail);
 const noEncontrado = (codigo: string, detail: string) => problema(404, codigo, detail);
+/** HU-703: el organizador del torneo está bloqueado; no se inscribe, confirma ni paga nadie. */
+const organizadorBloqueado = () =>
+  conflicto('ORGANIZADOR_BLOQUEADO', 'El organizador del torneo está bloqueado: la inscripción está suspendida');
 
 /** El 409 dice cuál es el jugador (CE4-4). */
 const jugadorYaInscripto = (sesion: SesionMock, id: number) =>
@@ -567,6 +575,7 @@ const validarEquipoYNomina = (
   if (!abierto(t)) {
     return conflicto('INSCRIPCION_NO_ABIERTA', 'La inscripción del torneo no está abierta');
   }
+  if (t.inscripcionSuspendida) return organizadorBloqueado();
   if (
     sesion.usuario.estado !== 'ACTIVO' ||
     nomina.some((id) => buscarJugador(id)?.inactivoAlGuardar)
@@ -693,6 +702,7 @@ export const crearInscripcionesHandlers = (sesion: () => SesionMock) => {
         if (!abierto(t)) {
           return conflicto('INSCRIPCION_NO_ABIERTA', 'La inscripción del torneo no está abierta');
         }
+        if (t.inscripcionSuspendida) return organizadorBloqueado();
         if (s.usuario.estado !== 'ACTIVO') {
           return conflicto('USUARIO_NO_ACTIVO', 'El usuario no está activo');
         }
@@ -883,6 +893,7 @@ export const crearInscripcionesHandlers = (sesion: () => SesionMock) => {
       if (!abierto(t)) {
         return conflicto('INSCRIPCION_NO_ABIERTA', 'La inscripción del torneo no está abierta');
       }
+      if (t.inscripcionSuspendida) return organizadorBloqueado();
       if (
         s.usuario.estado !== 'ACTIVO' ||
         i.nomina?.some((id) => buscarJugador(id)?.inactivoAlGuardar)
@@ -986,6 +997,7 @@ export const crearInscripcionesHandlers = (sesion: () => SesionMock) => {
       if (!abierto(t)) {
         return conflicto('INSCRIPCION_NO_ABIERTA', 'La inscripción del torneo no está abierta');
       }
+      if (t.inscripcionSuspendida) return organizadorBloqueado();
       if (s.usuario.estado !== 'ACTIVO') {
         return conflicto('USUARIO_NO_ACTIVO', 'El usuario no está activo');
       }

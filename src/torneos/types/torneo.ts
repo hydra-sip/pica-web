@@ -94,6 +94,8 @@ export interface TorneoDetalle {
   publicadoEn: string | null;
   /** HU-606: cuándo se repartió la custodia del torneo terminado; null mientras no se liquidó. */
   liquidadoEn?: string | null;
+  /** HU-703: la inscripción está abierta pero su organizador está bloqueado; no se inscribe nadie. */
+  inscripcionSuspendida: boolean;
 }
 
 export interface PageMetadata {

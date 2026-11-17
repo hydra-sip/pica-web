@@ -50,7 +50,11 @@ describe('backoffice: bloqueo de usuarios (HU-703)', () => {
     server.use(
       http.post(`${API_URL}/admin/usuarios/:id/bloqueo`, () =>
         HttpResponse.json(
-          { status: 409, codigo: 'USUARIO_YA_BLOQUEADO', detail: 'El usuario mgarcia ya está bloqueado' },
+          {
+            status: 409,
+            codigo: 'USUARIO_YA_BLOQUEADO',
+            detail: 'El usuario mgarcia ya está bloqueado',
+          },
           { status: 409 }
         )
       )
@@ -58,7 +62,10 @@ describe('backoffice: bloqueo de usuarios (HU-703)', () => {
     const { user } = await renderRuta('/admin/usuarios', { usuario: 'soporte' });
     const fila = (await screen.findByText('@mgarcia')).closest('tr')!;
     await user.click(within(fila).getByRole('button', { name: 'Bloquear' }));
-    await user.type(within(screen.getByRole('dialog')).getByRole('textbox'), 'Incumple las condiciones de uso');
+    await user.type(
+      within(screen.getByRole('dialog')).getByRole('textbox'),
+      'Incumple las condiciones de uso'
+    );
     await user.click(screen.getByRole('button', { name: 'Continuar' }));
     await user.type(screen.getByPlaceholderText('BLOQUEAR'), 'BLOQUEAR');
     await user.click(screen.getByRole('button', { name: 'Aplicar bloqueo' }));
@@ -78,11 +85,16 @@ describe('backoffice: bloqueo de usuarios (HU-703)', () => {
     const { user } = await renderRuta('/admin/usuarios', { usuario: 'soporte' });
     const fila = (await screen.findByText('@mgarcia')).closest('tr')!;
     await user.click(within(fila).getByRole('button', { name: 'Bloquear' }));
-    await user.type(within(screen.getByRole('dialog')).getByRole('textbox'), 'Incumple las condiciones de uso');
+    await user.type(
+      within(screen.getByRole('dialog')).getByRole('textbox'),
+      'Incumple las condiciones de uso'
+    );
     await user.click(screen.getByRole('button', { name: 'Continuar' }));
     await user.type(screen.getByPlaceholderText('BLOQUEAR'), 'BLOQUEAR');
     await user.click(screen.getByRole('button', { name: 'Aplicar bloqueo' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('El usuario no existe o está dado de baja.');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'El usuario no existe o está dado de baja.'
+    );
   });
 });
