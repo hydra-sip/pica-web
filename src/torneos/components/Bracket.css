@@ -78,6 +78,26 @@
   overflow: hidden;
 }
 
+/* El cruce que acaba de cambiar en vivo (HU-809): un fondo que se desvanece. */
+.bracket-cruce-actualizado {
+  animation: bracket-cruce-actualizado 2s ease-out;
+}
+
+@keyframes bracket-cruce-actualizado {
+  from {
+    background: var(--color-brand-soft);
+    border-color: var(--color-brand);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bracket-cruce-actualizado {
+    animation: none;
+    border-color: var(--color-brand);
+    box-shadow: 0 0 0 1px var(--color-brand);
+  }
+}
+
 .bracket-lado {
   display: flex;
   justify-content: space-between;

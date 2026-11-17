@@ -1,6 +1,6 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BracketTorneo, EstadoPartido } from '../api/torneoApi';
 import { server } from '../mocks/server';
 import { BracketDelTorneo } from '../torneos/components/BracketDelTorneo';
@@ -167,5 +167,78 @@ describe('HU-809: el bracket en vivo se queda con la versión más nueva', () =>
     await waitFor(() => expect(api.pedidos).toBe(2));
     await new Promise((r) => setTimeout(r, 50));
     expect(halconesEnLaFinal()).toBeInTheDocument();
+  });
+});
+
+/** El cruce de la semifinal o de la final, como caja del bracket. */
+const cruce = (ronda: 'Semifinal' | 'Final') =>
+  screen.getByRole('region', { name: ronda }).querySelector('.bracket-partido');
+
+describe('HU-809: el cruce que cambió se resalta', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('el cruce del mensaje queda resaltado y el resaltado se va solo', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    servidor(bracket(1));
+    await mostrar();
+
+    mockEmitTorneoEvent(TORNEO, {
+      tipo: 'RESULTADO_CONFIRMADO',
+      partidoId: SEMI,
+      bracket: bracket(2, 'CONFIRMADO'),
+    });
+
+    await waitFor(() => expect(cruce('Semifinal')).toHaveClass('bracket-cruce-actualizado'));
+    expect(cruce('Final')).not.toHaveClass('bracket-cruce-actualizado');
+    act(() => {
+      vi.advanceTimersByTime(2100);
+    });
+    expect(cruce('Semifinal')).not.toHaveClass('bracket-cruce-actualizado');
+  });
+
+  it('otro mensaje del mismo cambio, con la misma versión, resalta su cruce', async () => {
+    servidor(bracket(1));
+    await mostrar();
+    mockEmitTorneoEvent(TORNEO, {
+      tipo: 'PARTIDO_SIN_PRESENTES',
+      partidoId: SEMI,
+      bracket: bracket(2, 'WALKOVER'),
+    });
+
+    mockEmitTorneoEvent(TORNEO, {
+      tipo: 'RESULTADO_CONFIRMADO',
+      partidoId: FINAL,
+      bracket: bracket(2, 'WALKOVER'),
+    });
+
+    await waitFor(() => expect(cruce('Final')).toHaveClass('bracket-cruce-actualizado'));
+  });
+
+  it('un mensaje viejo no resalta nada', async () => {
+    servidor(bracket(5));
+    await mostrar();
+
+    mockEmitTorneoEvent(TORNEO, {
+      tipo: 'RESULTADO_CONFIRMADO',
+      partidoId: SEMI,
+      bracket: bracket(4, 'CONFIRMADO'),
+    });
+
+    await new Promise((r) => setTimeout(r, 50));
+    expect(cruce('Semifinal')).not.toHaveClass('bracket-cruce-actualizado');
+  });
+
+  it('el bracket que llega al reconectar no resalta nada', async () => {
+    const api = servidor(bracket(1));
+    await mostrar();
+
+    api.enServidor = bracket(3, 'CONFIRMADO');
+    mockDisconnect();
+    mockReconnect();
+
+    await waitFor(() => expect(halconesEnLaFinal()).toBeInTheDocument());
+    expect(document.querySelector('.bracket-cruce-actualizado')).toBeNull();
   });
 });
