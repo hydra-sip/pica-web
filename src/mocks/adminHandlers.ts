@@ -611,6 +611,13 @@ export const adminHandlers = [
     const b = (await request.json().catch(() => ({}))) as Cuerpo;
     const errores = validarUsuario(b, true);
     if (errores.length) return validacion(errores);
+    if (b.estado === 'BLOQUEADO') {
+      return problema(
+        400,
+        'BLOQUEO_POR_ENDPOINT_PROPIO',
+        'Un usuario no se puede crear bloqueado: se lo bloquea después, con motivo'
+      );
+    }
     const username = texto(b.username);
     const email = texto(b.email);
     if (usuarios.some((u) => u.username.toLowerCase() === username.toLowerCase())) {
@@ -634,7 +641,6 @@ export const adminHandlers = [
     }
     const nuevo = usuario(siguienteId(usuarios), username, email, p.id, rolesIds, {
       descripcion: textoONull(b.descripcion),
-      estado: b.estado === 'BLOQUEADO' ? 'BLOQUEADO' : 'ACTIVO',
       creadoEn: ahora(),
     });
     usuarios.push(nuevo);
@@ -662,6 +668,14 @@ export const adminHandlers = [
     if (!b.estado)
       errores.push({ campo: 'estado', codigo: 'REQUERIDO', mensaje: 'Es obligatorio' });
     if (errores.length) return validacion(errores);
+    // HU-703: el estado se manda como está; bloquear y desbloquear van por /bloqueo
+    if ((b.estado === 'BLOQUEADO') !== (u.estado === 'BLOQUEADO')) {
+      return problema(
+        400,
+        'BLOQUEO_POR_ENDPOINT_PROPIO',
+        `Para bloquear o desbloquear a ${u.username} usá /admin/usuarios/{id}/bloqueo`
+      );
+    }
     if (b.estado === 'ACTIVO' && !u.emailVerificado) {
       return problema(
         409,
@@ -697,13 +711,7 @@ export const adminHandlers = [
       modificadoEn: ahora(),
     });
     if (cambiaEmail) u.emailVerificado = false;
-    u.estado =
-      b.estado === 'BLOQUEADO'
-        ? 'BLOQUEADO'
-        : u.emailVerificado
-          ? 'ACTIVO'
-          : 'PENDIENTE_VERIFICACION';
-    if (u.estado !== 'BLOQUEADO') u.bloqueo = null;
+    if (u.estado !== 'BLOQUEADO') u.estado = u.emailVerificado ? 'ACTIVO' : 'PENDIENTE_VERIFICACION';
     return HttpResponse.json(usuarioDetalle(u));
   }),
 

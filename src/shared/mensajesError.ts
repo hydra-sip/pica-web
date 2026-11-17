@@ -47,6 +47,8 @@ const POR_CODIGO: Record<string, string> = {
   USUARIO_NO_ACTIVO: 'Solo se le pueden cambiar los roles a un usuario activo.',
   USUARIO_YA_BLOQUEADO:
     'El usuario ya está bloqueado. Para cambiar el motivo o la duración, levantá el bloqueo y volvé a bloquearlo.',
+  // HU-703: el PUT y el alta no bloquean ni desbloquean
+  BLOQUEO_POR_ENDPOINT_PROPIO: 'Para bloquear o desbloquear, usá Bloquear o Motivo en la tabla.',
   USUARIO_PROTEGIDO: 'El usuario Admin del sistema no se puede modificar.',
   ROL_PROTEGIDO: 'Ese cambio no está permitido en este rol del sistema.',
   ULTIMO_ASIGNADOR: 'No podés quitarte tu último rol que permite asignar roles.',
