@@ -192,6 +192,8 @@ describe('HU-809: el cruce que cambió se resalta', () => {
 
     await waitFor(() => expect(cruce('Semifinal')).toHaveClass('bracket-cruce-actualizado'));
     expect(cruce('Final')).not.toHaveClass('bracket-cruce-actualizado');
+    // el temporizador lo arma un efecto, que puede correr después de que se vio la clase
+    await act(async () => {});
     act(() => {
       vi.advanceTimersByTime(2100);
     });
@@ -240,5 +242,54 @@ describe('HU-809: el cruce que cambió se resalta', () => {
 
     await waitFor(() => expect(halconesEnLaFinal()).toBeInTheDocument());
     expect(document.querySelector('.bracket-cruce-actualizado')).toBeNull();
+  });
+});
+
+describe('HU-809: el bracket avisa cuando se cortó la conexión', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const aviso = () => screen.queryByText('Sin conexión, reconectando…');
+
+  it('después de 2 segundos sin conexión lo avisa, y al reconectar el aviso se va', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    servidor(bracket(1));
+    await mostrar();
+    expect(aviso()).toBeNull();
+
+    act(() => {
+      mockDisconnect();
+    });
+    act(() => {
+      vi.advanceTimersByTime(2100);
+    });
+    expect(aviso()).toBeInTheDocument();
+
+    act(() => {
+      mockReconnect();
+    });
+    expect(aviso()).toBeNull();
+  });
+
+  it('un corte más corto no muestra el aviso', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    servidor(bracket(1));
+    await mostrar();
+
+    act(() => {
+      mockDisconnect();
+    });
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    act(() => {
+      mockReconnect();
+    });
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+
+    expect(aviso()).toBeNull();
   });
 });

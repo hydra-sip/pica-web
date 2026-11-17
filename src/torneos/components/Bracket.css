@@ -78,6 +78,13 @@
   overflow: hidden;
 }
 
+/* El bracket en vivo perdió la conexión y está reintentando (HU-809). */
+.bracket-sin-conexion {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-warning);
+}
+
 /* El cruce que acaba de cambiar en vivo (HU-809): un fondo que se desvanece. */
 .bracket-cruce-actualizado {
   animation: bracket-cruce-actualizado 2s ease-out;
