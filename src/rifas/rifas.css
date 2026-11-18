@@ -117,8 +117,16 @@
 .rifas-acciones {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-3);
   margin-left: auto;
+}
+
+/* Por qué una acción está deshabilitada, al lado del botón */
+.rifas-leyenda {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
 }
 
 /* --- Premios --------------------------------------------------------------- */

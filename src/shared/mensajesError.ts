@@ -64,6 +64,7 @@ const POR_CODIGO: Record<string, string> = {
   CLAVE_IDEMPOTENCIA_USADA: 'No se pudo completar la compra: volvé a intentarlo.',
   RIFA_CON_VENTAS: 'La rifa ya tiene números vendidos: no se puede modificar ni eliminar.',
   RIFA_CON_RESERVAS: 'Alguien está pagando números de esta rifa: probá de nuevo en unos minutos.',
+  RIFA_SIN_VENTAS: 'Todavía no se vendió ningún número: la venta no se puede cerrar.',
   TORNEO_NO_EDITABLE: 'El torneo ya no se puede modificar desde acá.',
   CAMPOS_BLOQUEADOS:
     'Algunos datos ya no se pueden cambiar porque hay inscripciones pagas: recargá la página.',
