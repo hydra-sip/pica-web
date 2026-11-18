@@ -242,6 +242,11 @@ export interface OpcionesTorneo {
   checkinDuracionMaxMin: number;
   /** Las que ya existen en la sede pedida. */
   canchas: string[];
+  /**
+   * El ambiente de prueba (`app.torneos.sin-validar-fechas`, PICA-448): el torneo se crea, edita y publica con fechas
+   * pasadas y los partidos se programan en cualquier fecha. El orden entre las fechas se exige igual.
+   */
+  sinValidarFechas: boolean;
 }
 
 /** Fila de GET /torneos/mis-torneos. */
