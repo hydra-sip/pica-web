@@ -64,6 +64,8 @@ export const TorneoConsolaPage: React.FC = () => {
   const [pestana, setPestana] = useState<'gestion' | 'finanzas'>('gestion');
   /** Con fase de grupos (CR-02): los grupos como llegaron, para contar los partidos sin fecha. */
   const [grupos, setGrupos] = useState<GruposTorneo | null>(null);
+  /** Las inscripciones confirmadas, para no cerrar por debajo del mínimo (PICA-447); null hasta saberlo. */
+  const [confirmadas, setConfirmadas] = useState<number | null>(null);
 
   const recargarConsola = useCallback(() => {
     if (!id) return;
@@ -78,6 +80,16 @@ export const TorneoConsolaPage: React.FC = () => {
   useEffect(() => {
     recargarConsola();
   }, [recargarConsola]);
+
+  const inscripcionAbierta = torneo?.estado === 'INSCRIPCION_ABIERTA';
+  useEffect(() => {
+    if (!id || !inscripcionAbierta) return;
+    torneoApi
+      .inscripciones(Number(id), { estado: 'CONFIRMADA', size: 1 })
+      .then((pagina) => setConfirmadas(pagina.page.totalElements))
+      // sin el conteo el botón queda habilitado: el back igual rechaza el cierre por debajo del mínimo
+      .catch(() => setConfirmadas(null));
+  }, [id, inscripcionAbierta, recargaInscripciones]);
 
   useTorneoRealtime(id ? Number(id) : null, {
     onBracketChange: (nuevoBracket) => {
@@ -198,7 +210,9 @@ export const TorneoConsolaPage: React.FC = () => {
     } catch (err) {
       setMensaje({
         tipo: 'error',
-        texto: mensajeDeError(err, 'No se pudo cerrar la inscripción.'),
+        texto: mensajeDeError(err, 'No se pudo cerrar la inscripción.', {
+          PARTICIPANTES_INSUFICIENTES: `Hacen falta al menos ${torneo.inscriptosMinimos ?? 2} inscripciones confirmadas para cerrar la inscripción.`,
+        }),
       });
       // pudo haberse cerrado sola mientras tanto, por el cupo o por la fecha
       torneoApi
@@ -214,6 +228,11 @@ export const TorneoConsolaPage: React.FC = () => {
 
   const abierta = torneo.estado === 'INSCRIPCION_ABIERTA';
   const cancelable = abierta || programable;
+  // PICA-447: por debajo del mínimo no se puede jugar; si vence así, el back cancela el torneo
+  const bajoElMinimo =
+    confirmadas !== null &&
+    torneo.inscriptosMinimos !== null &&
+    confirmadas < torneo.inscriptosMinimos;
 
   const cancelado = (texto: string) => {
     setMensaje({ tipo: 'exito', texto });
@@ -344,7 +363,18 @@ export const TorneoConsolaPage: React.FC = () => {
               </div>
               <div className="torneos-acciones">
                 {abierta && !confirmandoCierre && (
-                  <Button onClick={() => setConfirmandoCierre(true)}>Cerrar inscripción</Button>
+                  <Button
+                    onClick={() => setConfirmandoCierre(true)}
+                    disabled={bajoElMinimo}
+                    aria-describedby={bajoElMinimo ? 'torneo-bajo-minimo' : undefined}
+                  >
+                    Cerrar inscripción
+                  </Button>
+                )}
+                {abierta && bajoElMinimo && (
+                  <p id="torneo-bajo-minimo" className="torneos-subtitulo">
+                    Hacen falta al menos {torneo.inscriptosMinimos} inscripciones confirmadas
+                  </p>
                 )}
                 {abierta && confirmandoCierre && (
                   <>
