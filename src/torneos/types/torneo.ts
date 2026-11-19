@@ -50,6 +50,7 @@ export interface TorneoResumen {
   cierreInscripcionEn: string | null;
   fechaInicio: string | null;
   fechaFin: string | null;
+  organizador?: OrganizadorTorneo | null;
 }
 
 export interface TorneoDetalle {

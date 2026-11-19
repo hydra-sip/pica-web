@@ -222,6 +222,17 @@
   font-weight: 600;
 }
 
+.torneo-card-organizador-link {
+  color: var(--text-primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.torneo-card-organizador-link:hover {
+  color: var(--color-indigo);
+  text-decoration: underline;
+}
+
 .torneo-card-btn {
   width: 100%;
   padding: 0.75rem;
