@@ -432,7 +432,16 @@ export const TorneoDetallePage: React.FC = () => {
                 Organizador Oficial
               </div>
               <div style={{ fontWeight: 600, color: 'var(--color-text)' }}>
-                {torneo.organizador?.nombreCompleto || 'Organizador'}
+                {torneo.organizador?.id ? (
+                  <Link
+                    to={`/organizadores/${torneo.organizador.id}`}
+                    className="torneo-organizador-link"
+                  >
+                    {torneo.organizador.nombreCompleto || 'Organizador'}
+                  </Link>
+                ) : (
+                  torneo.organizador?.nombreCompleto || 'Organizador'
+                )}
                 {torneo.organizador?.username && (
                   <span
                     style={{
