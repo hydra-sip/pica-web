@@ -47,6 +47,38 @@ describe('margen entre el cierre de la inscripción y el inicio (CE4-5)', () => 
   });
 });
 
+describe('PICA-448: fechas sin validar en el ambiente de prueba', () => {
+  const sinValidar = { ...limites, sinValidarFechas: true };
+
+  it('con el flag apagado, el inicio y el cierre tienen que ser futuros', () => {
+    const errores = validarBorrador(conFechas(enDias(-1), enDias(-7)), limites);
+    expect(errores.fechaInicio).toBe('Tiene que ser una fecha futura.');
+    expect(errores.cierreInscripcionEn).toBe('Tiene que ser una fecha futura.');
+  });
+
+  it('con el flag prendido, acepta el inicio y el cierre pasados', () => {
+    const errores = validarBorrador(conFechas(enDias(-1), enDias(-7)), sinValidar);
+    expect(errores.fechaInicio).toBeUndefined();
+    expect(errores.cierreInscripcionEn).toBeUndefined();
+  });
+
+  it('con el flag prendido, sigue pidiendo el cierre antes del inicio y con el margen', () => {
+    expect(validarBorrador(conFechas(enDias(-7), enDias(-1)), sinValidar).cierreInscripcionEn).toBe(
+      'La inscripción tiene que cerrar antes del inicio.'
+    );
+    const inicio = enDias(-1);
+    expect(
+      validarBorrador(conFechas(inicio, new Date(inicio.getTime() - HORA / 2)), sinValidar)
+        .cierreInscripcionEn
+    ).toMatch(/al menos 1 h antes del inicio/);
+  });
+
+  it('con el flag prendido, sigue pidiendo el fin después del inicio', () => {
+    const form = { ...conFechas(enDias(-1), enDias(-7)), fechaFin: local(enDias(-3)) };
+    expect(validarBorrador(form, sinValidar).fechaFin).toBe('No puede ser anterior al inicio.');
+  });
+});
+
 describe('pozo neto con el cupo mínimo (CE4-5)', () => {
   const gasto: GastoDetalle = {
     gastoId: 1,

@@ -115,6 +115,8 @@ export interface LimitesTorneo {
   cupoTope: number;
   /** Minutos que tienen que pasar como mínimo entre el cierre de la inscripción y el inicio. */
   margenCierreInicioMin: number;
+  /** El ambiente de prueba (PICA-448): las fechas pueden ser pasadas; el orden se exige igual. */
+  sinValidarFechas?: boolean;
 }
 
 const MIN_POR_HORA = 60;
@@ -130,7 +132,7 @@ export const textoMargen = (minutos: number): string =>
  */
 export const validarBorrador = (
   f: FormTorneo,
-  { cupoTope, margenCierreInicioMin }: LimitesTorneo,
+  { cupoTope, margenCierreInicioMin, sinValidarFechas = false }: LimitesTorneo,
   original?: FormTorneo
 ): ErroresTorneo => {
   const errores: ErroresTorneo = {};
@@ -149,13 +151,14 @@ export const validarBorrador = (
   const inicio = f.fechaInicio ? new Date(f.fechaInicio).getTime() : null;
   const fin = f.fechaFin ? new Date(f.fechaFin).getTime() : null;
   const cierre = f.cierreInscripcionEn ? new Date(f.cierreInscripcionEn).getTime() : null;
-  if (inicio !== null && cambia('fechaInicio') && inicio <= ahora) {
+  const futuras = !sinValidarFechas;
+  if (futuras && inicio !== null && cambia('fechaInicio') && inicio <= ahora) {
     errores.fechaInicio = 'Tiene que ser una fecha futura.';
   }
   if (inicio !== null && fin !== null && fin < inicio) {
     errores.fechaFin = 'No puede ser anterior al inicio.';
   }
-  if (cierre !== null && cambia('cierreInscripcionEn') && cierre <= ahora) {
+  if (futuras && cierre !== null && cambia('cierreInscripcionEn') && cierre <= ahora) {
     errores.cierreInscripcionEn = 'Tiene que ser una fecha futura.';
   } else if (cierre !== null && inicio !== null && cierre > inicio) {
     errores.cierreInscripcionEn = 'La inscripción tiene que cerrar antes del inicio.';

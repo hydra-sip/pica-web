@@ -93,7 +93,11 @@ export const TorneoFormPage: React.FC = () => {
   const bloqueados = torneo?.camposBloqueados ?? [];
   const estado = torneo?.estado ?? 'BORRADOR';
   const cupoTope = opciones?.cupoMaximo ?? 64;
-  const limites = { cupoTope, margenCierreInicioMin: opciones?.margenCierreInicioMin ?? 0 };
+  const limites = {
+    cupoTope,
+    margenCierreInicioMin: opciones?.margenCierreInicioMin ?? 0,
+    sinValidarFechas: opciones?.sinValidarFechas ?? false,
+  };
 
   useEffect(() => {
     let vigente = true;
