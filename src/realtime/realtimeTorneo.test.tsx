@@ -161,6 +161,7 @@ const torneoDetalleMock: TorneoDetalle = {
     username: 'organizador_pica',
   },
   publicadoEn: '2026-10-15T10:00:00Z',
+  inscripcionSuspendida: false,
 };
 
 const torneoInformacionMock: TorneoInformacion = {

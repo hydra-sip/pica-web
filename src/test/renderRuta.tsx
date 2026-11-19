@@ -7,7 +7,7 @@ import { AuthProvider } from '../auth/context/AuthContext';
 import { AppRoutes } from '../routes/AppRoutes';
 
 // Usuarios de handlers.ts: el participante tiene INSCRIPCION_GESTIONAR y el organizador no; el organizador tiene
-// TORNEO_GESTIONAR, y soporte solo CANCELACION_REVISAR.
+// TORNEO_GESTIONAR, y soporte CANCELACION_REVISAR, RECLAMO_RESOLVER, USUARIO_VER y USUARIO_BLOQUEAR.
 const CREDENCIALES = {
   participante: { identificador: 'usuario', password: 'user123' },
   sinPermiso: { identificador: 'organizador', password: 'org123' },

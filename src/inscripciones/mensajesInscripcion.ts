@@ -7,6 +7,9 @@ import { ProblemDetail } from '../auth/types';
 export const MENSAJES_INSCRIPCION: Record<string, string> = {
   USUARIO_NO_ACTIVO:
     'El usuario no está activo (cuenta bloqueada o sin verificar), así que no se puede continuar.',
+  // HU-703
+  ORGANIZADOR_BLOQUEADO:
+    'El organizador del torneo está bloqueado: por ahora no se puede inscribir nadie.',
 };
 
 /**
