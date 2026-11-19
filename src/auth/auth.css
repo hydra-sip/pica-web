@@ -93,6 +93,93 @@
   grid-template-columns: 2fr 3fr;
 }
 
+/* Registro (PICA-451): la casilla de Bases y Condiciones y la leyenda de la política de privacidad */
+.auth-casilla {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.auth-casilla label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.auth-casilla input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--color-primary);
+}
+
+.auth-legal {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.auth-legal strong {
+  color: var(--color-text);
+}
+
+/* Los requisitos de la contraseña, en el registro y en Mi perfil */
+.requisitos-clave {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+}
+
+.requisitos-clave-titulo {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.requisitos-clave ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.requisitos-clave li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  transition: color var(--transition-fast);
+}
+
+.requisitos-clave li.cumplido {
+  color: var(--color-success);
+}
+
+.requisitos-clave-marca {
+  width: 15px;
+  height: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  font-size: 0.65rem;
+  font-weight: 700;
+  background-color: var(--color-surface);
+}
+
+.requisitos-clave li.cumplido .requisitos-clave-marca {
+  background-color: var(--color-success-bg);
+}
+
 /* Revisá tu correo, verificación y vuelta de Google */
 .auth-estado {
   align-items: center;

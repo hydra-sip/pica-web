@@ -24,6 +24,7 @@ const bracketInicial: BracketTorneo = {
   torneoId: 100,
   semilla: 'abc12345',
   listaHash: 'def67890',
+  version: 1,
   rondas: [
     {
       numero: 1,
@@ -161,6 +162,7 @@ const torneoDetalleMock: TorneoDetalle = {
     username: 'organizador_pica',
   },
   publicadoEn: '2026-10-15T10:00:00Z',
+  inscripcionSuspendida: false,
 };
 
 const torneoInformacionMock: TorneoInformacion = {
@@ -194,6 +196,7 @@ const torneoInformacionMock: TorneoInformacion = {
   creadoEn: '2026-10-10T10:00:00Z',
   modificadoEn: '2026-10-10T10:00:00Z',
   camposBloqueados: [],
+  inscriptosMinimos: 2,
   checkinMinAntes: null,
   checkinDuracion: null,
   checkinSinPresentes: 'REPROGRAMAR',

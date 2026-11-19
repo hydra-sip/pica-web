@@ -10,6 +10,7 @@ type DetalleMock = Omit<
   | 'pctGastosAdministrativos'
   | 'gastosAdministrativos'
   | 'totalAPagar'
+  | 'inscripcionSuspendida'
 > & {
   premios: { puesto: number; pct: number }[];
   esBorrador?: boolean;
@@ -241,6 +242,7 @@ export const mockTorneosDetalle: (TorneoDetalle & { esBorrador?: boolean })[] = 
     gastosAdministrativos: t.valorInscripcion / 10,
     totalAPagar: t.valorInscripcion * 1.1,
     premios: t.premios.map((p) => ({ ...p, monto: (t.pozoEstimado * p.pct) / 100 })),
+    inscripcionSuspendida: false,
   })
 );
 

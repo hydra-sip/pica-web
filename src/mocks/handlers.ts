@@ -15,8 +15,8 @@ import { sancionHandlers } from './sancionHandlers';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
-// El admin es Super Usuario: tiene los 13 permisos del seed V4, el de parámetros de V35 y el de auditoría de V49,
-// como en el back
+// El admin es Super Usuario: tiene los 13 permisos del seed V4, el de parámetros de V35, el de auditoría de V49 y el
+// de bloqueo de V58, como en el back
 const PERMISOS_SUPER_USUARIO = [
   'USUARIO_VER',
   'USUARIO_CREAR',
@@ -34,6 +34,7 @@ const PERMISOS_SUPER_USUARIO = [
   'PARAMETRO_ADMINISTRAR',
   'RECLAMO_RESOLVER',
   'AUDITORIA_VER',
+  'USUARIO_BLOQUEAR',
   'ALERTA_FRAUDE_REVISAR',
 ];
 
@@ -294,7 +295,7 @@ export const handlers = [
       });
     }
 
-    // SOPORTE (HU-605 y HU-706): revisa las cancelaciones con gastos y resuelve reclamos
+    // SOPORTE (HU-605, HU-706 y HU-703): revisa las cancelaciones con gastos, resuelve reclamos y bloquea usuarios
     if (
       (id === 'soporte@pica.edu.ar' || id === 'soporte') &&
       (body.password === 'sop123' || body.password === 'soporte123')
@@ -317,7 +318,13 @@ export const handlers = [
           telefono: '1155667788',
         },
         roles: [{ id: 5, nombre: 'SOPORTE', nombreAmigable: 'Soporte' }],
-        permisos: ['CANCELACION_REVISAR', 'RECLAMO_RESOLVER', 'ALERTA_FRAUDE_REVISAR'],
+        permisos: [
+          'CANCELACION_REVISAR',
+          'RECLAMO_RESOLVER',
+          'USUARIO_VER',
+          'USUARIO_BLOQUEAR',
+          'ALERTA_FRAUDE_REVISAR',
+        ],
         datosCompletos: true,
       });
 
