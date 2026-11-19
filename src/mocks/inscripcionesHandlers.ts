@@ -182,8 +182,12 @@ const INDIVIDUAL = {
   nominaMaxima: null,
 } as const;
 
+/** El reglamento escrito de los torneos 1 y 2, con un salto de línea (PICA-450). */
+export const REGLAMENTO_TEXTO = 'Partidos de dos tiempos de 20 minutos.\nTres amarillas suspenden una fecha.';
+
 const TORNEOS: TorneoMock[] = [
   torneo(1, 'torneo-apertura-f5', 'Torneo Apertura F5', {
+    reglamentoTexto: REGLAMENTO_TEXTO,
     tamanioEquipo: 5,
     nominaMaxima: 7,
     valorInscripcion: 20000,
@@ -192,6 +196,7 @@ const TORNEOS: TorneoMock[] = [
   }),
   torneo(2, 'individual-pago', 'Desafío Individual de Ping Pong', {
     ...INDIVIDUAL,
+    reglamentoTexto: REGLAMENTO_TEXTO,
     cupoMaximo: 32,
     cupoMinimo: 8,
     valorInscripcion: 5000,
