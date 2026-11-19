@@ -100,6 +100,12 @@ export interface TorneoInformacion extends Omit<
    * inscripciones pagas; en curso o después, todos.
    */
   camposBloqueados: CampoTorneo[];
+  /**
+   * Las inscripciones confirmadas que hacen falta para cerrar la inscripción y jugar (PICA-447): 2 en eliminación
+   * directa; con grupos, `cupoMaximo / tamanioGrupo` grupos por `clasificanPorGrupo + 1`. Null en un borrador sin
+   * formato o sin cupo.
+   */
+  inscriptosMinimos: number | null;
   /** Ventana de check-in (HU-308): cuántos minutos antes del cruce abre; null sin configurar. */
   checkinMinAntes: number | null;
   /** Cuántos minutos dura la ventana de check-in. */
@@ -242,6 +248,11 @@ export interface OpcionesTorneo {
   checkinDuracionMaxMin: number;
   /** Las que ya existen en la sede pedida. */
   canchas: string[];
+  /**
+   * El ambiente de prueba (`app.torneos.sin-validar-fechas`, PICA-448): el torneo se crea, edita y publica con fechas
+   * pasadas y los partidos se programan en cualquier fecha. El orden entre las fechas se exige igual.
+   */
+  sinValidarFechas: boolean;
 }
 
 /** Fila de GET /torneos/mis-torneos. */
@@ -474,6 +485,8 @@ export interface BracketTorneo {
   semilla: string | null;
   listaHash: string | null;
   rondas: RondaBracket[];
+  /** La versión del bracket (HU-809): crece con cada cambio de la llave; uno con versión menor es más viejo. */
+  version: number;
 }
 
 // Las del asistente exigen TORNEO_GESTIONAR y cada organizador ve solo los suyos; las del catálogo son públicas.

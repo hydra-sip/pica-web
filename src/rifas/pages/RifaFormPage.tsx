@@ -266,10 +266,21 @@ export const RifaFormPage: React.FC = () => {
               </Button>
             </>
           )}
-          {/* HU-407: antes de la fecha; al llegar ventaHasta la cierra sola el back */}
-          <Button variant="secondary" onClick={() => setConfirmar('cerrar')}>
+          {/* HU-407: antes de la fecha; al llegar ventaHasta la cierra sola el back. Sin vendidos no se
+              cierra (PICA-445): si vence así, el back la cancela */}
+          <Button
+            variant="secondary"
+            onClick={() => setConfirmar('cerrar')}
+            disabled={sinCompras}
+            aria-describedby={sinCompras ? 'rifa-sin-ventas' : undefined}
+          >
             Cerrar venta
           </Button>
+          {sinCompras && (
+            <p id="rifa-sin-ventas" className="rifas-leyenda">
+              Todavía no se vendió ningún número
+            </p>
+          )}
         </div>
       )}
       {/* HU-504: desde la fecha del sorteo; al llegar la sortea sola el back */}

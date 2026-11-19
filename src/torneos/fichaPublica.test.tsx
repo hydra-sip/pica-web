@@ -65,6 +65,7 @@ const torneoDetalleBase: TorneoDetalle = {
     username: 'organizador',
   },
   publicadoEn: '2026-10-01T10:00:00Z',
+  inscripcionSuspendida: false,
 };
 
 describe('CE4-2 (PICA-303): Ficha pública del torneo', () => {
@@ -286,5 +287,49 @@ describe('CE4-2 (PICA-303): Ficha pública del torneo', () => {
       expect(btnCerrado).toBeInTheDocument();
       expect(btnCerrado).toBeDisabled();
     });
+  });
+});
+
+describe('HU-703: la ficha del torneo de un organizador bloqueado', () => {
+  const sinPartidos = () =>
+    server.use(http.get('*/torneos/11/mi-proximo-partido', () => HttpResponse.json(null)));
+
+  it('avisa que la inscripción está suspendida y no deja inscribirse', async () => {
+    sinPartidos();
+    await renderRuta('/torneos/copa-suspendida');
+
+    expect(await screen.findByRole('heading', { name: 'Copa Suspendida' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Inscripciones suspendidas' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Inscribirme al Torneo' })).not.toBeInTheDocument();
+  });
+
+  it('la entrada a la inscripción también avisa que está suspendida', async () => {
+    await renderRuta('/torneos/copa-suspendida/inscripcion');
+
+    expect(
+      await screen.findByText('La inscripción a Copa Suspendida está suspendida: su organizador está bloqueado.')
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Continuar al pago/ })).not.toBeInTheDocument();
+  });
+
+  it('si el organizador quedó bloqueado con la ficha abierta, inscribirse explica por qué no se puede', async () => {
+    // la ficha se cargó antes del bloqueo: dice que se puede, pero el back ya responde 409
+    sinPartidos();
+    server.use(
+      http.get('*/torneos/slug/copa-suspendida', async ({ request }) => {
+        const real = await fetch(request.url.replace('copa-suspendida', 'individual-pago'));
+        const torneo = await real.json();
+        return HttpResponse.json({ ...torneo, id: 11, slug: 'copa-suspendida', nombre: 'Copa Suspendida' });
+      })
+    );
+    const { user } = await renderRuta('/torneos/copa-suspendida');
+
+    await user.click(await screen.findByRole('button', { name: 'Inscribirme al Torneo' }));
+    await user.click(await screen.findByLabelText('Acepto el Reglamento y Código de Conducta'));
+    await user.click(screen.getByRole('button', { name: /^Continuar al pago/ }));
+
+    expect(
+      await screen.findByText('El organizador del torneo está bloqueado: por ahora no se puede inscribir nadie.')
+    ).toBeInTheDocument();
   });
 });

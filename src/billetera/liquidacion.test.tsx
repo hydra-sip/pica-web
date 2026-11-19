@@ -378,6 +378,7 @@ describe('HU-606 / T606-3: la ficha del torneo dice que se liquidó', () => {
     organizador: { id: 4, nombreCompleto: 'Organizador Eventos', username: 'organizador' },
     publicadoEn: '2026-09-20T10:00:00Z',
     liquidadoEn: LIQUIDADO_EN,
+    inscripcionSuspendida: false,
   };
 
   it('muestra "Liquidado" con la fecha', async () => {

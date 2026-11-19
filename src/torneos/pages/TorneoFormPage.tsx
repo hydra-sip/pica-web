@@ -33,6 +33,7 @@ import {
   validarBorrador,
   validarPaso,
 } from '../validacion';
+import { TERMINOS_TORNEO } from '../terminos';
 import '../torneos.css';
 
 type Paso = 1 | 2 | 3;
@@ -92,7 +93,11 @@ export const TorneoFormPage: React.FC = () => {
   const bloqueados = torneo?.camposBloqueados ?? [];
   const estado = torneo?.estado ?? 'BORRADOR';
   const cupoTope = opciones?.cupoMaximo ?? 64;
-  const limites = { cupoTope, margenCierreInicioMin: opciones?.margenCierreInicioMin ?? 0 };
+  const limites = {
+    cupoTope,
+    margenCierreInicioMin: opciones?.margenCierreInicioMin ?? 0,
+    sinValidarFechas: opciones?.sinValidarFechas ?? false,
+  };
 
   useEffect(() => {
     let vigente = true;
@@ -478,6 +483,20 @@ export const TorneoFormPage: React.FC = () => {
             />
           )}
 
+          {paso === 3 && editable && (
+            <section aria-labelledby="torneo-terminos-titulo">
+              <h3 id="torneo-terminos-titulo" className="torneos-terminos-titulo">
+                Términos de custodia de fondos
+              </h3>
+              <div className="torneos-terminos-texto" tabIndex={0}>
+                {TERMINOS_TORNEO.map((t) => (
+                  <p key={t.titulo}>
+                    <strong>{t.titulo}.</strong> {t.texto}
+                  </p>
+                ))}
+              </div>
+            </section>
+          )}
           {paso === 3 && editable && (
             <label className="torneos-terminos">
               <input

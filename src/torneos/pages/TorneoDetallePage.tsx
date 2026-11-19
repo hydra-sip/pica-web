@@ -264,8 +264,15 @@ export const TorneoDetallePage: React.FC = () => {
   );
   const inscripcionCerrada = cierreVencido || torneo.estado !== 'INSCRIPCION_ABIERTA';
 
+  // HU-703: con el organizador bloqueado, la inscripción sigue abierta pero no suma a nadie
+  const inscripcionSuspendida = !inscripcionCerrada && torneo.inscripcionSuspendida;
+
   const puedeInscribirse =
-    !isOrganizador && !miInscripcion && !inscripcionCerrada && torneo.cupoDisponible > 0;
+    !isOrganizador &&
+    !miInscripcion &&
+    !inscripcionCerrada &&
+    !inscripcionSuspendida &&
+    torneo.cupoDisponible > 0;
 
   const handleInscripcionClick = () => {
     if (!isAuthenticated) {
@@ -396,6 +403,15 @@ export const TorneoDetallePage: React.FC = () => {
               <button type="button" className="btn btn-secondary" disabled>
                 Inscripción cerrada
               </button>
+            ) : inscripcionSuspendida ? (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled
+                title="El organizador del torneo está bloqueado"
+              >
+                Inscripciones suspendidas
+              </button>
             ) : puedeInscribirse ? (
               <button
                 type="button"
@@ -432,7 +448,16 @@ export const TorneoDetallePage: React.FC = () => {
                 Organizador Oficial
               </div>
               <div style={{ fontWeight: 600, color: 'var(--color-text)' }}>
-                {torneo.organizador?.nombreCompleto || 'Organizador'}
+                {torneo.organizador?.id ? (
+                  <Link
+                    to={`/organizadores/${torneo.organizador.id}`}
+                    className="torneo-organizador-link"
+                  >
+                    {torneo.organizador.nombreCompleto || 'Organizador'}
+                  </Link>
+                ) : (
+                  torneo.organizador?.nombreCompleto || 'Organizador'
+                )}
                 {torneo.organizador?.username && (
                   <span
                     style={{

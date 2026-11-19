@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { authApi } from '../../api/authApi';
+import { ApiError } from '../../api/httpClient';
 import { FieldErrors } from '../types';
-import { ApiError, API_BASE_URL } from '../../api/httpClient';
+import { AuthTarjeta } from '../components/AuthTarjeta';
 import { PasswordRequirements } from '../components/PasswordRequirements';
 import {
   TIPOS_DOC_VALIDOS,
@@ -13,9 +14,13 @@ import {
   getTodayDateString,
   MIN_FECHA_NACIMIENTO,
 } from '../../shared/validators';
-import { IconoAlerta } from '../../shared/ui/Iconos';
-import '../auth.css';
+import { Button, Field, Input, InputClave, Select } from '../../shared/ui';
 
+/**
+ * Alta de cuenta, con el layout del frame «Registro» del wireframe (PICA-451): la misma tarjeta que el login, los
+ * campos que pide el back (nombre y apellido por separado, en una fila), la casilla de Bases y Condiciones y la
+ * leyenda de la política de privacidad.
+ */
 export const RegisterPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [nombres, setNombres] = useState('');
@@ -36,6 +41,14 @@ export const RegisterPage: React.FC = () => {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
   const navigate = useNavigate();
+
+  /** Al escribir en un campo se borra su error. */
+  const cambiar =
+    (setter: (valor: string) => void, campo: keyof FieldErrors) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setter(e.target.value);
+      if (fieldErrors[campo]) setFieldErrors((prev) => ({ ...prev, [campo]: undefined }));
+    };
 
   const validateForm = (): boolean => {
     const errors: FieldErrors = {};
@@ -124,16 +137,16 @@ export const RegisterPage: React.FC = () => {
 
       // Redirigir a la vista "Revisá tu correo"
       navigate('/auth/check-email', { state: { email: email.trim() } });
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err instanceof ApiError && err.problemDetail) {
         const pd = err.problemDetail;
-        const newFieldErrors: FieldErrors = {};
+        const newFieldErrors: Record<string, string> = {};
 
         // Parse 400 VALIDACION errores[]
         if (pd.errores && Array.isArray(pd.errores)) {
           pd.errores.forEach((item) => {
             if (item.campo) {
-              (newFieldErrors as any)[item.campo] = item.mensaje;
+              newFieldErrors[item.campo] = item.mensaje;
             }
           });
         }
@@ -148,367 +161,149 @@ export const RegisterPage: React.FC = () => {
         }
 
         if (Object.keys(newFieldErrors).length > 0) {
-          setFieldErrors(newFieldErrors);
+          setFieldErrors(newFieldErrors as FieldErrors);
         } else {
           setGeneralError(pd.detail || pd.codigo || 'Error al procesar el registro');
         }
       } else {
-        setGeneralError(err.message || 'Error al procesar el registro');
+        setGeneralError(err instanceof Error ? err.message : 'Error al procesar el registro');
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleLogin = () => {
-    const backendRoot = API_BASE_URL.replace(/\/api\/v1\/?$/, '');
-    window.location.href = `${backendRoot}/oauth2/authorization/google`;
-  };
-
   return (
-    <div style={{ maxWidth: '480px', margin: '2rem auto', padding: '0 0.5rem' }}>
-      <div className="pica-card hydra-card" style={{ padding: '2.25rem 2rem' }}>
-        {/* Logo and Brand Header */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.75rem' }}>
-          <div
-            className="pica-logo-badge hydra-logo-badge"
-            style={{ width: '52px', height: '52px', fontSize: '1.65rem', borderRadius: '14px', marginBottom: '0.85rem' }}
-          >
-            P
-          </div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, letterSpacing: '0.04em', margin: 0, color: 'var(--text-primary)' }}>
-            PICA
-          </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.25rem', textAlign: 'center' }}>
-            Plataforma Integral de Competencia Amateur
-          </p>
+    <AuthTarjeta>
+      {generalError && (
+        <div className="alerta alerta-peligro" role="alert">
+          {generalError}
         </div>
+      )}
 
-        {/* Segmented Control: Iniciar Sesión / Registrarse */}
-        <div className="pica-segmented-control hydra-segmented-control" style={{ marginBottom: '1.5rem' }}>
-          <Link to="/auth/login" className="pica-segmented-tab hydra-segmented-tab">
-            Iniciar Sesión
-          </Link>
-          <button type="button" className="pica-segmented-tab hydra-segmented-tab active">
-            Registrarse
-          </button>
-        </div>
-
-        {/* Botón Google OAuth2 */}
-        <button
-          type="button"
-          onClick={handleGoogleLogin}
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.75rem',
-            padding: '0.75rem',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-color)',
-            backgroundColor: 'var(--bg-surface)',
-            color: 'var(--text-primary)',
-            fontSize: '0.9rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            transition: 'all 0.15s ease',
-            boxShadow: 'var(--shadow-xs)',
-          }}
-          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-subtle)')}
-          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-surface)')}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-          </svg>
-          Continuar con Google
-        </button>
-
-        {/* Separador Visual */}
-        <div style={{ display: 'flex', alignItems: 'center', margin: '1.25rem 0', gap: '0.75rem' }}>
-          <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border-color)' }}></div>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>o con email</span>
-          <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border-color)' }}></div>
-        </div>
-
-        {generalError && (
-          <div
-            style={{
-              background: '#fef2f2',
-              border: '1px solid #fecaca',
-              color: '#991b1b',
-              padding: '0.85rem',
-              borderRadius: 'var(--radius-md)',
-              marginBottom: '1rem',
-              fontSize: '0.85rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.45rem',
-            }}
-          >
-            <IconoAlerta size={16} />
-            <span>{generalError}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {/* Nombres y Apellidos */}
-          <div className="auth-fila">
-            <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-                Nombre/s <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="Juan"
-                value={nombres}
-                onChange={(e) => {
-                  setNombres(e.target.value);
-                  if (fieldErrors.nombres) setFieldErrors((prev) => ({ ...prev, nombres: undefined }));
-                }}
-                className="input"
-                aria-invalid={!!fieldErrors.nombres}
-              />
-              {fieldErrors.nombres && (
-                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                  <IconoAlerta size={13} /> {fieldErrors.nombres}
-                </span>
-              )}
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-                Apellido/s <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="Pérez"
-                value={apellidos}
-                onChange={(e) => {
-                  setApellidos(e.target.value);
-                  if (fieldErrors.apellidos) setFieldErrors((prev) => ({ ...prev, apellidos: undefined }));
-                }}
-                className="input"
-                aria-invalid={!!fieldErrors.apellidos}
-              />
-              {fieldErrors.apellidos && (
-                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                  <IconoAlerta size={13} /> {fieldErrors.apellidos}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Username */}
-          <div>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-              Nombre de usuario <span style={{ color: '#ef4444' }}>*</span>
-            </label>
-            <input
+      <form onSubmit={handleSubmit} noValidate className="auth-form">
+        <div className="auth-fila">
+          <Field label="Nombre/s" required error={fieldErrors.nombres}>
+            <Input
               type="text"
-              required
-              placeholder="juanperez"
-              value={username}
-              onChange={(e) => {
-                setUsername(e.target.value);
-                if (fieldErrors.username) setFieldErrors((prev) => ({ ...prev, username: undefined }));
-              }}
-              className="input"
-              aria-invalid={!!fieldErrors.username}
+              autoComplete="given-name"
+              placeholder="Juan"
+              value={nombres}
+              onChange={cambiar(setNombres, 'nombres')}
             />
-            {fieldErrors.username && (
-              <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                <IconoAlerta size={13} /> {fieldErrors.username}
-              </span>
-            )}
-          </div>
-
-          {/* Correo Electrónico */}
-          <div>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-              Correo Electrónico <span style={{ color: '#ef4444' }}>*</span>
-            </label>
-            <input
-              type="email"
-              required
-              placeholder="juan@correo.com"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: undefined }));
-              }}
-              className="input"
-              aria-invalid={!!fieldErrors.email}
+          </Field>
+          <Field label="Apellido/s" required error={fieldErrors.apellidos}>
+            <Input
+              type="text"
+              autoComplete="family-name"
+              placeholder="Pérez"
+              value={apellidos}
+              onChange={cambiar(setApellidos, 'apellidos')}
             />
-            {fieldErrors.email && (
-              <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                <IconoAlerta size={13} /> {fieldErrors.email}
-              </span>
-            )}
-          </div>
-
-          {/* Tipo Doc, Nro Doc y Fecha Nac */}
-          <div className="auth-fila auth-fila-doc">
-            <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-                Tipo
-              </label>
-              <select
-                value={tipoDoc}
-                onChange={(e) => setTipoDoc(e.target.value)}
-                className="input"
-              >
-                {TIPOS_DOC_VALIDOS.map((td) => (
-                  <option key={td.value} value={td.value}>{td.label}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-                Nro Documento <span style={{ color: '#ef4444' }}>*</span>
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="38123456"
-                value={nroDoc}
-                onChange={(e) => {
-                  setNroDoc(e.target.value);
-                  if (fieldErrors.nroDoc) setFieldErrors((prev) => ({ ...prev, nroDoc: undefined }));
-                }}
-                className="input"
-                aria-invalid={!!fieldErrors.nroDoc}
-              />
-              {fieldErrors.nroDoc && (
-                <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                  <IconoAlerta size={13} /> {fieldErrors.nroDoc}
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-              Fecha de Nacimiento <span style={{ color: '#ef4444' }}>*</span>
-            </label>
-            <input
-              type="date"
-              required
-              min={MIN_FECHA_NACIMIENTO}
-              max={getTodayDateString()}
-              value={fechaNacimiento}
-              onChange={(e) => {
-                setFechaNacimiento(e.target.value);
-                if (fieldErrors.fechaNacimiento) setFieldErrors((prev) => ({ ...prev, fechaNacimiento: undefined }));
-              }}
-              className="input"
-              aria-invalid={!!fieldErrors.fechaNacimiento}
-            />
-            {fieldErrors.fechaNacimiento && (
-              <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                <IconoAlerta size={13} /> {fieldErrors.fechaNacimiento}
-              </span>
-            )}
-          </div>
-
-          {/* Contraseñas */}
-          <div>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-              Contraseña <span style={{ color: '#ef4444' }}>*</span>
-            </label>
-            <input
-              type="password"
-              required
-              placeholder="••••••••••••"
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: undefined }));
-              }}
-              className="input"
-              aria-invalid={!!fieldErrors.password}
-            />
-            <PasswordRequirements password={password} />
-            {fieldErrors.password && (
-              <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                <IconoAlerta size={13} /> {fieldErrors.password}
-              </span>
-            )}
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-              Confirmar contraseña <span style={{ color: '#ef4444' }}>*</span>
-            </label>
-            <input
-              type="password"
-              required
-              placeholder="••••••••••••"
-              value={confirmPassword}
-              onChange={(e) => {
-                setConfirmPassword(e.target.value);
-                if (fieldErrors.confirmPassword) setFieldErrors((prev) => ({ ...prev, confirmPassword: undefined }));
-              }}
-              className="input"
-              aria-invalid={!!fieldErrors.confirmPassword}
-            />
-            {fieldErrors.confirmPassword && (
-              <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                <IconoAlerta size={13} /> {fieldErrors.confirmPassword}
-              </span>
-            )}
-          </div>
-
-          {/* Checkbox Aceptar Términos */}
-          <div style={{ marginTop: '0.25rem' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.82rem', color: 'var(--text-primary)' }}>
-              <input
-                type="checkbox"
-                checked={aceptaTerminos}
-                onChange={(e) => {
-                  setAceptaTerminos(e.target.checked);
-                  if (terminosError) setTerminosError(null);
-                }}
-                style={{ width: '16px', height: '16px', accentColor: 'var(--brand-black)', cursor: 'pointer' }}
-              />
-              Acepto las Bases y Condiciones
-            </label>
-            {terminosError && (
-              <span style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                <IconoAlerta size={13} /> {terminosError}
-              </span>
-            )}
-          </div>
-
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={loading}
-            style={{
-              padding: '0.85rem',
-              fontSize: '0.95rem',
-              fontWeight: 700,
-              marginTop: '0.5rem',
-              width: '100%',
-              borderRadius: 'var(--radius-md)',
-            }}
-          >
-            {loading ? 'Creando cuenta...' : 'Registrarse'}
-          </button>
-        </form>
-
-        {/* Footer Legal Notice */}
-        <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-          Al continuar, aceptas las Bases y Condiciones<br />
-          <strong style={{ color: 'var(--text-primary)' }}>y la Política de Privacidad de PICA</strong>
+          </Field>
         </div>
-      </div>
-    </div>
+
+        <Field label="Nombre de usuario" required error={fieldErrors.username}>
+          <Input
+            type="text"
+            autoComplete="username"
+            placeholder="juanperez"
+            value={username}
+            onChange={cambiar(setUsername, 'username')}
+          />
+        </Field>
+
+        <Field label="Correo Electrónico" required error={fieldErrors.email}>
+          <Input
+            type="email"
+            autoComplete="email"
+            placeholder="juan@correo.com"
+            value={email}
+            onChange={cambiar(setEmail, 'email')}
+          />
+        </Field>
+
+        <div className="auth-fila auth-fila-doc">
+          <Field label="Tipo">
+            <Select value={tipoDoc} onChange={(e) => setTipoDoc(e.target.value)}>
+              {TIPOS_DOC_VALIDOS.map((td) => (
+                <option key={td.value} value={td.value}>
+                  {td.label}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Número de documento" required error={fieldErrors.nroDoc}>
+            <Input
+              type="text"
+              placeholder="38123456"
+              value={nroDoc}
+              onChange={cambiar(setNroDoc, 'nroDoc')}
+            />
+          </Field>
+        </div>
+
+        <Field label="Fecha de nacimiento" required error={fieldErrors.fechaNacimiento}>
+          <Input
+            type="date"
+            autoComplete="bday"
+            min={MIN_FECHA_NACIMIENTO}
+            max={getTodayDateString()}
+            value={fechaNacimiento}
+            onChange={cambiar(setFechaNacimiento, 'fechaNacimiento')}
+          />
+        </Field>
+
+        <Field label="Contraseña" required error={fieldErrors.password}>
+          <InputClave
+            autoComplete="new-password"
+            placeholder="••••••••••••"
+            value={password}
+            onChange={cambiar(setPassword, 'password')}
+          />
+        </Field>
+        <PasswordRequirements password={password} />
+
+        <Field label="Confirmar contraseña" required error={fieldErrors.confirmPassword}>
+          <InputClave
+            autoComplete="new-password"
+            placeholder="••••••••••••"
+            value={confirmPassword}
+            onChange={cambiar(setConfirmPassword, 'confirmPassword')}
+          />
+        </Field>
+
+        <div className="auth-casilla">
+          <label>
+            <input
+              type="checkbox"
+              checked={aceptaTerminos}
+              onChange={(e) => {
+                setAceptaTerminos(e.target.checked);
+                if (terminosError) setTerminosError(null);
+              }}
+              aria-invalid={terminosError ? true : undefined}
+              aria-describedby={terminosError ? 'registro-terminos-error' : undefined}
+            />
+            Acepto las Bases y Condiciones
+          </label>
+          {terminosError && (
+            <span id="registro-terminos-error" className="field-error" role="alert">
+              {terminosError}
+            </span>
+          )}
+        </div>
+
+        <Button type="submit" block loading={loading}>
+          {loading ? 'Creando cuenta...' : 'Registrarse'}
+        </Button>
+      </form>
+
+      <p className="auth-legal">
+        Al continuar, aceptás las Bases y Condiciones
+        <br />
+        <strong>y la Política de Privacidad de PICA</strong>
+      </p>
+    </AuthTarjeta>
   );
 };

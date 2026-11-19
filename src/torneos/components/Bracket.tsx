@@ -102,13 +102,15 @@ export const Partido: React.FC<{ partido: PartidoBracket }> = ({ partido }) => {
  * El bracket de eliminación directa (HU-207), compartido por la consola del organizador y la ficha pública: una
  * columna por ronda, de la primera a la final. En un celular se desliza de costado dentro de su caja. En la consola
  * cada partido lleva a su pantalla, donde se ve el resultado y se resuelven las objeciones (HU-304), y abajo, fuera
- * del enlace, lleva su `pie`: la programación (HU-308).
+ * del enlace, lleva su `pie`: la programación (HU-308). El partido `resaltado` es el que acaba de cambiar en vivo
+ * (HU-809).
  */
 export const Bracket: React.FC<{
   bracket: BracketTorneo;
   conEnlaces?: boolean;
   pie?: (partido: PartidoBracket) => React.ReactNode;
-}> = ({ bracket, conEnlaces = false, pie }) => (
+  resaltado?: number | null;
+}> = ({ bracket, conEnlaces = false, pie, resaltado = null }) => (
   <div className="bracket">
     <div className="bracket-rondas">
       {bracket.rondas.map((ronda) => (
@@ -116,7 +118,9 @@ export const Bracket: React.FC<{
           <h3>{ronda.nombre}</h3>
           <div className="bracket-partidos">
             {ronda.partidos.map((p) => {
-              const clases = `bracket-partido${p.bye ? ' bracket-partido-bye' : ''}`;
+              const clases = `bracket-partido${p.bye ? ' bracket-partido-bye' : ''}${
+                p.id === resaltado ? ' bracket-cruce-actualizado' : ''
+              }`;
               const partido =
                 conEnlaces && !p.bye ? (
                   <Link

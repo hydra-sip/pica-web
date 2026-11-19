@@ -7,6 +7,9 @@ import { ProblemDetail } from '../auth/types';
 export const MENSAJES_INSCRIPCION: Record<string, string> = {
   USUARIO_NO_ACTIVO:
     'El usuario no está activo (cuenta bloqueada o sin verificar), así que no se puede continuar.',
+  // HU-703
+  ORGANIZADOR_BLOQUEADO:
+    'El organizador del torneo está bloqueado: por ahora no se puede inscribir nadie.',
 };
 
 /**
@@ -37,6 +40,15 @@ export const MENSAJES_REEMPLAZO: Record<string, string> = {
   INSCRIPCION_NO_PERMITIDA_EN_TORNEO:
     'El organizador y los árbitros del torneo no pueden jugar en él.',
   INSCRIPCION_NO_EDITABLE: 'Esta inscripción ya no está confirmada.',
+};
+
+/** Los del reparto del premio (CR-05), en el paso 1 y en "Mi inscripción". */
+export const MENSAJES_REPARTO: Record<string, string> = {
+  ...MENSAJES_INSCRIPCION,
+  VALIDACION:
+    'No se pudo guardar el reparto: tienen que estar todos los integrantes, con un % de 0 a 100 (hasta dos decimales), y sumar 100 %.',
+  INSCRIPCION_NO_ABIERTA: 'La inscripción del torneo ya cerró: el reparto quedó fijo.',
+  INSCRIPCION_NO_EDITABLE: 'Esta inscripción ya no se puede modificar.',
 };
 
 /**

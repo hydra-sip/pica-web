@@ -5,7 +5,7 @@ import { erroresPorCampo, mensajeDeError } from '../../shared/mensajesError';
 import { Button, Field, Input, Modal, Select, Textarea } from '../../shared/ui';
 import './bloqueo.css';
 
-// Días hasta la fecha de fin; vacío es indefinido (lo levanta un administrador)
+// Días hasta la fecha de fin; vacío es indefinido (dura hasta que alguien lo levante)
 const DURACIONES = [
   { value: '1', label: '1 día' },
   { value: '7', label: '7 días' },
@@ -123,7 +123,7 @@ export const BloqueoModal: React.FC<BloqueoModalProps> = ({ usuario, onClose, on
           <>
             <Field
               label="Duración"
-              hint={hasta ? `Hasta el ${fecha(hasta)}.` : 'Hasta que un administrador lo levante.'}
+              hint={hasta ? `Hasta el ${fecha(hasta)}.` : 'Hasta que se levante.'}
             >
               <Select value={duracion} onChange={(e) => setDuracion(e.target.value)}>
                 {DURACIONES.map((d) => (

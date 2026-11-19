@@ -91,6 +91,16 @@
   font-size: var(--text-sm);
 }
 
+.torneo-organizador-link {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.torneo-organizador-link:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
 /* Grid of blocks */
 .torneo-detalle-grid {
   display: grid;

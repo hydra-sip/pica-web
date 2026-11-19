@@ -111,6 +111,17 @@ export const TorneoCard: React.FC<TorneoCardProps> = ({ torneo }) => {
             <strong>{fechaHora(torneo.fechaFin)}</strong>
           </div>
         )}
+        {torneo.organizador?.id && (
+          <div className="torneo-extra-item">
+            <span className="torneo-extra-label">Organiza:</span>
+            <Link
+              to={`/organizadores/${torneo.organizador.id}`}
+              className="torneo-card-organizador-link"
+            >
+              {torneo.organizador.nombreCompleto || torneo.organizador.username}
+            </Link>
+          </div>
+        )}
       </div>
 
       <Link
