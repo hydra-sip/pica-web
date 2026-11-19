@@ -41,6 +41,7 @@ const borrador: TorneoInformacion = {
   creadoEn: '2026-10-30T10:00:00Z',
   modificadoEn: '2026-10-30T10:00:00Z',
   camposBloqueados: [],
+  inscriptosMinimos: null,
   checkinMinAntes: null,
   checkinDuracion: null,
   checkinSinPresentes: 'REPROGRAMAR',

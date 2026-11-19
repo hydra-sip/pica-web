@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { adminHandlers } from './adminHandlers';
+import { crearAlertaFraudeHandlers } from './alertaFraudeHandlers';
 import { parametroHandlers } from './parametroHandlers';
 import { crearReclamoAdminHandlers } from './reclamoAdminHandlers';
 import { auditoriaHandlers } from './auditoriaHandlers';
@@ -34,6 +35,7 @@ const PERMISOS_SUPER_USUARIO = [
   'RECLAMO_RESOLVER',
   'AUDITORIA_VER',
   'USUARIO_BLOQUEAR',
+  'ALERTA_FRAUDE_REVISAR',
 ];
 
 // El PARTICIPANTE puede inscribirse a torneos (seed del back); el organizador de los mocks no.
@@ -91,6 +93,8 @@ const establecerUsuario = (usuario: typeof USUARIO_INICIAL) => {
 export const handlers = [
   // Backoffice (usuarios, personas, roles y permisos) según el contrato
   ...adminHandlers,
+  // Alertas de fraude en admin (HU-705 / PICA-417)
+  ...crearAlertaFraudeHandlers(() => mockCurrentUserState),
   // Parámetros de la plataforma (HU-702)
   ...parametroHandlers,
   // Reclamos de rifas y resolución en el admin (HU-706 / PICA-340)
@@ -314,7 +318,13 @@ export const handlers = [
           telefono: '1155667788',
         },
         roles: [{ id: 5, nombre: 'SOPORTE', nombreAmigable: 'Soporte' }],
-        permisos: ['CANCELACION_REVISAR', 'RECLAMO_RESOLVER', 'USUARIO_VER', 'USUARIO_BLOQUEAR'],
+        permisos: [
+          'CANCELACION_REVISAR',
+          'RECLAMO_RESOLVER',
+          'USUARIO_VER',
+          'USUARIO_BLOQUEAR',
+          'ALERTA_FRAUDE_REVISAR',
+        ],
         datosCompletos: true,
       });
 

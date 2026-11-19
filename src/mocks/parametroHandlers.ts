@@ -43,6 +43,48 @@ const iniciales = (): ParametroDetalle[] =>
       ['FAIR_PLAY_SANCION_LEVE', 'PUNTOS', 5, 'Puntos de fair play que resta una sanción leve'],
       ['FAIR_PLAY_SANCION_MEDIA', 'PUNTOS', 15, 'Puntos de fair play que resta una sanción media'],
       ['FAIR_PLAY_SANCION_GRAVE', 'PUNTOS', 30, 'Puntos de fair play que resta una sanción grave'],
+      [
+        'FRAUDE_RIFA_NUMEROS_MAX',
+        'CANTIDAD',
+        10,
+        'Cantidad de números comprados en una rifa dentro de la ventana tras la cual se alerta por compra masiva',
+      ],
+      [
+        'FRAUDE_RIFA_VENTANA_MIN',
+        'MINUTOS',
+        30,
+        'Ventana en minutos para evaluar la compra masiva de números en una misma rifa',
+      ],
+      [
+        'FRAUDE_CARRUSEL_OPERACIONES_MIN',
+        'CANTIDAD',
+        4,
+        'Cantidad mínima de cargas y retiros combinados en la ventana para alertar por carrusel de saldo',
+      ],
+      [
+        'FRAUDE_CARRUSEL_VENTANA_MIN',
+        'MINUTOS',
+        60,
+        'Ventana en minutos para evaluar cargas y retiros seguidos en la billetera',
+      ],
+      [
+        'FRAUDE_CANCELACIONES_MIN',
+        'CANTIDAD',
+        2,
+        'Cantidad mínima de torneos cancelados por un organizador para alertar por cancelaciones reiteradas',
+      ],
+      [
+        'FRAUDE_OBJECIONES_MIN',
+        'CANTIDAD',
+        3,
+        'Cantidad mínima de resultados objetados por un mismo usuario para alertar por objeciones repetidas',
+      ],
+      [
+        'FRAUDE_CUENTAS_USUARIOS_MIN',
+        'CANTIDAD',
+        2,
+        'Cantidad mínima de usuarios distintos que comparten una misma cuenta bancaria para generar alerta',
+      ],
     ] as const
   ).map(([clave, unidad, valor, descripcion]) => ({
     clave,
@@ -95,6 +137,10 @@ const errores = (pedidos: Record<string, unknown>): ErrorCampo[] => {
       });
     } else if (p.unidad === 'PUNTOS') {
       // en rango y entero: no le corren las reglas de abajo
+    } else if (p.unidad === 'CANTIDAD' && !Number.isInteger(valor)) {
+      lista.push({ campo: clave, codigo: 'FORMATO_INVALIDO', mensaje: 'Tiene que ser un número entero' });
+    } else if (p.unidad === 'CANTIDAD' && valor <= 0) {
+      lista.push({ campo: clave, codigo: 'RANGO_INVALIDO', mensaje: 'Tiene que ser mayor que 0' });
     } else if (p.unidad === 'MINUTOS' && !Number.isInteger(valor)) {
       lista.push({ campo: clave, codigo: 'FORMATO_INVALIDO', mensaje: 'Son minutos enteros' });
     } else if (

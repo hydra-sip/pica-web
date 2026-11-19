@@ -167,6 +167,9 @@ const POR_CODIGO: Record<string, string> = {
   NO_ES_COMPRADOR: 'No podés reclamar: no tenés un ticket comprado para esta rifa.',
   RECLAMO_DUPLICADO: 'Ya tenés un reclamo registrado para esta rifa.',
   RIFA_NO_SORTEADA: 'La rifa todavía no fue sorteada.',
+  // HU-705: Detección de conductas fraudulentas y alertas para soporte
+  ALERTA_FRAUDE_NO_ENCONTRADA: 'No se encontró la alerta de fraude.',
+  ALERTA_FRAUDE_YA_REVISADA: 'Esta alerta de fraude ya fue revisada.',
   // HU-706 / HU-707: Reclamos, resolución y liberación de fondos en el admin
   RECLAMO_NO_ENCONTRADO: 'El reclamo no existe.',
   RECLAMO_YA_RESUELTO: 'Este reclamo ya fue resuelto anteriormente.',
