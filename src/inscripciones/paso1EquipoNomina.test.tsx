@@ -6,6 +6,7 @@ import { equipoApi } from '../api/equipoApi';
 import { inscripcionApi } from '../api/inscripcionApi';
 import { torneoApi } from '../api/torneoApi';
 import { problema } from '../mocks/adminHandlers';
+import { REGLAMENTO_TEXTO } from '../mocks/inscripcionesHandlers';
 import { server } from '../mocks/server';
 import { renderRuta } from '../test/renderRuta';
 
@@ -215,6 +216,24 @@ describe('paso 1: equipo y nómina (alta)', () => {
     );
     expect(enlace).toHaveAttribute('target', '_blank');
     expect(screen.getByLabelText('Acepto el Reglamento y Código de Conducta')).not.toBeChecked();
+  });
+
+  it('muestra el texto del reglamento arriba de la casilla, con sus saltos de línea (PICA-450)', async () => {
+    await renderRuta(ALTA_F5);
+
+    const reglamento = await screen.findByRole('region', { name: 'Reglamento del torneo' });
+    expect(reglamento.textContent).toBe(REGLAMENTO_TEXTO);
+    const casilla = screen.getByLabelText('Acepto el Reglamento y Código de Conducta');
+    expect(
+      reglamento.compareDocumentPosition(casilla) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
+  it('sin el texto del reglamento no muestra un recuadro vacío (PICA-450)', async () => {
+    await renderRuta('/torneos/torneo-gratis/inscripcion');
+
+    expect(await screen.findByLabelText('Acepto el Reglamento y Código de Conducta')).toBeVisible();
+    expect(screen.queryByRole('region', { name: 'Reglamento del torneo' })).not.toBeInTheDocument();
   });
 
   it('el botón de continuar muestra el monto y sigue deshabilitado hasta tener reglamento, equipo y nómina válida', async () => {

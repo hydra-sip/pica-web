@@ -259,6 +259,8 @@ export interface RifaPublicaDetalle {
   /** Compromiso del sorteo (HU-502): SHA-256 de `listaHash:fechaSorteo`, publicado con el sello; null antes. */
   compromisoHash: string | null;
   compromisoPublicadoEn: string | null;
+  /** HU-703: la rifa está en venta pero su organizador está bloqueado; no se reserva ni se compra. */
+  ventaSuspendida: boolean;
 }
 
 export type EstadoNumero = 'VENDIDO' | 'RESERVADO' | 'REINTEGRADO';

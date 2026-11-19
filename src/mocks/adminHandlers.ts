@@ -97,6 +97,19 @@ const CATALOGO = [
       },
     ],
   },
+  {
+    modulo: 'AUDITORIA',
+    permisos: [
+      {
+        codigo: 'AUDITORIA_VER',
+        descripcion: 'Consultar el libro de auditoría de la plataforma',
+      },
+      {
+        codigo: 'ALERTA_FRAUDE_REVISAR',
+        descripcion: 'Consultar y revisar las alertas de fraude',
+      },
+    ],
+  },
 ];
 const TODOS_LOS_PERMISOS = CATALOGO.flatMap((m) => m.permisos.map((p) => p.codigo));
 
@@ -125,8 +138,8 @@ const rol = (
   modificadoEn: null,
 });
 
-const roles: RolMock[] = [
-  rol(1, 'SUPER_USUARIO', 'Super Usuario', TODOS_LOS_PERMISOS),
+const rolesIniciales = (): RolMock[] => [
+  rol(1, 'SUPER_USUARIO', 'Super Usuario', [...TODOS_LOS_PERMISOS]),
   rol(
     2,
     'ADMINISTRADOR',
@@ -135,9 +148,11 @@ const roles: RolMock[] = [
   ),
   rol(3, 'ORGANIZADOR', 'Organizador'),
   rol(4, 'ARBITRO', 'Árbitro'),
-  rol(5, 'SOPORTE', 'Soporte', ['RECLAMO_RESOLVER']),
+  rol(5, 'SOPORTE', 'Soporte', ['RECLAMO_RESOLVER', 'ALERTA_FRAUDE_REVISAR']),
   rol(6, 'PARTICIPANTE', 'Participante'),
 ];
+
+const roles: RolMock[] = rolesIniciales();
 
 const persona = (
   id: number,
@@ -163,7 +178,7 @@ const persona = (
   ...extra,
 });
 
-const personas: PersonaMock[] = [
+const personasIniciales = (): PersonaMock[] => [
   persona(1, 'Administrador', 'PICA', 'DNI', '30111222'),
   persona(2, 'Juan', 'Pérez', 'DNI', '30123456', {
     fechaNacimiento: '1990-05-17',
@@ -178,6 +193,8 @@ const personas: PersonaMock[] = [
   persona(8, 'Diego', 'López', 'PASAPORTE', 'AB123456'),
   persona(9, 'Pedro', 'Ruiz', 'DNI', '31555666', { eliminadoEn: '2026-09-22T15:00:00Z' }),
 ];
+
+const personas: PersonaMock[] = personasIniciales();
 
 const usuario = (
   id: number,
@@ -202,7 +219,7 @@ const usuario = (
   ...extra,
 });
 
-const usuarios: UsuarioMock[] = [
+const usuariosIniciales = (): UsuarioMock[] => [
   usuario(1, 'admin', 'admin@pica.edu.ar', 1, [SUPER_USUARIO], { protegido: true }),
   usuario(2, 'jperez', 'juan.perez@example.com', 2, [PARTICIPANTE], {
     creadoEn: '2026-09-20T10:00:00Z',
@@ -230,6 +247,14 @@ const usuarios: UsuarioMock[] = [
     creadoEn: '2026-09-22T12:00:00Z',
   }),
 ];
+
+const usuarios: UsuarioMock[] = usuariosIniciales();
+
+export const resetAdminMock = () => {
+  roles.splice(0, roles.length, ...rolesIniciales());
+  personas.splice(0, personas.length, ...personasIniciales());
+  usuarios.splice(0, usuarios.length, ...usuariosIniciales());
+};
 
 const siguienteId = (lista: { id: number }[]) => Math.max(0, ...lista.map((x) => x.id)) + 1;
 
@@ -611,6 +636,13 @@ export const adminHandlers = [
     const b = (await request.json().catch(() => ({}))) as Cuerpo;
     const errores = validarUsuario(b, true);
     if (errores.length) return validacion(errores);
+    if (b.estado === 'BLOQUEADO') {
+      return problema(
+        400,
+        'BLOQUEO_POR_ENDPOINT_PROPIO',
+        'Un usuario no se puede crear bloqueado: se lo bloquea después, con motivo'
+      );
+    }
     const username = texto(b.username);
     const email = texto(b.email);
     if (usuarios.some((u) => u.username.toLowerCase() === username.toLowerCase())) {
@@ -634,7 +666,6 @@ export const adminHandlers = [
     }
     const nuevo = usuario(siguienteId(usuarios), username, email, p.id, rolesIds, {
       descripcion: textoONull(b.descripcion),
-      estado: b.estado === 'BLOQUEADO' ? 'BLOQUEADO' : 'ACTIVO',
       creadoEn: ahora(),
     });
     usuarios.push(nuevo);
@@ -662,6 +693,14 @@ export const adminHandlers = [
     if (!b.estado)
       errores.push({ campo: 'estado', codigo: 'REQUERIDO', mensaje: 'Es obligatorio' });
     if (errores.length) return validacion(errores);
+    // HU-703: el estado se manda como está; bloquear y desbloquear van por /bloqueo
+    if ((b.estado === 'BLOQUEADO') !== (u.estado === 'BLOQUEADO')) {
+      return problema(
+        400,
+        'BLOQUEO_POR_ENDPOINT_PROPIO',
+        `Para bloquear o desbloquear a ${u.username} usá /admin/usuarios/{id}/bloqueo`
+      );
+    }
     if (b.estado === 'ACTIVO' && !u.emailVerificado) {
       return problema(
         409,
@@ -697,13 +736,7 @@ export const adminHandlers = [
       modificadoEn: ahora(),
     });
     if (cambiaEmail) u.emailVerificado = false;
-    u.estado =
-      b.estado === 'BLOQUEADO'
-        ? 'BLOQUEADO'
-        : u.emailVerificado
-          ? 'ACTIVO'
-          : 'PENDIENTE_VERIFICACION';
-    if (u.estado !== 'BLOQUEADO') u.bloqueo = null;
+    if (u.estado !== 'BLOQUEADO') u.estado = u.emailVerificado ? 'ACTIVO' : 'PENDIENTE_VERIFICACION';
     return HttpResponse.json(usuarioDetalle(u));
   }),
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import { authApi } from '../api/authApi';
 import { inscripcionApi } from '../api/inscripcionApi';
+import { REGLAMENTO_TEXTO } from '../mocks/inscripcionesHandlers';
 import { renderRuta } from '../test/renderRuta';
 
 const REGLAMENTO = 'Acepto el Reglamento y Código de Conducta';
@@ -10,6 +11,14 @@ const TORNEO_INDIVIDUAL_PAGO = 2;
 const idDeLaUbicacion = (ruta: string) => Number(/\/inscripciones\/(\d+)\//.exec(ruta)![1]);
 
 describe('paso 1: torneo individual', () => {
+  it('muestra el texto del reglamento arriba de la casilla (PICA-450)', async () => {
+    await renderRuta('/torneos/individual-pago/inscripcion');
+
+    const reglamento = await screen.findByRole('region', { name: 'Reglamento del torneo' });
+    expect(reglamento.textContent).toBe(REGLAMENTO_TEXTO);
+    expect(screen.getByLabelText(REGLAMENTO)).not.toBeChecked();
+  });
+
   it('se reduce al reglamento: sin equipo ni nómina, y confirma el borrador que ya existe', async () => {
     await authApi.login('usuario', 'user123');
     const { id } = await inscripcionApi.crear(TORNEO_INDIVIDUAL_PAGO);

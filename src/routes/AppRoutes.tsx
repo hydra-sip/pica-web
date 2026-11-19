@@ -18,6 +18,7 @@ import { ParametrosPage } from '../admin/pages/ParametrosPage';
 import { ReclamosPage } from '../admin/pages/ReclamosPage';
 import { ReclamoDetallePage } from '../admin/pages/ReclamoDetallePage';
 import { AuditoriaPage } from '../admin/pages/AuditoriaPage';
+import { AlertasFraudePage } from '../admin/pages/AlertasFraudePage';
 import { NotFoundPage } from '../shared/pages/NotFoundPage';
 import { UnauthorizedPage } from '../shared/pages/UnauthorizedPage';
 import { RequireAuth } from '../auth/components/RequireAuth';
@@ -194,6 +195,14 @@ export const AppRoutes: React.FC = () => {
               element={
                 <RequirePermiso permisos="AUDITORIA_VER">
                   <AuditoriaPage />
+                </RequirePermiso>
+              }
+            />
+            <Route
+              path="alertas"
+              element={
+                <RequirePermiso permisos="ALERTA_FRAUDE_REVISAR">
+                  <AlertasFraudePage />
                 </RequirePermiso>
               }
             />

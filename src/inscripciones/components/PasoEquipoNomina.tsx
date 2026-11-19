@@ -229,6 +229,17 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
       )}
 
       <Card className="reglamento">
+        {/* PICA-450: se lee antes de aceptarlo; sin texto (solo el PDF) no va el recuadro */}
+        {torneo.reglamentoTexto && (
+          <div
+            className="reglamento-texto"
+            role="region"
+            aria-label="Reglamento del torneo"
+            tabIndex={0}
+          >
+            {torneo.reglamentoTexto}
+          </div>
+        )}
         <label className="reglamento-casilla">
           <input
             type="checkbox"
