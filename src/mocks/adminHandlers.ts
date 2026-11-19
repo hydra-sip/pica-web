@@ -64,9 +64,11 @@ const CATALOGO = [
       { codigo: 'USUARIO_CREAR', descripcion: 'Dar de alta usuarios' },
       {
         codigo: 'USUARIO_EDITAR',
-        descripcion: 'Modificar usuarios, bloquearlos y resetear su contraseña',
+        descripcion: 'Modificar usuarios y resetear su contraseña',
       },
       { codigo: 'USUARIO_ELIMINAR', descripcion: 'Dar de baja y reactivar usuarios' },
+      // V58 (HU-703)
+      { codigo: 'USUARIO_BLOQUEAR', descripcion: 'Bloquear y desbloquear usuarios' },
     ],
   },
   {

@@ -11,7 +11,7 @@ describe('Cancelaciones en revisión, para soporte (HU-605)', () => {
     vi.restoreAllMocks();
   });
 
-  it('soporte, solo con CANCELACION_REVISAR, entra al backoffice y llega a la cola desde el menú', async () => {
+  it('soporte entra al backoffice y llega a la cola desde el menú', async () => {
     const { user, ubicacion } = await renderRuta('/admin', { usuario: 'soporte' });
 
     const [enElMenu] = await screen.findAllByRole('link', { name: 'Cancelaciones' });

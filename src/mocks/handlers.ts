@@ -321,6 +321,7 @@ export const handlers = [
         permisos: [
           'CANCELACION_REVISAR',
           'RECLAMO_RESOLVER',
+          'AUDITORIA_VER',
           'USUARIO_VER',
           'USUARIO_BLOQUEAR',
           'ALERTA_FRAUDE_REVISAR',
