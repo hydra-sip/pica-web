@@ -43,6 +43,20 @@ const GRUPOS: { titulo: string; ayuda: string; claves: ClaveParametro[] }[] = [
       'FAIR_PLAY_SANCION_GRAVE',
     ],
   },
+  {
+    titulo: 'Detección de fraude',
+    ayuda:
+      'Umbrales y ventanas temporales de las reglas automáticas que generan alertas para soporte (HU-705).',
+    claves: [
+      'FRAUDE_RIFA_NUMEROS_MAX',
+      'FRAUDE_RIFA_VENTANA_MIN',
+      'FRAUDE_CARRUSEL_OPERACIONES_MIN',
+      'FRAUDE_CARRUSEL_VENTANA_MIN',
+      'FRAUDE_CANCELACIONES_MIN',
+      'FRAUDE_OBJECIONES_MIN',
+      'FRAUDE_CUENTAS_USUARIOS_MIN',
+    ],
+  },
 ];
 
 const ETIQUETA: Record<ClaveParametro, string> = {
@@ -59,6 +73,13 @@ const ETIQUETA: Record<ClaveParametro, string> = {
   FAIR_PLAY_SANCION_LEVE: 'Resta por sanción leve',
   FAIR_PLAY_SANCION_MEDIA: 'Resta por sanción media',
   FAIR_PLAY_SANCION_GRAVE: 'Resta por sanción grave',
+  FRAUDE_RIFA_NUMEROS_MAX: 'Máximo de números comprados en rifa sin alertar',
+  FRAUDE_RIFA_VENTANA_MIN: 'Ventana para compra masiva en rifa',
+  FRAUDE_CARRUSEL_OPERACIONES_MIN: 'Mínimo de operaciones para alertar carrusel carga/retiro',
+  FRAUDE_CARRUSEL_VENTANA_MIN: 'Ventana para carrusel carga/retiro',
+  FRAUDE_CANCELACIONES_MIN: 'Mínimo de torneos cancelados para alertar',
+  FRAUDE_OBJECIONES_MIN: 'Mínimo de objeciones para alertar',
+  FRAUDE_CUENTAS_USUARIOS_MIN: 'Mínimo de usuarios con cuenta compartida para alertar',
 };
 
 const UNIDAD: Record<UnidadParametro, { sufijo: string; paso: string }> = {
@@ -66,6 +87,7 @@ const UNIDAD: Record<UnidadParametro, { sufijo: string; paso: string }> = {
   MINUTOS: { sufijo: 'min', paso: '1' },
   PESOS: { sufijo: '$', paso: '0.01' },
   PUNTOS: { sufijo: 'puntos', paso: '1' },
+  CANTIDAD: { sufijo: 'cantidad', paso: '1' },
 };
 
 /**

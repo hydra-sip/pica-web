@@ -2,6 +2,8 @@ import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import { afterAll, afterEach, beforeAll } from 'vitest';
 import { clearSessionTokens } from '../api/httpClient';
+import { resetAdminMock } from '../mocks/adminHandlers';
+import { resetAlertasFraudeMock } from '../mocks/alertaFraudeHandlers';
 import { reiniciarInscripciones } from '../mocks/inscripcionesHandlers';
 import { resetParametrosMock } from '../mocks/parametroHandlers';
 import { resetReclamosAdminMock } from '../mocks/reclamoAdminHandlers';
@@ -20,6 +22,8 @@ beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
 afterEach(() => {
   cleanup();
   server.resetHandlers();
+  resetAdminMock();
+  resetAlertasFraudeMock();
   reiniciarInscripciones();
   resetParametrosMock();
   resetReclamosAdminMock();

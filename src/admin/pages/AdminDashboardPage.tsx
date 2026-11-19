@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { alertaFraudeApi } from '../../api/alertaFraudeApi';
 import { usuarioApi } from '../../api/usuarioApi';
 import { torneoApi } from '../../api/torneoApi';
 import { useAuth } from '../../auth/hooks/useAuth';
@@ -46,6 +47,7 @@ export const AdminDashboardPage: React.FC = () => {
   const vePersonas = hasPermission('PERSONA_VER');
   const veRoles = hasPermission('ROL_VER');
   const veReclamos = hasPermission('RECLAMO_RESOLVER');
+  const veAlertas = hasPermission('ALERTA_FRAUDE_REVISAR');
 
   const [metricas, setMetricas] = useState<MetricaKPI[]>([]);
   const [loading, setLoading] = useState(true);
@@ -136,15 +138,24 @@ export const AdminDashboardPage: React.FC = () => {
           iconoNode: <IconoTrofeo size={20} />,
         })),
 
-      // 3. Alertas Antifraude
-      Promise.resolve({
-        id: 'alertas',
-        titulo: 'Alertas de Auditoría',
-        valor: '2',
-        detalle: 'Requieren atención',
-        badge: 'REVISIÓN',
-        iconoNode: <IconoAlerta size={20} />,
-      }),
+      // 3. Alertas Antifraude (HU-705)
+      (veAlertas
+        ? total(alertaFraudeApi.listar({ estado: 'PENDIENTE' }, 0, 1)).then((pendientes) => ({
+            id: 'alertas',
+            titulo: 'Alertas de Fraude',
+            valor: pendientes,
+            detalle: pendientes === 1 ? 'Requiere revisión' : 'Pendientes de revisión',
+            badge: pendientes > 0 ? 'PENDIENTES' : undefined,
+            ruta: '/admin/alertas',
+            iconoNode: <IconoAlerta size={20} />,
+          }))
+        : Promise.resolve({
+            id: 'alertas',
+            titulo: 'Alertas de Auditoría',
+            valor: '0',
+            detalle: 'Sin alertas pendientes',
+            iconoNode: <IconoAlerta size={20} />,
+          })),
 
       // 4. Fondos en Custodia
       Promise.resolve({
@@ -166,7 +177,7 @@ export const AdminDashboardPage: React.FC = () => {
       .finally(() => {
         setLoading(false);
       });
-  }, [veUsuarios]);
+  }, [veUsuarios, veAlertas]);
 
   return (
     <div className="panel">
@@ -372,6 +383,20 @@ export const AdminDashboardPage: React.FC = () => {
                     <IconoAlerta size={16} /> Reclamos de Rifas
                   </strong>
                   <span className="panel-acceso-texto">Revisión de disputas sobre sorteos, verificación criptográfica y resolución</span>
+                </span>
+                <span aria-hidden="true" style={{ fontWeight: 700, fontSize: '1.1rem' }}>→</span>
+              </Link>
+            </Card>
+          )}
+
+          {veAlertas && (
+            <Card className="panel-acceso">
+              <Link to="/admin/alertas" className="panel-acceso-link">
+                <span>
+                  <strong style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <IconoAlerta size={16} /> Alertas de Fraude
+                  </strong>
+                  <span className="panel-acceso-texto">Detección de conductas sospechosas, detalle de reglas y revisión auditada</span>
                 </span>
                 <span aria-hidden="true" style={{ fontWeight: 700, fontSize: '1.1rem' }}>→</span>
               </Link>

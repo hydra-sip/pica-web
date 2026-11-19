@@ -45,6 +45,8 @@ export const PERMISOS_BACKOFFICE = [
   'RECLAMO_RESOLVER',
   // HU-704: el libro de auditoría
   'AUDITORIA_VER',
+  // HU-705: panel de alertas de fraude
+  'ALERTA_FRAUDE_REVISAR',
 ];
 
 /**
@@ -129,6 +131,12 @@ export const NAVEGACION: Record<Seccion, ItemNavegacion[]> = {
       texto: 'Reclamos',
       icono: <IconoAlerta />,
       permisos: ['RECLAMO_RESOLVER'],
+    },
+    {
+      ruta: '/admin/alertas',
+      texto: 'Alertas',
+      icono: <IconoAlerta />,
+      permisos: ['ALERTA_FRAUDE_REVISAR'],
     },
     {
       ruta: '/admin/auditoria',

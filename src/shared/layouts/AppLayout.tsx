@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { alertaFraudeApi, EVENTO_ALERTAS_ACTUALIZADAS } from '../../api/alertaFraudeApi';
 import { torneoApi } from '../../api/torneoApi';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { AvisoDeNavegacion } from '../components/AvisoDeNavegacion';
@@ -49,11 +50,44 @@ const useDesignaciones = (conSesion: boolean, pathname: string) => {
   return cuenta;
 };
 
+/** Cuántas alertas de fraude esperan revisión en el backoffice (HU-705 / PICA-417). */
+const useAlertasPendientes = (activo: boolean, pathname: string) => {
+  const [pendientes, setPendientes] = useState(0);
+  useEffect(() => {
+    if (!activo) {
+      setPendientes(0);
+      return;
+    }
+    let vigente = true;
+    const consultar = () => {
+      alertaFraudeApi
+        .listar({ estado: 'PENDIENTE' }, 0, 1)
+        .then((res) => {
+          if (vigente) setPendientes(res.page?.totalElements ?? res.content.length);
+        })
+        .catch(() => {
+          // Si falla la consulta del contador, el menú sigue navegable.
+        });
+    };
+    consultar();
+    window.addEventListener(EVENTO_ALERTAS_ACTUALIZADAS, consultar);
+    return () => {
+      vigente = false;
+      window.removeEventListener(EVENTO_ALERTAS_ACTUALIZADAS, consultar);
+    };
+  }, [activo, pathname]);
+  return pendientes;
+};
+
 export const AppLayout: React.FC<AppLayoutProps> = ({ seccion }) => {
   const { user, isAuthenticated, logout, hasPermission } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const designaciones = useDesignaciones(isAuthenticated, pathname);
+  const alertasPendientes = useAlertasPendientes(
+    seccion === 'admin' && isAuthenticated && hasPermission('ALERTA_FRAUDE_REVISAR'),
+    pathname
+  );
 
   const visible = (item: ItemNavegacion) =>
     (!item.soloConSesion || isAuthenticated) &&
@@ -83,6 +117,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ seccion }) => {
       {item.soloConDesignaciones && designaciones.pendientes > 0 && (
         <span className="app-contador" aria-label={`${designaciones.pendientes} sin responder`}>
           {designaciones.pendientes}
+        </span>
+      )}
+      {item.ruta === '/admin/alertas' && alertasPendientes > 0 && (
+        <span className="app-contador" aria-label={`${alertasPendientes} pendientes`}>
+          {alertasPendientes}
         </span>
       )}
     </NavLink>
