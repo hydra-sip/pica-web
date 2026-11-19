@@ -43,6 +43,7 @@ const LLAVE_VACIA: BracketTorneo = {
   torneoId: 77,
   semilla: 'ab'.repeat(32),
   listaHash: null,
+  version: 1,
   rondas: [{ numero: 1, nombre: 'Final', partidos: [] }],
 };
 

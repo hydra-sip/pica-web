@@ -31,7 +31,7 @@ describe('HU-706 / T706-2 (PICA-340): Reclamos y resolución en el admin', () =>
     expect(await screen.findByRole('heading', { name: 'Reclamos de rifas' })).toBeInTheDocument();
   });
 
-  it('el rol SOPORTE accede al backoffice y ve Reclamos, pero no la configuración', async () => {
+  it('el rol SOPORTE accede al backoffice y ve Reclamos y Usuarios (HU-703), pero no Roles, Personas ni Parámetros', async () => {
     const { user, ubicacion } = await comoUsuario('soporte', 'soporte123', '/');
 
     const linksBackoffice = await screen.findAllByRole('link', { name: /backoffice/i });

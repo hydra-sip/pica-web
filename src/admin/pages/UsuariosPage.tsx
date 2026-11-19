@@ -52,6 +52,7 @@ export const UsuariosPage: React.FC = () => {
     usuarioLogueado != null && String(usuarioLogueado.id) === String(u.id);
   const puedeCrear = hasPermission('USUARIO_CREAR');
   const puedeEditar = hasPermission('USUARIO_EDITAR');
+  // HU-703: bloquear tiene permiso propio, así soporte sanciona sin poder editar cuentas
   const puedeBloquear = hasPermission('USUARIO_BLOQUEAR');
   const puedeEliminar = hasPermission('USUARIO_ELIMINAR');
   const puedeAsignarRoles = hasPermission('ROL_ASIGNAR');
@@ -532,13 +533,8 @@ export const UsuariosPage: React.FC = () => {
         )}
 
         {user.estado === 'BLOQUEADO' ? (
-          <Button
-            size="sm"
-            variant="secondary"
-            title={puedeBloquear ? 'Ver el motivo y levantar el bloqueo' : 'Ver el motivo y la duración'}
-            onClick={() => setMotivoDe(user)}
-          >
-            {puedeBloquear ? 'Desbloquear' : 'Motivo'}
+          <Button size="sm" variant="secondary" title="Ver el motivo y la duración" onClick={() => setMotivoDe(user)}>
+            Motivo
           </Button>
         ) : (
           puedeBloquear && (
@@ -1360,7 +1356,7 @@ export const UsuariosPage: React.FC = () => {
                   <StatusChip status={editingUser.estado} />
                   <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
                     {editingUser.estado === 'BLOQUEADO'
-                      ? 'Para levantarlo, usá Desbloquear en la tabla.'
+                      ? 'Para levantarlo, usá Motivo en la tabla.'
                       : 'Para bloquearlo, usá Bloquear en la tabla: pide motivo y duración.'}
                   </span>
                 </div>

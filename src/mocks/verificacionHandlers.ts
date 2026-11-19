@@ -331,6 +331,7 @@ const bracketDe = (sorteo: TorneoVerificacionData): BracketTorneo => {
     torneoId: sorteo.id,
     semilla: sorteo.semilla,
     listaHash: sorteo.listaHash,
+    version: 1,
     rondas: Array.from({ length: rondas }, (_, i) => ({
       numero: i + 1,
       nombre: `Ronda ${i + 1}`,

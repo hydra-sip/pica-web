@@ -18,6 +18,7 @@ import { ParametrosPage } from '../admin/pages/ParametrosPage';
 import { ReclamosPage } from '../admin/pages/ReclamosPage';
 import { ReclamoDetallePage } from '../admin/pages/ReclamoDetallePage';
 import { AuditoriaPage } from '../admin/pages/AuditoriaPage';
+import { AlertasFraudePage } from '../admin/pages/AlertasFraudePage';
 import { NotFoundPage } from '../shared/pages/NotFoundPage';
 import { UnauthorizedPage } from '../shared/pages/UnauthorizedPage';
 import { RequireAuth } from '../auth/components/RequireAuth';
@@ -46,6 +47,7 @@ import { TicketPage } from '../rifas/pages/TicketPage';
 import { MisTicketsPage } from '../rifas/pages/MisTicketsPage';
 import { MisInscripcionesPage } from '../inscripciones/pages/MisInscripcionesPage';
 import { MiBilleteraPage } from '../billetera/pages/MiBilleteraPage';
+import { PerfilOrganizadorPage } from '../reputacion/pages/PerfilOrganizadorPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -55,6 +57,8 @@ export const AppRoutes: React.FC = () => {
         <Route index element={<HomePage />} />
         <Route path="torneos" element={<TorneosCatalogoPage />} />
         <Route path="torneos/:slug" element={<TorneoDetallePage />} />
+        {/* HU-806 / PICA-430: Perfil público del organizador */}
+        <Route path="organizadores/:id" element={<PerfilOrganizadorPage />} />
         {/* HU-306 / T306-2: Pronósticos y ranking */}
         <Route path="pronosticos" element={<PronosticosPage />} />
         {/* Rifas para quien compra (PICA-221): públicas, sin login */}
@@ -191,6 +195,14 @@ export const AppRoutes: React.FC = () => {
               element={
                 <RequirePermiso permisos="AUDITORIA_VER">
                   <AuditoriaPage />
+                </RequirePermiso>
+              }
+            />
+            <Route
+              path="alertas"
+              element={
+                <RequirePermiso permisos="ALERTA_FRAUDE_REVISAR">
+                  <AlertasFraudePage />
                 </RequirePermiso>
               }
             />

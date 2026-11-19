@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { adminHandlers } from './adminHandlers';
+import { crearAlertaFraudeHandlers } from './alertaFraudeHandlers';
 import { parametroHandlers } from './parametroHandlers';
 import { crearReclamoAdminHandlers } from './reclamoAdminHandlers';
 import { auditoriaHandlers } from './auditoriaHandlers';
@@ -14,8 +15,8 @@ import { sancionHandlers } from './sancionHandlers';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
-// El admin es Super Usuario: tiene los 13 permisos del seed V4, el de parámetros de V35, el de auditoría de V49 y el de bloqueo de V58,
-// como en el back
+// El admin es Super Usuario: tiene los 13 permisos del seed V4, el de parámetros de V35, el de auditoría de V49 y el
+// de bloqueo de V58, como en el back
 const PERMISOS_SUPER_USUARIO = [
   'USUARIO_VER',
   'USUARIO_CREAR',
@@ -34,6 +35,7 @@ const PERMISOS_SUPER_USUARIO = [
   'RECLAMO_RESOLVER',
   'AUDITORIA_VER',
   'USUARIO_BLOQUEAR',
+  'ALERTA_FRAUDE_REVISAR',
 ];
 
 // El PARTICIPANTE puede inscribirse a torneos (seed del back); el organizador de los mocks no.
@@ -91,6 +93,8 @@ const establecerUsuario = (usuario: typeof USUARIO_INICIAL) => {
 export const handlers = [
   // Backoffice (usuarios, personas, roles y permisos) según el contrato
   ...adminHandlers,
+  // Alertas de fraude en admin (HU-705 / PICA-417)
+  ...crearAlertaFraudeHandlers(() => mockCurrentUserState),
   // Parámetros de la plataforma (HU-702)
   ...parametroHandlers,
   // Reclamos de rifas y resolución en el admin (HU-706 / PICA-340)
@@ -291,7 +295,7 @@ export const handlers = [
       });
     }
 
-    // SOPORTE (HU-605 y HU-706): revisa las cancelaciones con gastos y resuelve reclamos
+    // SOPORTE (HU-605, HU-706 y HU-703): revisa las cancelaciones con gastos, resuelve reclamos y bloquea usuarios
     if (
       (id === 'soporte@pica.edu.ar' || id === 'soporte') &&
       (body.password === 'sop123' || body.password === 'soporte123')
@@ -314,7 +318,14 @@ export const handlers = [
           telefono: '1155667788',
         },
         roles: [{ id: 5, nombre: 'SOPORTE', nombreAmigable: 'Soporte' }],
-        permisos: ['CANCELACION_REVISAR', 'RECLAMO_RESOLVER', 'AUDITORIA_VER', 'USUARIO_VER', 'USUARIO_BLOQUEAR'],
+        permisos: [
+          'CANCELACION_REVISAR',
+          'RECLAMO_RESOLVER',
+          'AUDITORIA_VER',
+          'USUARIO_VER',
+          'USUARIO_BLOQUEAR',
+          'ALERTA_FRAUDE_REVISAR',
+        ],
         datosCompletos: true,
       });
 

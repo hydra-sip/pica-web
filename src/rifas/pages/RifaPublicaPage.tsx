@@ -33,7 +33,17 @@ const estadoDeLaVenta = (
   if (new Date(rifa.ventaDesde).getTime() > ahora) {
     return { texto: 'Próximamente', tono: 'aviso', abierta: false };
   }
+  // HU-703: con el organizador bloqueado la venta sigue abierta pero no vende
+  if (rifa.ventaSuspendida) {
+    return { texto: 'Venta suspendida', tono: 'aviso', abierta: false };
+  }
   return { texto: 'En venta', tono: 'exito', abierta: true };
+};
+
+/** Los textos de la venta que pisan los globales de `mensajeDeError`. */
+const MENSAJES_VENTA: Record<string, string> = {
+  ORGANIZADOR_BLOQUEADO:
+    'El organizador de la rifa está bloqueado: por ahora no se venden números.',
 };
 
 /** Los números que el back marcó como ocupados en un 409 (NUMERO_NO_DISPONIBLE, RESERVA_VENCIDA). */
@@ -138,7 +148,7 @@ export const RifaPublicaPage: React.FC = () => {
         const tomados = numerosDelError(err);
         quitarOcupados(tomados, `Alguien eligió antes ${tomados.join(', ')}: elegí otros.`);
       } else {
-        setAviso(mensajeDeError(err, 'No se pudieron reservar los números.'));
+        setAviso(mensajeDeError(err, 'No se pudieron reservar los números.', MENSAJES_VENTA));
       }
     } finally {
       setReservando(false);
