@@ -487,3 +487,23 @@
   gap: var(--space-3);
   text-align: center;
 }
+
+/* CR-05: el % del premio de cada integrante, en la nómina del paso 1 y en el detalle */
+.reparto-campo {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+}
+
+.reparto-campo .input {
+  width: 4.5rem;
+  text-align: right;
+}
+
+.reparto-pct {
+  flex-shrink: 0;
+  font-size: var(--text-sm);
+  font-weight: 700;
+}

@@ -54,6 +54,17 @@ export interface InscripcionDetalle extends InscripcionResumen {
   /** Se completa al confirmar; en BORRADOR es null. */
   reglamentoAceptadoEn?: string | null;
   nomina?: UsuarioPublico[] | null;
+  /**
+   * El % del premio del equipo de cada integrante de la nómina, sumando 100 (CR-05). Null en la individual y en
+   * la de equipo que se liquida con todo al capitán (las de torneos que cerraron la inscripción antes del cambio).
+   */
+  reparto?: RepartoIntegrante[] | null;
+}
+
+/** Lo que le toca del premio del equipo a un integrante de la nómina: de 0 a 100, con hasta dos decimales. */
+export interface RepartoIntegrante {
+  usuarioId: number;
+  pct: number;
 }
 
 /** Cuerpo de crear y editar en un torneo por equipos: exactamente uno de equipoId y nombreEquipoNuevo. */
@@ -148,6 +159,14 @@ export const inscripcionApi = {
   /** Reemplazo en una CONFIRMADA de equipo, solo del capitán: devuelve la inscripción con la nómina actualizada. */
   reemplazar: async (id: number, payload: ReemplazoPayload): Promise<InscripcionDetalle> => {
     return httpClient.post<InscripcionDetalle>(`/inscripciones/${id}/reemplazos`, payload);
+  },
+
+  /**
+   * El capitán cambia el reparto del premio (CR-05): todos los integrantes de la nómina, una vez cada uno, sumando
+   * 100. Vale en BORRADOR, PENDIENTE_PAGO o CONFIRMADA mientras el torneo tenga la inscripción abierta.
+   */
+  repartir: async (id: number, reparto: RepartoIntegrante[]): Promise<InscripcionDetalle> => {
+    return httpClient.put<InscripcionDetalle>(`/inscripciones/${id}/reparto`, reparto);
   },
 
   /** Historial de reemplazos, del más viejo al más nuevo. Lo ven el capitán, la nómina y el organizador. */

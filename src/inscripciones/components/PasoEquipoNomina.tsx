@@ -11,10 +11,16 @@ import { useAuth } from '../../auth/hooks/useAuth';
 import { pesos } from '../../shared/formato';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { EstadoConAviso } from '../../shared/components/AvisoDeNavegacion';
-import { MENSAJES_PASO_1, mensajeJugadorYaInscripto } from '../mensajesInscripcion';
+import {
+  MENSAJES_PASO_1,
+  MENSAJES_REPARTO,
+  mensajeJugadorYaInscripto,
+} from '../mensajesInscripcion';
+import { leerReparto, mismoReparto, partesIguales, textosDe } from '../reparto';
 import { Button, Card } from '../../shared/ui';
 import { useEquiposDelTorneo } from '../hooks/useEquiposDelTorneo';
 import { BuscadorJugadores } from './BuscadorJugadores';
+import { CampoPct, TotalDelReparto } from './CamposDelReparto';
 import { EQUIPO_NUEVO, SelectorEquipo } from './SelectorEquipo';
 import { VolverAlTorneo } from './VolverAlTorneo';
 import '../inscripciones.css';
@@ -30,9 +36,25 @@ export interface PasoEquipoNominaProps {
 
 const cantidad = (n: number) => `${n} ${n === 1 ? 'jugador' : 'jugadores'}`;
 
+/** Falló el PUT del reparto, que va después de guardar la nómina: el borrador ya quedó guardado. */
+class ErrorDelReparto {
+  constructor(readonly causa: unknown) {}
+}
+
+/** El mensaje de un error al guardar: el del reparto tiene sus propios textos. */
+const mensajeAlGuardar = (err: unknown, capitanId: number, porDefecto: string) =>
+  err instanceof ErrorDelReparto
+    ? mensajeDeError(err.causa, 'No se pudo guardar el reparto.', MENSAJES_REPARTO)
+    : (mensajeJugadorYaInscripto(err, capitanId) ??
+      mensajeDeError(err, porDefecto, MENSAJES_PASO_1));
+
 /**
  * Paso 1 de la inscripción (HU-204): equipo, nómina y reglamento. Sirve para el alta y para retomar
  * un borrador, y guarda y navega solo (al paso 2, o a la ficha del torneo al guardar el borrador).
+ *
+ * En la de equipo, cada integrante tiene su % del premio (CR-05): arranca en partes iguales, vuelve a partes
+ * iguales cuando cambia la nómina (como en el back) y, si el capitán lo cambió, se manda con `PUT /reparto`
+ * después de guardar la nómina. Sin sumar 100 no se puede guardar.
  */
 export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, inscripcion }) => {
   const { user } = useAuth();
@@ -59,11 +81,30 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
   const [jugadores, setJugadores] = useState<UsuarioPublico[]>(
     () => inscripcion?.nomina?.filter((j) => j.id !== capitanId) ?? []
   );
+  const idsNomina = [capitanId, ...jugadores.map((j) => j.id)];
+  // Lo que dicen los campos de %: el reparto del borrador que se retoma o partes iguales.
+  const [textosPct, setTextosPct] = useState<Record<number, string>>(() =>
+    textosDe(inscripcion?.reparto ?? partesIguales(idsNomina, capitanId))
+  );
+  const reparto = leerReparto(idsNomina, textosPct);
+  const cambiarNomina = (nuevos: UsuarioPublico[]) => {
+    setJugadores(nuevos);
+    setTextosPct(textosDe(partesIguales([capitanId, ...nuevos.map((j) => j.id)], capitanId)));
+  };
   const total = jugadores.length + 1;
   const lleno = maximo !== null && total >= maximo;
-  const sumar = (j: UsuarioPublico) =>
-    setJugadores((prev) => (maximo !== null && prev.length + 1 >= maximo ? prev : [...prev, j]));
-  const sacar = (id: number) => setJugadores((prev) => prev.filter((j) => j.id !== id));
+  const sumar = (j: UsuarioPublico) => {
+    if (maximo !== null && jugadores.length + 1 >= maximo) return;
+    cambiarNomina([...jugadores, j]);
+  };
+  const sacar = (id: number) => cambiarNomina(jugadores.filter((j) => j.id !== id));
+  const campoPct = (id: number, nombre: string) => (
+    <CampoPct
+      nombre={nombre}
+      valor={textosPct[id] ?? ''}
+      onValor={(valor) => setTextosPct((prev) => ({ ...prev, [id]: valor }))}
+    />
+  );
 
   const [reglamentoAceptado, setReglamentoAceptado] = useState(false);
 
@@ -72,7 +113,8 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
   const equipoListo = individual || (creaNuevo ? nombreNuevo.trim() !== '' : equipoElegido !== '');
   // un borrador viejo puede tener de más: se sacan jugadores hasta entrar en el máximo
   const nominaValida = individual || (total >= minimo && (maximo === null || total <= maximo));
-  const puedeContinuar = reglamentoAceptado && equipoListo && nominaValida;
+  const repartoValido = individual || reparto.valido;
+  const puedeContinuar = reglamentoAceptado && equipoListo && nominaValida && repartoValido;
 
   // El borrador que ya existe en la API: el que se retoma o el que este paso guardó.
   const [borrador, setBorrador] = useState<InscripcionDetalle | null>(inscripcion ?? null);
@@ -93,7 +135,7 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
         : { equipoId: Number(equipoElegido) }),
       nomina: jugadores.map((j) => j.id),
     };
-    const guardada = borrador
+    let guardada = borrador
       ? await inscripcionApi.editar(borrador.id, payload)
       : await inscripcionApi.crear(torneo.id, payload);
     setBorrador(guardada);
@@ -102,6 +144,15 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
       agregar(guardada.equipo);
       setEquipoElegido(String(guardada.equipo.id));
       setNombreNuevo('');
+    }
+    // Guardar la nómina deja el reparto en partes iguales: si el capitán lo cambió, va aparte.
+    if (!mismoReparto(guardada.reparto, reparto.reparto)) {
+      try {
+        guardada = await inscripcionApi.repartir(guardada.id, reparto.reparto);
+      } catch (err) {
+        throw new ErrorDelReparto(err);
+      }
+      setBorrador(guardada);
     }
     return guardada;
   };
@@ -115,10 +166,9 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
       await inscripcionApi.confirmar(guardada.id, true);
       navigate(`/inscripciones/${guardada.id}/pago`);
     } catch (err) {
-      const mensaje =
-        mensajeJugadorYaInscripto(err, capitanId) ??
-        mensajeDeError(err, 'No se pudo guardar la inscripción.', MENSAJES_PASO_1);
-      setError(guardada ? `${mensaje} Tu borrador quedó guardado.` : mensaje);
+      const mensaje = mensajeAlGuardar(err, capitanId, 'No se pudo guardar la inscripción.');
+      const quedoGuardado = guardada || err instanceof ErrorDelReparto;
+      setError(quedoGuardado ? `${mensaje} Tu borrador quedó guardado.` : mensaje);
     } finally {
       setOcupado(false);
     }
@@ -134,10 +184,7 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
       };
       navigate(`/torneos/${torneo.slug}`, { state: estado });
     } catch (err) {
-      setError(
-        mensajeJugadorYaInscripto(err, capitanId) ??
-          mensajeDeError(err, 'No se pudo guardar el borrador.', MENSAJES_PASO_1)
-      );
+      setError(mensajeAlGuardar(err, capitanId, 'No se pudo guardar el borrador.'));
     } finally {
       setOcupado(false);
     }
@@ -196,6 +243,7 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
                   <strong>{user?.name || user?.username} (Capitán)</strong>
                   <small>@{user?.username}</small>
                 </span>
+                {campoPct(capitanId, user?.name || user?.username || 'el capitán')}
               </li>
               {jugadores.map((j, i) => (
                 <li key={j.id} className="nomina-fila">
@@ -208,6 +256,7 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
                     </strong>
                     <small>@{j.username}</small>
                   </span>
+                  {campoPct(j.id, `${j.nombres} ${j.apellidos}`)}
                   <button
                     type="button"
                     className="nomina-sacar"
@@ -224,6 +273,7 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
                 ? `${total} de ${maximo} (mínimo ${minimo})`
                 : `${cantidad(total)} (mínimo ${minimo})`}
             </p>
+            <TotalDelReparto escrito={reparto} />
           </section>
         </>
       )}
@@ -274,7 +324,7 @@ export const PasoEquipoNomina: React.FC<PasoEquipoNominaProps> = ({ torneo, insc
         <Button
           block
           variant="secondary"
-          disabled={!equipoListo || ocupado}
+          disabled={!equipoListo || !repartoValido || ocupado}
           onClick={guardarYSalir}
         >
           Guardar como borrador y salir

@@ -11,6 +11,7 @@ import { ComprobanteInscripcion } from '../../billetera/components/ComprobanteIn
 import { HistorialReemplazos } from '../components/HistorialReemplazos';
 import { VolverAlTorneo } from '../components/VolverAlTorneo';
 import { NominaConfirmada } from '../components/NominaConfirmada';
+import { RepartoDelPremio } from '../components/RepartoDelPremio';
 import { inscripcionAbierta } from '../inscripcionAbierta';
 import { MENSAJES_MI_INSCRIPCION, MENSAJES_REEMPLAZO } from '../mensajesInscripcion';
 import '../inscripciones.css';
@@ -29,6 +30,9 @@ const esDelQueMira = (i: InscripcionDetalle): boolean =>
  *
  * Un jugador de la nómina o el organizador la ven en solo lectura (HU-209): sin reemplazar ni el aviso de la
  * lista fija, y sin que un borrador o una pendiente los lleven a editarla o pagarla.
+ *
+ * El reparto del premio (CR-05) lo ven todos; el capitán lo cambia mientras la inscripción del torneo siga
+ * abierta, aunque el cupo esté completo.
  */
 export const MiInscripcionPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -118,6 +122,12 @@ export const MiInscripcionPage: React.FC = () => {
     inscripcionAbierta(torneo) &&
     torneo.cupoDisponible > 0;
   const listaFija = propia && (cerrada || (torneo !== null && !puedeReemplazar));
+  const puedeRepartir =
+    inscripcion.rol === 'CAPITAN' && torneo !== null && !cerrada && inscripcionAbierta(torneo);
+  const recargar = (mensaje: string) => {
+    setMotivoRecarga(mensaje);
+    setCarga((n) => n + 1);
+  };
 
   return (
     <div className="inscripcion-page">
@@ -156,10 +166,15 @@ export const MiInscripcionPage: React.FC = () => {
               setReemplazos((n) => n + 1);
             }}
             onCerrada={() => setCerrada(true)}
-            onNoEditable={(mensaje) => {
-              setMotivoRecarga(mensaje);
-              setCarga((n) => n + 1);
-            }}
+            onNoEditable={recargar}
+          />
+          <RepartoDelPremio
+            inscripcion={inscripcion}
+            capitanId={inscripcion.equipo.capitanId}
+            puedeEditar={puedeRepartir}
+            onGuardado={setInscripcion}
+            onCerrada={() => setCerrada(true)}
+            onNoEditable={recargar}
           />
           <HistorialReemplazos inscripcionId={inscripcion.id} recarga={reemplazos} />
         </>
