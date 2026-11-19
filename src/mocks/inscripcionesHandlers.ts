@@ -3,9 +3,11 @@ import type {
   EquipoInscripto,
   EstadoInscripcion,
   InscripcionDetalle,
+  RepartoIntegrante,
   RolEnInscripcion,
   TorneoDeInscripcion,
 } from '../api/inscripcionApi';
+import { CIEN, partesIguales } from '../inscripciones/reparto';
 import type { UsuarioPublico } from '../api/jugadorApi';
 import type { TorneoDetalle } from '../torneos/types/torneo';
 import { type ErrorCampo, problema, validacion } from './adminHandlers';
@@ -51,6 +53,9 @@ import { getBilleteraMock, setBilleteraMock } from './data';
 //   - En copa-de-invierno, Deportivo Luján está CONFIRMADA (902) con el capitán, Joaquín Gómez y Salvador
 //     Báez. Su historial (GET /inscripciones/902/reemplazos) tiene dos reemplazos del capitán: salió Lucas
 //     Fernández y entró Joaquín Gómez, y después salió Matías Rossi y entró Salvador Báez.
+//   - Reparto del premio (CR-05): toda inscripción de equipo arranca en partes iguales (el sobrante para el
+//     capitán), vuelve a partes iguales al crear o editar la nómina, y en un reemplazo el que entra hereda el %
+//     del que sale. PUT /inscripciones/{id}/reparto lo cambia mientras el torneo tenga la inscripción abierta.
 //   - Jugadores (GET /usuarios?q=, mínimo 3 caracteres, solo activos): Lucas Fernández (lucas_f99),
 //     Matías Rossi (mrossi), Joaquín Gómez (joaco_g), Salvador Báez (salva_b), Sofía Martínez (sofi_m),
 //     Pablo López (pablo_l), Ana Rodríguez (ana_r), Juan Pérez (juanp), Carlos Rivas (rival_c),
@@ -99,6 +104,8 @@ interface InscripcionMock {
   equipoId: number | null;
   /** Ids de los jugadores, el capitán incluido y primero. Solo en la de equipo. */
   nomina: number[] | null;
+  /** El % del premio de cada integrante (CR-05); null en la individual y en una de equipo sin reparto. */
+  reparto: RepartoIntegrante[] | null;
   estado: EstadoInscripcion;
   reglamentoAceptadoEn: string | null;
   creadoEn: string;
@@ -254,6 +261,10 @@ const JUGADORES: JugadorMock[] = [
 // El usuario de la sesión de los mocks que se inscribe: `usuario` (handlers.ts).
 const CAPITAN = 2;
 
+/** Las inscripciones de ejemplo arrancan con el reparto en partes iguales, como las nuevas. */
+const conPartesIguales = (inscripciones: Omit<InscripcionMock, 'reparto'>[]): InscripcionMock[] =>
+  inscripciones.map((i) => ({ ...i, reparto: i.nomina && partesIguales(i.nomina, i.duenioId) }));
+
 const estadoInicial = () => ({
   equipos: [
     { id: 1, nombre: 'Los Galácticos', capitanId: CAPITAN },
@@ -261,7 +272,7 @@ const estadoInicial = () => ({
     { id: 3, nombre: 'Deportivo Luján', capitanId: CAPITAN },
     { id: 10, nombre: 'Los Rivales', capitanId: 110 },
   ] as EquipoMock[],
-  inscripciones: [
+  inscripciones: conPartesIguales([
     {
       id: 900,
       torneoId: 1,
@@ -322,7 +333,7 @@ const estadoInicial = () => ({
       creadoEn: HACE_UN_RATO,
       modificadoEn: HACE_UN_RATO,
     },
-  ] as InscripcionMock[],
+  ] as Omit<InscripcionMock, 'reparto'>[]),
   reemplazos: [
     {
       inscripcionId: 902,
@@ -463,6 +474,7 @@ const detalle = (sesion: SesionMock, i: InscripcionMock): InscripcionDetalle => 
   ...resumen(sesion.usuario.id, i),
   reglamentoAceptadoEn: i.reglamentoAceptadoEn,
   nomina: i.nomina && i.nomina.map((id) => usuarioPublico(sesion, id)!),
+  reparto: i.reparto,
 });
 
 const cambiar = (i: InscripcionMock, cambios: Partial<InscripcionMock>) => {
@@ -553,7 +565,7 @@ const validarEquipoYNomina = (
   t: TorneoMock,
   cuerpo: CuerpoEquipo,
   exceptoId?: number
-): Response | { equipoId: number | null; nomina: number[] } => {
+): Response | { equipoId: number | null; nomina: number[]; reparto: RepartoIntegrante[] } => {
   if (cuerpo.equipoId !== undefined) {
     const equipo = buscarEquipo(cuerpo.equipoId);
     if (!equipo || equipo.capitanId !== sesion.usuario.id) {
@@ -596,7 +608,8 @@ const validarEquipoYNomina = (
       capitanId: sesion.usuario.id,
     });
   }
-  return { equipoId, nomina };
+  // Al guardar la nómina el reparto vuelve a partes iguales (CR-05).
+  return { equipoId, nomina, reparto: partesIguales(nomina, sesion.usuario.id) };
 };
 
 // --- handlers ---------------------------------------------------------------------------------
@@ -684,6 +697,7 @@ export const crearInscripcionesHandlers = (sesion: () => SesionMock) => {
 
       let equipoId: number | null = null;
       let nomina: number[] | null = null;
+      let reparto: RepartoIntegrante[] | null = null;
       if (t.tipoParticipante === 'INDIVIDUAL') {
         if (cuerpo) {
           return validacion([
@@ -704,7 +718,7 @@ export const crearInscripcionesHandlers = (sesion: () => SesionMock) => {
         if (Array.isArray(valido)) return validacion(valido);
         const resultado = validarEquipoYNomina(s, t, valido);
         if (resultado instanceof Response) return resultado;
-        ({ equipoId, nomina } = resultado);
+        ({ equipoId, nomina, reparto } = resultado);
       }
 
       const creada: InscripcionMock = {
@@ -714,6 +728,7 @@ export const crearInscripcionesHandlers = (sesion: () => SesionMock) => {
         usuarioId: t.tipoParticipante === 'INDIVIDUAL' ? s.usuario.id : null,
         equipoId,
         nomina,
+        reparto,
         estado: 'BORRADOR',
         reglamentoAceptadoEn: null,
         creadoEn: ahora(),
@@ -819,7 +834,13 @@ export const crearInscripcionesHandlers = (sesion: () => SesionMock) => {
       if (buscarJugador(entra as number)?.inactivoAlGuardar) {
         return conflicto('USUARIO_NO_ACTIVO', 'El jugador que entra no está activo');
       }
-      cambiar(i, { nomina: i.nomina.map((id) => (id === sale ? (entra as number) : id)) });
+      // El que entra hereda el % del que sale (CR-05).
+      cambiar(i, {
+        nomina: i.nomina.map((id) => (id === sale ? (entra as number) : id)),
+        reparto:
+          i.reparto &&
+          i.reparto.map((r) => (r.usuarioId === sale ? { ...r, usuarioId: entra as number } : r)),
+      });
       estado.reemplazos.push({
         inscripcionId: i.id,
         saleId: sale as number,
@@ -827,6 +848,42 @@ export const crearInscripcionesHandlers = (sesion: () => SesionMock) => {
         reemplazadoEn: ahora(),
         realizadoPorId: s.usuario.id,
       });
+      return HttpResponse.json(detalle(s, i));
+    }),
+
+    // Reparto del premio (CR-05): solo el capitán (de otro, 404), en BORRADOR, PENDIENTE_PAGO o CONFIRMADA
+    // mientras el torneo tenga la inscripción abierta, aunque el cupo esté completo. Tienen que estar todos los
+    // integrantes una vez cada uno, con % de 0 a 100 y hasta dos decimales, sumando exactamente 100.
+    http.put(`${API_URL}/inscripciones/:id/reparto`, async ({ request, params }) => {
+      const s = conSesion(request);
+      if (!s) return sinSesion();
+      if (!puedeGestionar(s)) return sinPermiso();
+      const cuerpo: unknown = await request.json().catch(() => null);
+      const i = propia(s, idDe(params));
+      if (i instanceof Response) return i;
+      const reparto = Array.isArray(cuerpo) ? (cuerpo as RepartoIntegrante[]) : [];
+      const centesimos = reparto.map((r) => Math.round(Number(r?.pct) * 100));
+      const ids = reparto.map((r) => r?.usuarioId);
+      const valido =
+        !!i.nomina &&
+        ids.length === i.nomina.length &&
+        new Set(ids).size === ids.length &&
+        ids.every((id) => i.nomina!.includes(id)) &&
+        reparto.every((r, k) => Math.abs(Number(r?.pct) * 100 - centesimos[k]) < 1e-6) &&
+        centesimos.every((c) => c >= 0 && c <= CIEN) &&
+        centesimos.reduce((a, b) => a + b, 0) === CIEN;
+      if (!valido) {
+        return validacion([
+          invalido('reparto', 'INVALIDO', 'El reparto tiene que incluir a toda la nómina y sumar 100'),
+        ]);
+      }
+      if (!['BORRADOR', 'PENDIENTE_PAGO', 'CONFIRMADA'].includes(i.estado)) {
+        return conflicto('INSCRIPCION_NO_EDITABLE', 'La inscripción no se puede modificar');
+      }
+      if (!abierto(buscarTorneo(i.torneoId)!)) {
+        return conflicto('INSCRIPCION_NO_ABIERTA', 'La inscripción del torneo ya cerró');
+      }
+      cambiar(i, { reparto: reparto.map((r) => ({ usuarioId: r.usuarioId, pct: r.pct })) });
       return HttpResponse.json(detalle(s, i));
     }),
 

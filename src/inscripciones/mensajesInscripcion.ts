@@ -39,6 +39,15 @@ export const MENSAJES_REEMPLAZO: Record<string, string> = {
   INSCRIPCION_NO_EDITABLE: 'Esta inscripción ya no está confirmada.',
 };
 
+/** Los del reparto del premio (CR-05), en el paso 1 y en "Mi inscripción". */
+export const MENSAJES_REPARTO: Record<string, string> = {
+  ...MENSAJES_INSCRIPCION,
+  VALIDACION:
+    'No se pudo guardar el reparto: tienen que estar todos los integrantes, con un % de 0 a 100 (hasta dos decimales), y sumar 100 %.',
+  INSCRIPCION_NO_ABIERTA: 'La inscripción del torneo ya cerró: el reparto quedó fijo.',
+  INSCRIPCION_NO_EDITABLE: 'Esta inscripción ya no se puede modificar.',
+};
+
 /**
  * El 409 JUGADOR_YA_INSCRIPTO dice cuál es el jugador (CE4-4): lo nombra, o habla de vos si sos el capitán.
  * Sin `jugador` (un back viejo) devuelve undefined y queda el texto general de `mensajeDeError`.
