@@ -532,8 +532,13 @@ export const UsuariosPage: React.FC = () => {
         )}
 
         {user.estado === 'BLOQUEADO' ? (
-          <Button size="sm" variant="secondary" title="Ver el motivo y la duración" onClick={() => setMotivoDe(user)}>
-            Motivo
+          <Button
+            size="sm"
+            variant="secondary"
+            title={puedeBloquear ? 'Ver el motivo y levantar el bloqueo' : 'Ver el motivo y la duración'}
+            onClick={() => setMotivoDe(user)}
+          >
+            {puedeBloquear ? 'Desbloquear' : 'Motivo'}
           </Button>
         ) : (
           puedeBloquear && (
@@ -1355,7 +1360,7 @@ export const UsuariosPage: React.FC = () => {
                   <StatusChip status={editingUser.estado} />
                   <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
                     {editingUser.estado === 'BLOQUEADO'
-                      ? 'Para levantarlo, usá Motivo en la tabla.'
+                      ? 'Para levantarlo, usá Desbloquear en la tabla.'
                       : 'Para bloquearlo, usá Bloquear en la tabla: pide motivo y duración.'}
                   </span>
                 </div>
