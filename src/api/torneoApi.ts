@@ -100,6 +100,12 @@ export interface TorneoInformacion extends Omit<
    * inscripciones pagas; en curso o después, todos.
    */
   camposBloqueados: CampoTorneo[];
+  /**
+   * Las inscripciones confirmadas que hacen falta para cerrar la inscripción y jugar (PICA-447): 2 en eliminación
+   * directa; con grupos, `cupoMaximo / tamanioGrupo` grupos por `clasificanPorGrupo + 1`. Null en un borrador sin
+   * formato o sin cupo.
+   */
+  inscriptosMinimos: number | null;
   /** Ventana de check-in (HU-308): cuántos minutos antes del cruce abre; null sin configurar. */
   checkinMinAntes: number | null;
   /** Cuántos minutos dura la ventana de check-in. */

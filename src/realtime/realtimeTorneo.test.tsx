@@ -196,6 +196,7 @@ const torneoInformacionMock: TorneoInformacion = {
   creadoEn: '2026-10-10T10:00:00Z',
   modificadoEn: '2026-10-10T10:00:00Z',
   camposBloqueados: [],
+  inscriptosMinimos: 2,
   checkinMinAntes: null,
   checkinDuracion: null,
   checkinSinPresentes: 'REPROGRAMAR',

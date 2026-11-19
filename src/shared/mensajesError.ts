@@ -93,7 +93,7 @@ const POR_CODIGO: Record<string, string> = {
   GASTO_YA_PAGADO: 'Ese gasto ya está pagado.',
   INSCRIPCION_NO_CERRADA: 'El bracket se genera cuando se cierra la inscripción.',
   PARTICIPANTES_INSUFICIENTES:
-    'Hacen falta al menos 2 inscripciones confirmadas para armar el bracket.',
+    'No hay suficientes inscripciones confirmadas para jugar el torneo: con grupos, cada grupo necesita uno más que los que pasan.',
   BRACKET_YA_GENERADO: 'El torneo ya tiene bracket: recargá la página.',
   SIN_ARBITROS:
     'Hace falta al menos un árbitro que haya aceptado la designación: cada partido necesita uno.',
