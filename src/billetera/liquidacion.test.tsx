@@ -133,6 +133,124 @@ describe('HU-606 / T606-3: el reparto de la liquidación para el organizador (wi
   });
 });
 
+describe('CR-05: el premio de un equipo repartido entre los integrantes', () => {
+  const premio = (
+    puesto: number,
+    equipoNombre: string,
+    beneficiarioNombre: string,
+    monto: number,
+    origen: 'TORNEO' | 'APORTE_RIFA' = 'TORNEO'
+  ) => ({
+    rol: 'PREMIO' as const,
+    origen,
+    puesto,
+    beneficiarioNombre,
+    beneficiarioUsername: beneficiarioNombre.split(' ')[0].toLowerCase(),
+    equipoNombre,
+    monto,
+    acreditadoEn: LIQUIDADO_EN,
+  });
+
+  /** Pozo de 14 000: el 1.º (40/20/20/20) cobra 10 000 y el 2.º (50/50), 4 000; la rifa le aporta 500 al 1.º. */
+  const repartido: RepartoLiquidacion = {
+    liquidado: true,
+    liquidadoEn: LIQUIDADO_EN,
+    total: 14500,
+    moneda: 'ARS',
+    lineas: [
+      premio(1, 'Los Halcones', 'Ana García', 4000),
+      premio(1, 'Los Halcones', 'Beto Díaz', 2000),
+      premio(1, 'Los Halcones', 'Caro Paz', 2000),
+      premio(1, 'Los Halcones', 'Dani Sosa', 2000),
+      premio(2, 'La Matanza', 'Eva Ruiz', 2000),
+      premio(2, 'La Matanza', 'Fede Gil', 2000),
+      premio(1, 'Los Halcones', 'Ana García', 200, 'APORTE_RIFA'),
+      premio(1, 'Los Halcones', 'Beto Díaz', 100, 'APORTE_RIFA'),
+      premio(1, 'Los Halcones', 'Caro Paz', 100, 'APORTE_RIFA'),
+      premio(1, 'Los Halcones', 'Dani Sosa', 100, 'APORTE_RIFA'),
+    ],
+  };
+
+  it('agrupa por equipo, con el total del equipo y una fila por integrante con su monto', async () => {
+    server.use(http.get('*/torneos/7/liquidacion', () => HttpResponse.json(repartido)));
+
+    repartoDelTorneo();
+
+    const tarjeta = await screen.findByRole('region', { name: 'Reparto de la liquidación' });
+    expect(within(tarjeta).getByText('Premio 1º puesto').parentElement).toHaveTextContent(
+      /\$\s10\.500,00.*Los Halcones/
+    );
+    const filas = within(tarjeta)
+      .getAllByRole('row')
+      .slice(1)
+      .map((f) => f.textContent);
+    expect(filas).toEqual([
+      expect.stringMatching(/^Los Halcones.*Premio del 1º puesto.*Torneo.*10\.000,00/),
+      expect.stringMatching(/^Ana García.*Su parte.*Torneo.*4\.000,00.*Acreditado/),
+      expect.stringMatching(/^Beto Díaz.*2\.000,00/),
+      expect.stringMatching(/^Caro Paz.*2\.000,00/),
+      expect.stringMatching(/^Dani Sosa.*2\.000,00/),
+      expect.stringMatching(/^La Matanza.*Premio del 2º puesto.*4\.000,00/),
+      expect.stringMatching(/^Eva Ruiz.*2\.000,00/),
+      expect.stringMatching(/^Fede Gil.*2\.000,00/),
+      expect.stringMatching(/^Los Halcones.*Premio del 1º puesto.*Aporte de la rifa.*500,00/),
+      expect.stringMatching(/^Ana García.*Aporte de la rifa.*200,00/),
+      expect.stringMatching(/^Beto Díaz.*100,00/),
+      expect.stringMatching(/^Caro Paz.*100,00/),
+      expect.stringMatching(/^Dani Sosa.*100,00/),
+    ]);
+  });
+
+  it('un torneo liquidado antes del cambio (todo al capitán) se ve como siempre: una fila por equipo', async () => {
+    server.use(http.get('*/torneos/7/liquidacion', () => HttpResponse.json(reparto)));
+
+    repartoDelTorneo();
+
+    const tarjeta = await screen.findByRole('region', { name: 'Reparto de la liquidación' });
+    const filas = within(tarjeta).getAllByRole('row').slice(1);
+    expect(filas).toHaveLength(5);
+    expect(filas[0]).toHaveTextContent(/^Ana García \(Los Halcones\).*Premio del 1º puesto/);
+    expect(within(tarjeta).queryByText('Su parte')).not.toBeInTheDocument();
+  });
+
+  it.each([
+    [40, 4000],
+    [20, 2000],
+  ])(
+    'cada integrante ve en Mi billetera su parte (%i %) con la descripción del back',
+    async (pct, monto) => {
+      const descripcion = `Tu parte (${pct} %) del premio del 1.º puesto en Torneo Relámpago, equipo Los Halcones`;
+      setMovimientosMock([
+        {
+          id: 601,
+          tipo: 'PREMIO',
+          monto,
+          moneda: 'ARS',
+          saldoResultante: 10000 + monto,
+          estado: 'CONFIRMADO',
+          referenciaExterna: 'liq-t1-premio-30-u2',
+          descripcion,
+          torneo: {
+            id: 1,
+            nombre: 'Torneo Relámpago',
+            titulo: 'Torneo Relámpago Apertura',
+            slug: 'torneo-relampago-apertura',
+          },
+          rifa: null,
+          creadoEn: LIQUIDADO_EN,
+        },
+      ]);
+
+      await renderRuta('/billetera', { usuario: 'participante' });
+
+      expect(await screen.findByText(descripcion)).toBeInTheDocument();
+      expect(
+        screen.getByText(new RegExp(`\\+\\s*\\$\\s*${monto / 1000}\\.000,00`))
+      ).toBeInTheDocument();
+    }
+  );
+});
+
 describe('HU-606 / T606-3: el premio llega a la billetera del ganador', () => {
   it('Mi billetera muestra el premio y la liquidación como ingresos, con el evento y qué fue', async () => {
     setMovimientosMock([
