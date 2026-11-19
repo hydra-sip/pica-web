@@ -31,7 +31,7 @@ describe('HU-706 / T706-2 (PICA-340): Reclamos y resolución en el admin', () =>
     expect(await screen.findByRole('heading', { name: 'Reclamos de rifas' })).toBeInTheDocument();
   });
 
-  it('el rol SOPORTE (solo RECLAMO_RESOLVER) accede al backoffice y solo ve Panel y Reclamos', async () => {
+  it('el rol SOPORTE accede al backoffice y ve Reclamos, pero no la configuración', async () => {
     const { user, ubicacion } = await comoUsuario('soporte', 'soporte123', '/');
 
     const linksBackoffice = await screen.findAllByRole('link', { name: /backoffice/i });
@@ -41,7 +41,7 @@ describe('HU-706 / T706-2 (PICA-340): Reclamos y resolución en el admin', () =>
     expect(ubicacion()).toBe('/admin');
 
     expect(await screen.findAllByRole('link', { name: 'Reclamos' })).not.toHaveLength(0);
-    expect(screen.queryByRole('link', { name: 'Usuarios' })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: 'Usuarios' })).not.toHaveLength(0);
     expect(screen.queryByRole('link', { name: 'Roles' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Personas' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Parámetros' })).not.toBeInTheDocument();

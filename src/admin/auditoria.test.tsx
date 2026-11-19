@@ -199,13 +199,13 @@ describe('Libro de auditoría (HU-704)', () => {
   });
 
   it('sin AUDITORIA_VER no aparece en el menú ni se ve la pantalla', async () => {
-    await renderRuta('/admin', { usuario: 'soporte' });
-    await screen.findAllByRole('link', { name: 'Cancelaciones' });
+    await renderRuta('/admin', { usuario: 'organizador' });
+    await screen.findAllByRole('link', { name: 'Usuarios' });
     expect(screen.queryByRole('link', { name: 'Auditoría' })).not.toBeInTheDocument();
   });
 
   it('entrando directo sin el permiso no se ve la auditoría', async () => {
-    await renderRuta('/admin/auditoria', { usuario: 'soporte' });
+    await renderRuta('/admin/auditoria', { usuario: 'organizador' });
 
     await screen.findByRole('heading', { level: 1 });
     expect(screen.queryByRole('heading', { name: 'Auditoría' })).not.toBeInTheDocument();
