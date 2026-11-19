@@ -1,13 +1,25 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { BracketTorneo, torneoApi } from '../../api/torneoApi';
+import { useEstadoConexion } from '../../realtime/useEstadoConexion';
 import { useTorneoRealtime } from '../../realtime/useTorneoRealtime';
 import { IconoEscudoCheck, IconoTrofeo } from '../../shared/ui/Iconos';
 import { Bracket } from './Bracket';
+
+/** Cuánto queda resaltado el cruce que acaba de cambiar. */
+const RESALTADO_MS = 2000;
+/** Cuánto tiene que durar un corte para avisarlo: uno más corto no vale el parpadeo. */
+const AVISO_CORTE_MS = 2000;
 
 /**
  * El bracket en la ficha pública (PICA-217), para los participantes y cualquiera con el enlace.
  * Suscripto a `/topic/torneos/{id}` para reflejar avances y confirmaciones de resultados en tiempo real
  * sin recargar la página. Al reconectarse recarga el estado desde el servidor.
+ *
+ * Se queda siempre con la versión del bracket más alta (HU-809): un bracket más viejo que el que muestra, del tópico
+ * o del GET, se descarta; uno de la misma versión se aplica (varios mensajes de un mismo cambio la comparten). Si la
+ * versión salta, se perdió algún mensaje: aplica el que llegó, que trae el bracket completo, y además lo vuelve a pedir.
+ * El cruce del mensaje aplicado queda resaltado unos segundos; el bracket del GET no resalta nada. Si la conexión
+ * lleva un rato caída, el encabezado lo avisa hasta que vuelve.
  */
 export const BracketDelTorneo: React.FC<{
   torneoId: number;
@@ -15,13 +27,40 @@ export const BracketDelTorneo: React.FC<{
   conGrupos?: boolean;
 }> = ({ torneoId, conGrupos = false }) => {
   const [bracket, setBracket] = useState<BracketTorneo | null>(null);
+  const version = useRef<number | null>(null);
+  const [resaltado, setResaltado] = useState<number | null>(null);
+  const conectado = useEstadoConexion();
+  const [sinConexion, setSinConexion] = useState(false);
+
+  useEffect(() => {
+    if (conectado) {
+      setSinConexion(false);
+      return undefined;
+    }
+    const avisar = setTimeout(() => setSinConexion(true), AVISO_CORTE_MS);
+    return () => clearTimeout(avisar);
+  }, [conectado]);
+
+  useEffect(() => {
+    if (resaltado === null) return undefined;
+    const apagar = setTimeout(() => setResaltado(null), RESALTADO_MS);
+    return () => clearTimeout(apagar);
+  }, [resaltado]);
+
+  /** Lo aplica si no es más viejo que el que se ve; devuelve si lo aplicó. */
+  const aplicar = useCallback((nuevo: BracketTorneo): boolean => {
+    if (version.current !== null && nuevo.version < version.current) return false;
+    version.current = nuevo.version;
+    setBracket(nuevo);
+    return true;
+  }, []);
 
   const cargarBracket = useCallback(() => {
     let vigente = true;
     torneoApi
       .bracket(torneoId)
       .then((b) => {
-        if (vigente) setBracket(b);
+        if (vigente) aplicar(b);
       })
       .catch(() => {
         if (vigente) setBracket(null);
@@ -29,24 +68,23 @@ export const BracketDelTorneo: React.FC<{
     return () => {
       vigente = false;
     };
-  }, [torneoId]);
+  }, [torneoId, aplicar]);
 
   useEffect(() => {
     return cargarBracket();
   }, [cargarBracket]);
 
   useTorneoRealtime(torneoId, {
-    onBracketChange: (nuevoBracket) => {
-      setBracket(nuevoBracket);
-    },
     onActualizar: (data) => {
-      if (data.bracket) {
-        setBracket(data.bracket);
-      } else if (data.rondas) {
-        setBracket(data as unknown as BracketTorneo);
-      } else {
+      const nuevo = data.bracket ?? (data.rondas ? (data as unknown as BracketTorneo) : null);
+      if (!nuevo) {
         cargarBracket();
+        return;
       }
+      const anterior = version.current;
+      if (!aplicar(nuevo)) return;
+      if (typeof data.partidoId === 'number') setResaltado(data.partidoId);
+      if (anterior !== null && nuevo.version > anterior + 1) cargarBracket();
     },
     onReconnect: () => {
       cargarBracket();
@@ -70,6 +108,11 @@ export const BracketDelTorneo: React.FC<{
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <IconoTrofeo size={20} />
           <span>{conGrupos ? 'Llave' : 'Bracket'}</span>
+          {sinConexion && (
+            <span role="status" className="bracket-sin-conexion">
+              Sin conexión, reconectando…
+            </span>
+          )}
         </div>
         {conGrupos ? (
           <span className="torneos-subtitulo">Cruces fijos: 1A–2B, 1B–2A…</span>
@@ -93,7 +136,7 @@ export const BracketDelTorneo: React.FC<{
           </a>
         )}
       </div>
-      <Bracket bracket={bracket} />
+      <Bracket bracket={bracket} resaltado={resaltado} />
     </div>
   );
 };

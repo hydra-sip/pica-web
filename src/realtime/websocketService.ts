@@ -59,11 +59,13 @@ class WebSocketService {
   private torneoListeners = new Map<number, Set<TorneoSubscriptionCallbacks>>();
   private rifaListeners = new Map<number, Set<RifaSubscriptionCallbacks>>();
   private stompSubscriptions = new Map<string, StompSubscription>();
-  private wasConnected = false;
-  private isConnected = false;
+  private estadoListeners = new Set<(conectado: boolean) => void>();
   private isTestMode =
     typeof process !== 'undefined' &&
     (process.env.NODE_ENV === 'test' || import.meta.env.MODE === 'test');
+  private wasConnected = false;
+  // en los tests no hay broker: arranca conectado y la desconexión se simula con mockDisconnect
+  private isConnected = this.isTestMode;
 
   constructor() {
     if (!this.isTestMode && typeof window !== 'undefined') {
@@ -81,7 +83,7 @@ class WebSocketService {
       heartbeatOutgoing: 4000,
       onConnect: () => {
         const hadPriorConnection = this.wasConnected;
-        this.isConnected = true;
+        this.setConnected(true);
         this.wasConnected = true;
 
         this.resubscribeTopics();
@@ -91,10 +93,10 @@ class WebSocketService {
         }
       },
       onDisconnect: () => {
-        this.isConnected = false;
+        this.setConnected(false);
       },
       onWebSocketClose: () => {
-        this.isConnected = false;
+        this.setConnected(false);
       },
       onStompError: (frame) => {
         console.error('STOMP protocol error:', frame.headers?.message, frame.body);
@@ -115,6 +117,26 @@ class WebSocketService {
     }
     this.isConnected = false;
     this.stompSubscriptions.clear();
+  }
+
+  private setConnected(conectado: boolean) {
+    if (this.isConnected === conectado) return;
+    this.isConnected = conectado;
+    this.estadoListeners.forEach((cb) => {
+      try {
+        cb(conectado);
+      } catch (err) {
+        console.error('Error en el aviso del estado de la conexión:', err);
+      }
+    });
+  }
+
+  /** Avisa cada vez que la conexión se cae o vuelve (HU-809). Devuelve cómo dejar de escuchar. */
+  public onEstadoConexion(cb: (conectado: boolean) => void): () => void {
+    this.estadoListeners.add(cb);
+    return () => {
+      this.estadoListeners.delete(cb);
+    };
   }
 
   private resubscribeTopics() {
@@ -292,12 +314,12 @@ class WebSocketService {
   }
 
   public mockDisconnect() {
-    this.isConnected = false;
+    this.setConnected(false);
     this.wasConnected = true;
   }
 
   public mockReconnect() {
-    this.isConnected = true;
+    this.setConnected(true);
     this.notifyReconnectAll();
   }
 
@@ -309,8 +331,9 @@ class WebSocketService {
     this.torneoListeners.clear();
     this.rifaListeners.clear();
     this.stompSubscriptions.clear();
+    this.estadoListeners.clear();
     this.wasConnected = false;
-    this.isConnected = false;
+    this.isConnected = this.isTestMode;
   }
 }
 
@@ -325,6 +348,9 @@ export const subscribeToRifa = (
   rifaId: number,
   callbacks: RifaSubscriptionCallbacks
 ): (() => void) => websocketService.subscribeToRifa(rifaId, callbacks);
+
+export const onEstadoConexion = (cb: (conectado: boolean) => void): (() => void) =>
+  websocketService.onEstadoConexion(cb);
 
 export const mockEmitTorneoEvent = (torneoId: number, payload: unknown): void =>
   websocketService.mockEmitTorneoEvent(torneoId, payload);

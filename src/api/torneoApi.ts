@@ -474,6 +474,8 @@ export interface BracketTorneo {
   semilla: string | null;
   listaHash: string | null;
   rondas: RondaBracket[];
+  /** La versión del bracket (HU-809): crece con cada cambio de la llave; uno con versión menor es más viejo. */
+  version: number;
 }
 
 // Las del asistente exigen TORNEO_GESTIONAR y cada organizador ve solo los suyos; las del catálogo son públicas.
