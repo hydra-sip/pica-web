@@ -21,6 +21,7 @@ import { GruposDelTorneo } from '../components/GruposDelTorneo';
 import { HonorariosDelTorneo } from '../components/HonorariosDelTorneo';
 import { EstadoDeLaCancelacion } from '../components/EstadoDeLaCancelacion';
 import { InscripcionesDelTorneo } from '../components/InscripcionesDelTorneo';
+import { CalificarJugadores } from '../../reputacion/components/CalificarJugadores';
 import { SancionesDelTorneo } from '../../reputacion/components/SancionesDelTorneo';
 import { ProgramacionPartido } from '../components/ProgramacionPartido';
 import { RifaDelTorneo } from '../components/RifaDelTorneo';
@@ -285,6 +286,7 @@ export const TorneoConsolaPage: React.FC = () => {
             <p className="torneos-vacio">El torneo no llegó a tener bracket.</p>
           )}
         </Card>
+        {torneo.estado === 'CANCELADO' && <CalificarJugadores torneoId={torneo.id} />}
       </div>
     );
   }
@@ -453,6 +455,8 @@ export const TorneoConsolaPage: React.FC = () => {
           />
 
           <SancionesDelTorneo torneoId={torneo.id} recarga={recargaSanciones} />
+
+          {torneo.estado === 'FINALIZADO' && <CalificarJugadores torneoId={torneo.id} />}
 
           {conGrupos && generado && (
             <Card>

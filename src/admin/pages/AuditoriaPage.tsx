@@ -40,6 +40,8 @@ const ACCIONES: Record<AccionAuditoria, string> = {
   LIQUIDACION: 'Liquidación',
   CANCELACION: 'Cancelación',
   REINTEGRO: 'Reintegro',
+  SANCION: 'Sanción',
+  CALIFICACION: 'Calificación',
 };
 
 const ENTIDADES: Record<EntidadAuditoria, string> = {

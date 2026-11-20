@@ -1,10 +1,11 @@
 import { http, HttpResponse } from 'msw';
+import { CalificacionDetalle, CalificacionRequest } from '../api/calificacionApi';
 import { UsuarioPublico } from '../api/jugadorApi';
 import { JugadorSancionable, SancionDetalle, SancionRequest } from '../api/sancionApi';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
-/** HU-803 y HU-802. Quien sanciona en los mocks. */
+/** HU-803, HU-802 y HU-805. Quien sanciona y califica en los mocks. */
 const ORGANIZADOR: UsuarioPublico = {
   id: 3,
   username: 'organizador',
@@ -33,9 +34,11 @@ export const JUGADORES_SANCIONABLES: JugadorSancionable[] = [
 
 let sanciones: SancionDetalle[] = [];
 let siguienteId = 1;
+let calificaciones: CalificacionDetalle[] = [];
 
 export const resetSancionesMock = () => {
   sanciones = [];
+  calificaciones = [];
   siguienteId = 1;
 };
 
@@ -88,5 +91,43 @@ export const sancionHandlers = [
     };
     sanciones = [sancion, ...sanciones];
     return HttpResponse.json(sancion, { status: 201 });
+  }),
+
+  // HU-805: los calificables son los mismos jugadores, con la calificación que ya tengan en ese torneo
+  http.get(`${API_URL}/torneos/:id/calificaciones`, ({ params }) =>
+    HttpResponse.json(
+      JUGADORES_SANCIONABLES.map((j) => ({
+        ...j,
+        calificacion:
+          calificaciones.find(
+            (c) => c.torneoId === Number(params.id) && c.jugador.id === j.jugador.id
+          ) ?? null,
+      }))
+    )
+  ),
+
+  http.post(`${API_URL}/torneos/:id/calificaciones`, async ({ params, request }) => {
+    const body = (await request.json()) as CalificacionRequest;
+    const jugador = JUGADORES_SANCIONABLES.find((j) => j.jugador.id === body.usuarioId);
+    if (!jugador) {
+      return problema(409, 'JUGADOR_NO_PARTICIPA', 'El jugador no jugó el torneo');
+    }
+    const torneoId = Number(params.id);
+    if (calificaciones.some((c) => c.torneoId === torneoId && c.jugador.id === body.usuarioId)) {
+      return problema(409, 'JUGADOR_YA_CALIFICADO', 'El jugador ya está calificado en el torneo');
+    }
+    const calificacion: CalificacionDetalle = {
+      id: siguienteId++,
+      torneoId,
+      torneo: 'Apertura F5',
+      jugador: jugador.jugador,
+      organizador: ORGANIZADOR,
+      puntaje: body.puntaje,
+      comentario: body.comentario?.trim() || null,
+      noConfiable: body.noConfiable,
+      creadaEn: new Date().toISOString(),
+    };
+    calificaciones = [...calificaciones, calificacion];
+    return HttpResponse.json(calificacion, { status: 201 });
   }),
 ];
