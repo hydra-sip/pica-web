@@ -12,6 +12,7 @@ import { ticketHandlers } from './ticketHandlers';
 import { billeteraHandlers } from './billeteraHandlers';
 import { cancelacionHandlers } from './cancelacionHandlers';
 import { sancionHandlers } from './sancionHandlers';
+import { crearNotificacionHandlers } from './notificacionHandlers';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
@@ -99,6 +100,8 @@ export const handlers = [
   ...parametroHandlers,
   // Reclamos de rifas y resolución en el admin (HU-706 / PICA-340)
   ...crearReclamoAdminHandlers(() => mockCurrentUserState),
+  // Centro de notificaciones del usuario logueado (HU-808)
+  ...crearNotificacionHandlers(() => mockCurrentUserState),
   // Libro de auditoría (HU-704)
   ...auditoriaHandlers,
   // Inscripción en dos pasos: el capitán es el usuario logueado de estos mocks. Va antes que los torneos

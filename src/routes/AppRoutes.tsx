@@ -45,6 +45,7 @@ import { RifaPublicaPage } from '../rifas/pages/RifaPublicaPage';
 import { PortalVerificacionPage } from '../verificacion/pages/PortalVerificacionPage';
 import { TicketPage } from '../rifas/pages/TicketPage';
 import { MisTicketsPage } from '../rifas/pages/MisTicketsPage';
+import { NotificacionesPage } from '../notificaciones/pages/NotificacionesPage';
 import { MisInscripcionesPage } from '../inscripciones/pages/MisInscripcionesPage';
 import { MiBilleteraPage } from '../billetera/pages/MiBilleteraPage';
 import { PerfilOrganizadorPage } from '../reputacion/pages/PerfilOrganizadorPage';
@@ -76,6 +77,8 @@ export const AppRoutes: React.FC = () => {
         {/* Rutas Autenticadas Públicas / Perfil */}
         <Route element={<RequireAuth />}>
           <Route path="mi-perfil" element={<ProfilePage />} />
+          {/* HU-808 / T808-3: el centro de notificaciones del usuario */}
+          <Route path="notificaciones" element={<NotificacionesPage />} />
           {/* HU-602 / T602-3: Mi billetera con saldos, movimientos y cargas */}
           <Route path="billetera" element={<MiBilleteraPage />} />
           <Route path="mis-tickets" element={<MisTicketsPage />} />
