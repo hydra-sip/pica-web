@@ -13,6 +13,7 @@ import { resetBilleteraMock } from '../mocks/data';
 import { resetCadenaMock } from '../mocks/cadenaHandlers';
 import { resetCancelacionMock } from '../mocks/cancelacionHandlers';
 import { resetSancionesMock } from '../mocks/sancionHandlers';
+import { resetNotificacionesMock } from '../mocks/notificacionHandlers';
 import { server } from '../mocks/server';
 import { resetRealtime } from '../realtime/websocketService';
 
@@ -24,6 +25,7 @@ afterEach(() => {
   server.resetHandlers();
   resetAdminMock();
   resetAlertasFraudeMock();
+  resetNotificacionesMock();
   reiniciarInscripciones();
   resetParametrosMock();
   resetReclamosAdminMock();
