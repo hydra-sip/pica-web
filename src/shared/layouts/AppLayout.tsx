@@ -3,11 +3,13 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import { alertaFraudeApi, EVENTO_ALERTAS_ACTUALIZADAS } from '../../api/alertaFraudeApi';
 import { torneoApi } from '../../api/torneoApi';
 import { useAuth } from '../../auth/hooks/useAuth';
+import { ToastNotificacion } from '../../notificaciones/components/ToastNotificacion';
+import { useNotificaciones } from '../../notificaciones/useNotificaciones';
 import { AvisoDeNavegacion } from '../components/AvisoDeNavegacion';
 import { ScrollAlInicio } from '../components/ScrollAlInicio';
 import { Footer } from '../components/Footer';
 import { IncompleteProfileBanner } from '../components/IncompleteProfileBanner';
-import { IconoCampana, IconoSalir, IconoSitio } from '../ui/Iconos';
+import { IconoCampana, IconoEscudo, IconoSalir, IconoSitio } from '../ui/Iconos';
 import { LogoPica } from '../ui/LogoPica';
 import { ItemNavegacion, NAVEGACION, Seccion } from './navegacion';
 import './AppLayout.css';
@@ -88,6 +90,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ seccion }) => {
     seccion === 'admin' && isAuthenticated && hasPermission('ALERTA_FRAUDE_REVISAR'),
     pathname
   );
+  // HU-808: la campana es de las notificaciones del usuario; las designaciones del árbitro van con su escudo
+  const notificaciones = useNotificaciones(isAuthenticated ? user?.id : undefined, pathname);
 
   const visible = (item: ItemNavegacion) =>
     (!item.soloConSesion || isAuthenticated) &&
@@ -117,6 +121,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ seccion }) => {
       {item.soloConDesignaciones && designaciones.pendientes > 0 && (
         <span className="app-contador" aria-label={`${designaciones.pendientes} sin responder`}>
           {designaciones.pendientes}
+        </span>
+      )}
+      {item.ruta === '/notificaciones' && notificaciones.noLeidas > 0 && (
+        <span className="app-contador" aria-label={`${notificaciones.noLeidas} sin leer`}>
+          {notificaciones.noLeidas}
         </span>
       )}
       {item.ruta === '/admin/alertas' && alertasPendientes > 0 && (
@@ -176,15 +185,26 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ seccion }) => {
               </Link>
             )}
             {designaciones.total > 0 && (
-              // En el celular la barra de abajo no llega a "Designaciones": el aviso va en la campana (wireframe 48)
+              // En el celular la barra de abajo no llega a "Designaciones": va arriba, con el escudo de la sidebar
               <Link
                 to="/mis-designaciones"
                 className="app-boton-icono app-campana"
                 aria-label={`Designaciones: ${designaciones.pendientes} sin responder`}
                 title="Designaciones"
               >
-                <IconoCampana />
+                <IconoEscudo />
                 {designaciones.pendientes > 0 && <span className="app-contador">{designaciones.pendientes}</span>}
+              </Link>
+            )}
+            {isAuthenticated && (
+              <Link
+                to="/notificaciones"
+                className="app-boton-icono app-campana"
+                aria-label={`Notificaciones: ${notificaciones.noLeidas} sin leer`}
+                title="Notificaciones"
+              >
+                <IconoCampana />
+                {notificaciones.noLeidas > 0 && <span className="app-contador">{notificaciones.noLeidas}</span>}
               </Link>
             )}
             {isAuthenticated && (
@@ -207,6 +227,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ seccion }) => {
       <nav aria-label="Navegación principal" className="app-barra-inferior">
         {items.slice(0, MAX_ITEMS_CELULAR).map((item) => enlace(item, 'app-barra-item'))}
       </nav>
+
+      {notificaciones.recienLlegada && (
+        <ToastNotificacion notificacion={notificaciones.recienLlegada} onCerrar={notificaciones.cerrarToast} />
+      )}
     </div>
   );
 };
