@@ -17,7 +17,9 @@ export type AccionAuditoria =
   | 'CIERRE_VENTA'
   | 'LIQUIDACION'
   | 'CANCELACION'
-  | 'REINTEGRO';
+  | 'REINTEGRO'
+  | 'SANCION'
+  | 'CALIFICACION';
 
 /** GET /admin/auditoria: una fila del libro (HU-704). */
 export interface RegistroAuditoria {
