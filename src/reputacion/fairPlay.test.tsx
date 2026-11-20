@@ -21,6 +21,8 @@ const inscripto = (id: number, nombres: string, fairPlay: number): InscripcionDe
   capitan: null,
   jugadores: null,
   fairPlay,
+  reputacion: { promedio: null, cantidad: 0 },
+  noConfiable: false,
 });
 
 const movimiento = (cambios: Partial<MovimientoFairPlay>): MovimientoFairPlay => ({

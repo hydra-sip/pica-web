@@ -269,3 +269,82 @@
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.25rem;
 }
+
+/* HU-805: calificaciones de jugadores y puntaje de reputación */
+.reputacion-calificacion-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.reputacion-avatar {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-full);
+  background-color: var(--color-border);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.reputacion-calificacion-hecha p {
+  margin: 0.4rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.reputacion-calificacion-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+}
+
+.reputacion-calificacion-acciones {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.reputacion-casilla {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: var(--text-sm);
+}
+
+.reputacion-selector-estrellas {
+  display: inline-flex;
+  gap: 0.15rem;
+}
+
+.reputacion-selector-estrellas button {
+  border: none;
+  background: transparent;
+  padding: 0 0.1rem;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--color-border);
+  cursor: pointer;
+}
+
+.reputacion-selector-estrellas button.activa {
+  color: var(--color-text);
+}
+
+.reputacion-estrellas {
+  letter-spacing: 0.05rem;
+}
+
+.reputacion-estrellas-vacias {
+  color: var(--color-text-secondary);
+}
+
+.reputacion-puntaje {
+  display: inline-flex;
+  flex-direction: column;
+}

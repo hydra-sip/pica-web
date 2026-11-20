@@ -4,6 +4,7 @@ import { EstadoInscripcion, InscripcionDelTorneo, torneoApi } from '../../api/to
 import { PageResponse } from '../../api/usuarioApi';
 import { ESTADO_INSCRIPCION } from '../../inscripciones/formato';
 import { IndiceFairPlay } from '../../reputacion/components/IndiceFairPlay';
+import { PuntajeReputacion } from '../../reputacion/components/PuntajeReputacion';
 import { SancionarJugador } from '../../reputacion/components/SancionarJugador';
 import { nombreCompleto } from '../../reputacion/formato';
 import { mensajeDeError } from '../../shared/mensajesError';
@@ -42,7 +43,8 @@ interface InscripcionesDelTorneoProps {
 
 /**
  * Las inscripciones del torneo en la consola (HU-206, PICA-214), de la más vieja a la más nueva, con un filtro por
- * estado y el índice de fair play de cada uno (HU-802; en un equipo, el del capitán). Filtra y pagina el back. Sin link a la nómina: "Mi inscripción" supone que quien mira es el capitán.
+ * estado, el índice de fair play de cada uno (HU-802; en un equipo, el del capitán) y, de esa misma persona, el puntaje
+ * de reputación y la marca de no confiable (HU-805). Filtra y pagina el back. Sin link a la nómina: "Mi inscripción" supone que quien mira es el capitán.
  */
 export const InscripcionesDelTorneo: React.FC<InscripcionesDelTorneoProps> = ({
   torneoId,
@@ -143,6 +145,7 @@ export const InscripcionesDelTorneo: React.FC<InscripcionesDelTorneoProps> = ({
                 <th scope="col">Estado</th>
                 <th scope="col">Inscripción</th>
                 <th scope="col">Fair play</th>
+                <th scope="col">Reputación</th>
                 {puedeSancionar && <th scope="col">Acciones</th>}
               </tr>
             </thead>
@@ -153,6 +156,7 @@ export const InscripcionesDelTorneo: React.FC<InscripcionesDelTorneoProps> = ({
                   <tr key={i.id}>
                     <td>
                       <span className="torneos-nombre-fila">{nombre}</span>
+                      {i.noConfiable && <Badge tone="peligro">No confiable</Badge>}
                       {detalle && <span className="torneos-celda-secundaria">{detalle}</span>}
                     </td>
                     <td>
@@ -163,6 +167,9 @@ export const InscripcionesDelTorneo: React.FC<InscripcionesDelTorneoProps> = ({
                     <td>{formatFecha(i.creadoEn)}</td>
                     <td>
                       <IndiceFairPlay valor={i.fairPlay} />
+                    </td>
+                    <td>
+                      <PuntajeReputacion reputacion={i.reputacion} />
                     </td>
                     {puedeSancionar && (
                       <td>

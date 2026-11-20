@@ -170,6 +170,9 @@ const POR_CODIGO: Record<string, string> = {
   // HU-705: Detección de conductas fraudulentas y alertas para soporte
   ALERTA_FRAUDE_NO_ENCONTRADA: 'No se encontró la alerta de fraude.',
   ALERTA_FRAUDE_YA_REVISADA: 'Esta alerta de fraude ya fue revisada.',
+  // HU-805
+  TORNEO_NO_TERMINADO: 'Se califica cuando el torneo termina o se cancela.',
+  JUGADOR_YA_CALIFICADO: 'Ya calificaste a este jugador en este torneo.',
   // HU-706 / HU-707: Reclamos, resolución y liberación de fondos en el admin
   RECLAMO_NO_ENCONTRADO: 'El reclamo no existe.',
   RECLAMO_YA_RESUELTO: 'Este reclamo ya fue resuelto anteriormente.',

@@ -1,3 +1,4 @@
+import { Reputacion } from './calificacionApi';
 import { customFetch, httpClient } from './httpClient';
 import { UsuarioPublico } from './jugadorApi';
 import { PageResponse } from './usuarioApi';
@@ -406,6 +407,10 @@ export interface InscripcionDelTorneo {
   jugadores: number | null;
   /** HU-802: el índice de fair play del inscripto o, en un equipo, del capitán. */
   fairPlay: number;
+  /** HU-805: el promedio de las calificaciones de esa misma persona. */
+  reputacion: Reputacion;
+  /** HU-805: si algún organizador lo marcó como no confiable. No bloquea. */
+  noConfiable: boolean;
 }
 
 /** GET /torneos/{id}/bracket (HU-207): sin generar, `rondas` vacío. */

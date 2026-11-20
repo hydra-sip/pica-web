@@ -28,6 +28,8 @@ const inscripcion = (cambios: Partial<InscripcionDelTorneo>): InscripcionDelTorn
   capitan: null,
   jugadores: null,
   fairPlay: 100,
+  reputacion: { promedio: null, cantidad: 0 },
+  noConfiable: false,
   ...cambios,
 });
 
