@@ -1,0 +1,50 @@
+# El back para los E2E (PICA-437): la imagen de dev con el seed de desarrollo, sobre una base que se descarta.
+# Lo usan el CI y `npm run e2e:back`. Los plazos van cortos para que los flujos no esperen al minuto.
+name: pica-e2e
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: pica
+      POSTGRES_USER: pica
+      POSTGRES_PASSWORD: pica
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pica -d pica"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  api:
+    image: ${API_IMAGE:-ghcr.io/hydra-sip/pica-back:dev}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${E2E_API_PORT:-8080}:8080"
+    environment:
+      # dev: claves JWT efímeras y sin Google; seed: los usuarios dev_* y el admin con PicaDev2026
+      SPRING_PROFILES_ACTIVE: dev,seed
+      SPRING_DOCKER_COMPOSE_ENABLED: "false"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/pica
+      SPRING_DATASOURCE_USERNAME: pica
+      SPRING_DATASOURCE_PASSWORD: pica
+      APP_WEB_URL: http://localhost:4173
+      APP_CORS_ALLOWED_ORIGINS: http://localhost:4173,http://127.0.0.1:4173
+      # Los E2E no esperan a los jobs programados
+      APP_TORNEOS_SIN_VALIDAR_FECHAS: "true"
+      APP_TORNEOS_REVISION_CIERRES: 2s
+      APP_LIQUIDACION_REVISION: 2s
+      APP_RIFAS_REVISION_CIERRES: 2s
+      APP_RIFAS_SORTEO_ANTICIPADO: "true"
+      APP_PARTIDOS_REVISION_PLAZOS: 2s
+      # Sin límite práctico de intentos: los tests se loguean muchas veces seguidas
+      APP_AUTH_INTENTOS_LOGIN_MAXIMO: "1000"
+      LOGGING_LEVEL_COM_HYDRA_PICA: INFO
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health || exit 1"]
+      interval: 3s
+      timeout: 5s
+      retries: 60
