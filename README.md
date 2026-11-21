@@ -88,6 +88,8 @@ npm run e2e:back:bajar            # al terminar: la base es descartable
 - `e2e/pages/` tiene un Page Object por pantalla: los localizadores (por rol y texto accesible) en un solo lugar.
 - `e2e/support/api.ts` arma los datos de cada test por la API; los clics quedan para lo que se prueba.
 - El reporte queda en `playwright-report/` (`npx playwright show-report`) con captura, video y traza de lo que falló.
+- En el CI corren en el job `e2e`, en paralelo con lint, tests y build, en cada PR y en cada push a dev y main. Si
+  fallan, el reporte, las trazas y el log del back quedan en el artifact `playwright-report`.
 - `E2E_BASE_URL` y `E2E_API_URL` apuntan los tests a otro ambiente sin levantar nada.
 - Como se prueba contra el back de `dev`, un cambio del front que necesita algo del back todavía sin mergear
   falla hasta que entra el del back.
