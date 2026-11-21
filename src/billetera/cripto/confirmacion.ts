@@ -1,4 +1,4 @@
-import { billeteraApi, type MovimientoBilletera } from '../../api/billeteraApi';
+import { billeteraApi, type MovimientoBilletera, type RetiroCripto } from '../../api/billeteraApi';
 import { ApiError } from '../../api/httpClient';
 
 /** Cada cuánto se vuelve a pedir la acreditación y hasta cuándo, mientras la red confirma (HU-609). */
@@ -39,20 +39,19 @@ const esperar = (ms: number, senal?: AbortSignal) =>
   });
 
 /**
- * Pide al back que acredite la carga con el hash hasta que lo haga, reintentando cada `REINTENTO_MS` mientras
- * la transacción no esté confirmada. Pasado `ESPERA_MAXIMA_MS`, rechaza con `CargaDemorada`; con la `senal`
- * abortada, con `EsperaCancelada`. Cualquier otro error del back es definitivo y se propaga.
+ * Repite `confirmar` cada `REINTENTO_MS` mientras la transacción no esté confirmada. Pasado `ESPERA_MAXIMA_MS`,
+ * rechaza con `CargaDemorada`; con la `senal` abortada, con `EsperaCancelada`. Cualquier otro error del back es
+ * definitivo y se propaga.
  */
-export const confirmarHastaAcreditar = async (
-  referencia: string,
-  hash: string,
+const confirmarHastaQueSalga = async <T>(
+  confirmar: () => Promise<T>,
   senal?: AbortSignal
-): Promise<MovimientoBilletera> => {
+): Promise<T> => {
   const limite = Date.now() + ESPERA_MAXIMA_MS;
   for (;;) {
     if (senal?.aborted) throw new EsperaCancelada();
     try {
-      return await billeteraApi.confirmarCargaCripto(referencia, hash);
+      return await confirmar();
     } catch (err) {
       if (!sePuedeReintentar(err)) throw err;
     }
@@ -60,3 +59,19 @@ export const confirmarHastaAcreditar = async (
     await esperar(REINTENTO_MS, senal);
   }
 };
+
+/** Pide al back que acredite la carga con el hash hasta que lo haga (HU-609). */
+export const confirmarHastaAcreditar = (
+  referencia: string,
+  hash: string,
+  senal?: AbortSignal
+): Promise<MovimientoBilletera> =>
+  confirmarHastaQueSalga(() => billeteraApi.confirmarCargaCripto(referencia, hash), senal);
+
+/** Pide al back que confirme el cobro del retiro con el hash hasta que lo haga (HU-610). */
+export const confirmarHastaCobrar = (
+  referencia: string,
+  hash: string,
+  senal?: AbortSignal
+): Promise<RetiroCripto> =>
+  confirmarHastaQueSalga(() => billeteraApi.confirmarRetiroCripto(referencia, hash), senal);

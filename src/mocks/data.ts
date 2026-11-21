@@ -4,6 +4,7 @@ import {
   CuentaBancaria,
   LimitesRetiro,
   MovimientoBilletera,
+  RetiroCripto,
 } from '../api/billeteraApi';
 
 export const billeteraInicialMock: Billetera = {
@@ -173,6 +174,84 @@ export const acreditarCargaCriptoMock = (carga: CargaCripto, hash: string): Movi
   return movimiento;
 };
 
+/** HU-610: el contrato PasarelaRetiros y los retiros a la wallet pedidos en la sesión de prueba. */
+export const CONTRATO_RETIROS = '0x00000000000000000000000000000000000Ca5A5';
+const FIRMA_DE_PRUEBA = `0x${'5a'.repeat(65)}` as const;
+
+let retirosCripto = new Map<string, RetiroCripto>();
+
+/** Descuenta el saldo como el back: un RETIRO PENDIENTE y el permiso firmado, que vence en una hora. */
+export const solicitarRetiroCriptoMock = (monto: number, destino: string): RetiroCripto => {
+  const numero = (retirosCripto.size + 1).toString(16).padStart(64, 'f');
+  const vence = Math.floor(Date.now() / 1000) + 3600;
+  const retiro: RetiroCripto = {
+    referencia: `0x${numero}`,
+    contrato: CONTRATO_RETIROS,
+    chainId: 84532,
+    destino: destino.toLowerCase() as `0x${string}`,
+    montoPesos: monto,
+    montoWei: (BigInt(Math.round(monto * 100)) * WEI_POR_CENTAVO).toString(),
+    vence,
+    venceEn: new Date(vence * 1000).toISOString(),
+    firma: FIRMA_DE_PRUEBA,
+    estado: 'PENDIENTE',
+    hash: null,
+    enlaceExplorador: null,
+  };
+  retirosCripto.set(retiro.referencia, retiro);
+  const nuevoSaldo = billeteraEstado.saldoDisponible - monto;
+  billeteraEstado = { ...billeteraEstado, saldoDisponible: nuevoSaldo };
+  movimientosEstado = [
+    {
+      id: Date.now(),
+      tipo: 'RETIRO',
+      monto,
+      moneda: billeteraEstado.moneda,
+      saldoResultante: nuevoSaldo,
+      estado: 'PENDIENTE',
+      referenciaExterna: `retiro-cripto-${retiro.referencia}`,
+      descripcion: `Retiro a la wallet ${retiro.destino.slice(0, 6)}…${retiro.destino.slice(-4)}`,
+      torneo: null,
+      rifa: null,
+      creadoEn: new Date().toISOString(),
+    },
+    ...movimientosEstado,
+  ];
+  return retiro;
+};
+
+export const agregarRetiroCriptoMock = (retiro: RetiroCripto) => {
+  retirosCripto.set(retiro.referencia, retiro);
+};
+
+export const getRetiroCriptoMock = (referencia: string): RetiroCripto | undefined =>
+  retirosCripto.get(referencia);
+
+export const getRetirosCriptoPendientesMock = (): RetiroCripto[] =>
+  [...retirosCripto.values()].filter((r) => r.estado === 'PENDIENTE').reverse();
+
+/** Confirma el cobro como el back: el retiro COBRADO y su movimiento CONFIRMADO con el hash. */
+export const confirmarRetiroCriptoMock = (retiro: RetiroCripto, hash: string): RetiroCripto => {
+  const cobrado: RetiroCripto = {
+    ...retiro,
+    estado: 'COBRADO',
+    hash,
+    enlaceExplorador: `https://sepolia.basescan.org/tx/${hash}`,
+  };
+  retirosCripto.set(retiro.referencia, cobrado);
+  movimientosEstado = movimientosEstado.map((m) =>
+    m.referenciaExterna === `retiro-cripto-${retiro.referencia}`
+      ? {
+          ...m,
+          estado: 'CONFIRMADO',
+          referenciaExterna: hash,
+          enlaceExplorador: cobrado.enlaceExplorador,
+        }
+      : m
+  );
+  return cobrado;
+};
+
 let cuentasBancariasEstado: CuentaBancaria[] = [...cuentasBancariasInicialesMock];
 let limitesRetiroEstado: LimitesRetiro = { ...limitesRetiroInicialMock };
 
@@ -190,6 +269,7 @@ export const resetBilleteraMock = () => {
   billeteraEstado = { ...billeteraInicialMock };
   movimientosEstado = [...movimientosInicialesMock];
   cargasCripto = new Map();
+  retirosCripto = new Map();
   cuentasBancariasEstado = [...cuentasBancariasInicialesMock];
   limitesRetiroEstado = { ...limitesRetiroInicialMock };
 };
