@@ -148,6 +148,7 @@ export const TorneoFilters: React.FC<TorneoFiltersProps> = ({
           <select
             id="filtro-estado"
             className="torneo-status-select"
+            aria-label="Estado del torneo"
             value={estado}
             onChange={(e) => onEstadoChange(e.target.value as EstadoTorneo | '')}
           >
