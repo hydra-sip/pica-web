@@ -74,7 +74,7 @@ describe('sesión compartida entre pestañas (CE4-6)', () => {
     await authApi.login('usuario', 'user123');
     renderApp();
     await screen.findByText(/^Sesión de /);
-    expect(localStorage.getItem(SESION_USUARIO_KEY)).not.toBeNull();
+    expect(localStorage.getItem(SESION_USUARIO_KEY)).toBe('2');
 
     server.use(
       http.get(`${API_URL}/me`, () =>

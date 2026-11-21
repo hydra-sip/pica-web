@@ -135,6 +135,6 @@ describe('el marcador de un partido de grupos (CR-02-7)', () => {
   });
 
   it('en la llave el empate sigue pidiendo penales', () => {
-    expect(erroresDelMarcador(empate).penalesLocal).toBeDefined();
+    expect(erroresDelMarcador(empate).penalesLocal).toBe('Con empate, se define por penales.');
   });
 });
