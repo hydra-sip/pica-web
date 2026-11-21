@@ -224,9 +224,9 @@ describe('paso 1: equipo y nómina (alta)', () => {
     const reglamento = await screen.findByRole('region', { name: 'Reglamento del torneo' });
     expect(reglamento.textContent).toBe(REGLAMENTO_TEXTO);
     const casilla = screen.getByLabelText('Acepto el Reglamento y Código de Conducta');
-    expect(
-      reglamento.compareDocumentPosition(casilla) & Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy();
+    expect(reglamento.compareDocumentPosition(casilla) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING
+    );
   });
 
   it('sin el texto del reglamento no muestra un recuadro vacío (PICA-450)', async () => {
@@ -287,7 +287,7 @@ describe('paso 1: equipo y nómina (alta)', () => {
       'joaco_g',
       'salva_b',
     ]);
-    expect(inscripcion.reglamentoAceptadoEn).toBeTruthy();
+    expect(inscripcion.reglamentoAceptadoEn).toMatch(/^\d{4}-\d{2}-\d{2}T/);
   });
 
   it('"Guardar como borrador y salir" guarda sin confirmar y vuelve a la ficha con el aviso, sin pedir el reglamento', async () => {

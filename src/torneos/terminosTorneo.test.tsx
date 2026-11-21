@@ -90,9 +90,9 @@ describe('PICA-449: Términos de custodia al publicar el torneo', () => {
       expect(terminos).toHaveTextContent(seccion.titulo);
     }
     // el recuadro va arriba de la casilla
-    expect(
-      terminos.compareDocumentPosition(casilla) & Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy();
+    expect(terminos.compareDocumentPosition(casilla) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING
+    );
     expect(screen.getByRole('button', { name: /Publicar/ })).toBeInTheDocument();
   });
 });

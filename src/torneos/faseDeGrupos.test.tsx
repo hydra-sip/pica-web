@@ -49,8 +49,15 @@ describe('reglas de la fase de grupos en el asistente (CR-02-7)', () => {
   });
 
   it('empatar da menos que ganar', () => {
-    expect(validarBorrador(conGrupos({ puntosEmpate: '3' }), limites).puntosEmpate).toBeDefined();
-    expect(validarBorrador(conGrupos({ tamanioGrupo: '9' }), limites).tamanioGrupo).toBeDefined();
+    expect(validarBorrador(conGrupos({ puntosEmpate: '3' }), limites).puntosEmpate).toBe(
+      'Tiene que ser menos que por ganar.'
+    );
+  });
+
+  it('los grupos son de 3 a 8', () => {
+    expect(validarBorrador(conGrupos({ tamanioGrupo: '9' }), limites).tamanioGrupo).toBe(
+      'Tiene que ser entre 3 y 8.'
+    );
   });
 
   it('manda las reglas solo con grupos', () => {
