@@ -1,4 +1,4 @@
-# Lint, tests y build en cada PR y en cada push a dev/main.
+# Lint, tests y build en cada PR y en cada push a dev/main, y en paralelo los E2E de Playwright contra el back de dev.
 # Al mergear a dev, además publica la imagen en GHCR y actualiza la web de staging
 # (los pasos de la instancia están en pica-back/infra/README.md).
 name: CI
@@ -27,6 +27,64 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+
+  # E2E de Playwright (PICA-439): el front sin mocks contra la imagen del back de dev con el seed (e2e/docker-compose.yml).
+  # Corre en paralelo con verify, así que no alarga el CI; el reporte y las trazas suben solo si falla.
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      # Arranca primero: mientras baja la imagen y migra la base, se instala el resto
+      - name: Levantar el back
+        run: docker compose -f e2e/docker-compose.yml up -d
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Versión de Playwright
+        id: playwright
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Caché de los navegadores
+        id: navegadores
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+
+      - name: Instalar Chromium
+        if: steps.navegadores.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Dependencias de Chromium
+        if: steps.navegadores.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - name: Esperar al back
+        run: docker compose -f e2e/docker-compose.yml up -d --wait
+
+      - name: Correr los E2E
+        run: npm run e2e
+
+      - name: Log del back
+        if: failure()
+        run: mkdir -p test-results && docker compose -f e2e/docker-compose.yml logs api > test-results/api.log 2>&1
+
+      - name: Guardar el reporte
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
 
   # En los PR solo comprueba que el Dockerfile construye; en dev la publica
   imagen:
