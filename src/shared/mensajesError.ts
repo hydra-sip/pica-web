@@ -147,6 +147,12 @@ const POR_CODIGO: Record<string, string> = {
   CUENTA_NO_VALIDADA: 'Solo se puede retirar a una cuenta validada.',
   CUENTA_BANCARIA_NO_ENCONTRADA: 'La cuenta bancaria no existe o no te pertenece.',
   RETIRO_FUERA_DE_TOPES: 'El monto debe estar dentro de los límites de retiro permitidos.',
+  // HU-610: retiro a la wallet
+  RETIROS_CRIPTO_NO_DISPONIBLES: 'Los retiros a la wallet no están disponibles en este momento.',
+  TRANSACCION_SIN_RETIRO: 'Esa transacción no cobró este retiro.',
+  RETIRO_NO_ENCONTRADO: 'El retiro no existe o no es tuyo.',
+  RETIRO_YA_COBRADO: 'El retiro ya se cobró con otra transacción.',
+  RETIRO_VENCIDO: 'El permiso venció sin cobrarse: el saldo volvió a tu billetera.',
   DOCUMENTO_NO_CARGADO:
     'Debés tener tu documento registrado en tu perfil para gestionar cuentas y retiros.',
   // HU-605: cancelación de torneos y revisión de soporte
