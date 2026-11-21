@@ -70,6 +70,19 @@ Abre tu navegador en `http://localhost:5173`.
 
 ---
 
+## Testing
+
+Dos niveles en este repo, y la estrategia completa de los tres repos en
+[pica-back/docs/testing.md](https://github.com/hydra-sip/pica-back/blob/dev/docs/testing.md):
+
+| Nivel | Herramienta | Qué prueba | Cómo se corre | En el CI |
+|---|---|---|---|---|
+| Componentes y páginas | Vitest + Testing Library + MSW | cada pantalla con la ruta real y la API de los handlers de MSW (`src/**/*.test.tsx`) | `npm test` | job `verify`, con el lint y el build |
+| E2E | Playwright | los flujos críticos con el front compilado contra el back real (`e2e/`) | `npm run e2e:back` y `npm run e2e` | job `e2e`, en paralelo |
+
+Los tests buscan por rol y texto accesible (`getByRole`, `getByLabel`), como lo usa una persona, y comparan con el
+valor exacto que se espera: nada de `toBeTruthy()` para un texto o un monto.
+
 ## Pruebas de punta a punta (Playwright)
 
 Los E2E de `e2e/` prueban el sistema levantado: el front sin mocks contra el back real. Son pocos y solo de los
