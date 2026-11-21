@@ -73,6 +73,26 @@ export interface CargaCripto {
   montoPesos: number;
 }
 
+/**
+ * HU-610: un retiro a la wallet con el permiso firmado por el back, para cobrarlo con
+ * `cobrar(referencia, montoWei, vence, firma)` en PasarelaRetiros desde la wallet `destino`. `montoWei` viene como
+ * texto (se usa como `bigint`) y `vence` en segundos, como lo compara el contrato.
+ */
+export interface RetiroCripto {
+  referencia: `0x${string}`;
+  contrato: `0x${string}`;
+  chainId: number;
+  destino: `0x${string}`;
+  montoPesos: number;
+  montoWei: string;
+  vence: number;
+  venceEn: string;
+  firma: `0x${string}`;
+  estado: 'PENDIENTE' | 'COBRADO' | 'DEVUELTO';
+  hash?: string | null;
+  enlaceExplorador?: string | null;
+}
+
 export type PaginaMovimientoBilletera = PageResponse<MovimientoBilletera>;
 
 /**
@@ -202,6 +222,23 @@ export const billeteraApi = {
    */
   listarCuentas: async (): Promise<CuentaBancaria[]> => {
     return httpClient.get<CuentaBancaria[]>('/billetera/cuentas');
+  },
+
+  /** HU-610: descuenta el saldo y devuelve el permiso firmado para cobrar el retiro en la wallet `destino`. */
+  solicitarRetiroCripto: async (monto: number, destino: string): Promise<RetiroCripto> => {
+    return httpClient.post<RetiroCripto>('/billetera/retiros/cripto', { monto, destino });
+  },
+
+  /** HU-610: los retiros a la wallet que todavía se pueden cobrar, del más nuevo al más viejo. */
+  retirosCriptoPendientes: async (): Promise<RetiroCripto[]> => {
+    return httpClient.get<RetiroCripto[]>('/billetera/retiros/cripto');
+  },
+
+  /** HU-610: el back lee el cobro en la cadena y confirma el retiro. */
+  confirmarRetiroCripto: async (referencia: string, hash: string): Promise<RetiroCripto> => {
+    return httpClient.post<RetiroCripto>(`/billetera/retiros/cripto/${referencia}/confirmar`, {
+      hash,
+    });
   },
 
   /**

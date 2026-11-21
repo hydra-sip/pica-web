@@ -1,6 +1,10 @@
 import { http, HttpResponse } from 'msw';
 import {
   acreditarCargaCriptoMock,
+  confirmarRetiroCriptoMock,
+  getRetiroCriptoMock,
+  getRetirosCriptoPendientesMock,
+  solicitarRetiroCriptoMock,
   cargarSaldoMock,
   getCargaCriptoMock,
   iniciarCargaCriptoMock,
@@ -353,6 +357,53 @@ export const billeteraHandlers = [
     setCuentasBancariasMock(cuentas.filter((c) => c.id !== id));
     return new HttpResponse(null, { status: 204 });
   }),
+
+  // POST /billetera/retiros/cripto (HU-610): mismos topes y saldo que el retiro a una cuenta
+  http.post(`${API_URL}/billetera/retiros/cripto`, async ({ request }) => {
+    const { monto, destino } = (await request.json()) as { monto: number; destino: string };
+    const problema = (status: number, codigo: string, detail: string) =>
+      HttpResponse.json({ status, codigo, detail }, { status });
+    if (getBilleteraMock().estado === 'BLOQUEADA') {
+      return problema(403, 'BILLETERA_BLOQUEADA', 'Tu billetera se encuentra bloqueada.');
+    }
+    const limites = getLimitesRetiroMock();
+    if (monto < limites.minimo || monto > limites.maximo) {
+      return problema(
+        400,
+        'RETIRO_FUERA_DE_TOPES',
+        `El monto a retirar debe estar entre $${limites.minimo} y $${limites.maximo}`
+      );
+    }
+    if (monto > getBilleteraMock().saldoDisponible) {
+      return problema(409, 'SALDO_INSUFICIENTE', 'El saldo disponible no alcanza para el retiro.');
+    }
+    return HttpResponse.json(solicitarRetiroCriptoMock(monto, destino), { status: 201 });
+  }),
+
+  // GET /billetera/retiros/cripto (HU-610): los que todavía se pueden cobrar
+  http.get(`${API_URL}/billetera/retiros/cripto`, () =>
+    HttpResponse.json(getRetirosCriptoPendientesMock())
+  ),
+
+  // POST /billetera/retiros/cripto/{referencia}/confirmar: confirma con el hash, sin mirar la red
+  http.post(
+    `${API_URL}/billetera/retiros/cripto/:referencia/confirmar`,
+    async ({ params, request }) => {
+      const retiro = getRetiroCriptoMock(params.referencia as string);
+      if (!retiro) {
+        return HttpResponse.json(
+          {
+            status: 404,
+            codigo: 'RETIRO_NO_ENCONTRADO',
+            detail: 'No hay un retiro con esa referencia',
+          },
+          { status: 404 }
+        );
+      }
+      const { hash } = (await request.json()) as { hash: string };
+      return HttpResponse.json(confirmarRetiroCriptoMock(retiro, hash));
+    }
+  ),
 
   // GET /billetera/retiros/limites (HU-607)
   http.get(`${API_URL}/billetera/retiros/limites`, () => {
