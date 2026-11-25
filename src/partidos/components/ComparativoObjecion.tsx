@@ -1,6 +1,6 @@
 import React from 'react';
 import { EventoPartido, ObjecionComparada, VersionResultado } from '../../api/partidoApi';
-import { formatFecha } from '../../torneos/utils/formatters';
+import { fechaHora } from '../../shared/formato';
 import { marcadorDeVersion } from '../formato';
 import { EvidenciasPartido } from './EvidenciasPartido';
 
@@ -23,7 +23,7 @@ const NOMBRA_AL_EQUIPO: EventoPartido['evento'][] = ['WALKOVER', 'PASE_DIRECTO']
 
 const accion = (e: EventoPartido): string => {
   if (e.evento === 'PROGRAMADO' && e.fechaProgramada) {
-    return `programó el partido para el ${formatFecha(e.fechaProgramada)}`;
+    return `programó el partido para el ${fechaHora(e.fechaProgramada)}`;
   }
   // en WALKOVER, `equipo` es el ausente; en PASE_DIRECTO, el que pasa
   if (e.evento === 'WALKOVER' && e.equipo) return `${ACCION.WALKOVER} de ${e.equipo}`;
@@ -48,7 +48,7 @@ const Version: React.FC<{
   <section className="comparativo-version">
     <p className="partido-rotulo">{titulo}</p>
     <strong className="comparativo-marcador">{marcadorDeVersion(version)}</strong>
-    <p className="partido-ayuda">{formatFecha(version.fecha)}</p>
+    <p className="partido-ayuda">{fechaHora(version.fecha)}</p>
     <EvidenciasPartido
       partidoId={partidoId}
       evidencias={version.evidencias ?? []}
@@ -91,7 +91,7 @@ export const ComparativoObjecion: React.FC<ComparativoObjecionProps> = ({
         <ol>
           {comparada.historial.map((e, i) => (
             <li key={i}>
-              <span className="partido-ayuda">{formatFecha(e.fecha)}</span>
+              <span className="partido-ayuda">{fechaHora(e.fecha)}</span>
               <span>
                 {e.usuario ?? 'El sistema'}
                 {e.equipo &&

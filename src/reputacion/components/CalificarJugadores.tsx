@@ -4,7 +4,7 @@ import {
   JugadorCalificable,
   calificacionApi,
 } from '../../api/calificacionApi';
-import { formatFecha } from '../../torneos/utils/formatters';
+import { fechaHora } from '../../shared/formato';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { Badge, Button, Card, Field, Textarea } from '../../shared/ui';
 import { nombreCompleto } from '../formato';
@@ -87,7 +87,7 @@ export const CalificarJugadores: React.FC<CalificarJugadoresProps> = ({ torneoId
                 <div className="reputacion-calificacion-hecha">
                   <span className="torneos-celda-secundaria">
                     <Estrellas puntaje={j.calificacion.puntaje} /> · Calificado el{' '}
-                    {formatFecha(j.calificacion.creadaEn)}
+                    {fechaHora(j.calificacion.creadaEn)}
                   </span>
                   {j.calificacion.comentario && <p>«{j.calificacion.comentario}»</p>}
                 </div>

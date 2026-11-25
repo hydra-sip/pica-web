@@ -13,7 +13,7 @@ import { TuProximoCruce } from '../../partidos/components/TuProximoCruce';
 import { TorneoDetalleSkeleton } from '../components/TorneoSkeleton';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { fecha, fechaHora, pesos, valorInscripcion } from '../../shared/formato';
-import { formatFormatoTorneo, formatModalidad, formatTipoParticipante } from '../utils/formatters';
+import { formatFormatoTorneo, formatModalidad, formatTipoParticipante } from '../formato';
 import {
   IconoTrofeo,
   IconoAlerta,

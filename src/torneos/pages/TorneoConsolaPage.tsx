@@ -30,7 +30,7 @@ import { RepartoDeLaLiquidacion } from '../../billetera/components/RepartoDeLaLi
 import { PanelFinancieroDelTorneo } from '../../billetera/components/PanelFinancieroDelTorneo';
 import { LibroDeIngresos } from '../../billetera/components/LibroDeIngresos';
 import { abreviarHash, ESTADO_TORNEO_UI, participantes, TONO_ESTADO_TORNEO } from '../formato';
-import { formatFecha } from '../utils/formatters';
+import { fechaHora } from '../../shared/formato';
 import '../torneos.css';
 
 const conResultados = (bracket: BracketTorneo): boolean =>
@@ -346,7 +346,7 @@ export const TorneoConsolaPage: React.FC = () => {
                   {abierta
                     ? 'La inscripción sigue abierta'
                     : torneo.inscripcionCerradaEn
-                      ? `Inscripción cerrada el ${formatFecha(torneo.inscripcionCerradaEn)}`
+                      ? `Inscripción cerrada el ${fechaHora(torneo.inscripcionCerradaEn)}`
                       : 'Inscripción cerrada'}
                 </strong>
                 <p className="torneos-subtitulo">

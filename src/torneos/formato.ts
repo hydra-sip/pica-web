@@ -35,3 +35,46 @@ export const TONO_ESTADO_TORNEO: Record<EstadoTorneo, BadgeTone> = {
 /** "equipos" o "jugadores", según quién se inscribe; sin definir, "participantes". */
 export const participantes = (tipo: TipoParticipante | '' | null): string =>
   tipo === 'EQUIPO' ? 'equipos' : tipo === 'INDIVIDUAL' ? 'jugadores' : 'participantes';
+
+/** Etiqueta del formato del torneo: `ELIMINACION_DIRECTA` → `Eliminación Directa`. */
+export const formatFormatoTorneo = (formato: string): string => {
+  switch (formato) {
+    case 'ELIMINACION_DIRECTA':
+      return 'Eliminación Directa';
+    case 'FASE_GRUPOS_ELIMINACION':
+    case 'GRUPOS_Y_ELIMINACION':
+      return 'Fase de Grupos y Eliminación';
+    case 'TODOS_CONTRA_TODOS':
+      return 'Todos contra Todos';
+    case 'SUIZO':
+      return 'Sistema Suizo';
+    default:
+      return formato
+        .replace(/_/g, ' ')
+        .toLowerCase()
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+};
+
+/** Etiqueta de la modalidad: `PRESENCIAL` → `Presencial`. */
+export const formatModalidad = (modalidad: string): string => {
+  switch (modalidad) {
+    case 'PRESENCIAL':
+      return 'Presencial';
+    case 'ONLINE':
+    case 'VIRTUAL':
+      return 'Online';
+    case 'HIBRIDA':
+      return 'Híbrida';
+    default:
+      return modalidad;
+  }
+};
+
+/** "Individual" o "Equipos (n jugadores)". */
+export const formatTipoParticipante = (tipo: string, tamanioEquipo?: number | null): string => {
+  if (tipo === 'EQUIPO') {
+    return tamanioEquipo ? `Equipos (${tamanioEquipo} jugadores)` : 'Equipos';
+  }
+  return 'Individual';
+};

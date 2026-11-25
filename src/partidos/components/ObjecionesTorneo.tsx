@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ObjecionResumen, partidoApi } from '../../api/partidoApi';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { Badge } from '../../shared/ui';
-import { formatFecha } from '../../torneos/utils/formatters';
+import { fechaHora } from '../../shared/formato';
 import { ESTADO_OBJECION_UI, marcadorDeVersion } from '../formato';
 import '../partidos.css';
 
@@ -68,7 +68,7 @@ export const ObjecionesTorneo: React.FC<ObjecionesTorneoProps> = ({ torneoId }) 
             Motivo: {o.motivo}
           </p>
           <div className="objeciones-item-pie">
-            <span className="partido-ayuda">Objetado el {formatFecha(o.creadaEn)}</span>
+            <span className="partido-ayuda">Objetado el {fechaHora(o.creadaEn)}</span>
             <Link to={`/partidos/${o.partidoId}`}>{o.decision ? 'Ver' : 'Ver y resolver'}</Link>
           </div>
         </li>

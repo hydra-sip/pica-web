@@ -20,7 +20,7 @@ import { ObjetarResultado } from '../components/ObjetarResultado';
 import { ResolverObjecion } from '../components/ResolverObjecion';
 import { SalaCheckin } from '../components/SalaCheckin';
 import { abreviarHash } from '../../torneos/formato';
-import { formatFecha } from '../../torneos/utils/formatters';
+import { fechaHora } from '../../shared/formato';
 import {
   CERRADOS,
   CierrePorAusencia,
@@ -381,7 +381,7 @@ export const PartidoPage: React.FC = () => {
                         : 'se confirmó el resultado cargado'}
                       , por {partido.objecion.resueltaPor}
                       {partido.objecion.resueltaEn &&
-                        ` el ${formatFecha(partido.objecion.resueltaEn)}`}
+                        ` el ${fechaHora(partido.objecion.resueltaEn)}`}
                       .
                     </p>
                     <p>Justificación: {partido.objecion.justificacion}</p>
