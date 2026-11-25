@@ -9,7 +9,7 @@ import { SancionarJugador } from '../../reputacion/components/SancionarJugador';
 import { nombreCompleto } from '../../reputacion/formato';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { Badge, Button, Card, Table } from '../../shared/ui';
-import { formatFecha } from '../utils/formatters';
+import { fechaHora } from '../../shared/formato';
 
 const TAMANIO_PAGINA = 20;
 
@@ -164,7 +164,7 @@ export const InscripcionesDelTorneo: React.FC<InscripcionesDelTorneoProps> = ({
                         {ESTADO_INSCRIPCION[i.estado].texto}
                       </Badge>
                     </td>
-                    <td>{formatFecha(i.creadoEn)}</td>
+                    <td>{fechaHora(i.creadoEn)}</td>
                     <td>
                       <IndiceFairPlay valor={i.fairPlay} />
                     </td>
