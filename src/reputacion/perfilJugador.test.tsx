@@ -294,3 +294,26 @@ describe('HU-804: las rifas ganadas y las insignias en el perfil', () => {
     expect(screen.queryByRole('region', { name: 'Insignias' })).not.toBeInTheDocument();
   });
 });
+
+describe('HU-801: el orden del perfil, según el wireframe', () => {
+  it('después del encabezado van el historial, las insignias, los torneos y las rifas', async () => {
+    await renderRuta('/jugadores/2');
+
+    await screen.findByRole('heading', { level: 1, name: 'Juan Pérez' });
+    expect(screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)).toEqual([
+      'Historial competitivo',
+      'Insignias',
+      'Últimos torneos',
+      'Rifas ganadas',
+    ]);
+  });
+
+  it('cada insignia muestra su descripción y su fecha debajo del nombre', async () => {
+    await renderRuta('/jugadores/2');
+
+    const seccion = await screen.findByRole('region', { name: 'Insignias' });
+    expect(
+      within(seccion).getByText('Terminó su primer torneo. Otorgada el 30/10/2026.')
+    ).toBeVisible();
+  });
+});

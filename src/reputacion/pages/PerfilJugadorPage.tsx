@@ -149,15 +149,48 @@ export const PerfilJugadorPage: React.FC = () => {
         </section>
       </section>
 
-      <section className="organizador-contadores" aria-label="Historial del jugador">
-        {contadores.map(({ etiqueta, valor }) => (
-          <article key={etiqueta} className="pica-card hydra-card organizador-contador-card">
-            <span className="organizador-contador-label">{etiqueta}</span>
-            <strong className="organizador-contador-valor">{valor}</strong>
-          </article>
-        ))}
+      <section aria-label="Historial del jugador">
+        <h2 className="jugador-seccion-titulo">Historial competitivo</h2>
+        <div className="jugador-contadores">
+          {contadores.map(({ etiqueta, valor }) => (
+            <article key={etiqueta} className="pica-card hydra-card jugador-contador">
+              <strong className="jugador-contador-valor">{valor}</strong>
+              <span className="jugador-contador-label">{etiqueta}</span>
+            </article>
+          ))}
+        </div>
       </section>
 
+      {perfil.insignias.length > 0 && (
+        <section
+          className="pica-card hydra-card reputacion-tarjeta"
+          aria-labelledby="jugador-insignias"
+        >
+          <h2 id="jugador-insignias">Insignias</h2>
+          <ul className="reputacion-lista">
+            {perfil.insignias.map((i) => {
+              const ayuda = `${i.descripcion} Otorgada el ${fecha(i.otorgadaEn)}.`;
+              return (
+                <li
+                  key={i.codigo}
+                  className="jugador-insignia"
+                  aria-describedby={`insignia-${i.codigo}`}
+                >
+                  <span className="jugador-insignia-icono" aria-hidden="true">
+                    {EMOJI_INSIGNIA[i.icono] ?? EMOJI_INSIGNIA_DESCONOCIDA}
+                  </span>
+                  <span>
+                    <strong className="jugador-insignia-nombre">{i.nombre}</strong>
+                    <span id={`insignia-${i.codigo}`} className="reputacion-ayuda">
+                      {ayuda}
+                    </span>
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
       <section
         className="pica-card hydra-card reputacion-tarjeta"
         aria-labelledby="jugador-torneos"
@@ -219,36 +252,6 @@ export const PerfilJugadorPage: React.FC = () => {
                 </span>
               </li>
             ))}
-          </ul>
-        </section>
-      )}
-
-      {perfil.insignias.length > 0 && (
-        <section
-          className="pica-card hydra-card reputacion-tarjeta"
-          aria-labelledby="jugador-insignias"
-        >
-          <h2 id="jugador-insignias">Insignias</h2>
-          <ul className="jugador-insignias">
-            {perfil.insignias.map((i) => {
-              const ayuda = `${i.descripcion} Otorgada el ${fecha(i.otorgadaEn)}.`;
-              return (
-                <li
-                  key={i.codigo}
-                  className="jugador-insignia"
-                  title={ayuda}
-                  aria-describedby={`insignia-${i.codigo}`}
-                >
-                  <span className="jugador-insignia-icono" aria-hidden="true">
-                    {EMOJI_INSIGNIA[i.icono] ?? EMOJI_INSIGNIA_DESCONOCIDA}
-                  </span>
-                  {i.nombre}
-                  <span id={`insignia-${i.codigo}`} hidden>
-                    {ayuda}
-                  </span>
-                </li>
-              );
-            })}
           </ul>
         </section>
       )}
