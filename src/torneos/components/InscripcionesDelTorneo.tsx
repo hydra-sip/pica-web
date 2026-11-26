@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { SancionDetalle } from '../../api/sancionApi';
 import { EstadoInscripcion, InscripcionDelTorneo, torneoApi } from '../../api/torneoApi';
 import { PageResponse } from '../../api/usuarioApi';
@@ -21,14 +22,33 @@ const ESTADOS: Exclude<EstadoInscripcion, 'BORRADOR'>[] = [
   'REINTEGRADA',
 ];
 
-const participante = (i: InscripcionDelTorneo): { nombre: string; detalle: string } => {
+const perfil = (usuarioId: number) => `/jugadores/${usuarioId}`;
+
+/**
+ * Quién se inscribió. HU-801: el inscripto individual y el capitán de un equipo enlazan a su perfil público; el nombre
+ * del equipo no, porque no tiene uno.
+ */
+const participante = (
+  i: InscripcionDelTorneo
+): { nombre: string; titulo: React.ReactNode; detalle: React.ReactNode } => {
   if (i.equipo && i.capitan) {
     const jugadores = i.jugadores === 1 ? '1 jugador' : `${i.jugadores ?? 0} jugadores`;
-    return { nombre: i.equipo.nombre, detalle: `Capitán @${i.capitan.username} · ${jugadores}` };
+    return {
+      nombre: i.equipo.nombre,
+      titulo: i.equipo.nombre,
+      detalle: (
+        <>
+          Capitán <Link to={perfil(i.capitan.id)}>@{i.capitan.username}</Link> · {jugadores}
+        </>
+      ),
+    };
   }
+  if (!i.usuario) return { nombre: '—', titulo: '—', detalle: null };
+  const nombre = `${i.usuario.nombres} ${i.usuario.apellidos}`;
   return {
-    nombre: i.usuario ? `${i.usuario.nombres} ${i.usuario.apellidos}` : '—',
-    detalle: i.usuario ? `@${i.usuario.username}` : '',
+    nombre,
+    titulo: <Link to={perfil(i.usuario.id)}>{nombre}</Link>,
+    detalle: `@${i.usuario.username}`,
   };
 };
 
@@ -151,11 +171,11 @@ export const InscripcionesDelTorneo: React.FC<InscripcionesDelTorneoProps> = ({
             </thead>
             <tbody>
               {datos.content.map((i) => {
-                const { nombre, detalle } = participante(i);
+                const { nombre, titulo, detalle } = participante(i);
                 return (
                   <tr key={i.id}>
                     <td>
-                      <span className="torneos-nombre-fila">{nombre}</span>
+                      <span className="torneos-nombre-fila">{titulo}</span>
                       {i.noConfiable && <Badge tone="peligro">No confiable</Badge>}
                       {detalle && <span className="torneos-celda-secundaria">{detalle}</span>}
                     </td>

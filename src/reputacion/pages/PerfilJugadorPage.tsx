@@ -1,0 +1,147 @@
+import React, { useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { jugadorApi, PerfilJugador } from '../../api/jugadorApi';
+import { fecha } from '../../shared/formato';
+import { codigoDeError, mensajeDeError } from '../../shared/mensajesError';
+import { IndiceFairPlay } from '../components/IndiceFairPlay';
+import '../reputacion.css';
+
+/** `Juan Pérez` → `JP`: la primera letra de las dos primeras palabras. */
+const iniciales = (nombre: string): string =>
+  nombre
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((palabra) => palabra.charAt(0).toUpperCase())
+    .join('');
+
+type Estado =
+  | { tipo: 'cargando' }
+  | { tipo: 'inexistente' }
+  | { tipo: 'error'; mensaje: string }
+  | { tipo: 'listo'; perfil: PerfilJugador };
+
+/** Un id que no es un entero positivo no puede ser de nadie: no hace falta preguntarle al back. */
+const idValido = (id: number) => Number.isInteger(id) && id > 0;
+
+/**
+ * HU-801 (T801-3): el perfil público de un jugador (/jugadores/:id), sin sesión. Muestra su identidad, los contadores
+ * de su historial y su índice de fair play. Un jugador inexistente, o un id que no es un número, tiene su propio estado
+ * en lugar de la página 404 genérica.
+ */
+export const PerfilJugadorPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const jugadorId = Number(id);
+  const [estado, setEstado] = useState<Estado>({ tipo: 'cargando' });
+
+  useEffect(() => {
+    if (!idValido(jugadorId)) {
+      setEstado({ tipo: 'inexistente' });
+      return;
+    }
+    let vigente = true;
+    setEstado({ tipo: 'cargando' });
+    jugadorApi
+      .verPerfil(jugadorId)
+      .then((perfil) => vigente && setEstado({ tipo: 'listo', perfil }))
+      .catch(
+        (err) =>
+          vigente &&
+          setEstado(
+            codigoDeError(err) === 'USUARIO_NO_ENCONTRADO'
+              ? { tipo: 'inexistente' }
+              : {
+                  tipo: 'error',
+                  mensaje: mensajeDeError(err, 'No se pudo cargar el perfil del jugador.'),
+                }
+          )
+      );
+    return () => {
+      vigente = false;
+    };
+  }, [jugadorId]);
+
+  if (estado.tipo === 'cargando') {
+    return (
+      <div className="organizador-perfil-contenedor">
+        <p className="reputacion-ayuda" role="status">
+          Cargando el perfil del jugador...
+        </p>
+      </div>
+    );
+  }
+  if (estado.tipo === 'inexistente') {
+    return (
+      <div className="organizador-perfil-contenedor">
+        <section className="pica-card hydra-card reputacion-tarjeta">
+          <h1 className="organizador-nombre">Este jugador no existe</h1>
+          <p className="reputacion-ayuda">
+            Puede que el enlace esté mal escrito o que la cuenta ya no esté activa.
+          </p>
+          <p>
+            <Link to="/torneos">Ver los torneos</Link>
+          </p>
+        </section>
+      </div>
+    );
+  }
+  if (estado.tipo === 'error') {
+    return (
+      <div className="organizador-perfil-contenedor">
+        <div className="alerta alerta-peligro" role="alert">
+          {estado.mensaje}
+        </div>
+      </div>
+    );
+  }
+
+  const { perfil } = estado;
+
+  const contadores = [
+    { etiqueta: 'Torneos jugados', valor: perfil.historial.torneosJugados },
+    { etiqueta: 'Victorias', valor: perfil.historial.victorias },
+    { etiqueta: 'Derrotas', valor: perfil.historial.derrotas },
+    { etiqueta: 'Podios', valor: perfil.historial.podios },
+  ];
+
+  return (
+    <div className="organizador-perfil-contenedor">
+      <section className="pica-card hydra-card reputacion-tarjeta organizador-cabecera">
+        <div className="organizador-identidad">
+          <div className="organizador-avatar" aria-hidden="true">
+            {perfil.avatar ? (
+              <img src={perfil.avatar} alt="" className="organizador-avatar-img" />
+            ) : (
+              iniciales(perfil.nombreCompleto)
+            )}
+          </div>
+          <div>
+            <h1 className="organizador-nombre">{perfil.nombreCompleto}</h1>
+            <p className="organizador-username">@{perfil.username}</p>
+          </div>
+        </div>
+
+        <section className="organizador-indice-bloque" aria-labelledby="jugador-fair-play">
+          <span id="jugador-fair-play" className="organizador-indice-etiqueta">
+            Fair play
+          </span>
+          <IndiceFairPlay valor={perfil.fairPlay.valor} grande />
+          {perfil.fairPlay.actualizadoEn && (
+            <p className="reputacion-ayuda">
+              Actualizado el {fecha(perfil.fairPlay.actualizadoEn)}
+            </p>
+          )}
+        </section>
+      </section>
+
+      <section className="organizador-contadores" aria-label="Historial del jugador">
+        {contadores.map(({ etiqueta, valor }) => (
+          <article key={etiqueta} className="pica-card hydra-card organizador-contador-card">
+            <span className="organizador-contador-label">{etiqueta}</span>
+            <strong className="organizador-contador-valor">{valor}</strong>
+          </article>
+        ))}
+      </section>
+    </div>
+  );
+};
