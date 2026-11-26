@@ -210,3 +210,87 @@ describe('HU-801: los últimos torneos del jugador', () => {
     );
   });
 });
+
+describe('HU-804: las rifas ganadas y las insignias en el perfil', () => {
+  it('cada rifa ganada muestra el premio, el número y lleva a la rifa y al torneo', async () => {
+    await renderRuta('/jugadores/2', { usuario: 'anonimo' });
+
+    const seccion = await screen.findByRole('region', { name: 'Rifas ganadas' });
+    const [rifa] = within(seccion).getAllByRole('listitem');
+    expect(within(rifa).getByRole('link', { name: 'Rifa solidaria' })).toHaveAttribute(
+      'href',
+      '/rifas/5'
+    );
+    expect(rifa).toHaveTextContent('1.º premio · número 42');
+    expect(within(rifa).getByRole('link', { name: 'Apertura F5' })).toHaveAttribute(
+      'href',
+      '/torneos/apertura-f5'
+    );
+    expect(rifa).toHaveTextContent('21/11/2026');
+  });
+
+  it('una rifa sin número ganador ni ficha del torneo muestra solo el premio y el nombre', async () => {
+    server.use(
+      http.get(`${API_URL}/usuarios/2/perfil`, () =>
+        HttpResponse.json({
+          ...JUGADOR_COMPLETO,
+          rifasGanadas: [
+            {
+              ...JUGADOR_COMPLETO.rifasGanadas[0],
+              puesto: 2,
+              numeroGanador: null,
+              torneoSlug: null,
+            },
+          ],
+        })
+      )
+    );
+    await renderRuta('/jugadores/2');
+
+    const seccion = await screen.findByRole('region', { name: 'Rifas ganadas' });
+    expect(seccion).toHaveTextContent('2.º premio');
+    expect(seccion).not.toHaveTextContent('número');
+    expect(seccion).toHaveTextContent('Apertura F5 · 21/11/2026');
+    expect(within(seccion).queryByRole('link', { name: 'Apertura F5' })).not.toBeInTheDocument();
+  });
+
+  it('cada insignia muestra su ícono y su nombre, con la descripción y la fecha como ayuda', async () => {
+    server.use(
+      http.get(`${API_URL}/usuarios/2/perfil`, () =>
+        HttpResponse.json({
+          ...JUGADOR_COMPLETO,
+          insignias: [
+            JUGADOR_COMPLETO.insignias[0],
+            {
+              codigo: 'NUEVA',
+              nombre: 'Insignia nueva',
+              descripcion: 'Todavía sin ícono en el front.',
+              icono: 'clave-desconocida',
+              otorgadaEn: '2026-11-22T12:00:00Z',
+            },
+          ],
+        })
+      )
+    );
+    await renderRuta('/jugadores/2');
+
+    const seccion = await screen.findByRole('region', { name: 'Insignias' });
+    const [primera, nueva] = within(seccion).getAllByRole('listitem');
+    expect(primera).toHaveTextContent('🏆Primer torneo');
+    expect(primera).toHaveAccessibleDescription(
+      'Terminó su primer torneo. Otorgada el 30/10/2026.'
+    );
+    expect(nueva).toHaveTextContent('🏅Insignia nueva');
+    expect(nueva).toHaveAccessibleDescription(
+      'Todavía sin ícono en el front. Otorgada el 22/11/2026.'
+    );
+  });
+
+  it('un jugador sin rifas ni insignias no muestra esas secciones', async () => {
+    await renderRuta('/jugadores/30');
+
+    expect(await screen.findByRole('region', { name: 'Últimos torneos' })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Rifas ganadas' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Insignias' })).not.toBeInTheDocument();
+  });
+});

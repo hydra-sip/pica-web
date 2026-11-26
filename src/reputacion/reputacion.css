@@ -369,3 +369,28 @@
   flex-shrink: 0;
   font-weight: 700;
 }
+
+.jugador-insignias {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.jugador-insignia {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  padding: 0.4rem 0.9rem 0.4rem 0.6rem;
+  font-weight: 700;
+  cursor: help;
+}
+
+.jugador-insignia-icono {
+  font-size: 1.35rem;
+  line-height: 1;
+}

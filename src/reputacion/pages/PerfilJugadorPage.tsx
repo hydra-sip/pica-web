@@ -19,6 +19,16 @@ const iniciales = (nombre: string): string =>
 const posicion = (puesto: number | null): string =>
   puesto === null ? 'Fase de grupos' : `${puesto}.º puesto`;
 
+/** HU-804: `icono` es una clave y el front no tiene librería de íconos. */
+const EMOJI_INSIGNIA: Record<string, string> = {
+  'trofeo-inicio': '🏆',
+  corona: '👑',
+  medalla: '🥇',
+  'ticket-estrella': '🎟️',
+  'escudo-check': '🛡️',
+};
+const EMOJI_INSIGNIA_DESCONOCIDA = '🏅';
+
 type Estado =
   | { tipo: 'cargando' }
   | { tipo: 'inexistente' }
@@ -30,7 +40,8 @@ const idValido = (id: number) => Number.isInteger(id) && id > 0;
 
 /**
  * HU-801 (T801-3): el perfil público de un jugador (/jugadores/:id), sin sesión. Muestra su identidad, los contadores
- * de su historial, su índice de fair play y sus últimos torneos terminados. Un jugador inexistente, o un id que no es un número, tiene su propio estado
+ * de su historial, su índice de fair play, sus últimos torneos terminados y, si las tiene, las rifas que ganó y sus
+ * insignias (HU-804). Un jugador inexistente, o un id que no es un número, tiene su propio estado
  * en lugar de la página 404 genérica.
  */
 export const PerfilJugadorPage: React.FC = () => {
@@ -178,6 +189,69 @@ export const PerfilJugadorPage: React.FC = () => {
           </ul>
         )}
       </section>
+
+      {perfil.rifasGanadas.length > 0 && (
+        <section
+          className="pica-card hydra-card reputacion-tarjeta"
+          aria-labelledby="jugador-rifas"
+        >
+          <h2 id="jugador-rifas">Rifas ganadas</h2>
+          <ul className="reputacion-lista">
+            {perfil.rifasGanadas.map((r) => (
+              <li key={`${r.rifaId}-${r.puesto}`} className="jugador-torneo">
+                <div>
+                  <strong>
+                    <Link to={`/rifas/${r.rifaId}`}>{r.rifaTitulo}</Link>
+                  </strong>
+                  <span className="reputacion-ayuda jugador-torneo-detalle">
+                    {r.torneoSlug ? (
+                      <Link to={`/torneos/${r.torneoSlug}`}>{r.torneoNombre}</Link>
+                    ) : (
+                      r.torneoNombre
+                    )}
+                    {' · '}
+                    {fecha(r.fecha)}
+                  </span>
+                </div>
+                <span className="jugador-torneo-posicion">
+                  {r.puesto}.º premio
+                  {r.numeroGanador !== null && ` · número ${r.numeroGanador}`}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {perfil.insignias.length > 0 && (
+        <section
+          className="pica-card hydra-card reputacion-tarjeta"
+          aria-labelledby="jugador-insignias"
+        >
+          <h2 id="jugador-insignias">Insignias</h2>
+          <ul className="jugador-insignias">
+            {perfil.insignias.map((i) => {
+              const ayuda = `${i.descripcion} Otorgada el ${fecha(i.otorgadaEn)}.`;
+              return (
+                <li
+                  key={i.codigo}
+                  className="jugador-insignia"
+                  title={ayuda}
+                  aria-describedby={`insignia-${i.codigo}`}
+                >
+                  <span className="jugador-insignia-icono" aria-hidden="true">
+                    {EMOJI_INSIGNIA[i.icono] ?? EMOJI_INSIGNIA_DESCONOCIDA}
+                  </span>
+                  {i.nombre}
+                  <span id={`insignia-${i.codigo}`} hidden>
+                    {ayuda}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
     </div>
   );
 };
