@@ -15,6 +15,10 @@ const iniciales = (nombre: string): string =>
     .map((palabra) => palabra.charAt(0).toUpperCase())
     .join('');
 
+/** `1` → `1.º puesto`; null: quedó afuera en la fase de grupos. */
+const posicion = (puesto: number | null): string =>
+  puesto === null ? 'Fase de grupos' : `${puesto}.º puesto`;
+
 type Estado =
   | { tipo: 'cargando' }
   | { tipo: 'inexistente' }
@@ -26,7 +30,7 @@ const idValido = (id: number) => Number.isInteger(id) && id > 0;
 
 /**
  * HU-801 (T801-3): el perfil público de un jugador (/jugadores/:id), sin sesión. Muestra su identidad, los contadores
- * de su historial y su índice de fair play. Un jugador inexistente, o un id que no es un número, tiene su propio estado
+ * de su historial, su índice de fair play y sus últimos torneos terminados. Un jugador inexistente, o un id que no es un número, tiene su propio estado
  * en lugar de la página 404 genérica.
  */
 export const PerfilJugadorPage: React.FC = () => {
@@ -141,6 +145,38 @@ export const PerfilJugadorPage: React.FC = () => {
             <strong className="organizador-contador-valor">{valor}</strong>
           </article>
         ))}
+      </section>
+
+      <section
+        className="pica-card hydra-card reputacion-tarjeta"
+        aria-labelledby="jugador-torneos"
+      >
+        <h2 id="jugador-torneos">Últimos torneos</h2>
+        {perfil.ultimosTorneos.length === 0 ? (
+          <p className="reputacion-ayuda">Todavía no terminó ningún torneo.</p>
+        ) : (
+          <ul className="reputacion-lista">
+            {perfil.ultimosTorneos.map((t) => (
+              <li key={t.torneoId} className="jugador-torneo">
+                <div>
+                  <strong>
+                    {t.slug ? <Link to={`/torneos/${t.slug}`}>{t.nombre}</Link> : t.nombre}
+                  </strong>
+                  <span className="reputacion-ayuda jugador-torneo-detalle">
+                    {t.disciplina} · {fecha(t.fechaFin)}
+                    {t.equipo && (
+                      <>
+                        {' · con '}
+                        <em>{t.equipo}</em>
+                      </>
+                    )}
+                  </span>
+                </div>
+                <span className="jugador-torneo-posicion">{posicion(t.posicion)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </div>
   );

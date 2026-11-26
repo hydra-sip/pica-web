@@ -3,6 +3,7 @@ import { http, HttpResponse } from 'msw';
 import { describe, expect, it } from 'vitest';
 import { InscripcionDelTorneo } from '../api/torneoApi';
 import { prepararTorneoACancelar, TORNEO_A_CANCELAR } from '../mocks/cancelacionHandlers';
+import { JUGADOR_COMPLETO } from '../mocks/perfilJugadorHandlers';
 import { server } from '../mocks/server';
 import { renderRuta } from '../test/renderRuta';
 
@@ -163,5 +164,49 @@ describe('HU-801: se llega al perfil desde las inscripciones del organizador', (
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Juan Pérez' })
     ).toBeInTheDocument();
+  });
+});
+
+describe('HU-801: los últimos torneos del jugador', () => {
+  it('cada torneo muestra a dónde llegó, con qué equipo y lleva a su ficha', async () => {
+    await renderRuta('/jugadores/2', { usuario: 'anonimo' });
+
+    const seccion = await screen.findByRole('region', { name: 'Últimos torneos' });
+    const [apertura, padel] = within(seccion).getAllByRole('listitem');
+    expect(within(apertura).getByRole('link', { name: 'Apertura F5' })).toHaveAttribute(
+      'href',
+      '/torneos/apertura-f5'
+    );
+    expect(apertura).toHaveTextContent('Fútbol 5 · 20/11/2026');
+    expect(apertura).toHaveTextContent('1.º puesto');
+    expect(apertura).toHaveTextContent('con Los Rudos');
+
+    expect(padel).toHaveTextContent('Fase de grupos');
+    expect(padel).not.toHaveTextContent('puesto');
+    expect(padel).not.toHaveTextContent('con ');
+  });
+
+  it('un torneo sin ficha pública se muestra sin enlace', async () => {
+    server.use(
+      http.get(`${API_URL}/usuarios/2/perfil`, () =>
+        HttpResponse.json({
+          ...JUGADOR_COMPLETO,
+          ultimosTorneos: [{ ...JUGADOR_COMPLETO.ultimosTorneos[0], slug: null }],
+        })
+      )
+    );
+    await renderRuta('/jugadores/2');
+
+    const seccion = await screen.findByRole('region', { name: 'Últimos torneos' });
+    expect(within(seccion).getByText('Apertura F5')).toBeInTheDocument();
+    expect(within(seccion).queryByRole('link')).not.toBeInTheDocument();
+  });
+
+  it('un jugador que no terminó ninguno lo dice', async () => {
+    await renderRuta('/jugadores/30');
+
+    expect(await screen.findByRole('region', { name: 'Últimos torneos' })).toHaveTextContent(
+      'Todavía no terminó ningún torneo'
+    );
   });
 });

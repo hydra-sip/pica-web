@@ -348,3 +348,24 @@
   display: inline-flex;
   flex-direction: column;
 }
+
+/* HU-801: perfil público del jugador */
+.jugador-torneo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+}
+
+.jugador-torneo-detalle {
+  display: block;
+  margin-top: 0.2rem;
+}
+
+.jugador-torneo-posicion {
+  flex-shrink: 0;
+  font-weight: 700;
+}
