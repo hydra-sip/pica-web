@@ -71,6 +71,15 @@ export const TorneoDetallePage: React.FC = () => {
     fetchTorneoDetalle();
   }, [fetchTorneoDetalle]);
 
+  /** Vuelve a pedir el torneo sin la pantalla de carga: la ocupación y las fechas cambian con la página abierta. */
+  const refrescarTorneo = useCallback(() => {
+    if (!slug) return;
+    torneoApi
+      .getTorneoBySlug(slug)
+      .then(setTorneo)
+      .catch(() => undefined);
+  }, [slug]);
+
   useEffect(() => {
     if (!torneo?.id) return;
     torneoApi
@@ -90,7 +99,9 @@ export const TorneoDetallePage: React.FC = () => {
       .listarMias({ torneoId: torneo.id })
       .then((res) => {
         if (cancelado) return;
-        const activa = res.content?.find((i) => i.estado !== 'CANCELADA') ?? null;
+        // la reintegrada (se bajó por la nueva fecha, CR-01) tampoco cuenta: puede volver a inscribirse
+        const activa =
+          res.content?.find((i) => i.estado !== 'CANCELADA' && i.estado !== 'REINTEGRADA') ?? null;
         setMiInscripcion(activa);
       })
       .catch(() => {
@@ -112,9 +123,10 @@ export const TorneoDetallePage: React.FC = () => {
       setTorneo((prev) => (prev ? { ...prev, estado: estado as EstadoTorneo } : prev));
     },
     onActualizar: (data) => {
-      // cambiaron las fechas (CR-01): se vuelven a pedir el torneo y el historial
-      if (data.tipo === 'TORNEO_REPROGRAMADO') {
-        void fetchTorneoDetalle();
+      // cambiaron las fechas o alguien se bajó por la nueva fecha (CR-01): se vuelven a pedir el torneo (fechas,
+      // ocupación y pozo) y el historial
+      if (data.tipo === 'TORNEO_REPROGRAMADO' || data.tipo === 'INSCRIPCION_REINTEGRADA') {
+        refrescarTorneo();
         setRecargaReprogramaciones((n) => n + 1);
         return;
       }
@@ -503,8 +515,10 @@ export const TorneoDetallePage: React.FC = () => {
           inscripcion={miInscripcion}
           reprogramacion={nuevaFecha}
           onRechazada={(rechazo) => {
-            setMiInscripcion({ ...miInscripcion, estado: rechazo.estado });
+            // ya no está inscripto: vuelve el botón para inscribirse y la ocupación baja
+            setMiInscripcion(null);
             setBajada(rechazo.reintegrado);
+            refrescarTorneo();
           }}
         />
       )}
