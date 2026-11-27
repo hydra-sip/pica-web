@@ -18,6 +18,7 @@ import {
   IconoAlerta,
 } from '../../shared/ui/Iconos';
 import { MiFairPlay } from '../../reputacion/components/MiFairPlay';
+import { MisLogros } from '../../reputacion/components/MisLogros';
 import { MisSanciones } from '../../reputacion/components/MisSanciones';
 import '../auth.css';
 
@@ -262,9 +263,10 @@ export const ProfilePage: React.FC = () => {
         </Link>
       </div>
 
-      {/* HU-802 y HU-803: su índice de fair play y las sanciones que recibió */}
+      {/* HU-802, HU-803 y HU-804: índice de fair play, sanciones, insignias y rifas ganadas */}
       {user && <MiFairPlay usuarioId={Number(user.id)} />}
       <MisSanciones />
+      {user && <MisLogros usuarioId={Number(user.id)} />}
 
       {/* Profile Form: Datos Personales */}
       <div className="pica-card hydra-card" style={{ padding: '1.75rem' }}>

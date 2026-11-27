@@ -1,0 +1,46 @@
+/* HU-804 (PICA-426): insignias obtenidas y rifas ganadas en Mi perfil */
+.reputacion-insignias {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 0.75rem;
+}
+
+.reputacion-insignia {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+}
+
+.reputacion-insignia-icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-full);
+  background-color: var(--color-emerald-light);
+  color: var(--color-emerald-dark);
+  border: 1px solid var(--color-emerald-border);
+}
+
+.reputacion-insignia-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.reputacion-insignia-nombre {
+  font-weight: 700;
+}
+
+.reputacion-insignia-toast {
+  z-index: 1001;
+}
