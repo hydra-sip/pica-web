@@ -1,11 +1,20 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { EstadoTorneo, ReprogramacionDetalle, ReprogramacionPayload } from '../api/torneoApi';
 import { prepararTorneoACancelar, TORNEO_A_CANCELAR } from '../mocks/cancelacionHandlers';
 import { server } from '../mocks/server';
+import type { UseTorneoRealtimeOptions } from '../realtime/useTorneoRealtime';
 import { renderRuta } from '../test/renderRuta';
 import { HistorialReprogramaciones } from './components/HistorialReprogramaciones';
+
+// el canal del torneo, a mano: el test manda los mensajes que mandaría el back
+const enVivo = vi.hoisted(() => ({ opciones: null as UseTorneoRealtimeOptions | null }));
+vi.mock('../realtime/useTorneoRealtime', () => ({
+  useTorneoRealtime: (_torneoId: unknown, opciones: UseTorneoRealtimeOptions) => {
+    enVivo.opciones = opciones;
+  },
+}));
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
@@ -135,6 +144,20 @@ describe('Reprogramar un torneo desde la consola (CR-01-5)', () => {
     expect(screen.getByText(/Se bajó 1 inscripción/)).toBeInTheDocument();
     expect(screen.getByText(/Motivo: Lluvia/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Reprogramar' })).not.toBeInTheDocument();
+  });
+
+  it('cuando alguien se baja, la consola se actualiza sola con el mensaje en vivo', async () => {
+    await consola('INSCRIPCION_CERRADA', [reprogramacion({ rechazos: 0 })]);
+    expect(await screen.findByText(/Nadie se bajó todavía/)).toBeInTheDocument();
+    server.use(
+      http.get(`${API_URL}/torneos/${TORNEO_A_CANCELAR}/reprogramaciones`, () =>
+        HttpResponse.json([reprogramacion({ rechazos: 1 })])
+      )
+    );
+
+    await act(async () => enVivo.opciones?.onActualizar?.({ tipo: 'INSCRIPCION_REINTEGRADA' }));
+
+    expect(await screen.findByText(/Se bajó 1 inscripción/)).toBeInTheDocument();
   });
 
   it('un torneo finalizado no se reprograma', async () => {

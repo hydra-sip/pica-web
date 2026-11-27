@@ -109,9 +109,11 @@ export const TorneoConsolaPage: React.FC = () => {
       setTorneo((prev) => (prev ? { ...prev, estado: nuevoEstado as EstadoTorneo } : prev));
     },
     onActualizar: (data) => {
-      // cambiaron las fechas y quizás se descartó la llave: se vuelve a pedir todo
-      if (data.tipo === 'TORNEO_REPROGRAMADO') {
+      // cambiaron las fechas y quizás se descartó la llave, o alguien se bajó por la nueva fecha (se liberó un lugar
+      // y bajó el pozo): se vuelve a pedir todo, también las inscripciones
+      if (data.tipo === 'TORNEO_REPROGRAMADO' || data.tipo === 'INSCRIPCION_REINTEGRADA') {
         recargarConsola();
+        setRecargaInscripciones((n) => n + 1);
         return;
       }
       if (data.bracket) {
