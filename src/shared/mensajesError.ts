@@ -163,6 +163,11 @@ const POR_CODIGO: Record<string, string> = {
   CANCELACION_YA_RESUELTA: 'Esta cancelación ya se resolvió.',
   CANCELACION_PROPIA: 'No podés revisar la cancelación de un torneo que organizás.',
   CANCELACION_NO_ENCONTRADA: 'Este torneo no tiene una cancelación.',
+  // CR-01: reprogramación de torneos
+  TORNEO_NO_REPROGRAMABLE:
+    'Este torneo ya no se puede reprogramar: se reprograma con la inscripción abierta o cerrada, o en curso sin resultados.',
+  REPROGRAMACION_EN_CURSO:
+    'Ya hay una reprogramación con el plazo para bajarse abierto: esperá a que venza para volver a cambiar la fecha.',
   INSCRIPCION_NO_PERMITIDA_EN_TORNEO:
     'El organizador y los árbitros de un torneo no pueden inscribirse en él.',
   PRONOSTICO_FUERA_DE_VENTANA:

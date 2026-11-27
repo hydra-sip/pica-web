@@ -278,6 +278,9 @@ export const torneoHandlers = [
   // HU-807: en los mocks nadie tiene designaciones de árbitro
   http.get(`${API_URL}/designaciones/mias`, () => HttpResponse.json([])),
 
+  // CR-01: ningún torneo de los mocks se reprogramó; los tests de la reprogramación lo cambian
+  http.get(`${API_URL}/torneos/:id/reprogramaciones`, () => HttpResponse.json([])),
+
   // GET /torneos/resumen (Público, sin sesión)
   http.get(`${API_URL}/torneos/resumen`, ({ request }) => {
     const url = new URL(request.url);

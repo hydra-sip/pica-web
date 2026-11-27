@@ -448,6 +448,34 @@ export interface GrupoDelTorneo {
   desempatesPendientes: number[][];
 }
 
+/** POST /torneos/{id}/reprogramaciones (CR-01): las fechas nuevas, en ISO; `fechaFin` es opcional. */
+export interface ReprogramacionPayload {
+  fechaInicio: string | null;
+  fechaFin: string | null;
+  /** Hasta cuándo se anota gente en los lugares que se liberen; posterior al plazo. */
+  cierreInscripcion: string | null;
+  /** Hasta cuándo los inscriptos pueden bajarse si la nueva fecha no les sirve. */
+  rechazoHasta: string | null;
+  motivo: string;
+}
+
+/** Una reprogramación del historial del torneo (CR-01). Es pública: sale en la ficha. */
+export interface ReprogramacionDetalle {
+  id: number;
+  fechaInicioAnterior: string;
+  fechaFinAnterior: string | null;
+  fechaInicioNueva: string;
+  fechaFinNueva: string | null;
+  cierreInscripcion: string;
+  rechazoHasta: string;
+  motivo: string;
+  /** Si todavía se puede rechazar la nueva fecha. */
+  plazoAbierto: boolean;
+  /** Cuántas inscripciones se bajaron por esta nueva fecha. */
+  rechazos: number;
+  creadaEn: string;
+}
+
 /** GET /torneos/{id}/grupos (CR-02): las reglas y, por grupo, la tabla y los partidos. */
 export interface GruposTorneo {
   torneoId: number;
@@ -682,6 +710,16 @@ export const torneoApi = {
   /** Otro sorteo, mientras no haya resultados; queda en la auditoría. */
   regenerarBracket: async (id: number): Promise<BracketTorneo> => {
     return httpClient.post<BracketTorneo>(`/torneos/${id}/bracket/regenerar`);
+  },
+
+  /** Solo el organizador (CR-01): cambia las fechas sin cancelar y abre el plazo para bajarse. */
+  reprogramar: async (id: number, payload: ReprogramacionPayload): Promise<ReprogramacionDetalle> => {
+    return httpClient.post<ReprogramacionDetalle>(`/torneos/${id}/reprogramaciones`, payload);
+  },
+
+  /** Público (CR-01): el historial, de la más vieja a la más nueva. */
+  reprogramaciones: async (id: number): Promise<ReprogramacionDetalle[]> => {
+    return httpClient.get<ReprogramacionDetalle[]>(`/torneos/${id}/reprogramaciones`);
   },
 
   /**

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { torneoApi } from '../../api/torneoApi';
+import { ReprogramacionDetalle, torneoApi } from '../../api/torneoApi';
 import { inscripcionApi, InscripcionResumen } from '../../api/inscripcionApi';
 import { ApiError } from '../../api/httpClient';
 import { EstadoTorneo, TorneoDetalle } from '../types/torneo';
@@ -9,6 +9,7 @@ import { StatusChip } from '../../admin/components/StatusChip';
 import { TorneoPremiosList } from '../components/TorneoPremiosList';
 import { BracketDelTorneo } from '../components/BracketDelTorneo';
 import { GruposPublicos } from '../components/GruposPublicos';
+import { HistorialReprogramaciones } from '../components/HistorialReprogramaciones';
 import { TuProximoCruce } from '../../partidos/components/TuProximoCruce';
 import { TorneoDetalleSkeleton } from '../components/TorneoSkeleton';
 import { useAuth } from '../../auth/hooks/useAuth';
@@ -34,6 +35,9 @@ export const TorneoDetallePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isNotFound, setIsNotFound] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  /** Los cambios de fecha (CR-01); si no se pudieron traer, la ficha sigue igual. */
+  const [reprogramaciones, setReprogramaciones] = useState<ReprogramacionDetalle[]>([]);
+  const [recargaReprogramaciones, setRecargaReprogramaciones] = useState(0);
 
   const fetchTorneoDetalle = useCallback(async () => {
     if (!slug) return;
@@ -62,6 +66,14 @@ export const TorneoDetallePage: React.FC = () => {
   useEffect(() => {
     fetchTorneoDetalle();
   }, [fetchTorneoDetalle]);
+
+  useEffect(() => {
+    if (!torneo?.id) return;
+    torneoApi
+      .reprogramaciones(torneo.id)
+      .then(setReprogramaciones)
+      .catch(() => setReprogramaciones([]));
+  }, [torneo?.id, recargaReprogramaciones]);
 
   useEffect(() => {
     let cancelado = false;
@@ -96,6 +108,12 @@ export const TorneoDetallePage: React.FC = () => {
       setTorneo((prev) => (prev ? { ...prev, estado: estado as EstadoTorneo } : prev));
     },
     onActualizar: (data) => {
+      // cambiaron las fechas (CR-01): se vuelven a pedir el torneo y el historial
+      if (data.tipo === 'TORNEO_REPROGRAMADO') {
+        void fetchTorneoDetalle();
+        setRecargaReprogramaciones((n) => n + 1);
+        return;
+      }
       if (data.pozoEstimado !== undefined || data.estado) {
         setTorneo((prev) => {
           if (!prev) return prev;
@@ -609,6 +627,8 @@ export const TorneoDetallePage: React.FC = () => {
                 {torneo.fechaFin ? fechaHora(torneo.fechaFin) : 'A definir'}
               </span>
             </div>
+
+            <HistorialReprogramaciones reprogramaciones={reprogramaciones} />
           </div>
         </div>
 

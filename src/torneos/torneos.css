@@ -1063,7 +1063,40 @@
 }
 
 .torneos-consola-cancelar {
+  display: flex;
+  gap: 0.5rem;
   margin-left: auto;
+}
+
+/* CR-01: el resumen antes de reprogramar y el historial de cambios de fecha */
+.torneos-reprogramacion-resumen {
+  margin: 1rem 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-subtle);
+}
+
+.torneos-reprogramacion-resumen h3,
+.torneos-reprogramaciones h3 {
+  margin: 0 0 0.4rem;
+  font-size: 1rem;
+}
+
+.torneos-reprogramacion-resumen ul,
+.torneos-reprogramaciones ol {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.torneos-reprogramaciones {
+  margin-top: 0.75rem;
+}
+
+.torneos-reprogramaciones p {
+  margin: 0;
 }
 
 .torneos-cancelacion-gastos {

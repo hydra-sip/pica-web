@@ -5,6 +5,7 @@ import {
   BracketTorneo,
   EstadoTorneo,
   GruposTorneo,
+  ReprogramacionDetalle,
   torneoApi,
   TorneoInformacion,
 } from '../../api/torneoApi';
@@ -20,6 +21,8 @@ import { DiscordTorneo } from '../components/DiscordTorneo';
 import { GruposDelTorneo } from '../components/GruposDelTorneo';
 import { HonorariosDelTorneo } from '../components/HonorariosDelTorneo';
 import { EstadoDeLaCancelacion } from '../components/EstadoDeLaCancelacion';
+import { HistorialReprogramaciones } from '../components/HistorialReprogramaciones';
+import { ReprogramarTorneo } from '../components/ReprogramarTorneo';
 import { InscripcionesDelTorneo } from '../components/InscripcionesDelTorneo';
 import { CalificarJugadores } from '../../reputacion/components/CalificarJugadores';
 import { SancionesDelTorneo } from '../../reputacion/components/SancionesDelTorneo';
@@ -67,6 +70,8 @@ export const TorneoConsolaPage: React.FC = () => {
   const [grupos, setGrupos] = useState<GruposTorneo | null>(null);
   /** Las inscripciones confirmadas, para no cerrar por debajo del mínimo (PICA-447); null hasta saberlo. */
   const [confirmadas, setConfirmadas] = useState<number | null>(null);
+  /** Los cambios de fecha (CR-01); si no se pudieron traer, la consola sigue igual. */
+  const [reprogramaciones, setReprogramaciones] = useState<ReprogramacionDetalle[]>([]);
 
   const recargarConsola = useCallback(() => {
     if (!id) return;
@@ -76,6 +81,10 @@ export const TorneoConsolaPage: React.FC = () => {
         setBracket(b);
       })
       .catch((err) => setError(mensajeDeError(err, 'No se pudo cargar el torneo.')));
+    torneoApi
+      .reprogramaciones(Number(id))
+      .then(setReprogramaciones)
+      .catch(() => setReprogramaciones([]));
   }, [id]);
 
   useEffect(() => {
@@ -100,6 +109,13 @@ export const TorneoConsolaPage: React.FC = () => {
       setTorneo((prev) => (prev ? { ...prev, estado: nuevoEstado as EstadoTorneo } : prev));
     },
     onActualizar: (data) => {
+      // cambiaron las fechas y quizás se descartó la llave, o alguien se bajó por la nueva fecha (se liberó un lugar
+      // y bajó el pozo): se vuelve a pedir todo, también las inscripciones
+      if (data.tipo === 'TORNEO_REPROGRAMADO' || data.tipo === 'INSCRIPCION_REINTEGRADA') {
+        recargarConsola();
+        setRecargaInscripciones((n) => n + 1);
+        return;
+      }
       if (data.bracket) {
         setBracket(data.bracket);
       }
@@ -241,6 +257,12 @@ export const TorneoConsolaPage: React.FC = () => {
     setRecargaInscripciones((n) => n + 1);
   };
 
+  // CR-01: mientras corre el plazo para bajarse no se vuelve a reprogramar ni se cierra la inscripción a mano
+  const plazoAbierto = reprogramaciones.some((r) => r.plazoAbierto);
+  const reprogramable =
+    !plazoAbierto &&
+    (abierta || torneo.estado === 'INSCRIPCION_CERRADA' || (enCurso && !conResultados(bracket)));
+
   const enRevision = torneo.estado === 'CANCELACION_EN_REVISION';
   const encabezado = (
     <header>
@@ -298,9 +320,12 @@ export const TorneoConsolaPage: React.FC = () => {
         <div className="torneos-titulo-con-chip">
           <h1>{torneo.nombre}</h1>
           <Badge tone={TONO_ESTADO_TORNEO[torneo.estado]}>{ESTADO_TORNEO_UI[torneo.estado]}</Badge>
-          {cancelable && (
+          {(cancelable || reprogramable) && (
             <div className="torneos-consola-cancelar">
-              <CancelarTorneo torneoId={torneo.id} onCancelado={cancelado} />
+              {reprogramable && (
+                <ReprogramarTorneo torneo={torneo} conLlave={generado} onReprogramado={cancelado} />
+              )}
+              {cancelable && <CancelarTorneo torneoId={torneo.id} onCancelado={cancelado} />}
             </div>
           )}
         </div>
@@ -362,18 +387,30 @@ export const TorneoConsolaPage: React.FC = () => {
                     <code title={torneo.listaHash}>{abreviarHash(torneo.listaHash)}</code>
                   </p>
                 )}
+                <HistorialReprogramaciones reprogramaciones={reprogramaciones} conRechazos />
               </div>
               <div className="torneos-acciones">
                 {abierta && !confirmandoCierre && (
                   <Button
                     onClick={() => setConfirmandoCierre(true)}
-                    disabled={bajoElMinimo}
-                    aria-describedby={bajoElMinimo ? 'torneo-bajo-minimo' : undefined}
+                    disabled={bajoElMinimo || plazoAbierto}
+                    aria-describedby={
+                      plazoAbierto
+                        ? 'torneo-plazo-abierto'
+                        : bajoElMinimo
+                          ? 'torneo-bajo-minimo'
+                          : undefined
+                    }
                   >
                     Cerrar inscripción
                   </Button>
                 )}
-                {abierta && bajoElMinimo && (
+                {abierta && plazoAbierto && (
+                  <p id="torneo-plazo-abierto" className="torneos-subtitulo">
+                    Se puede cerrar cuando venza el plazo para bajarse
+                  </p>
+                )}
+                {abierta && bajoElMinimo && !plazoAbierto && (
                   <p id="torneo-bajo-minimo" className="torneos-subtitulo">
                     Hacen falta al menos {torneo.inscriptosMinimos} inscripciones confirmadas
                   </p>
