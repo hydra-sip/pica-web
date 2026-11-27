@@ -56,6 +56,15 @@ export const sancionHandlers = [
     })
   ),
 
+  // HU-804: en los mocks un usuario arranca sin insignias ni rifas ganadas
+  http.get(`${API_URL}/usuarios/:id/logros`, ({ params }) =>
+    HttpResponse.json({
+      usuarioId: Number(params.id),
+      insignias: [],
+      rifasGanadas: [],
+    })
+  ),
+
   http.get(`${API_URL}/torneos/:id/sanciones/jugadores`, () =>
     HttpResponse.json(JUGADORES_SANCIONABLES)
   ),
