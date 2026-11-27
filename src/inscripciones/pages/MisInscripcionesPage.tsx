@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { inscripcionApi, InscripcionResumen } from '../../api/inscripcionApi';
+import { inscripcionApi, InscripcionResumen, RechazoReprogramacion } from '../../api/inscripcionApi';
+import { ReprogramacionDetalle, torneoApi } from '../../api/torneoApi';
+import { pesos } from '../../shared/formato';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { Badge, Card } from '../../shared/ui';
 import { IconoAlerta, IconoTrofeo } from '../../shared/ui/Iconos';
 import { ESTADO_TORNEO_UI, TONO_ESTADO_TORNEO } from '../../torneos/formato';
+import { AvisoNuevaFecha } from '../components/AvisoNuevaFecha';
 import { ESTADO_INSCRIPCION, ROL_EN_INSCRIPCION } from '../formato';
 import '../inscripciones.css';
 
@@ -27,11 +30,15 @@ const accionDe = (i: InscripcionResumen): { texto: string; ruta: string } | null
 
 /**
  * Mis inscripciones (HU-209): los torneos en los que estoy inscripto, también los de equipos ajenos en cuya
- * nómina figuro. Las canceladas no se muestran: no sirven para seguir un torneo.
+ * nómina figuro. Las canceladas no se muestran: no sirven para seguir un torneo. Si un torneo cambió de fecha y todavía
+ * se puede bajar, el aviso con la nueva fecha (CR-01-6).
  */
 export const MisInscripcionesPage: React.FC = () => {
   const [inscripciones, setInscripciones] = useState<InscripcionResumen[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  /** La reprogramación con el plazo abierto de cada torneo donde la inscripción está confirmada. */
+  const [nuevasFechas, setNuevasFechas] = useState<Record<number, ReprogramacionDetalle>>({});
+  const [bajada, setBajada] = useState<{ torneo: string; reintegrado: number } | null>(null);
 
   useEffect(() => {
     let vigente = true;
@@ -47,6 +54,34 @@ export const MisInscripcionesPage: React.FC = () => {
     };
   }, []);
 
+  const torneosConfirmados = [
+    ...new Set((inscripciones ?? []).filter((i) => i.estado === 'CONFIRMADA').map((i) => i.torneoId)),
+  ].join(',');
+  useEffect(() => {
+    if (!torneosConfirmados) return;
+    let vigente = true;
+    torneosConfirmados.split(',').forEach((id) =>
+      torneoApi
+        .reprogramaciones(Number(id))
+        .then((historial) => {
+          const abierta = historial.find((r) => r.plazoAbierto);
+          if (vigente && abierta) setNuevasFechas((n) => ({ ...n, [Number(id)]: abierta }));
+        })
+        // sin el historial la fila se ve igual, sin el aviso
+        .catch(() => undefined)
+    );
+    return () => {
+      vigente = false;
+    };
+  }, [torneosConfirmados]);
+
+  const rechazada = (i: InscripcionResumen, rechazo: RechazoReprogramacion) => {
+    setInscripciones((lista) =>
+      (lista ?? []).map((x) => (x.id === i.id ? { ...x, estado: rechazo.estado } : x))
+    );
+    setBajada({ torneo: i.torneo.nombre, reintegrado: rechazo.reintegrado });
+  };
+
   return (
     <div className="inscripcion-page mis-inscripciones">
       <header className="inscripcion-encabezado">
@@ -58,6 +93,16 @@ export const MisInscripcionesPage: React.FC = () => {
         <div role="alert" className="alerta alerta-peligro">
           <IconoAlerta size={20} />
           <span>{error}</span>
+        </div>
+      )}
+
+      {bajada && (
+        <div role="status" className="alerta alerta-exito">
+          <span>
+            Te bajaste de {bajada.torneo}
+            {bajada.reintegrado > 0 && `: volvieron ${pesos(bajada.reintegrado)} a tu billetera`}.{' '}
+            <Link to="/billetera">Ver en Mi billetera</Link>
+          </span>
         </div>
       )}
 
@@ -93,6 +138,13 @@ export const MisInscripcionesPage: React.FC = () => {
                       {ESTADO_INSCRIPCION[i.estado].texto}
                     </Badge>
                   </p>
+                  {nuevasFechas[i.torneoId] && (
+                    <AvisoNuevaFecha
+                      inscripcion={i}
+                      reprogramacion={nuevasFechas[i.torneoId]}
+                      onRechazada={(rechazo) => rechazada(i, rechazo)}
+                    />
+                  )}
                   <div className="inscripcion-acciones mi-inscripcion-acciones">
                     {accion && (
                       <Link to={accion.ruta} className="btn btn-primary">

@@ -10,6 +10,7 @@ import { TorneoPremiosList } from '../components/TorneoPremiosList';
 import { BracketDelTorneo } from '../components/BracketDelTorneo';
 import { GruposPublicos } from '../components/GruposPublicos';
 import { HistorialReprogramaciones } from '../components/HistorialReprogramaciones';
+import { AvisoNuevaFecha } from '../../inscripciones/components/AvisoNuevaFecha';
 import { TuProximoCruce } from '../../partidos/components/TuProximoCruce';
 import { TorneoDetalleSkeleton } from '../components/TorneoSkeleton';
 import { useAuth } from '../../auth/hooks/useAuth';
@@ -38,6 +39,9 @@ export const TorneoDetallePage: React.FC = () => {
   /** Los cambios de fecha (CR-01); si no se pudieron traer, la ficha sigue igual. */
   const [reprogramaciones, setReprogramaciones] = useState<ReprogramacionDetalle[]>([]);
   const [recargaReprogramaciones, setRecargaReprogramaciones] = useState(0);
+  /** Lo que volvió a la billetera al bajarse por la nueva fecha (CR-01-6); null mientras no se bajó. */
+  const [bajada, setBajada] = useState<number | null>(null);
+  const nuevaFecha = reprogramaciones.find((r) => r.plazoAbierto) ?? null;
 
   const fetchTorneoDetalle = useCallback(async () => {
     if (!slug) return;
@@ -67,6 +71,15 @@ export const TorneoDetallePage: React.FC = () => {
     fetchTorneoDetalle();
   }, [fetchTorneoDetalle]);
 
+  /** Vuelve a pedir el torneo sin la pantalla de carga: la ocupación y las fechas cambian con la página abierta. */
+  const refrescarTorneo = useCallback(() => {
+    if (!slug) return;
+    torneoApi
+      .getTorneoBySlug(slug)
+      .then(setTorneo)
+      .catch(() => undefined);
+  }, [slug]);
+
   useEffect(() => {
     if (!torneo?.id) return;
     torneoApi
@@ -86,7 +99,9 @@ export const TorneoDetallePage: React.FC = () => {
       .listarMias({ torneoId: torneo.id })
       .then((res) => {
         if (cancelado) return;
-        const activa = res.content?.find((i) => i.estado !== 'CANCELADA') ?? null;
+        // la reintegrada (se bajó por la nueva fecha, CR-01) tampoco cuenta: puede volver a inscribirse
+        const activa =
+          res.content?.find((i) => i.estado !== 'CANCELADA' && i.estado !== 'REINTEGRADA') ?? null;
         setMiInscripcion(activa);
       })
       .catch(() => {
@@ -108,9 +123,10 @@ export const TorneoDetallePage: React.FC = () => {
       setTorneo((prev) => (prev ? { ...prev, estado: estado as EstadoTorneo } : prev));
     },
     onActualizar: (data) => {
-      // cambiaron las fechas (CR-01): se vuelven a pedir el torneo y el historial
-      if (data.tipo === 'TORNEO_REPROGRAMADO') {
-        void fetchTorneoDetalle();
+      // cambiaron las fechas o alguien se bajó por la nueva fecha (CR-01): se vuelven a pedir el torneo (fechas,
+      // ocupación y pozo) y el historial
+      if (data.tipo === 'TORNEO_REPROGRAMADO' || data.tipo === 'INSCRIPCION_REINTEGRADA') {
+        refrescarTorneo();
         setRecargaReprogramaciones((n) => n + 1);
         return;
       }
@@ -492,6 +508,29 @@ export const TorneoDetallePage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* CR-01-6: el torneo cambió de fecha y todavía me puedo bajar */}
+      {miInscripcion && nuevaFecha && (
+        <AvisoNuevaFecha
+          inscripcion={miInscripcion}
+          reprogramacion={nuevaFecha}
+          onRechazada={(rechazo) => {
+            // ya no está inscripto: vuelve el botón para inscribirse y la ocupación baja
+            setMiInscripcion(null);
+            setBajada(rechazo.reintegrado);
+            refrescarTorneo();
+          }}
+        />
+      )}
+      {bajada !== null && (
+        <div role="status" className="alerta alerta-exito">
+          <span>
+            Te bajaste del torneo
+            {bajada > 0 && `: volvieron ${pesos(bajada)} a tu billetera`}.{' '}
+            <Link to="/billetera">Ver en Mi billetera</Link>
+          </span>
+        </div>
+      )}
 
       {/* Próximo cruce si es capitán */}
       <TuProximoCruce torneoId={torneo.id} />

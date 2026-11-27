@@ -507,3 +507,16 @@
   font-size: var(--text-sm);
   font-weight: 700;
 }
+
+/* CR-01-6: el torneo cambió de fecha; el botón para bajarse va a la derecha del texto */
+.aviso-nueva-fecha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.aviso-nueva-fecha p {
+  margin: 0.25rem 0 0;
+}
