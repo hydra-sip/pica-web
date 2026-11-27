@@ -15,10 +15,11 @@ interface AvisoNuevaFechaProps {
 
 /**
  * CR-01-6 (PICA-395): el torneo cambió de fecha y la inscripción sigue confirmada. Muestra la fecha nueva, el motivo y
- * hasta cuándo se puede bajar. El participante de la individual o el capitán tiene el botón «La nueva fecha no me
- * sirve», con un diálogo que dice cuánto se le devuelve y que pierde el lugar; el resto del equipo ve el aviso, sin el
- * botón. Fuera del plazo, con la inscripción ya reintegrada o hecha después de la reprogramación (con la fecha nueva
- * ya publicada), no muestra nada.
+ * hasta cuándo se puede bajar. El participante de la individual o el capitán tiene el botón «Rechazar»,
+ * con un diálogo que dice cuánto se le devuelve y que pierde el lugar, donde sigue inscripto o cancela la
+ * inscripción; el resto del equipo ve el aviso, sin el botón. Si no hace nada, sigue inscripto. Fuera del plazo, con
+ * la inscripción ya reintegrada o hecha después de la reprogramación (con la fecha nueva ya publicada), no muestra
+ * nada.
  */
 export const AvisoNuevaFecha: React.FC<AvisoNuevaFechaProps> = ({
   inscripcion,
@@ -86,7 +87,7 @@ export const AvisoNuevaFecha: React.FC<AvisoNuevaFechaProps> = ({
       </div>
       {puedeBajarse && (
         <Button variant="secondary" onClick={() => setAbierto(true)}>
-          La nueva fecha no me sirve
+          Rechazar
         </Button>
       )}
       <Modal
@@ -100,7 +101,7 @@ export const AvisoNuevaFecha: React.FC<AvisoNuevaFechaProps> = ({
               Seguir inscripto
             </Button>
             <Button variant="danger" loading={enviando} onClick={() => void bajarse()}>
-              Sí, me bajo
+              Cancelar inscripción
             </Button>
           </>
         }

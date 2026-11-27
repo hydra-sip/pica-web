@@ -67,13 +67,13 @@ describe('Aviso de la nueva fecha y rechazo (CR-01-6)', () => {
     const item = await screen.findByRole('listitem', { name: /Copa Lluvia/ });
     expect(await within(item).findByText(/Copa Lluvia cambió de fecha/)).toBeInTheDocument();
     expect(within(item).getByText(/Motivo: Lluvia/)).toBeInTheDocument();
-    await user.click(within(item).getByRole('button', { name: 'La nueva fecha no me sirve' }));
+    await user.click(within(item).getByRole('button', { name: 'Rechazar' }));
 
     const modal = await screen.findByRole('dialog', { name: '¿Bajarte del torneo?' });
     expect(await within(modal).findByText('$ 20.000,00')).toBeInTheDocument();
     expect(within(modal).getByText(/Los gastos administrativos no se devuelven/)).toBeInTheDocument();
     expect(within(modal).getByText(/El equipo pierde el lugar/)).toBeInTheDocument();
-    await user.click(within(modal).getByRole('button', { name: 'Sí, me bajo' }));
+    await user.click(within(modal).getByRole('button', { name: 'Cancelar inscripción' }));
 
     expect(await screen.findByText(/volvieron \$ 20\.000,00 a tu billetera/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Ver en Mi billetera' })).toHaveAttribute('href', '/billetera');
@@ -92,7 +92,7 @@ describe('Aviso de la nueva fecha y rechazo (CR-01-6)', () => {
       await within(item).findByText(/el capitán puede bajar al equipo hasta el/)
     ).toBeInTheDocument();
     expect(
-      within(item).queryByRole('button', { name: 'La nueva fecha no me sirve' })
+      within(item).queryByRole('button', { name: 'Rechazar' })
     ).not.toBeInTheDocument();
   });
 
@@ -129,10 +129,10 @@ describe('Aviso de la nueva fecha y rechazo (CR-01-6)', () => {
     const { user } = await renderRuta(RUTA);
 
     const item = await screen.findByRole('listitem', { name: /Copa Lluvia/ });
-    await user.click(await within(item).findByRole('button', { name: 'La nueva fecha no me sirve' }));
+    await user.click(await within(item).findByRole('button', { name: 'Rechazar' }));
     const modal = await screen.findByRole('dialog');
     expect(within(modal).getByText(/Perdés el lugar en el torneo/)).toBeInTheDocument();
-    await user.click(within(modal).getByRole('button', { name: 'Sí, me bajo' }));
+    await user.click(within(modal).getByRole('button', { name: 'Cancelar inscripción' }));
 
     expect(
       await within(modal).findByText('Ya venció el plazo para bajarse por la nueva fecha: seguís inscripto.')
@@ -207,9 +207,9 @@ describe('La nueva fecha en la ficha del torneo (CR-01-6)', () => {
     const { user } = await renderRuta('/torneos/copa-lluvia');
 
     expect(await screen.findByText('2 cupos disponibles')).toBeInTheDocument();
-    await user.click(await screen.findByRole('button', { name: 'La nueva fecha no me sirve' }));
+    await user.click(await screen.findByRole('button', { name: 'Rechazar' }));
     await user.click(
-      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Sí, me bajo' })
+      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Cancelar inscripción' })
     );
 
     expect(await screen.findByText(/volvieron \$ 20\.000,00 a tu billetera/)).toBeInTheDocument();
