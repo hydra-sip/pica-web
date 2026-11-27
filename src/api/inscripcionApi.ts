@@ -109,6 +109,15 @@ export interface Reemplazo {
   realizadoPor: UsuarioPublico;
 }
 
+/** POST /inscripciones/{id}/rechazo-reprogramacion (CR-01-3): la inscripción quedó REINTEGRADA. */
+export interface RechazoReprogramacion {
+  inscripcionId: number;
+  torneoId: number;
+  estado: 'REINTEGRADA';
+  /** Lo que volvió a la billetera de quien pagó, sin los gastos administrativos; 0 en un torneo sin costo. */
+  reintegrado: number;
+}
+
 // Inscripciones del participante. Crear, editar, reemplazar, cancelar, confirmar, reabrir, ver el
 // resumen de pago y pagar exigen INSCRIPCION_GESTIONAR; ver y listar alcanza con estar logueado.
 export const inscripcionApi = {
@@ -167,6 +176,14 @@ export const inscripcionApi = {
    */
   repartir: async (id: number, reparto: RepartoIntegrante[]): Promise<InscripcionDetalle> => {
     return httpClient.put<InscripcionDetalle>(`/inscripciones/${id}/reparto`, reparto);
+  },
+
+  /**
+   * La nueva fecha del torneo no le sirve (CR-01-3): solo el participante de la individual o el capitán, dentro del
+   * plazo. Se le devuelve la inscripción, sin los gastos administrativos, y pierde el lugar.
+   */
+  rechazarReprogramacion: async (id: number): Promise<RechazoReprogramacion> => {
+    return httpClient.post<RechazoReprogramacion>(`/inscripciones/${id}/rechazo-reprogramacion`);
   },
 
   /** Historial de reemplazos, del más viejo al más nuevo. Lo ven el capitán, la nómina y el organizador. */

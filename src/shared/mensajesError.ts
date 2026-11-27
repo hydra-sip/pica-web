@@ -168,6 +168,7 @@ const POR_CODIGO: Record<string, string> = {
     'Este torneo ya no se puede reprogramar: se reprograma con la inscripción abierta o cerrada, o en curso sin resultados.',
   REPROGRAMACION_EN_CURSO:
     'Ya hay una reprogramación con el plazo para bajarse abierto: esperá a que venza para volver a cambiar la fecha.',
+  PLAZO_RECHAZO_VENCIDO: 'Ya venció el plazo para bajarse por la nueva fecha: seguís inscripto.',
   INSCRIPCION_NO_PERMITIDA_EN_TORNEO:
     'El organizador y los árbitros de un torneo no pueden inscribirse en él.',
   PRONOSTICO_FUERA_DE_VENTANA:

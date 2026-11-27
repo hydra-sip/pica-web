@@ -10,6 +10,7 @@ import { TorneoPremiosList } from '../components/TorneoPremiosList';
 import { BracketDelTorneo } from '../components/BracketDelTorneo';
 import { GruposPublicos } from '../components/GruposPublicos';
 import { HistorialReprogramaciones } from '../components/HistorialReprogramaciones';
+import { AvisoNuevaFecha } from '../../inscripciones/components/AvisoNuevaFecha';
 import { TuProximoCruce } from '../../partidos/components/TuProximoCruce';
 import { TorneoDetalleSkeleton } from '../components/TorneoSkeleton';
 import { useAuth } from '../../auth/hooks/useAuth';
@@ -38,6 +39,9 @@ export const TorneoDetallePage: React.FC = () => {
   /** Los cambios de fecha (CR-01); si no se pudieron traer, la ficha sigue igual. */
   const [reprogramaciones, setReprogramaciones] = useState<ReprogramacionDetalle[]>([]);
   const [recargaReprogramaciones, setRecargaReprogramaciones] = useState(0);
+  /** Lo que volvió a la billetera al bajarse por la nueva fecha (CR-01-6); null mientras no se bajó. */
+  const [bajada, setBajada] = useState<number | null>(null);
+  const nuevaFecha = reprogramaciones.find((r) => r.plazoAbierto) ?? null;
 
   const fetchTorneoDetalle = useCallback(async () => {
     if (!slug) return;
@@ -492,6 +496,27 @@ export const TorneoDetallePage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* CR-01-6: el torneo cambió de fecha y todavía me puedo bajar */}
+      {miInscripcion && nuevaFecha && (
+        <AvisoNuevaFecha
+          inscripcion={miInscripcion}
+          reprogramacion={nuevaFecha}
+          onRechazada={(rechazo) => {
+            setMiInscripcion({ ...miInscripcion, estado: rechazo.estado });
+            setBajada(rechazo.reintegrado);
+          }}
+        />
+      )}
+      {bajada !== null && (
+        <div role="status" className="alerta alerta-exito">
+          <span>
+            Te bajaste del torneo
+            {bajada > 0 && `: volvieron ${pesos(bajada)} a tu billetera`}.{' '}
+            <Link to="/billetera">Ver en Mi billetera</Link>
+          </span>
+        </div>
+      )}
 
       {/* Próximo cruce si es capitán */}
       <TuProximoCruce torneoId={torneo.id} />
