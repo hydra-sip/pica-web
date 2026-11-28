@@ -254,6 +254,44 @@ describe('HU-804: las rifas ganadas y las insignias en el perfil', () => {
     expect(within(seccion).queryByRole('link', { name: 'Apertura F5' })).not.toBeInTheDocument();
   });
 
+  it('una rifa sin torneo muestra solo la fecha', async () => {
+    server.use(
+      http.get(`${API_URL}/usuarios/2/perfil`, () =>
+        HttpResponse.json({
+          ...JUGADOR_COMPLETO,
+          rifasGanadas: [
+            {
+              ...JUGADOR_COMPLETO.rifasGanadas[0],
+              torneoId: null,
+              torneoNombre: null,
+              torneoSlug: null,
+            },
+          ],
+        })
+      )
+    );
+    await renderRuta('/jugadores/2');
+
+    const seccion = await screen.findByRole('region', { name: 'Rifas ganadas' });
+    expect(seccion).toHaveTextContent('21/11/2026');
+    expect(seccion.querySelector('.jugador-torneo-detalle')?.textContent).toBe('21/11/2026');
+  });
+
+  it('un torneo sin fecha de fin no muestra una fecha vacía', async () => {
+    server.use(
+      http.get(`${API_URL}/usuarios/2/perfil`, () =>
+        HttpResponse.json({
+          ...JUGADOR_COMPLETO,
+          ultimosTorneos: [{ ...JUGADOR_COMPLETO.ultimosTorneos[1], fechaFin: null }],
+        })
+      )
+    );
+    await renderRuta('/jugadores/2');
+
+    const seccion = await screen.findByRole('region', { name: 'Últimos torneos' });
+    expect(seccion.querySelector('.jugador-torneo-detalle')?.textContent).toBe('Pádel');
+  });
+
   it('cada insignia muestra su ícono y su nombre, con la descripción y la fecha como ayuda', async () => {
     server.use(
       http.get(`${API_URL}/usuarios/2/perfil`, () =>

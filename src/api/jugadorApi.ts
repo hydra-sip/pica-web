@@ -16,7 +16,8 @@ export interface TorneoDelJugador {
   slug: string | null;
   nombre: string;
   disciplina: string;
-  fechaFin: string;
+  /** La planificada; null si el torneo no la tiene. */
+  fechaFin: string | null;
   posicion: number | null;
   /** Con qué equipo jugó; null en un torneo individual. */
   equipo: string | null;
@@ -26,12 +27,13 @@ export interface TorneoDelJugador {
 export interface RifaGanada {
   rifaId: number;
   rifaTitulo: string;
-  torneoId: number;
-  torneoNombre: string;
+  /** null si la rifa no está asociada a un torneo. */
+  torneoId: number | null;
+  torneoNombre: string | null;
   torneoSlug: string | null;
   puesto: number;
   numeroGanador: number | null;
-  fecha: string;
+  fecha: string | null;
 }
 
 /** HU-804: `icono` es una clave, no una URL. */

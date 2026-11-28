@@ -207,7 +207,8 @@ export const PerfilJugadorPage: React.FC = () => {
                     {t.slug ? <Link to={`/torneos/${t.slug}`}>{t.nombre}</Link> : t.nombre}
                   </strong>
                   <span className="reputacion-ayuda jugador-torneo-detalle">
-                    {t.disciplina} · {fecha(t.fechaFin)}
+                    {t.disciplina}
+                    {t.fechaFin && ` · ${fecha(t.fechaFin)}`}
                     {t.equipo && (
                       <>
                         {' · con '}
@@ -236,15 +237,18 @@ export const PerfilJugadorPage: React.FC = () => {
                   <strong>
                     <Link to={`/rifas/${r.rifaId}`}>{r.rifaTitulo}</Link>
                   </strong>
-                  <span className="reputacion-ayuda jugador-torneo-detalle">
-                    {r.torneoSlug ? (
-                      <Link to={`/torneos/${r.torneoSlug}`}>{r.torneoNombre}</Link>
-                    ) : (
-                      r.torneoNombre
-                    )}
-                    {' · '}
-                    {fecha(r.fecha)}
-                  </span>
+                  {(r.torneoNombre || r.fecha) && (
+                    <span className="reputacion-ayuda jugador-torneo-detalle">
+                      {r.torneoNombre &&
+                        (r.torneoSlug ? (
+                          <Link to={`/torneos/${r.torneoSlug}`}>{r.torneoNombre}</Link>
+                        ) : (
+                          r.torneoNombre
+                        ))}
+                      {r.torneoNombre && r.fecha && ' · '}
+                      {r.fecha && fecha(r.fecha)}
+                    </span>
+                  )}
                 </div>
                 <span className="jugador-torneo-posicion">
                   {r.puesto}.º premio
