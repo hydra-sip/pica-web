@@ -17,10 +17,13 @@ export const MARCADOR_VACIO: Marcador = {
 
 export const esEmpate = (m: Marcador): boolean => m.local !== '' && m.local === m.visitante;
 
-/** Lo mismo que valida el back al cargar u objetar: con empate, los penales definen un ganador. */
-export const erroresDelMarcador = (m: Marcador): Record<string, string> => {
+/**
+ * Lo mismo que valida el back al cargar u objetar: con empate, los penales definen un ganador. En la fase de grupos
+ * (CR-02, `conEmpate`) se puede empatar y no hay penales.
+ */
+export const erroresDelMarcador = (m: Marcador, conEmpate = false): Record<string, string> => {
   const errores: Record<string, string> = {};
-  const empate = esEmpate(m);
+  const empate = esEmpate(m) && !conEmpate;
   if (m.local === '') errores.puntajeLocal = 'Es obligatorio.';
   if (m.visitante === '') errores.puntajeVisitante = 'Es obligatorio.';
   if (empate && m.penalesLocal === '') errores.penalesLocal = 'Con empate, se define por penales.';
@@ -33,8 +36,8 @@ export const erroresDelMarcador = (m: Marcador): Record<string, string> => {
 
 const numero = (valor: string): number | null => (valor.trim() === '' ? null : Number(valor));
 
-export const payloadDelMarcador = (m: Marcador): ResultadoPayload => {
-  const empate = esEmpate(m);
+export const payloadDelMarcador = (m: Marcador, conEmpate = false): ResultadoPayload => {
+  const empate = esEmpate(m) && !conEmpate;
   return {
     puntajeLocal: Number(m.local),
     puntajeVisitante: Number(m.visitante),

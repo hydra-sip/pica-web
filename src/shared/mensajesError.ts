@@ -47,6 +47,11 @@ const POR_CODIGO: Record<string, string> = {
   USUARIO_NO_ACTIVO: 'Solo se le pueden cambiar los roles a un usuario activo.',
   USUARIO_YA_BLOQUEADO:
     'El usuario ya está bloqueado. Para cambiar el motivo o la duración, levantá el bloqueo y volvé a bloquearlo.',
+  // HU-703: el organizador del torneo o de la rifa está bloqueado
+  ORGANIZADOR_BLOQUEADO:
+    'El organizador está bloqueado: por ahora no se puede inscribir ni comprar.',
+  // HU-703: el PUT y el alta no bloquean ni desbloquean
+  BLOQUEO_POR_ENDPOINT_PROPIO: 'Para bloquear o desbloquear, usá Bloquear o Motivo en la tabla.',
   USUARIO_PROTEGIDO: 'El usuario Admin del sistema no se puede modificar.',
   ROL_PROTEGIDO: 'Ese cambio no está permitido en este rol del sistema.',
   ULTIMO_ASIGNADOR: 'No podés quitarte tu último rol que permite asignar roles.',
@@ -64,6 +69,7 @@ const POR_CODIGO: Record<string, string> = {
   CLAVE_IDEMPOTENCIA_USADA: 'No se pudo completar la compra: volvé a intentarlo.',
   RIFA_CON_VENTAS: 'La rifa ya tiene números vendidos: no se puede modificar ni eliminar.',
   RIFA_CON_RESERVAS: 'Alguien está pagando números de esta rifa: probá de nuevo en unos minutos.',
+  RIFA_SIN_VENTAS: 'Todavía no se vendió ningún número: la venta no se puede cerrar.',
   TORNEO_NO_EDITABLE: 'El torneo ya no se puede modificar desde acá.',
   CAMPOS_BLOQUEADOS:
     'Algunos datos ya no se pueden cambiar porque hay inscripciones pagas: recargá la página.',
@@ -88,16 +94,22 @@ const POR_CODIGO: Record<string, string> = {
   GASTO_YA_PAGADO: 'Ese gasto ya está pagado.',
   INSCRIPCION_NO_CERRADA: 'El bracket se genera cuando se cierra la inscripción.',
   PARTICIPANTES_INSUFICIENTES:
-    'Hacen falta al menos 2 inscripciones confirmadas para armar el bracket.',
+    'No hay suficientes inscripciones confirmadas para jugar el torneo: con grupos, cada grupo necesita uno más que los que pasan.',
   BRACKET_YA_GENERADO: 'El torneo ya tiene bracket: recargá la página.',
   SIN_ARBITROS:
     'Hace falta al menos un árbitro que haya aceptado la designación: cada partido necesita uno.',
   BRACKET_CON_RESULTADOS: 'Ya hay resultados cargados: el bracket no se puede volver a sortear.',
+  SEMILLA_NO_DISPONIBLE:
+    'La ronda de drand del sorteo todavía no salió: probá de nuevo en unos segundos.',
+  GRUPOS_YA_SORTEADOS:
+    'Los grupos ya se sortearon: salen de drand, así que no se vuelven a sortear.',
   PARTIDO_NO_ENCONTRADO: 'El partido no existe.',
   EVIDENCIA_NO_ENCONTRADA: 'Ese archivo ya no está: recargá la página.',
   PARTIDO_NO_EN_JUEGO: 'Este partido no está en juego: ya tiene resultado o falta el rival.',
   PARTIDO_CERRADO: 'El partido ya está cerrado: no se le puede sumar evidencia.',
   NO_ES_CAPITAN: 'Solo el capitán de uno de los dos lados puede hacerlo.',
+  // HU-803
+  JUGADOR_NO_PARTICIPA: 'Ese jugador no está en una inscripción confirmada del torneo.',
   RESULTADO_NO_PENDIENTE: 'No hay un resultado para aceptar u objetar: recargá la página.',
   RESULTADO_PROPIO: 'El resultado que cargaste lo acepta u objeta el rival.',
   PLAZO_OBJECION_VENCIDO: 'Venció el plazo para objetar: el resultado ya se confirma.',
@@ -135,6 +147,12 @@ const POR_CODIGO: Record<string, string> = {
   CUENTA_NO_VALIDADA: 'Solo se puede retirar a una cuenta validada.',
   CUENTA_BANCARIA_NO_ENCONTRADA: 'La cuenta bancaria no existe o no te pertenece.',
   RETIRO_FUERA_DE_TOPES: 'El monto debe estar dentro de los límites de retiro permitidos.',
+  // HU-610: retiro a la wallet
+  RETIROS_CRIPTO_NO_DISPONIBLES: 'Los retiros a la wallet no están disponibles en este momento.',
+  TRANSACCION_SIN_RETIRO: 'Esa transacción no cobró este retiro.',
+  RETIRO_NO_ENCONTRADO: 'El retiro no existe o no es tuyo.',
+  RETIRO_YA_COBRADO: 'El retiro ya se cobró con otra transacción.',
+  RETIRO_VENCIDO: 'El permiso venció sin cobrarse: el saldo volvió a tu billetera.',
   DOCUMENTO_NO_CARGADO:
     'Debés tener tu documento registrado en tu perfil para gestionar cuentas y retiros.',
   // HU-605: cancelación de torneos y revisión de soporte
@@ -145,6 +163,14 @@ const POR_CODIGO: Record<string, string> = {
   CANCELACION_YA_RESUELTA: 'Esta cancelación ya se resolvió.',
   CANCELACION_PROPIA: 'No podés revisar la cancelación de un torneo que organizás.',
   CANCELACION_NO_ENCONTRADA: 'Este torneo no tiene una cancelación.',
+  // CR-01: reprogramación de torneos
+  TORNEO_NO_REPROGRAMABLE:
+    'Este torneo ya no se puede reprogramar: se reprograma con la inscripción abierta o cerrada, o en curso sin resultados.',
+  REPROGRAMACION_EN_CURSO:
+    'Ya hay una reprogramación con el plazo para bajarse abierto: esperá a que venza para volver a cambiar la fecha.',
+  PLAZO_RECHAZO_VENCIDO: 'Ya venció el plazo para bajarse por la nueva fecha: seguís inscripto.',
+  INSCRIPCION_POSTERIOR_A_REPROGRAMACION:
+    'Te inscribiste con la nueva fecha ya publicada: no podés bajarte por el cambio de fecha.',
   INSCRIPCION_NO_PERMITIDA_EN_TORNEO:
     'El organizador y los árbitros de un torneo no pueden inscribirse en él.',
   PRONOSTICO_FUERA_DE_VENTANA:
@@ -155,6 +181,12 @@ const POR_CODIGO: Record<string, string> = {
   NO_ES_COMPRADOR: 'No podés reclamar: no tenés un ticket comprado para esta rifa.',
   RECLAMO_DUPLICADO: 'Ya tenés un reclamo registrado para esta rifa.',
   RIFA_NO_SORTEADA: 'La rifa todavía no fue sorteada.',
+  // HU-705: Detección de conductas fraudulentas y alertas para soporte
+  ALERTA_FRAUDE_NO_ENCONTRADA: 'No se encontró la alerta de fraude.',
+  ALERTA_FRAUDE_YA_REVISADA: 'Esta alerta de fraude ya fue revisada.',
+  // HU-805
+  TORNEO_NO_TERMINADO: 'Se califica cuando el torneo termina o se cancela.',
+  JUGADOR_YA_CALIFICADO: 'Ya calificaste a este jugador en este torneo.',
   // HU-706 / HU-707: Reclamos, resolución y liberación de fondos en el admin
   RECLAMO_NO_ENCONTRADO: 'El reclamo no existe.',
   RECLAMO_YA_RESUELTO: 'Este reclamo ya fue resuelto anteriormente.',

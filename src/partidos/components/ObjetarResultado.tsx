@@ -33,7 +33,7 @@ export const ObjetarResultado: React.FC<ObjetarResultadoProps> = ({
 
   const objetar = async (e: React.FormEvent) => {
     e.preventDefault();
-    const faltan = erroresDelMarcador(marcador);
+    const faltan = erroresDelMarcador(marcador, partido.fase === 'GRUPOS');
     if (motivo.trim() === '') faltan.motivo = 'Contá por qué no coincide.';
     if (!conEvidencia) faltan.evidencia = SIN_EVIDENCIA;
     setErrores(faltan);
@@ -44,7 +44,7 @@ export const ObjetarResultado: React.FC<ObjetarResultadoProps> = ({
     try {
       onObjetado(
         await partidoApi.objetarResultado(partido.id, {
-          ...payloadDelMarcador(marcador),
+          ...payloadDelMarcador(marcador, partido.fase === 'GRUPOS'),
           motivo: motivo.trim(),
         })
       );
@@ -63,6 +63,7 @@ export const ObjetarResultado: React.FC<ObjetarResultadoProps> = ({
       <strong>¿El resultado no coincide?</strong>
       <p className="partido-ayuda">Cargá el resultado que fue para vos y por qué.</p>
       <CamposMarcador
+        conEmpate={partido.fase === 'GRUPOS'}
         marcador={marcador}
         errores={errores}
         nombreLocal={partido.local?.nombre}

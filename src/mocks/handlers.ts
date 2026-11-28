@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { adminHandlers } from './adminHandlers';
+import { crearAlertaFraudeHandlers } from './alertaFraudeHandlers';
 import { parametroHandlers } from './parametroHandlers';
 import { crearReclamoAdminHandlers } from './reclamoAdminHandlers';
 import { auditoriaHandlers } from './auditoriaHandlers';
@@ -10,11 +11,14 @@ import { verificacionHandlers } from './verificacionHandlers';
 import { ticketHandlers } from './ticketHandlers';
 import { billeteraHandlers } from './billeteraHandlers';
 import { cancelacionHandlers } from './cancelacionHandlers';
+import { sancionHandlers } from './sancionHandlers';
+import { perfilJugadorHandlers } from './perfilJugadorHandlers';
+import { crearNotificacionHandlers } from './notificacionHandlers';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
 
-// El admin es Super Usuario: tiene los 13 permisos del seed V4, el de parámetros de V35 y el de auditoría de V49,
-// como en el back
+// El admin es Super Usuario: tiene los 13 permisos del seed V4, el de parámetros de V35, el de auditoría de V49 y el
+// de bloqueo de V58, como en el back
 const PERMISOS_SUPER_USUARIO = [
   'USUARIO_VER',
   'USUARIO_CREAR',
@@ -32,6 +36,8 @@ const PERMISOS_SUPER_USUARIO = [
   'PARAMETRO_ADMINISTRAR',
   'RECLAMO_RESOLVER',
   'AUDITORIA_VER',
+  'USUARIO_BLOQUEAR',
+  'ALERTA_FRAUDE_REVISAR',
 ];
 
 // El PARTICIPANTE puede inscribirse a torneos (seed del back); el organizador de los mocks no.
@@ -89,10 +95,14 @@ const establecerUsuario = (usuario: typeof USUARIO_INICIAL) => {
 export const handlers = [
   // Backoffice (usuarios, personas, roles y permisos) según el contrato
   ...adminHandlers,
+  // Alertas de fraude en admin (HU-705 / PICA-417)
+  ...crearAlertaFraudeHandlers(() => mockCurrentUserState),
   // Parámetros de la plataforma (HU-702)
   ...parametroHandlers,
   // Reclamos de rifas y resolución en el admin (HU-706 / PICA-340)
   ...crearReclamoAdminHandlers(() => mockCurrentUserState),
+  // Centro de notificaciones del usuario logueado (HU-808)
+  ...crearNotificacionHandlers(() => mockCurrentUserState),
   // Libro de auditoría (HU-704)
   ...auditoriaHandlers,
   // Inscripción en dos pasos: el capitán es el usuario logueado de estos mocks. Va antes que los torneos
@@ -114,6 +124,9 @@ export const handlers = [
   // Billetera virtual y movimientos (HU-602 / T602-3)
   ...billeteraHandlers,
   ...cancelacionHandlers,
+  ...sancionHandlers,
+  // HU-801: el perfil público del jugador
+  ...perfilJugadorHandlers,
 
   // Auth: Registro Endpoint (POST /auth/registro) -> 201 { id }
   http.post(`${API_URL}/auth/registro`, async ({ request }) => {
@@ -288,7 +301,7 @@ export const handlers = [
       });
     }
 
-    // SOPORTE (HU-605 y HU-706): revisa las cancelaciones con gastos y resuelve reclamos
+    // SOPORTE (HU-605, HU-706 y HU-703): revisa las cancelaciones con gastos, resuelve reclamos y bloquea usuarios
     if (
       (id === 'soporte@pica.edu.ar' || id === 'soporte') &&
       (body.password === 'sop123' || body.password === 'soporte123')
@@ -311,7 +324,14 @@ export const handlers = [
           telefono: '1155667788',
         },
         roles: [{ id: 5, nombre: 'SOPORTE', nombreAmigable: 'Soporte' }],
-        permisos: ['CANCELACION_REVISAR', 'RECLAMO_RESOLVER'],
+        permisos: [
+          'CANCELACION_REVISAR',
+          'RECLAMO_RESOLVER',
+          'AUDITORIA_VER',
+          'USUARIO_VER',
+          'USUARIO_BLOQUEAR',
+          'ALERTA_FRAUDE_REVISAR',
+        ],
         datosCompletos: true,
       });
 

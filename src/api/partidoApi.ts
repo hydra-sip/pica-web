@@ -4,14 +4,18 @@ import { EstadoPartido, LadoBracket } from './torneoApi';
 export type Lado = 'LOCAL' | 'VISITANTE';
 
 /** GET /partidos/{id} (HU-301): el partido con lo que hace falta para cargar, aceptar, objetar o laudar el resultado. */
+export type FasePartido = 'GRUPOS' | 'DESEMPATE' | 'ELIMINACION';
+
 export interface PartidoDetalle {
   id: number;
   torneoId: number;
   torneo: string;
   torneoSlug: string | null;
   ronda: number;
-  /** "Final", "Semifinal"... como en el bracket. */
+  /** "Final", "Semifinal"... como en el bracket; en la fase de grupos, «Grupo A · Fecha 2». */
   nombreRonda: string;
+  /** CR-02: en GRUPOS se puede empatar y no hay penales; DESEMPATE y ELIMINACION, como la llave. */
+  fase: FasePartido;
   posicion: number;
   estado: EstadoPartido;
   bye: boolean;
@@ -31,6 +35,8 @@ export interface PartidoDetalle {
   objecion: ObjecionDetalle | null;
   /** Con el partido objetado, si quien consulta lo puede laudar: el organizador o un árbitro con permiso. */
   puedoResolver: boolean;
+  /** Si quien consulta puede sancionar a sus jugadores (HU-803): el organizador o un árbitro que aceptó. */
+  puedoSancionar: boolean;
 }
 
 /** La objeción: quién objetó, por qué y el resultado que propone; y el laudo, si ya se resolvió. */

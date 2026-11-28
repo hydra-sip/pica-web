@@ -2,6 +2,7 @@ import {
   IconoAlerta,
   IconoBackoffice,
   IconoBilletera,
+  IconoCampana,
   IconoConfiguracion,
   IconoDocumento,
   IconoEscudo,
@@ -45,6 +46,8 @@ export const PERMISOS_BACKOFFICE = [
   'RECLAMO_RESOLVER',
   // HU-704: el libro de auditoría
   'AUDITORIA_VER',
+  // HU-705: panel de alertas de fraude
+  'ALERTA_FRAUDE_REVISAR',
 ];
 
 /**
@@ -89,6 +92,8 @@ export const NAVEGACION: Record<Seccion, ItemNavegacion[]> = {
     // PICA-227: RIFA_GESTIONAR lo tienen ORGANIZADOR y ADMINISTRADOR
     { ruta: '/mis-rifas', texto: 'Mis rifas', icono: <IconoRifas />, permisos: ['RIFA_GESTIONAR'] },
     { ruta: '/mi-perfil', texto: 'Perfil', icono: <IconoPerfil />, soloConSesion: true },
+    // HU-808: el centro de notificaciones. En el celular no entra en la barra de abajo: está en la campana de arriba
+    { ruta: '/notificaciones', texto: 'Notificaciones', icono: <IconoCampana />, soloConSesion: true },
     {
       ruta: '/admin',
       texto: 'Backoffice',
@@ -129,6 +134,12 @@ export const NAVEGACION: Record<Seccion, ItemNavegacion[]> = {
       texto: 'Reclamos',
       icono: <IconoAlerta />,
       permisos: ['RECLAMO_RESOLVER'],
+    },
+    {
+      ruta: '/admin/alertas',
+      texto: 'Alertas',
+      icono: <IconoAlerta />,
+      permisos: ['ALERTA_FRAUDE_REVISAR'],
     },
     {
       ruta: '/admin/auditoria',

@@ -33,6 +33,7 @@ import {
   validarBorrador,
   validarPaso,
 } from '../validacion';
+import { TERMINOS_TORNEO } from '../terminos';
 import '../torneos.css';
 
 type Paso = 1 | 2 | 3;
@@ -92,7 +93,11 @@ export const TorneoFormPage: React.FC = () => {
   const bloqueados = torneo?.camposBloqueados ?? [];
   const estado = torneo?.estado ?? 'BORRADOR';
   const cupoTope = opciones?.cupoMaximo ?? 64;
-  const limites = { cupoTope, margenCierreInicioMin: opciones?.margenCierreInicioMin ?? 0 };
+  const limites = {
+    cupoTope,
+    margenCierreInicioMin: opciones?.margenCierreInicioMin ?? 0,
+    sinValidarFechas: opciones?.sinValidarFechas ?? false,
+  };
 
   useEffect(() => {
     let vigente = true;
@@ -225,7 +230,13 @@ export const TorneoFormPage: React.FC = () => {
         setMensaje({ tipo: 'exito', texto: 'Borrador guardado.' });
       }
     } catch (err) {
-      const delBack = erroresPorCampo(err, MENSAJES_DE_CAMPO) as ErroresTorneo;
+      const delBack = Object.fromEntries(
+        // las reglas de grupos vienen como reglasGrupos.tamanioGrupo: en el formulario van sueltas
+        Object.entries(erroresPorCampo(err, MENSAJES_DE_CAMPO)).map(([campo, texto]) => [
+          campo.replace(/^reglasGrupos\./, ''),
+          texto,
+        ])
+      ) as ErroresTorneo;
       // el rango ya lo miró el front: publicado, lo único que puede rechazar el back es bajar de los inscriptos
       if (publicado && delBack.cupoMaximo) {
         delBack.cupoMaximo = 'No puede quedar por debajo de los que ya se inscribieron.';
@@ -364,7 +375,7 @@ export const TorneoFormPage: React.FC = () => {
           {!publicado
             ? 'El torneo ya empezó o terminó: se muestra de solo lectura.'
             : bloqueados.includes('sede')
-              ? 'Ya hay inscripciones pagas: sede, fechas y formato no se pueden cambiar. Sí el nombre, la descripción y el cupo máximo.'
+              ? 'Ya hay inscripciones pagas: sede y fechas no se pueden cambiar. Sí el nombre, la descripción y el cupo máximo.'
               : 'El torneo está publicado: la disciplina, el reglamento y el esquema económico quedaron sellados; lo demás se puede cambiar.'}{' '}
           {torneo.slug && (
             <Link to={`/torneos/${torneo.id}/publicado`}>Ver el enlace y el sello</Link>
@@ -472,6 +483,20 @@ export const TorneoFormPage: React.FC = () => {
             />
           )}
 
+          {paso === 3 && editable && (
+            <section aria-labelledby="torneo-terminos-titulo">
+              <h3 id="torneo-terminos-titulo" className="torneos-terminos-titulo">
+                Términos de custodia de fondos
+              </h3>
+              <div className="torneos-terminos-texto" tabIndex={0}>
+                {TERMINOS_TORNEO.map((t) => (
+                  <p key={t.titulo}>
+                    <strong>{t.titulo}.</strong> {t.texto}
+                  </p>
+                ))}
+              </div>
+            </section>
+          )}
           {paso === 3 && editable && (
             <label className="torneos-terminos">
               <input

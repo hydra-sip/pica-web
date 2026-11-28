@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
-import '@rainbow-me/rainbowkit/styles.css';
-import { ConnectButton, lightTheme, RainbowKitProvider } from '@rainbow-me/rainbowkit';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useAccount, useSwitchChain, WagmiProvider } from 'wagmi';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useAccount, useSwitchChain } from 'wagmi';
 import { baseSepolia } from 'wagmi/chains';
 import type { MovimientoBilletera } from '../../api/billeteraApi';
 import { pesos } from '../../shared/formato';
 import { Modal } from '../../shared/ui';
 import { IconoAlerta, IconoCheck } from '../../shared/ui/Iconos';
 import { eth } from './cargaCripto';
-import { configWallet } from './configWallet';
 import { enlaceTransaccion, FAUCET_BASE_SEPOLIA } from './pasarelaCargas';
+import { ProveedoresWallet } from './ProveedoresWallet';
 import { useCargaCripto } from './useCargaCripto';
 
 interface Props {
@@ -19,7 +17,7 @@ interface Props {
   onAcreditada: (movimiento: MovimientoBilletera) => void;
 }
 
-const EnlaceBaseScan: React.FC<{ hash: string }> = ({ hash }) => (
+export const EnlaceBaseScan: React.FC<{ hash: string }> = ({ hash }) => (
   <a
     href={enlaceTransaccion(hash)}
     target="_blank"
@@ -30,7 +28,7 @@ const EnlaceBaseScan: React.FC<{ hash: string }> = ({ hash }) => (
   </a>
 );
 
-const Alerta: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+export const Alerta: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div role="alert" className="alerta alerta-peligro">
     <IconoAlerta size={18} />
     <span>{children}</span>
@@ -221,17 +219,10 @@ const ModalCargaConCripto: React.FC<Props> = ({ usuarioId, onCerrar, onAcreditad
  * HU-609: Cargar con cripto. Se carga con lazy desde Mi billetera para que wagmi, viem y RainbowKit no pesen en el
  * resto de la app.
  */
-const CargaConCripto: React.FC<Props> = (props) => {
-  const [queryClient] = useState(() => new QueryClient());
-  return (
-    <WagmiProvider config={configWallet()}>
-      <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider locale="es-419" theme={lightTheme({ accentColor: '#1b4468' })}>
-          <ModalCargaConCripto {...props} />
-        </RainbowKitProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
-  );
-};
+const CargaConCripto: React.FC<Props> = (props) => (
+  <ProveedoresWallet>
+    <ModalCargaConCripto {...props} />
+  </ProveedoresWallet>
+);
 
 export default CargaConCripto;

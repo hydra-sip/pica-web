@@ -1,0 +1,190 @@
+/* HU-808: centro de notificaciones y el toast de la que acaba de llegar, como en el wireframe */
+.notificaciones {
+  max-width: 640px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.notificaciones-cabecera {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.notificaciones-cabecera h1 {
+  margin: 0;
+  text-align: center;
+  font-size: var(--text-lg);
+  font-weight: 800;
+}
+
+/* las mismas pestañas que la consola del torneo */
+.notificaciones-pestanas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.notificaciones-pestana {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background-color: var(--color-card);
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.notificaciones-pestana:hover {
+  border-color: var(--color-border-strong);
+  color: var(--color-text);
+}
+
+.notificaciones-pestana.activa {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.notificaciones-marcar-todas {
+  align-self: flex-end;
+}
+
+.notificaciones-vacio,
+.notificaciones-error {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.notificaciones-error {
+  color: var(--color-danger);
+}
+
+.notificaciones-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.notificacion-tarjeta {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  font: inherit;
+  color: var(--color-text);
+  background-color: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+/* la no leída lleva la etiqueta "Nueva" al lado del título */
+.notificacion-titulo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.notificacion-icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-full);
+  background-color: var(--color-text);
+  color: #fff;
+}
+
+.notificacion-contenido {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1;
+  min-width: 0;
+}
+
+.notificacion-texto {
+  display: block;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.notificacion-contenido small {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+}
+
+/* el toast: arriba de la barra de abajo en el celular, en la esquina en escritorio */
+.notificacion-toast {
+  position: fixed;
+  z-index: 1000;
+  left: var(--space-4);
+  right: var(--space-4);
+  bottom: calc(72px + var(--space-3));
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background-color: #fff;
+  border: 1.5px solid var(--color-text);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.notificacion-toast-cuerpo {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  text-align: left;
+  font: inherit;
+  color: var(--color-text);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.notificacion-toast-cuerpo .notificacion-texto {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.notificacion-toast-cerrar {
+  display: flex;
+  padding: var(--space-1);
+  color: var(--color-text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+@media (min-width: 768px) {
+  .notificacion-toast {
+    left: auto;
+    bottom: var(--space-5);
+    width: 360px;
+  }
+}

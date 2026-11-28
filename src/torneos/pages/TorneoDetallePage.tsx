@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { torneoApi } from '../../api/torneoApi';
+import { ReprogramacionDetalle, torneoApi } from '../../api/torneoApi';
 import { inscripcionApi, InscripcionResumen } from '../../api/inscripcionApi';
 import { ApiError } from '../../api/httpClient';
 import { EstadoTorneo, TorneoDetalle } from '../types/torneo';
@@ -8,11 +8,14 @@ import { useTorneoRealtime } from '../../realtime/useTorneoRealtime';
 import { StatusChip } from '../../admin/components/StatusChip';
 import { TorneoPremiosList } from '../components/TorneoPremiosList';
 import { BracketDelTorneo } from '../components/BracketDelTorneo';
+import { GruposPublicos } from '../components/GruposPublicos';
+import { HistorialReprogramaciones } from '../components/HistorialReprogramaciones';
+import { AvisoNuevaFecha } from '../../inscripciones/components/AvisoNuevaFecha';
 import { TuProximoCruce } from '../../partidos/components/TuProximoCruce';
 import { TorneoDetalleSkeleton } from '../components/TorneoSkeleton';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { fecha, fechaHora, pesos, valorInscripcion } from '../../shared/formato';
-import { formatFormatoTorneo, formatModalidad, formatTipoParticipante } from '../utils/formatters';
+import { formatFormatoTorneo, formatModalidad, formatTipoParticipante } from '../formato';
 import {
   IconoTrofeo,
   IconoAlerta,
@@ -33,6 +36,12 @@ export const TorneoDetallePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isNotFound, setIsNotFound] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  /** Los cambios de fecha (CR-01); si no se pudieron traer, la ficha sigue igual. */
+  const [reprogramaciones, setReprogramaciones] = useState<ReprogramacionDetalle[]>([]);
+  const [recargaReprogramaciones, setRecargaReprogramaciones] = useState(0);
+  /** Lo que volvió a la billetera al bajarse por la nueva fecha (CR-01-6); null mientras no se bajó. */
+  const [bajada, setBajada] = useState<number | null>(null);
+  const nuevaFecha = reprogramaciones.find((r) => r.plazoAbierto) ?? null;
 
   const fetchTorneoDetalle = useCallback(async () => {
     if (!slug) return;
@@ -62,6 +71,23 @@ export const TorneoDetallePage: React.FC = () => {
     fetchTorneoDetalle();
   }, [fetchTorneoDetalle]);
 
+  /** Vuelve a pedir el torneo sin la pantalla de carga: la ocupación y las fechas cambian con la página abierta. */
+  const refrescarTorneo = useCallback(() => {
+    if (!slug) return;
+    torneoApi
+      .getTorneoBySlug(slug)
+      .then(setTorneo)
+      .catch(() => undefined);
+  }, [slug]);
+
+  useEffect(() => {
+    if (!torneo?.id) return;
+    torneoApi
+      .reprogramaciones(torneo.id)
+      .then(setReprogramaciones)
+      .catch(() => setReprogramaciones([]));
+  }, [torneo?.id, recargaReprogramaciones]);
+
   useEffect(() => {
     let cancelado = false;
     if (!isAuthenticated || !torneo?.id) {
@@ -73,7 +99,9 @@ export const TorneoDetallePage: React.FC = () => {
       .listarMias({ torneoId: torneo.id })
       .then((res) => {
         if (cancelado) return;
-        const activa = res.content?.find((i) => i.estado !== 'CANCELADA') ?? null;
+        // la reintegrada (se bajó por la nueva fecha, CR-01) tampoco cuenta: puede volver a inscribirse
+        const activa =
+          res.content?.find((i) => i.estado !== 'CANCELADA' && i.estado !== 'REINTEGRADA') ?? null;
         setMiInscripcion(activa);
       })
       .catch(() => {
@@ -95,6 +123,13 @@ export const TorneoDetallePage: React.FC = () => {
       setTorneo((prev) => (prev ? { ...prev, estado: estado as EstadoTorneo } : prev));
     },
     onActualizar: (data) => {
+      // cambiaron las fechas o alguien se bajó por la nueva fecha (CR-01): se vuelven a pedir el torneo (fechas,
+      // ocupación y pozo) y el historial
+      if (data.tipo === 'TORNEO_REPROGRAMADO' || data.tipo === 'INSCRIPCION_REINTEGRADA') {
+        refrescarTorneo();
+        setRecargaReprogramaciones((n) => n + 1);
+        return;
+      }
       if (data.pozoEstimado !== undefined || data.estado) {
         setTorneo((prev) => {
           if (!prev) return prev;
@@ -250,11 +285,11 @@ export const TorneoDetallePage: React.FC = () => {
   // Lógica de organizador, cupos e inscripción
   const isOrganizador = Boolean(
     user &&
-      torneo.organizador &&
-      (String(user.id) === String(torneo.organizador.id) ||
-        (user.username &&
-          torneo.organizador.username &&
-          user.username.toLowerCase() === torneo.organizador.username.toLowerCase()))
+    torneo.organizador &&
+    (String(user.id) === String(torneo.organizador.id) ||
+      (user.username &&
+        torneo.organizador.username &&
+        user.username.toLowerCase() === torneo.organizador.username.toLowerCase()))
   );
 
   const fechaCierre = torneo.cierreInscripcionEn ? new Date(torneo.cierreInscripcionEn) : null;
@@ -263,8 +298,15 @@ export const TorneoDetallePage: React.FC = () => {
   );
   const inscripcionCerrada = cierreVencido || torneo.estado !== 'INSCRIPCION_ABIERTA';
 
+  // HU-703: con el organizador bloqueado, la inscripción sigue abierta pero no suma a nadie
+  const inscripcionSuspendida = !inscripcionCerrada && torneo.inscripcionSuspendida;
+
   const puedeInscribirse =
-    !isOrganizador && !miInscripcion && !inscripcionCerrada && torneo.cupoDisponible > 0;
+    !isOrganizador &&
+    !miInscripcion &&
+    !inscripcionCerrada &&
+    !inscripcionSuspendida &&
+    torneo.cupoDisponible > 0;
 
   const handleInscripcionClick = () => {
     if (!isAuthenticated) {
@@ -333,6 +375,13 @@ export const TorneoDetallePage: React.FC = () => {
           }}
         >
           <span className="badge">Formato: {formatFormatoTorneo(torneo.formato)}</span>
+          {torneo.reglasGrupos && (
+            <span className="badge">
+              Grupos de {torneo.reglasGrupos.tamanioGrupo} · pasan{' '}
+              {torneo.reglasGrupos.clasificanPorGrupo} · {torneo.reglasGrupos.puntosVictoria}/
+              {torneo.reglasGrupos.puntosEmpate}/0 puntos
+            </span>
+          )}
           <span className="badge">Modalidad: {formatModalidad(torneo.modalidad)}</span>
           <span className="badge">
             Modalidad de juego:{' '}
@@ -388,6 +437,15 @@ export const TorneoDetallePage: React.FC = () => {
               <button type="button" className="btn btn-secondary" disabled>
                 Inscripción cerrada
               </button>
+            ) : inscripcionSuspendida ? (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled
+                title="El organizador del torneo está bloqueado"
+              >
+                Inscripciones suspendidas
+              </button>
             ) : puedeInscribirse ? (
               <button
                 type="button"
@@ -424,7 +482,16 @@ export const TorneoDetallePage: React.FC = () => {
                 Organizador Oficial
               </div>
               <div style={{ fontWeight: 600, color: 'var(--color-text)' }}>
-                {torneo.organizador?.nombreCompleto || 'Organizador'}
+                {torneo.organizador?.id ? (
+                  <Link
+                    to={`/organizadores/${torneo.organizador.id}`}
+                    className="torneo-organizador-link"
+                  >
+                    {torneo.organizador.nombreCompleto || 'Organizador'}
+                  </Link>
+                ) : (
+                  torneo.organizador?.nombreCompleto || 'Organizador'
+                )}
                 {torneo.organizador?.username && (
                   <span
                     style={{
@@ -441,6 +508,29 @@ export const TorneoDetallePage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* CR-01-6: el torneo cambió de fecha y todavía me puedo bajar */}
+      {miInscripcion && nuevaFecha && (
+        <AvisoNuevaFecha
+          inscripcion={miInscripcion}
+          reprogramacion={nuevaFecha}
+          onRechazada={(rechazo) => {
+            // ya no está inscripto: vuelve el botón para inscribirse y la ocupación baja
+            setMiInscripcion(null);
+            setBajada(rechazo.reintegrado);
+            refrescarTorneo();
+          }}
+        />
+      )}
+      {bajada !== null && (
+        <div role="status" className="alerta alerta-exito">
+          <span>
+            Te bajaste del torneo
+            {bajada > 0 && `: volvieron ${pesos(bajada)} a tu billetera`}.{' '}
+            <Link to="/billetera">Ver en Mi billetera</Link>
+          </span>
+        </div>
+      )}
 
       {/* Próximo cruce si es capitán */}
       <TuProximoCruce torneoId={torneo.id} />
@@ -576,6 +666,8 @@ export const TorneoDetallePage: React.FC = () => {
                 {torneo.fechaFin ? fechaHora(torneo.fechaFin) : 'A definir'}
               </span>
             </div>
+
+            <HistorialReprogramaciones reprogramaciones={reprogramaciones} />
           </div>
         </div>
 
@@ -721,7 +813,9 @@ export const TorneoDetallePage: React.FC = () => {
       {torneo.estado !== 'INSCRIPCION_ABIERTA' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--color-text)' }}>
+            <span
+              style={{ fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--color-text)' }}
+            >
               Cuadro del Torneo
             </span>
             <Link
@@ -733,7 +827,11 @@ export const TorneoDetallePage: React.FC = () => {
               <span>Pronosticar Cruces</span>
             </Link>
           </div>
-          <BracketDelTorneo torneoId={torneo.id} />
+          {torneo.formato === 'GRUPOS_Y_ELIMINACION' && <GruposPublicos torneoId={torneo.id} />}
+          <BracketDelTorneo
+            torneoId={torneo.id}
+            conGrupos={torneo.formato === 'GRUPOS_Y_ELIMINACION'}
+          />
         </div>
       )}
     </div>

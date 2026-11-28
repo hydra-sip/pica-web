@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   AccionAuditoria,
   auditoriaApi,
@@ -39,6 +40,8 @@ const ACCIONES: Record<AccionAuditoria, string> = {
   LIQUIDACION: 'Liquidación',
   CANCELACION: 'Cancelación',
   REINTEGRO: 'Reintegro',
+  SANCION: 'Sanción',
+  CALIFICACION: 'Calificación',
 };
 
 const ENTIDADES: Record<EntidadAuditoria, string> = {
@@ -50,6 +53,7 @@ const ENTIDADES: Record<EntidadAuditoria, string> = {
   CARGA_CRIPTO: 'Carga con cripto',
   USUARIO: 'Usuario',
   PARAMETRO: 'Parámetro',
+  ALERTA_FRAUDE: 'Alerta de fraude',
 };
 
 const buscarUsuarios = (q: string): Promise<OpcionFiltro[]> =>
@@ -86,9 +90,21 @@ const resumen = (detalle: RegistroAuditoria['detalle']): string =>
     : '-';
 
 export const AuditoriaPage: React.FC = () => {
-  const [tipoEntidad, setTipoEntidad] = useState<EntidadAuditoria | ''>('');
-  const [entidadId, setEntidadId] = useState('');
-  const [usuario, setUsuario] = useState<OpcionFiltro | null>(null);
+  const [searchParams] = useSearchParams();
+  const usuarioParam = searchParams.get('usuario');
+  const usernameParam = searchParams.get('username');
+  const entidadParam = searchParams.get('entidad');
+  const entidadIdParam = searchParams.get('entidadId');
+
+  const [tipoEntidad, setTipoEntidad] = useState<EntidadAuditoria | ''>(() =>
+    entidadParam && entidadParam in ENTIDADES ? (entidadParam as EntidadAuditoria) : ''
+  );
+  const [entidadId, setEntidadId] = useState(() => (entidadParam && entidadIdParam ? entidadIdParam : ''));
+  const [usuario, setUsuario] = useState<OpcionFiltro | null>(() => {
+    const idNum = usuarioParam ? Number(usuarioParam) : NaN;
+    if (!Number.isInteger(idNum) || idNum <= 0) return null;
+    return { id: idNum, texto: usernameParam ? `@${usernameParam}` : `Usuario #${idNum}` };
+  });
   const [accion, setAccion] = useState<AccionAuditoria | ''>('');
   const [desde, setDesde] = useState('');
   const [hasta, setHasta] = useState('');

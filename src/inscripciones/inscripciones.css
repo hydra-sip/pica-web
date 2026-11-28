@@ -332,6 +332,25 @@
   background-color: var(--color-surface);
 }
 
+/* PICA-450: el texto del reglamento, con scroll y con sus saltos de línea */
+.reglamento-texto {
+  max-height: 14rem;
+  overflow-y: auto;
+  margin-bottom: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-card);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  white-space: pre-line;
+}
+
+.reglamento-texto:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
 .reglamento-casilla {
   display: flex;
   align-items: center;
@@ -467,4 +486,37 @@
   align-items: center;
   gap: var(--space-3);
   text-align: center;
+}
+
+/* CR-05: el % del premio de cada integrante, en la nómina del paso 1 y en el detalle */
+.reparto-campo {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+}
+
+.reparto-campo .input {
+  width: 4.5rem;
+  text-align: right;
+}
+
+.reparto-pct {
+  flex-shrink: 0;
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+/* CR-01-6: el torneo cambió de fecha; el botón para bajarse va a la derecha del texto */
+.aviso-nueva-fecha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.aviso-nueva-fecha p {
+  margin: 0.25rem 0 0;
 }

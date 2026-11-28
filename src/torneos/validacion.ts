@@ -1,6 +1,8 @@
 import {
+  Formato,
   InformacionTorneoPayload,
   Modalidad,
+  REGLAS_GRUPOS_POR_DEFECTO,
   TipoParticipante,
   TorneoInformacion,
 } from '../api/torneoApi';
@@ -10,6 +12,7 @@ import { inputLocalAIso, isoAInputLocal } from '../shared/formato';
 export interface FormTorneo {
   nombre: string;
   disciplina: string;
+  formato: Formato;
   modalidad: Modalidad | '';
   tipoParticipante: TipoParticipante | '';
   sede: string;
@@ -22,6 +25,11 @@ export interface FormTorneo {
   cupoMinimo: string;
   tamanioEquipo: string;
   nominaMaxima: string;
+  /** Las reglas de la fase de grupos (CR-02): solo cuentan con GRUPOS_Y_ELIMINACION. */
+  tamanioGrupo: string;
+  clasificanPorGrupo: string;
+  puntosVictoria: string;
+  puntosEmpate: string;
 }
 
 export type ErroresTorneo = Partial<Record<keyof FormTorneo, string>>;
@@ -34,6 +42,7 @@ const texto = (n: number | null): string => (n === null ? '' : String(n));
 export const desdeTorneo = (t: TorneoInformacion | null): FormTorneo => ({
   nombre: t?.nombre ?? '',
   disciplina: t?.disciplina ?? '',
+  formato: t?.formato ?? 'ELIMINACION_DIRECTA',
   modalidad: t?.modalidad ?? '',
   tipoParticipante: t?.tipoParticipante ?? '',
   sede: t?.sede ?? '',
@@ -46,6 +55,10 @@ export const desdeTorneo = (t: TorneoInformacion | null): FormTorneo => ({
   cupoMinimo: texto(t?.cupoMinimo ?? null),
   tamanioEquipo: texto(t?.tamanioEquipo ?? null),
   nominaMaxima: texto(t?.nominaMaxima ?? null),
+  tamanioGrupo: String((t?.reglasGrupos ?? REGLAS_GRUPOS_POR_DEFECTO).tamanioGrupo),
+  clasificanPorGrupo: String((t?.reglasGrupos ?? REGLAS_GRUPOS_POR_DEFECTO).clasificanPorGrupo),
+  puntosVictoria: String((t?.reglasGrupos ?? REGLAS_GRUPOS_POR_DEFECTO).puntosVictoria),
+  puntosEmpate: String((t?.reglasGrupos ?? REGLAS_GRUPOS_POR_DEFECTO).puntosEmpate),
 });
 
 /** Vacío es null; lo que no es número queda NaN y no pasa Number.isInteger. */
@@ -72,7 +85,16 @@ export const aPayload = (
     nombre: f.nombre.trim(),
     disciplina: f.disciplina.trim(),
     descripcion: guardado?.descripcion ?? null,
-    formato: 'ELIMINACION_DIRECTA',
+    formato: f.formato,
+    reglasGrupos:
+      f.formato === 'GRUPOS_Y_ELIMINACION'
+        ? {
+            tamanioGrupo: Number(f.tamanioGrupo),
+            clasificanPorGrupo: Number(f.clasificanPorGrupo),
+            puntosVictoria: Number(f.puntosVictoria),
+            puntosEmpate: Number(f.puntosEmpate),
+          }
+        : null,
     modalidad: f.modalidad || null,
     tipoParticipante: f.tipoParticipante || null,
     sede: presencial ? f.sede.trim() || null : null,
@@ -93,6 +115,8 @@ export interface LimitesTorneo {
   cupoTope: number;
   /** Minutos que tienen que pasar como mínimo entre el cierre de la inscripción y el inicio. */
   margenCierreInicioMin: number;
+  /** El ambiente de prueba (PICA-448): las fechas pueden ser pasadas; el orden se exige igual. */
+  sinValidarFechas?: boolean;
 }
 
 const MIN_POR_HORA = 60;
@@ -108,7 +132,7 @@ export const textoMargen = (minutos: number): string =>
  */
 export const validarBorrador = (
   f: FormTorneo,
-  { cupoTope, margenCierreInicioMin }: LimitesTorneo,
+  { cupoTope, margenCierreInicioMin, sinValidarFechas = false }: LimitesTorneo,
   original?: FormTorneo
 ): ErroresTorneo => {
   const errores: ErroresTorneo = {};
@@ -127,13 +151,14 @@ export const validarBorrador = (
   const inicio = f.fechaInicio ? new Date(f.fechaInicio).getTime() : null;
   const fin = f.fechaFin ? new Date(f.fechaFin).getTime() : null;
   const cierre = f.cierreInscripcionEn ? new Date(f.cierreInscripcionEn).getTime() : null;
-  if (inicio !== null && cambia('fechaInicio') && inicio <= ahora) {
+  const futuras = !sinValidarFechas;
+  if (futuras && inicio !== null && cambia('fechaInicio') && inicio <= ahora) {
     errores.fechaInicio = 'Tiene que ser una fecha futura.';
   }
   if (inicio !== null && fin !== null && fin < inicio) {
     errores.fechaFin = 'No puede ser anterior al inicio.';
   }
-  if (cierre !== null && cambia('cierreInscripcionEn') && cierre <= ahora) {
+  if (futuras && cierre !== null && cambia('cierreInscripcionEn') && cierre <= ahora) {
     errores.cierreInscripcionEn = 'Tiene que ser una fecha futura.';
   } else if (cierre !== null && inicio !== null && cierre > inicio) {
     errores.cierreInscripcionEn = 'La inscripción tiene que cerrar antes del inicio.';
@@ -159,6 +184,10 @@ export const validarBorrador = (
     errores.cupoMinimo = 'No puede ser mayor que el cupo máximo.';
   }
 
+  if (f.formato === 'GRUPOS_Y_ELIMINACION') {
+    Object.assign(errores, erroresDeGrupos(f, maximo, minimo, !errores.cupoMaximo));
+  }
+
   if (f.tipoParticipante === 'EQUIPO') {
     const tamanio = numero(f.tamanioEquipo);
     const nomina = numero(f.nominaMaxima);
@@ -170,6 +199,57 @@ export const validarBorrador = (
     } else if (tamanio !== null && nomina !== null && !errores.tamanioEquipo && nomina < tamanio) {
       errores.nominaMaxima = 'No puede ser menor que los titulares.';
     }
+  }
+  return errores;
+};
+
+/** Cuántos grupos salen y cuántos pasan a la llave con ese cupo; null si las reglas no cierran. */
+export const resumenGrupos = (
+  f: FormTorneo
+): { grupos: number; aLaLlave: number; necesarios: number } | null => {
+  const tamanio = numero(f.tamanioGrupo);
+  const pasan = numero(f.clasificanPorGrupo);
+  const cupo = numero(f.cupoMaximo);
+  if (!tamanio || !pasan || !cupo || cupo % tamanio !== 0) return null;
+  const grupos = cupo / tamanio;
+  return { grupos, aLaLlave: grupos * pasan, necesarios: grupos * (pasan + 1) };
+};
+
+const esPotenciaDeDos = (n: number): boolean => n >= 2 && (n & (n - 1)) === 0;
+
+/** Lo mismo que valida el back para la fase de grupos (CR-02): rangos y lo que piden del cupo. */
+const erroresDeGrupos = (
+  f: FormTorneo,
+  maximo: number | null,
+  minimo: number | null,
+  cupoValido: boolean
+): ErroresTorneo => {
+  const errores: ErroresTorneo = {};
+  const tamanio = numero(f.tamanioGrupo);
+  const pasan = numero(f.clasificanPorGrupo);
+  const victoria = numero(f.puntosVictoria);
+  const empate = numero(f.puntosEmpate);
+  if (tamanio === null || !Number.isInteger(tamanio) || tamanio < 3 || tamanio > 8) {
+    errores.tamanioGrupo = 'Tiene que ser entre 3 y 8.';
+  } else if (pasan === null || !Number.isInteger(pasan) || pasan < 1 || pasan >= tamanio) {
+    errores.clasificanPorGrupo = 'Tiene que pasar al menos 1 y menos que los del grupo.';
+  }
+  if (victoria === null || !Number.isInteger(victoria) || victoria < 1 || victoria > 10) {
+    errores.puntosVictoria = 'Tiene que ser entre 1 y 10.';
+  } else if (empate === null || !Number.isInteger(empate) || empate < 0 || empate >= victoria) {
+    errores.puntosEmpate = 'Tiene que ser menos que por ganar.';
+  }
+  if (Object.keys(errores).length > 0 || maximo === null || !cupoValido) return errores;
+  const resumen = resumenGrupos(f);
+  if (!resumen) {
+    errores.cupoMaximo = `Tiene que ser múltiplo de ${tamanio}, para que los grupos queden completos.`;
+    return errores;
+  }
+  if (!esPotenciaDeDos(resumen.aLaLlave)) {
+    errores.clasificanPorGrupo = `Con ${resumen.grupos} grupos pasan ${resumen.aLaLlave} a la llave: tienen que ser 2, 4, 8, 16…`;
+  }
+  if (minimo !== null && minimo <= maximo && minimo < resumen.necesarios) {
+    errores.cupoMinimo = `Con ${resumen.grupos} grupos hacen falta al menos ${resumen.necesarios}: en cada grupo, uno más que los que pasan.`;
   }
   return errores;
 };
@@ -212,6 +292,10 @@ export const validarPaso = (
 export const CAMPOS_PASO_2: (keyof FormTorneo)[] = [
   'cupoMaximo',
   'cupoMinimo',
+  'tamanioGrupo',
+  'clasificanPorGrupo',
+  'puntosVictoria',
+  'puntosEmpate',
   'tamanioEquipo',
   'nominaMaxima',
 ];

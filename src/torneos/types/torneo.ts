@@ -1,3 +1,5 @@
+import type { ReglasGrupos } from '../../api/torneoApi';
+
 export type EstadoTorneo =
   | 'INSCRIPCION_ABIERTA'
   | 'INSCRIPCION_CERRADA'
@@ -48,6 +50,7 @@ export interface TorneoResumen {
   cierreInscripcionEn: string | null;
   fechaInicio: string | null;
   fechaFin: string | null;
+  organizador?: OrganizadorTorneo | null;
 }
 
 export interface TorneoDetalle {
@@ -57,6 +60,8 @@ export interface TorneoDetalle {
   descripcion: string | null;
   disciplina: string;
   formato: FormatoTorneo;
+  /** Las de la fase de grupos, selladas (CR-02); null en eliminación directa. */
+  reglasGrupos?: ReglasGrupos | null;
   modalidad: ModalidadTorneo;
   tipoParticipante: TipoParticipante;
   sede: string | null;
@@ -90,6 +95,8 @@ export interface TorneoDetalle {
   publicadoEn: string | null;
   /** HU-606: cuándo se repartió la custodia del torneo terminado; null mientras no se liquidó. */
   liquidadoEn?: string | null;
+  /** HU-703: la inscripción está abierta pero su organizador está bloqueado; no se inscribe nadie. */
+  inscripcionSuspendida: boolean;
 }
 
 export interface PageMetadata {

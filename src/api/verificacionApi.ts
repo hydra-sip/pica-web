@@ -1,7 +1,14 @@
 import { rifaPublicaApi, SorteoRifa } from './rifaApi';
-import { BracketTorneo, torneoApi } from './torneoApi';
+import { BracketTorneo, SorteoGrupos, torneoApi } from './torneoApi';
 
-export type TipoSorteo = 'TORNEO' | 'RIFA';
+/** GRUPOS (CR-02): el sorteo de los grupos de un torneo con fase de grupos; su llave tiene cruces fijos. */
+export type TipoSorteo = 'TORNEO' | 'GRUPOS' | 'RIFA';
+
+/** El tipo que viene en la URL (?tipo=torneo|grupos|rifa); sin él, TORNEO. */
+export const tipoDeSorteo = (valor: string | null): TipoSorteo => {
+  const tipo = valor?.toUpperCase();
+  return tipo === 'RIFA' || tipo === 'GRUPOS' ? tipo : 'TORNEO';
+};
 
 /** Un torneo con el bracket sorteado o una rifa sorteada, para elegirlo en el portal. */
 export interface SorteoItemResumen {
@@ -78,8 +85,11 @@ export function torneoDesdeBracket(bracket: BracketTorneo): TorneoVerificacionDa
 }
 
 export const verificacionApi = {
-  /** Los torneos con el bracket sorteado: en curso o finalizados, del catálogo público. */
-  listarTorneos: async (): Promise<SorteoItemResumen[]> => {
+  /**
+   * Los torneos con el sorteo hecho: en curso o finalizados, del catálogo público. Con `conGrupos`, los de fase de
+   * grupos (se verifica el reparto); sin él, los de eliminación directa (se verifica la llave).
+   */
+  listarTorneos: async (conGrupos = false): Promise<SorteoItemResumen[]> => {
     const paginas = await Promise.all(
       (['EN_CURSO', 'FINALIZADO'] as const).map((estado) =>
         torneoApi.getTorneosResumen({ estado, size: 50 })
@@ -87,9 +97,10 @@ export const verificacionApi = {
     );
     return paginas
       .flatMap((p) => p.content)
+      .filter((t) => (t.formato === 'GRUPOS_Y_ELIMINACION') === conGrupos)
       .map((t): SorteoItemResumen => ({
         id: t.id,
-        tipo: 'TORNEO',
+        tipo: conGrupos ? 'GRUPOS' : 'TORNEO',
         titulo: t.nombre,
         disciplinaOInfo: t.disciplina,
       }));
@@ -97,6 +108,11 @@ export const verificacionApi = {
 
   obtenerTorneo: async (id: number | string): Promise<TorneoVerificacionData> => {
     return torneoDesdeBracket(await torneoApi.bracket(Number(id)));
+  },
+
+  /** El sorteo de los grupos (CR-02), tal cual lo publica el back. */
+  obtenerGrupos: async (id: number | string): Promise<SorteoGrupos> => {
+    return torneoApi.sorteoGrupos(Number(id));
   },
 
   /** Las rifas sorteadas, la más reciente primero; en lugar de la disciplina va el torneo. */

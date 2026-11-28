@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { TorneoResumen } from '../types/torneo';
 import { StatusChip } from '../../admin/components/StatusChip';
 import { fechaHora, pesos, valorInscripcion } from '../../shared/formato';
-import { formatFormatoTorneo } from '../utils/formatters';
+import { formatFormatoTorneo } from '../formato';
 import { IconoTrofeo } from '../../shared/ui/Iconos';
 import './TorneoCard.css';
 
@@ -72,12 +72,14 @@ export const TorneoCard: React.FC<TorneoCardProps> = ({ torneo }) => {
       {/* Barra de Progreso de Cupos */}
       <div className="torneo-cupos-section">
         <div className="torneo-cupos-header">
-          <span className={`torneo-cupos-status ${esAgotado ? 'status-agotado' : esCasiLleno ? 'status-alerta' : ''}`}>
+          <span
+            className={`torneo-cupos-status ${esAgotado ? 'status-agotado' : esCasiLleno ? 'status-alerta' : ''}`}
+          >
             {esAgotado
               ? 'Cupos agotados'
               : esCasiLleno
-              ? `Últimos ${torneo.cupoDisponible} cupos disponibles`
-              : `Quedan ${torneo.cupoDisponible} cupos`}
+                ? `Últimos ${torneo.cupoDisponible} cupos disponibles`
+                : `Quedan ${torneo.cupoDisponible} cupos`}
           </span>
           <span className="torneo-cupos-ratio">
             {cuposOcupados}/{cuposTotales}
@@ -111,12 +113,20 @@ export const TorneoCard: React.FC<TorneoCardProps> = ({ torneo }) => {
             <strong>{fechaHora(torneo.fechaFin)}</strong>
           </div>
         )}
+        {torneo.organizador?.id && (
+          <div className="torneo-extra-item">
+            <span className="torneo-extra-label">Organiza:</span>
+            <Link
+              to={`/organizadores/${torneo.organizador.id}`}
+              className="torneo-card-organizador-link"
+            >
+              {torneo.organizador.nombreCompleto || torneo.organizador.username}
+            </Link>
+          </div>
+        )}
       </div>
 
-      <Link
-        to={`/torneos/${torneo.slug}`}
-        className={`btn ${btnClass} torneo-card-btn`}
-      >
+      <Link to={`/torneos/${torneo.slug}`} className={`btn ${btnClass} torneo-card-btn`}>
         {btnLabel} →
       </Link>
     </article>

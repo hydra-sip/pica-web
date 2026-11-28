@@ -70,6 +70,45 @@ Abre tu navegador en `http://localhost:5173`.
 
 ---
 
+## Testing
+
+Dos niveles en este repo, y la estrategia completa de los tres repos en
+[pica-back/docs/testing.md](https://github.com/hydra-sip/pica-back/blob/dev/docs/testing.md):
+
+| Nivel | Herramienta | Qué prueba | Cómo se corre | En el CI |
+|---|---|---|---|---|
+| Componentes y páginas | Vitest + Testing Library + MSW | cada pantalla con la ruta real y la API de los handlers de MSW (`src/**/*.test.tsx`) | `npm test` | job `verify`, con el lint y el build |
+| E2E | Playwright | los flujos críticos con el front compilado contra el back real (`e2e/`) | `npm run e2e:back` y `npm run e2e` | job `e2e`, en paralelo |
+
+Los tests buscan por rol y texto accesible (`getByRole`, `getByLabel`), como lo usa una persona, y comparan con el
+valor exacto que se espera: nada de `toBeTruthy()` para un texto o un monto.
+
+## Pruebas de punta a punta (Playwright)
+
+Los E2E de `e2e/` prueban el sistema levantado: el front sin mocks contra el back real. Son pocos y solo de los
+flujos críticos; lo demás lo cubren los tests de Vitest (`npm test`), que no los levantan.
+
+```bash
+npx playwright install chromium   # una sola vez
+npm run e2e:back                  # el back de dev con el seed, en Docker (puerto 8080)
+npm run e2e                       # build sin mocks + vite preview en el 4173, y los tests en modo headless
+npm run e2e:back:bajar            # al terminar: la base es descartable
+```
+
+- `e2e/docker-compose.yml` usa la imagen `ghcr.io/hydra-sip/pica-back:dev` con los perfiles `dev,seed` y los
+  plazos de los jobs programados cortos. Los usuarios del seed (`admin`, `dev_organizador`, `dev_arbitro`,
+  `dev_jugador1` a `6`) tienen la contraseña `PicaDev2026`.
+- `e2e/pages/` tiene un Page Object por pantalla: los localizadores (por rol y texto accesible) en un solo lugar.
+- `e2e/support/api.ts` arma los datos de cada test por la API; los clics quedan para lo que se prueba.
+- El reporte queda en `playwright-report/` (`npx playwright show-report`) con captura, video y traza de lo que falló.
+- En el CI corren en el job `e2e`, en paralelo con lint, tests y build, en cada PR y en cada push a dev y main. Si
+  fallan, el reporte, las trazas y el log del back quedan en el artifact `playwright-report`.
+- `E2E_BASE_URL` y `E2E_API_URL` apuntan los tests a otro ambiente sin levantar nada.
+- Como se prueba contra el back de `dev`, un cambio del front que necesita algo del back todavía sin mergear
+  falla hasta que entra el del back.
+
+---
+
 ## Scripts Disponibles
 
 - `npm run dev`: Inicia el servidor de desarrollo.
@@ -77,3 +116,4 @@ Abre tu navegador en `http://localhost:5173`.
 - `npm run preview`: Previsualiza localmente la build estática.
 - `npm run lint`: Ejecuta ESLint.
 - `npm run format`: Formatea el código con Prettier.
+- `npm run e2e`: Corre los E2E de Playwright (ver arriba).

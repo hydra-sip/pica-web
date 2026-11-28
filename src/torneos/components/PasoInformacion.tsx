@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   CampoTorneo,
   DisciplinaOpcion,
+  Formato,
   OpcionesTorneo,
   TorneoInformacion,
 } from '../../api/torneoApi';
@@ -164,11 +165,17 @@ export const PasoInformacion: React.FC<PasoInformacionProps> = ({
         {opciones.formatos.map((f) => (
           <Opcion
             key={f.codigo}
-            elegida={f.disponible}
-            onElegir={() => undefined}
+            elegida={form.formato === f.codigo}
+            onElegir={() => onCambio({ formato: f.codigo as Formato })}
             disabled={!puede('formato') || !f.disponible}
             titulo={f.nombre}
-            detalle={f.disponible ? undefined : 'Próximamente'}
+            detalle={
+              !f.disponible
+                ? 'Próximamente'
+                : f.codigo === 'GRUPOS_Y_ELIMINACION'
+                  ? 'Las reglas de los grupos van en el paso 2'
+                  : undefined
+            }
           />
         ))}
       </Grupo>

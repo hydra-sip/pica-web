@@ -18,6 +18,7 @@ import { ParametrosPage } from '../admin/pages/ParametrosPage';
 import { ReclamosPage } from '../admin/pages/ReclamosPage';
 import { ReclamoDetallePage } from '../admin/pages/ReclamoDetallePage';
 import { AuditoriaPage } from '../admin/pages/AuditoriaPage';
+import { AlertasFraudePage } from '../admin/pages/AlertasFraudePage';
 import { NotFoundPage } from '../shared/pages/NotFoundPage';
 import { UnauthorizedPage } from '../shared/pages/UnauthorizedPage';
 import { RequireAuth } from '../auth/components/RequireAuth';
@@ -44,8 +45,11 @@ import { RifaPublicaPage } from '../rifas/pages/RifaPublicaPage';
 import { PortalVerificacionPage } from '../verificacion/pages/PortalVerificacionPage';
 import { TicketPage } from '../rifas/pages/TicketPage';
 import { MisTicketsPage } from '../rifas/pages/MisTicketsPage';
+import { NotificacionesPage } from '../notificaciones/pages/NotificacionesPage';
 import { MisInscripcionesPage } from '../inscripciones/pages/MisInscripcionesPage';
 import { MiBilleteraPage } from '../billetera/pages/MiBilleteraPage';
+import { PerfilOrganizadorPage } from '../reputacion/pages/PerfilOrganizadorPage';
+import { PerfilJugadorPage } from '../reputacion/pages/PerfilJugadorPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -55,6 +59,10 @@ export const AppRoutes: React.FC = () => {
         <Route index element={<HomePage />} />
         <Route path="torneos" element={<TorneosCatalogoPage />} />
         <Route path="torneos/:slug" element={<TorneoDetallePage />} />
+        {/* HU-806 / PICA-430: Perfil público del organizador */}
+        <Route path="organizadores/:id" element={<PerfilOrganizadorPage />} />
+        {/* HU-801 / PICA-420: Perfil público del jugador */}
+        <Route path="jugadores/:id" element={<PerfilJugadorPage />} />
         {/* HU-306 / T306-2: Pronósticos y ranking */}
         <Route path="pronosticos" element={<PronosticosPage />} />
         {/* Rifas para quien compra (PICA-221): públicas, sin login */}
@@ -72,6 +80,8 @@ export const AppRoutes: React.FC = () => {
         {/* Rutas Autenticadas Públicas / Perfil */}
         <Route element={<RequireAuth />}>
           <Route path="mi-perfil" element={<ProfilePage />} />
+          {/* HU-808 / T808-3: el centro de notificaciones del usuario */}
+          <Route path="notificaciones" element={<NotificacionesPage />} />
           {/* HU-602 / T602-3: Mi billetera con saldos, movimientos y cargas */}
           <Route path="billetera" element={<MiBilleteraPage />} />
           <Route path="mis-tickets" element={<MisTicketsPage />} />
@@ -191,6 +201,14 @@ export const AppRoutes: React.FC = () => {
               element={
                 <RequirePermiso permisos="AUDITORIA_VER">
                   <AuditoriaPage />
+                </RequirePermiso>
+              }
+            />
+            <Route
+              path="alertas"
+              element={
+                <RequirePermiso permisos="ALERTA_FRAUDE_REVISAR">
+                  <AlertasFraudePage />
                 </RequirePermiso>
               }
             />

@@ -8,6 +8,7 @@ import {
   estadoMovimientoLabel,
   LimitesRetiro,
   MovimientoBilletera,
+  RetiroCripto,
   TIPO_MOVIMIENTO_LABEL,
   TipoMovimientoBilletera,
 } from '../../api/billeteraApi';
@@ -41,6 +42,8 @@ const CON_DETALLE: TipoMovimientoBilletera[] = [
 
 // HU-609: wagmi, viem y RainbowKit se bajan recién al abrir Cargar con cripto
 const CargaConCripto = lazy(() => import('../cripto/CargaConCripto'));
+// HU-610: lo mismo para Retirar a la wallet
+const RetiroACripto = lazy(() => import('../cripto/RetiroACripto'));
 
 const tonoEstado = (estado: string): BadgeTone => {
   switch (estado) {
@@ -161,6 +164,21 @@ export const MiBilleteraPage: React.FC = () => {
     [cargarBilletera, cargarMovimientos]
   );
 
+  const [retiroCriptoAbierto, setRetiroCriptoAbierto] = useState<boolean>(false);
+
+  // el back descontó el saldo al pedir el retiro: se vuelve a leer la billetera
+  const retiroCriptoPedido = useCallback(async () => {
+    await Promise.all([cargarBilletera(), cargarMovimientos(0)]);
+  }, [cargarBilletera, cargarMovimientos]);
+
+  const retiroCriptoCobrado = useCallback(
+    async (retiro: RetiroCripto) => {
+      setMensajeExito(`Cobraste ${pesos(retiro.montoPesos)} en tu wallet.`);
+      await Promise.all([cargarBilletera(), cargarMovimientos(0)]);
+    },
+    [cargarBilletera, cargarMovimientos]
+  );
+
   const { user } = useAuth();
   const retomadas = useRetomarCargasCripto(
     user?.id,
@@ -241,6 +259,14 @@ export const MiBilleteraPage: React.FC = () => {
             disabled={billetera?.estado === 'BLOQUEADA'}
           >
             Cargar con cripto
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setRetiroCriptoAbierto(true)}
+            disabled={billetera?.estado === 'BLOQUEADA'}
+          >
+            Retirar a la wallet
           </button>
         </div>
       </header>
@@ -488,6 +514,18 @@ export const MiBilleteraPage: React.FC = () => {
             usuarioId={user?.id ?? ''}
             onCerrar={() => setCriptoAbierto(false)}
             onAcreditada={(movimiento) => void cargaCriptoAcreditada(movimiento)}
+          />
+        </Suspense>
+      )}
+
+      {retiroCriptoAbierto && (
+        <Suspense fallback={null}>
+          <RetiroACripto
+            saldoDisponible={billetera?.saldoDisponible ?? 0}
+            limites={limitesRetiro}
+            onCerrar={() => setRetiroCriptoAbierto(false)}
+            onPedido={() => void retiroCriptoPedido()}
+            onCobrado={(retiro) => void retiroCriptoCobrado(retiro)}
           />
         </Suspense>
       )}

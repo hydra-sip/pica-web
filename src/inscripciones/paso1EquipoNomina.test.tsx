@@ -6,6 +6,7 @@ import { equipoApi } from '../api/equipoApi';
 import { inscripcionApi } from '../api/inscripcionApi';
 import { torneoApi } from '../api/torneoApi';
 import { problema } from '../mocks/adminHandlers';
+import { REGLAMENTO_TEXTO } from '../mocks/inscripcionesHandlers';
 import { server } from '../mocks/server';
 import { renderRuta } from '../test/renderRuta';
 
@@ -217,6 +218,24 @@ describe('paso 1: equipo y nómina (alta)', () => {
     expect(screen.getByLabelText('Acepto el Reglamento y Código de Conducta')).not.toBeChecked();
   });
 
+  it('muestra el texto del reglamento arriba de la casilla, con sus saltos de línea (PICA-450)', async () => {
+    await renderRuta(ALTA_F5);
+
+    const reglamento = await screen.findByRole('region', { name: 'Reglamento del torneo' });
+    expect(reglamento.textContent).toBe(REGLAMENTO_TEXTO);
+    const casilla = screen.getByLabelText('Acepto el Reglamento y Código de Conducta');
+    expect(reglamento.compareDocumentPosition(casilla) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING
+    );
+  });
+
+  it('sin el texto del reglamento no muestra un recuadro vacío (PICA-450)', async () => {
+    await renderRuta('/torneos/torneo-gratis/inscripcion');
+
+    expect(await screen.findByLabelText('Acepto el Reglamento y Código de Conducta')).toBeVisible();
+    expect(screen.queryByRole('region', { name: 'Reglamento del torneo' })).not.toBeInTheDocument();
+  });
+
   it('el botón de continuar muestra el monto y sigue deshabilitado hasta tener reglamento, equipo y nómina válida', async () => {
     const { user } = await renderRuta(ALTA_F5); // nómina de 5 a 7
     const continuar = await screen.findByRole('button', {
@@ -268,7 +287,7 @@ describe('paso 1: equipo y nómina (alta)', () => {
       'joaco_g',
       'salva_b',
     ]);
-    expect(inscripcion.reglamentoAceptadoEn).toBeTruthy();
+    expect(inscripcion.reglamentoAceptadoEn).toMatch(/^\d{4}-\d{2}-\d{2}T/);
   });
 
   it('"Guardar como borrador y salir" guarda sin confirmar y vuelve a la ficha con el aviso, sin pedir el reglamento', async () => {

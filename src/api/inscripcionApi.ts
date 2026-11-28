@@ -54,6 +54,17 @@ export interface InscripcionDetalle extends InscripcionResumen {
   /** Se completa al confirmar; en BORRADOR es null. */
   reglamentoAceptadoEn?: string | null;
   nomina?: UsuarioPublico[] | null;
+  /**
+   * El % del premio del equipo de cada integrante de la nómina, sumando 100 (CR-05). Null en la individual y en
+   * la de equipo que se liquida con todo al capitán (las de torneos que cerraron la inscripción antes del cambio).
+   */
+  reparto?: RepartoIntegrante[] | null;
+}
+
+/** Lo que le toca del premio del equipo a un integrante de la nómina: de 0 a 100, con hasta dos decimales. */
+export interface RepartoIntegrante {
+  usuarioId: number;
+  pct: number;
 }
 
 /** Cuerpo de crear y editar en un torneo por equipos: exactamente uno de equipoId y nombreEquipoNuevo. */
@@ -96,6 +107,15 @@ export interface Reemplazo {
   entra: UsuarioPublico;
   reemplazadoEn: string;
   realizadoPor: UsuarioPublico;
+}
+
+/** POST /inscripciones/{id}/rechazo-reprogramacion (CR-01-3): la inscripción quedó REINTEGRADA. */
+export interface RechazoReprogramacion {
+  inscripcionId: number;
+  torneoId: number;
+  estado: 'REINTEGRADA';
+  /** Lo que volvió a la billetera de quien pagó, sin los gastos administrativos; 0 en un torneo sin costo. */
+  reintegrado: number;
 }
 
 // Inscripciones del participante. Crear, editar, reemplazar, cancelar, confirmar, reabrir, ver el
@@ -148,6 +168,22 @@ export const inscripcionApi = {
   /** Reemplazo en una CONFIRMADA de equipo, solo del capitán: devuelve la inscripción con la nómina actualizada. */
   reemplazar: async (id: number, payload: ReemplazoPayload): Promise<InscripcionDetalle> => {
     return httpClient.post<InscripcionDetalle>(`/inscripciones/${id}/reemplazos`, payload);
+  },
+
+  /**
+   * El capitán cambia el reparto del premio (CR-05): todos los integrantes de la nómina, una vez cada uno, sumando
+   * 100. Vale en BORRADOR, PENDIENTE_PAGO o CONFIRMADA mientras el torneo tenga la inscripción abierta.
+   */
+  repartir: async (id: number, reparto: RepartoIntegrante[]): Promise<InscripcionDetalle> => {
+    return httpClient.put<InscripcionDetalle>(`/inscripciones/${id}/reparto`, reparto);
+  },
+
+  /**
+   * La nueva fecha del torneo no le sirve (CR-01-3): solo el participante de la individual o el capitán, dentro del
+   * plazo. Se le devuelve la inscripción, sin los gastos administrativos, y pierde el lugar.
+   */
+  rechazarReprogramacion: async (id: number): Promise<RechazoReprogramacion> => {
+    return httpClient.post<RechazoReprogramacion>(`/inscripciones/${id}/rechazo-reprogramacion`);
   },
 
   /** Historial de reemplazos, del más viejo al más nuevo. Lo ven el capitán, la nómina y el organizador. */

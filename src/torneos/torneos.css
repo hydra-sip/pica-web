@@ -846,6 +846,36 @@
   margin-top: 3px;
 }
 
+/* PICA-449: los términos de custodia, con scroll arriba de la casilla, como los de la rifa */
+.torneos-terminos-titulo {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-md);
+}
+
+.torneos-terminos-texto {
+  max-height: 14rem;
+  overflow-y: auto;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-card);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.torneos-terminos-texto p {
+  margin: 0;
+}
+
+.torneos-terminos-texto p + p {
+  margin-top: var(--space-3);
+}
+
+.torneos-terminos-texto:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
 .torneos-faltantes {
   margin: var(--space-2) 0 0;
   padding-left: var(--space-5);
@@ -1033,7 +1063,40 @@
 }
 
 .torneos-consola-cancelar {
+  display: flex;
+  gap: 0.5rem;
   margin-left: auto;
+}
+
+/* CR-01: el resumen antes de reprogramar y el historial de cambios de fecha */
+.torneos-reprogramacion-resumen {
+  margin: 1rem 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-subtle);
+}
+
+.torneos-reprogramacion-resumen h3,
+.torneos-reprogramaciones h3 {
+  margin: 0 0 0.4rem;
+  font-size: 1rem;
+}
+
+.torneos-reprogramacion-resumen ul,
+.torneos-reprogramaciones ol {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.torneos-reprogramaciones {
+  margin-top: 0.75rem;
+}
+
+.torneos-reprogramaciones p {
+  margin: 0;
 }
 
 .torneos-cancelacion-gastos {
@@ -1084,4 +1147,68 @@
 
 .torneos-cancelacion-total {
   font-weight: 700;
+}
+
+/* CR-02: cómo queda la fase de grupos con el cupo elegido */
+.torneos-ayuda {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+/* CR-02: la fase de grupos en la consola y en la ficha */
+.grupos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6, 1.5rem);
+}
+
+.grupos-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 0.75rem);
+}
+
+.grupos-tabla-caja {
+  overflow-x: auto;
+}
+
+.grupos-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.grupos-tabla th,
+.grupos-tabla td {
+  padding: 0.4rem 0.5rem;
+  text-align: center;
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.grupos-tabla th:nth-child(2),
+.grupos-tabla td:nth-child(2),
+.grupos-criterio {
+  text-align: left;
+}
+
+.grupos-clasifica td:first-child {
+  box-shadow: inset 3px 0 0 var(--color-success, #16a34a);
+}
+
+.grupos-pasa,
+.grupos-criterio {
+  color: var(--color-text-secondary);
+}
+
+.grupos-fecha h4 {
+  margin: 0 0 0.5rem;
+  font-size: var(--text-sm);
+}
+
+.grupos-partidos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-3, 0.75rem);
 }

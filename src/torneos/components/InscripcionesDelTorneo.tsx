@@ -1,10 +1,16 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { SancionDetalle } from '../../api/sancionApi';
 import { EstadoInscripcion, InscripcionDelTorneo, torneoApi } from '../../api/torneoApi';
 import { PageResponse } from '../../api/usuarioApi';
 import { ESTADO_INSCRIPCION } from '../../inscripciones/formato';
+import { IndiceFairPlay } from '../../reputacion/components/IndiceFairPlay';
+import { PuntajeReputacion } from '../../reputacion/components/PuntajeReputacion';
+import { SancionarJugador } from '../../reputacion/components/SancionarJugador';
+import { nombreCompleto } from '../../reputacion/formato';
 import { mensajeDeError } from '../../shared/mensajesError';
 import { Badge, Button, Card, Table } from '../../shared/ui';
-import { formatFecha } from '../utils/formatters';
+import { fechaHora } from '../../shared/formato';
 
 const TAMANIO_PAGINA = 20;
 
@@ -16,14 +22,33 @@ const ESTADOS: Exclude<EstadoInscripcion, 'BORRADOR'>[] = [
   'REINTEGRADA',
 ];
 
-const participante = (i: InscripcionDelTorneo): { nombre: string; detalle: string } => {
+const perfil = (usuarioId: number) => `/jugadores/${usuarioId}`;
+
+/**
+ * Quién se inscribió. HU-801: el inscripto individual y el capitán de un equipo enlazan a su perfil público; el nombre
+ * del equipo no, porque no tiene uno.
+ */
+const participante = (
+  i: InscripcionDelTorneo
+): { nombre: string; titulo: React.ReactNode; detalle: React.ReactNode } => {
   if (i.equipo && i.capitan) {
     const jugadores = i.jugadores === 1 ? '1 jugador' : `${i.jugadores ?? 0} jugadores`;
-    return { nombre: i.equipo.nombre, detalle: `Capitán @${i.capitan.username} · ${jugadores}` };
+    return {
+      nombre: i.equipo.nombre,
+      titulo: i.equipo.nombre,
+      detalle: (
+        <>
+          Capitán <Link to={perfil(i.capitan.id)}>@{i.capitan.username}</Link> · {jugadores}
+        </>
+      ),
+    };
   }
+  if (!i.usuario) return { nombre: '—', titulo: '—', detalle: null };
+  const nombre = `${i.usuario.nombres} ${i.usuario.apellidos}`;
   return {
-    nombre: i.usuario ? `${i.usuario.nombres} ${i.usuario.apellidos}` : '—',
-    detalle: i.usuario ? `@${i.usuario.username}` : '',
+    nombre,
+    titulo: <Link to={perfil(i.usuario.id)}>{nombre}</Link>,
+    detalle: `@${i.usuario.username}`,
   };
 };
 
@@ -31,21 +56,28 @@ interface InscripcionesDelTorneoProps {
   torneoId: number;
   /** Cambia para volver a pedir la lista: por ejemplo, después de cerrar la inscripción. */
   recarga: number;
+  /** HU-803: con el torneo publicado, el organizador sanciona desde cada inscripción confirmada. */
+  puedeSancionar?: boolean;
+  onSancionada?: (sancion: SancionDetalle) => void;
 }
 
 /**
  * Las inscripciones del torneo en la consola (HU-206, PICA-214), de la más vieja a la más nueva, con un filtro por
- * estado. Filtra y pagina el back. Sin link a la nómina: "Mi inscripción" supone que quien mira es el capitán.
+ * estado, el índice de fair play de cada uno (HU-802; en un equipo, el del capitán) y, de esa misma persona, el puntaje
+ * de reputación y la marca de no confiable (HU-805). Filtra y pagina el back. Sin link a la nómina: "Mi inscripción" supone que quien mira es el capitán.
  */
 export const InscripcionesDelTorneo: React.FC<InscripcionesDelTorneoProps> = ({
   torneoId,
   recarga,
+  puedeSancionar = false,
+  onSancionada,
 }) => {
   const [estado, setEstado] = useState<EstadoInscripcion | null>(null);
   const [pagina, setPagina] = useState(0);
   const [datos, setDatos] = useState<PageResponse<InscripcionDelTorneo> | null>(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sancionada, setSancionada] = useState<string | null>(null);
 
   useEffect(() => {
     let vigente = true;
@@ -70,6 +102,11 @@ export const InscripcionesDelTorneo: React.FC<InscripcionesDelTorneoProps> = ({
   };
 
   const desde = pagina * TAMANIO_PAGINA;
+
+  const alSancionar = (s: SancionDetalle) => {
+    setSancionada(`Sanción aplicada a ${nombreCompleto(s.jugador)}.`);
+    onSancionada?.(s);
+  };
 
   return (
     <Card>
@@ -99,6 +136,12 @@ export const InscripcionesDelTorneo: React.FC<InscripcionesDelTorneoProps> = ({
         ))}
       </div>
 
+      {sancionada && (
+        <div className="alerta alerta-exito" role="status">
+          {sancionada}
+        </div>
+      )}
+
       {error ? (
         <div className="alerta alerta-peligro" role="alert">
           {error}
@@ -121,15 +164,19 @@ export const InscripcionesDelTorneo: React.FC<InscripcionesDelTorneoProps> = ({
                 <th scope="col">Participante</th>
                 <th scope="col">Estado</th>
                 <th scope="col">Inscripción</th>
+                <th scope="col">Fair play</th>
+                <th scope="col">Reputación</th>
+                {puedeSancionar && <th scope="col">Acciones</th>}
               </tr>
             </thead>
             <tbody>
               {datos.content.map((i) => {
-                const { nombre, detalle } = participante(i);
+                const { nombre, titulo, detalle } = participante(i);
                 return (
                   <tr key={i.id}>
                     <td>
-                      <span className="torneos-nombre-fila">{nombre}</span>
+                      <span className="torneos-nombre-fila">{titulo}</span>
+                      {i.noConfiable && <Badge tone="peligro">No confiable</Badge>}
                       {detalle && <span className="torneos-celda-secundaria">{detalle}</span>}
                     </td>
                     <td>
@@ -137,7 +184,26 @@ export const InscripcionesDelTorneo: React.FC<InscripcionesDelTorneoProps> = ({
                         {ESTADO_INSCRIPCION[i.estado].texto}
                       </Badge>
                     </td>
-                    <td>{formatFecha(i.creadoEn)}</td>
+                    <td>{fechaHora(i.creadoEn)}</td>
+                    <td>
+                      <IndiceFairPlay valor={i.fairPlay} />
+                    </td>
+                    <td>
+                      <PuntajeReputacion reputacion={i.reputacion} />
+                    </td>
+                    {puedeSancionar && (
+                      <td>
+                        {i.estado === 'CONFIRMADA' && (
+                          <SancionarJugador
+                            torneoId={torneoId}
+                            inscripcionId={i.id}
+                            size="sm"
+                            ariaLabel={`Sancionar en la inscripción de ${nombre}`}
+                            onSancionada={alSancionar}
+                          />
+                        )}
+                      </td>
+                    )}
                   </tr>
                 );
               })}

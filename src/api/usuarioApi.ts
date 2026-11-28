@@ -75,7 +75,8 @@ export interface UsuarioCreatePayload {
   personaId: number;
   roles: number[];
   descripcion?: string;
-  estado?: 'ACTIVO' | 'BLOQUEADO';
+  // nadie nace bloqueado: se lo bloquea después, con motivo (HU-703)
+  estado?: 'ACTIVO';
 }
 
 export interface UsuarioUpdatePayload {

@@ -115,3 +115,12 @@
   font-size: var(--text-xs);
   color: var(--color-text-secondary);
 }
+
+/* CR-05: el premio de un equipo, con el total y debajo la parte de cada integrante */
+.reparto-fila-equipo td {
+  font-weight: 700;
+}
+
+.reparto-fila-integrante td:first-child {
+  padding-left: var(--space-6);
+}

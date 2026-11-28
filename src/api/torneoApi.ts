@@ -1,3 +1,4 @@
+import { Reputacion } from './calificacionApi';
 import { customFetch, httpClient } from './httpClient';
 import { UsuarioPublico } from './jugadorApi';
 import { PageResponse } from './usuarioApi';
@@ -17,7 +18,29 @@ export type EstadoTorneo =
   /** HU-605: canceló con gastos y espera a soporte; la plata sigue en custodia. */
   | 'CANCELACION_EN_REVISION'
   | 'CANCELADO';
-export type Formato = 'ELIMINACION_DIRECTA';
+export type Formato = 'ELIMINACION_DIRECTA' | 'GRUPOS_Y_ELIMINACION';
+
+/**
+ * Las reglas de la fase de grupos (CR-02): las elige el organizador y quedan selladas al publicar. El desempate no se
+ * configura: puntos, resultado entre sí, partidos ganados y partido de desempate.
+ */
+export interface ReglasGrupos {
+  /** Integrantes por grupo con el cupo lleno, de 3 a 8. */
+  tamanioGrupo: number;
+  /** Cuántos pasan a la llave; menos que el tamaño. */
+  clasificanPorGrupo: number;
+  puntosVictoria: number;
+  /** Menos que por ganar; perder da 0. */
+  puntosEmpate: number;
+}
+
+/** Las de Fede, con las que arranca el asistente. */
+export const REGLAS_GRUPOS_POR_DEFECTO: ReglasGrupos = {
+  tamanioGrupo: 4,
+  clasificanPorGrupo: 2,
+  puntosVictoria: 3,
+  puntosEmpate: 1,
+};
 export type Modalidad = 'PRESENCIAL' | 'ONLINE';
 export type TipoParticipante = 'INDIVIDUAL' | 'EQUIPO';
 
@@ -27,6 +50,8 @@ export interface InformacionTorneoPayload {
   disciplina: string;
   descripcion?: string | null;
   formato?: Formato | null;
+  /** Solo con GRUPOS_Y_ELIMINACION; lo que no viene toma el valor por defecto. */
+  reglasGrupos?: ReglasGrupos | null;
   modalidad: Modalidad | null;
   tipoParticipante: TipoParticipante | null;
   sede: string | null;
@@ -44,7 +69,7 @@ export interface InformacionTorneoPayload {
 /** GET /torneos/{id}; también lo devuelven el alta y PUT /informacion. */
 export interface TorneoInformacion extends Omit<
   InformacionTorneoPayload,
-  'descripcion' | 'formato'
+  'descripcion' | 'formato' | 'reglasGrupos'
 > {
   id: number;
   estado: EstadoTorneo;
@@ -52,6 +77,8 @@ export interface TorneoInformacion extends Omit<
   pasoPendiente: number | null;
   descripcion: string | null;
   formato: Formato;
+  /** Las de la fase de grupos; null en eliminación directa. */
+  reglasGrupos: ReglasGrupos | null;
   /** El PDF, si se subió: GET /torneos/{id}/reglamento. */
   reglamentoUrl: string | null;
   /** SHA-256 del PDF desde que se sube; sin PDF, el del texto al publicar. */
@@ -74,6 +101,12 @@ export interface TorneoInformacion extends Omit<
    * inscripciones pagas; en curso o después, todos.
    */
   camposBloqueados: CampoTorneo[];
+  /**
+   * Las inscripciones confirmadas que hacen falta para cerrar la inscripción y jugar (PICA-447): 2 en eliminación
+   * directa; con grupos, `cupoMaximo / tamanioGrupo` grupos por `clasificanPorGrupo + 1`. Null en un borrador sin
+   * formato o sin cupo.
+   */
+  inscriptosMinimos: number | null;
   /** Ventana de check-in (HU-308): cuántos minutos antes del cruce abre; null sin configurar. */
   checkinMinAntes: number | null;
   /** Cuántos minutos dura la ventana de check-in. */
@@ -216,6 +249,11 @@ export interface OpcionesTorneo {
   checkinDuracionMaxMin: number;
   /** Las que ya existen en la sede pedida. */
   canchas: string[];
+  /**
+   * El ambiente de prueba (`app.torneos.sin-validar-fechas`, PICA-448): el torneo se crea, edita y publica con fechas
+   * pasadas y los partidos se programan en cualquier fecha. El orden entre las fechas se exige igual.
+   */
+  sinValidarFechas: boolean;
 }
 
 /** Fila de GET /torneos/mis-torneos. */
@@ -367,15 +405,121 @@ export interface InscripcionDelTorneo {
   equipo: { id: number; nombre: string } | null;
   capitan: UsuarioInscripto | null;
   jugadores: number | null;
+  /** HU-802: el índice de fair play del inscripto o, en un equipo, del capitán. */
+  fairPlay: number;
+  /** HU-805: el promedio de las calificaciones de esa misma persona. */
+  reputacion: Reputacion;
+  /** HU-805: si algún organizador lo marcó como no confiable. No bloquea. */
+  noConfiable: boolean;
 }
 
 /** GET /torneos/{id}/bracket (HU-207): sin generar, `rondas` vacío. */
+/** Con qué se definió un puesto de la tabla (CR-02); EMPATE si lo comparte. */
+export type CriterioPuesto = 'PUNTOS' | 'ENTRE_SI' | 'GANADOS' | 'DESEMPATE' | 'EMPATE';
+
+export interface FilaTablaGrupo {
+  inscripcionId: number;
+  nombre: string;
+  /** Los que comparten puesto tienen la misma. */
+  posicion: number;
+  jugados: number;
+  ganados: number;
+  empatados: number;
+  perdidos: number;
+  aFavor: number;
+  enContra: number;
+  diferencia: number;
+  puntos: number;
+  criterio: CriterioPuesto;
+  /** Si pasa a la llave. */
+  clasifica: boolean;
+}
+
+export interface GrupoDelTorneo {
+  letra: string;
+  /** Si se jugaron todos sus partidos. */
+  terminado: boolean;
+  tabla: FilaTablaGrupo[];
+  /** Todos contra todos; la ronda es la fecha. */
+  partidos: PartidoBracket[];
+  /** El partido de desempate, si hubo. */
+  desempate: PartidoBracket[];
+  /** Con el grupo terminado, los empatados que se definen con un partido de desempate. */
+  desempatesPendientes: number[][];
+}
+
+/** POST /torneos/{id}/reprogramaciones (CR-01): las fechas nuevas, en ISO; `fechaFin` es opcional. */
+export interface ReprogramacionPayload {
+  fechaInicio: string | null;
+  fechaFin: string | null;
+  /** Hasta cuándo se anota gente en los lugares que se liberen; posterior al plazo. */
+  cierreInscripcion: string | null;
+  /** Hasta cuándo los inscriptos pueden bajarse si la nueva fecha no les sirve. */
+  rechazoHasta: string | null;
+  motivo: string;
+}
+
+/** Una reprogramación del historial del torneo (CR-01). Es pública: sale en la ficha. */
+export interface ReprogramacionDetalle {
+  id: number;
+  fechaInicioAnterior: string;
+  fechaFinAnterior: string | null;
+  fechaInicioNueva: string;
+  fechaFinNueva: string | null;
+  cierreInscripcion: string;
+  rechazoHasta: string;
+  motivo: string;
+  /** Si todavía se puede rechazar la nueva fecha. */
+  plazoAbierto: boolean;
+  /** Cuántas inscripciones se bajaron por esta nueva fecha. */
+  rechazos: number;
+  creadaEn: string;
+}
+
+/** GET /torneos/{id}/grupos (CR-02): las reglas y, por grupo, la tabla y los partidos. */
+export interface GruposTorneo {
+  torneoId: number;
+  reglas: ReglasGrupos;
+  /** El orden sellado: puntos,entre-si,ganados,partido. */
+  desempate: string;
+  grupos: GrupoDelTorneo[];
+}
+
+export interface IntegranteSorteado {
+  inscripcionId: number;
+  nombre: string;
+}
+
+/** GET /torneos/{id}/sorteo-grupos (CR-02): todo para recalcular el reparto en el portal. */
+export interface SorteoGrupos {
+  torneoId: number;
+  torneoNombre: string;
+  /** 1: el orden de la llave repartido en serpentina. */
+  version: number;
+  listaHash: string;
+  listaSelladaEn: string | null;
+  /** Las confirmadas que entraron al sorteo, por id. */
+  inscripciones: number[];
+  /** La ronda de drand fijada al cerrar la inscripción. */
+  semillaRonda: number | null;
+  /** SHA-256 de listaHash:semillaRonda. */
+  compromisoHash: string | null;
+  /** El randomness de la ronda; null antes del sorteo. */
+  semilla: string | null;
+  semillaFirma: string | null;
+  semillaUrl: string | null;
+  cantidadGrupos: number;
+  grupos: { letra: string; integrantes: IntegranteSorteado[] }[];
+}
+
 export interface BracketTorneo {
   torneoId: number;
   /** Con la que se sorteó: cualquiera puede recalcular el cuadro con ella y la lista. */
   semilla: string | null;
   listaHash: string | null;
   rondas: RondaBracket[];
+  /** La versión del bracket (HU-809): crece con cada cambio de la llave; uno con versión menor es más viejo. */
+  version: number;
 }
 
 // Las del asistente exigen TORNEO_GESTIONAR y cada organizador ve solo los suyos; las del catálogo son públicas.
@@ -553,9 +697,29 @@ export const torneoApi = {
     return httpClient.post<BracketTorneo>(`/torneos/${id}/bracket`);
   },
 
+  /** Público (CR-02): los grupos, sus tablas con el criterio de cada puesto y sus partidos. */
+  grupos: async (id: number): Promise<GruposTorneo> => {
+    return httpClient.get<GruposTorneo>(`/torneos/${id}/grupos`);
+  },
+
+  /** Público (CR-02): el sorteo de los grupos, para verificarlo. */
+  sorteoGrupos: async (id: number): Promise<SorteoGrupos> => {
+    return httpClient.get<SorteoGrupos>(`/torneos/${id}/sorteo-grupos`);
+  },
+
   /** Otro sorteo, mientras no haya resultados; queda en la auditoría. */
   regenerarBracket: async (id: number): Promise<BracketTorneo> => {
     return httpClient.post<BracketTorneo>(`/torneos/${id}/bracket/regenerar`);
+  },
+
+  /** Solo el organizador (CR-01): cambia las fechas sin cancelar y abre el plazo para bajarse. */
+  reprogramar: async (id: number, payload: ReprogramacionPayload): Promise<ReprogramacionDetalle> => {
+    return httpClient.post<ReprogramacionDetalle>(`/torneos/${id}/reprogramaciones`, payload);
+  },
+
+  /** Público (CR-01): el historial, de la más vieja a la más nueva. */
+  reprogramaciones: async (id: number): Promise<ReprogramacionDetalle[]> => {
+    return httpClient.get<ReprogramacionDetalle[]>(`/torneos/${id}/reprogramaciones`);
   },
 
   /**

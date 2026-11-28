@@ -9,6 +9,8 @@ import {
 } from '../../api/partidoApi';
 import { LadoBracket, torneoApi } from '../../api/torneoApi';
 import { useTorneoRealtime } from '../../realtime/useTorneoRealtime';
+import { SancionarJugador } from '../../reputacion/components/SancionarJugador';
+import { nombreCompleto } from '../../reputacion/formato';
 import { erroresPorCampo, mensajeDeError } from '../../shared/mensajesError';
 import { Badge, Button, Card } from '../../shared/ui';
 import { CamposMarcador } from '../components/CamposMarcador';
@@ -18,7 +20,7 @@ import { ObjetarResultado } from '../components/ObjetarResultado';
 import { ResolverObjecion } from '../components/ResolverObjecion';
 import { SalaCheckin } from '../components/SalaCheckin';
 import { abreviarHash } from '../../torneos/formato';
-import { formatFecha } from '../../torneos/utils/formatters';
+import { fechaHora } from '../../shared/formato';
 import {
   CERRADOS,
   CierrePorAusencia,
@@ -188,14 +190,19 @@ export const PartidoPage: React.FC = () => {
 
   const enviar = async (e: React.FormEvent) => {
     e.preventDefault();
-    const faltan = erroresDelMarcador(form);
+    const faltan = erroresDelMarcador(form, partido.fase === 'GRUPOS');
     setErrores(faltan);
     if (Object.keys(faltan).length > 0) return;
 
     setEnviando(true);
     setMensaje(null);
     try {
-      setPartido(await partidoApi.cargarResultado(partido.id, payloadDelMarcador(form)));
+      setPartido(
+        await partidoApi.cargarResultado(
+          partido.id,
+          payloadDelMarcador(form, partido.fase === 'GRUPOS')
+        )
+      );
       setMensaje({
         tipo: 'exito',
         texto: 'Resultado enviado. Ahora lo tiene que aceptar el rival.',
@@ -250,6 +257,20 @@ export const PartidoPage: React.FC = () => {
             Ver todas las objeciones del torneo →
           </Link>
         )}
+        {partido.puedoSancionar && (partido.local || partido.visitante) && (
+          <div className="partido-sancionar">
+            <SancionarJugador
+              torneoId={partido.torneoId}
+              partidoId={partido.id}
+              onSancionada={(s) =>
+                setMensaje({
+                  tipo: 'exito',
+                  texto: `Sanción aplicada a ${nombreCompleto(s.jugador)}.`,
+                })
+              }
+            />
+          </div>
+        )}
       </header>
 
       {mensaje && (
@@ -282,6 +303,7 @@ export const PartidoPage: React.FC = () => {
         {puedeCargar ? (
           <form className="partido-form" onSubmit={(e) => void enviar(e)} noValidate>
             <CamposMarcador
+              conEmpate={partido.fase === 'GRUPOS'}
               marcador={form}
               errores={errores}
               nombreLocal={partido.local?.nombre}
@@ -359,7 +381,7 @@ export const PartidoPage: React.FC = () => {
                         : 'se confirmó el resultado cargado'}
                       , por {partido.objecion.resueltaPor}
                       {partido.objecion.resueltaEn &&
-                        ` el ${formatFecha(partido.objecion.resueltaEn)}`}
+                        ` el ${fechaHora(partido.objecion.resueltaEn)}`}
                       .
                     </p>
                     <p>Justificación: {partido.objecion.justificacion}</p>

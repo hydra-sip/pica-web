@@ -23,7 +23,8 @@ interface Datos {
  *   2. Una inscripción CONFIRMADA: aviso "ya estás inscripto". Va antes que el cierre y que un borrador,
  *      porque un borrador ya no se puede confirmar si hay una confirmada.
  *   3. Inscripción cerrada (estado distinto de abierta o fecha de cierre pasada): aviso. Va antes de
- *      PENDIENTE_PAGO y BORRADOR porque ni se paga ni se confirma en un torneo cerrado.
+ *      PENDIENTE_PAGO y BORRADOR porque ni se paga ni se confirma en un torneo cerrado. Lo mismo con la
+ *      inscripción suspendida porque el organizador está bloqueado (HU-703).
  *   4. Una PENDIENTE_PAGO: redirige al paso 2 (`/inscripciones/:id/pago`).
  *   5. Un BORRADOR (el más nuevo): redirige al paso 1 (`/inscripciones/:id/nomina`).
  *   6. Ninguna, o solo CANCELADAS y REINTEGRADAS: el paso 1 en modo alta. Un equipo con una cancelada
@@ -96,6 +97,20 @@ export const InscripcionEntradaPage: React.FC = () => {
       <div className="inscripcion-page">
         <div className="alerta alerta-aviso" role="status">
           La inscripción a {datos.torneo.nombre} no está abierta o ya cerró.
+        </div>
+        <div className="inscripcion-acciones">
+          <Link to={`/torneos/${datos.torneo.slug}`} className="btn btn-secondary btn-block">
+            Ver torneo
+          </Link>
+        </div>
+      </div>
+    );
+  }
+  if (datos.torneo.inscripcionSuspendida) {
+    return (
+      <div className="inscripcion-page">
+        <div className="alerta alerta-aviso" role="status">
+          La inscripción a {datos.torneo.nombre} está suspendida: su organizador está bloqueado.
         </div>
         <div className="inscripcion-acciones">
           <Link to={`/torneos/${datos.torneo.slug}`} className="btn btn-secondary btn-block">

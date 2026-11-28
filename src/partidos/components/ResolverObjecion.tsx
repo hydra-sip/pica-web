@@ -71,7 +71,7 @@ export const ResolverObjecion: React.FC<ResolverObjecionProps> = ({
 
   const revisar = async (e: React.FormEvent) => {
     e.preventDefault();
-    const faltan = opcion === 'otro' ? erroresDelMarcador(marcador) : {};
+    const faltan = opcion === 'otro' ? erroresDelMarcador(marcador, partido.fase === 'GRUPOS') : {};
     if (evidenciaId === null) faltan.evidenciaId = 'Elegí la evidencia en la que te basás.';
     if (justificacion.trim() === '') faltan.justificacion = 'Explicá el fallo.';
     setErrores(faltan);
@@ -83,7 +83,7 @@ export const ResolverObjecion: React.FC<ResolverObjecionProps> = ({
         ? original
         : opcion === 'propuesta'
           ? propuesta
-          : payloadDelMarcador(marcador);
+          : payloadDelMarcador(marcador, partido.fase === 'GRUPOS');
     const evidencia = evidencias.find((x) => x.id === evidenciaId)!;
     setDefinitivo(false);
     setRevisando({
@@ -156,6 +156,7 @@ export const ResolverObjecion: React.FC<ResolverObjecionProps> = ({
       </fieldset>
       {opcion === 'otro' && (
         <CamposMarcador
+          conEmpate={partido.fase === 'GRUPOS'}
           marcador={marcador}
           errores={errores}
           nombreLocal={partido.local?.nombre}

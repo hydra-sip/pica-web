@@ -10,6 +10,7 @@ type DetalleMock = Omit<
   | 'pctGastosAdministrativos'
   | 'gastosAdministrativos'
   | 'totalAPagar'
+  | 'inscripcionSuspendida'
 > & {
   premios: { puesto: number; pct: number }[];
   esBorrador?: boolean;
@@ -241,15 +242,44 @@ export const mockTorneosDetalle: (TorneoDetalle & { esBorrador?: boolean })[] = 
     gastosAdministrativos: t.valorInscripcion / 10,
     totalAPagar: t.valorInscripcion * 1.1,
     premios: t.premios.map((p) => ({ ...p, monto: (t.pozoEstimado * p.pct) / 100 })),
+    inscripcionSuspendida: false,
   })
 );
 
 const sinTildes = (texto: string) =>
   texto.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim();
 
+const mapearTorneoResumen = (t: TorneoDetalle): TorneoResumen => ({
+  id: t.id,
+  slug: t.slug,
+  nombre: t.nombre,
+  descripcion: t.descripcion,
+  disciplina: t.disciplina,
+  formato: t.formato,
+  modalidad: t.modalidad,
+  tipoParticipante: t.tipoParticipante,
+  sede: t.sede,
+  estado: t.estado,
+  cupoMaximo: t.cupoMaximo,
+  cupoDisponible: t.cupoDisponible,
+  valorInscripcion: t.valorInscripcion,
+  gastosAdministrativos: t.gastosAdministrativos,
+  moneda: t.moneda,
+  pozoEstimado: t.pozoEstimado,
+  cierreInscripcionEn: t.cierreInscripcionEn,
+  fechaInicio: t.fechaInicio,
+  fechaFin: t.fechaFin,
+  organizador: t.organizador,
+});
+
+const ESTADOS_VIGENTES = new Set(['INSCRIPCION_ABIERTA', 'INSCRIPCION_CERRADA', 'EN_CURSO']);
+
 export const torneoHandlers = [
   // HU-807: en los mocks nadie tiene designaciones de árbitro
   http.get(`${API_URL}/designaciones/mias`, () => HttpResponse.json([])),
+
+  // CR-01: ningún torneo de los mocks se reprogramó; los tests de la reprogramación lo cambian
+  http.get(`${API_URL}/torneos/:id/reprogramaciones`, () => HttpResponse.json([])),
 
   // GET /torneos/resumen (Público, sin sesión)
   http.get(`${API_URL}/torneos/resumen`, ({ request }) => {
@@ -304,27 +334,7 @@ export const torneoHandlers = [
     const pagedContent = filtered.slice(startIndex, startIndex + size);
 
     // Mapear a TorneoResumen
-    const content: TorneoResumen[] = pagedContent.map((t) => ({
-      id: t.id,
-      slug: t.slug,
-      nombre: t.nombre,
-      descripcion: t.descripcion,
-      disciplina: t.disciplina,
-      formato: t.formato,
-      modalidad: t.modalidad,
-      tipoParticipante: t.tipoParticipante,
-      sede: t.sede,
-      estado: t.estado,
-      cupoMaximo: t.cupoMaximo,
-      cupoDisponible: t.cupoDisponible,
-      valorInscripcion: t.valorInscripcion,
-      gastosAdministrativos: t.gastosAdministrativos,
-      moneda: t.moneda,
-      pozoEstimado: t.pozoEstimado,
-      cierreInscripcionEn: t.cierreInscripcionEn,
-      fechaInicio: t.fechaInicio,
-      fechaFin: t.fechaFin,
-    }));
+    const content: TorneoResumen[] = pagedContent.map(mapearTorneoResumen);
 
     return HttpResponse.json({
       content,
@@ -359,5 +369,45 @@ export const torneoHandlers = [
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { esBorrador, ...torneoDetalle } = torneo;
     return HttpResponse.json(torneoDetalle);
+  }),
+
+  // GET /usuarios/:id/perfil-organizador (Público, HU-806)
+  http.get(`${API_URL}/usuarios/:id/perfil-organizador`, ({ params }) => {
+    const id = Number(params.id);
+    if (!Number.isFinite(id) || id === 999) {
+      return HttpResponse.json(
+        {
+          status: 404,
+          codigo: 'USUARIO_NO_ENCONTRADO',
+          detail: `No existe el usuario ${params.id}`,
+        },
+        { status: 404 }
+      );
+    }
+
+    const publicados = mockTorneosDetalle.filter(
+      (t) => !t.esBorrador && t.organizador?.id === id
+    );
+    const identidad = publicados[0]?.organizador ?? {
+      id,
+      username: `organizador_${id}`,
+      nombreCompleto: `Organizador ${id}`,
+    };
+
+    return HttpResponse.json({
+      id: identidad.id,
+      username: identidad.username,
+      nombreCompleto: identidad.nombreCompleto,
+      avatar: null,
+      torneosOrganizados: publicados.length,
+      torneosFinalizados: publicados.filter((t) => t.estado === 'FINALIZADO').length,
+      torneosCancelados: publicados.filter((t) => t.estado === 'CANCELADO').length,
+      indice: 100,
+      indiceActualizadoEn: null,
+      historialIndice: [],
+      torneosProximos: publicados
+        .filter((t) => ESTADOS_VIGENTES.has(t.estado))
+        .map(mapearTorneoResumen),
+    });
   }),
 ];

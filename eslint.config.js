@@ -5,7 +5,16 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist', 'node_modules', '.vite', 'public/mockServiceWorker.js'] },
+  {
+    ignores: [
+      'dist',
+      'node_modules',
+      '.vite',
+      'public/mockServiceWorker.js',
+      'playwright-report',
+      'test-results',
+    ],
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],
@@ -23,5 +32,11 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
     },
+  },
+  // E2E (PICA-437): corren en Node, y el `use` de los fixtures de Playwright no es el hook de React
+  {
+    files: ['e2e/**/*.ts', 'playwright.config.ts'],
+    languageOptions: { globals: globals.node },
+    rules: { 'react-hooks/rules-of-hooks': 'off' },
   }
 );

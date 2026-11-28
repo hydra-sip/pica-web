@@ -1,6 +1,11 @@
 import { Client, IMessage, StompSubscription } from '@stomp/stompjs';
+import { getAccessToken } from '../api/httpClient';
+import { Notificacion } from '../api/notificacionApi';
 import { BracketTorneo, EstadoTorneo, RondaBracket } from '../api/torneoApi';
 import { EstadoRifa, RifaDetalle } from '../api/rifaApi';
+
+/** La cola de cada usuario (HU-808): pide sesión, así que la conexión manda el token en el CONNECT. */
+const COLA_NOTIFICACIONES = '/user/queue/notificaciones';
 
 export interface TorneoWebSocketMessage {
   tipo?: string;
@@ -58,12 +63,15 @@ class WebSocketService {
   private client: Client | null = null;
   private torneoListeners = new Map<number, Set<TorneoSubscriptionCallbacks>>();
   private rifaListeners = new Map<number, Set<RifaSubscriptionCallbacks>>();
+  private notificacionListeners = new Set<(notificacion: Notificacion) => void>();
   private stompSubscriptions = new Map<string, StompSubscription>();
-  private wasConnected = false;
-  private isConnected = false;
+  private estadoListeners = new Set<(conectado: boolean) => void>();
   private isTestMode =
     typeof process !== 'undefined' &&
     (process.env.NODE_ENV === 'test' || import.meta.env.MODE === 'test');
+  private wasConnected = false;
+  // en los tests no hay broker: arranca conectado y la desconexión se simula con mockDisconnect
+  private isConnected = this.isTestMode;
 
   constructor() {
     if (!this.isTestMode && typeof window !== 'undefined') {
@@ -79,11 +87,20 @@ class WebSocketService {
       reconnectDelay: 3000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
+      // en cada conexión y reconexión, el token de ese momento: sin token sigue sirviendo para los /topic públicos
+      beforeConnect: () => {
+        const token = getAccessToken();
+        if (this.client) {
+          this.client.connectHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+        }
+      },
       onConnect: () => {
         const hadPriorConnection = this.wasConnected;
-        this.isConnected = true;
+        this.setConnected(true);
         this.wasConnected = true;
 
+        // las suscripciones de una conexión anterior murieron con ella: sin esto resubscribeTopics las saltearía
+        this.stompSubscriptions.clear();
         this.resubscribeTopics();
 
         if (hadPriorConnection) {
@@ -91,10 +108,10 @@ class WebSocketService {
         }
       },
       onDisconnect: () => {
-        this.isConnected = false;
+        this.setConnected(false);
       },
       onWebSocketClose: () => {
-        this.isConnected = false;
+        this.setConnected(false);
       },
       onStompError: (frame) => {
         console.error('STOMP protocol error:', frame.headers?.message, frame.body);
@@ -117,6 +134,37 @@ class WebSocketService {
     this.stompSubscriptions.clear();
   }
 
+  /**
+   * Al iniciar o cerrar sesión: la sesión STOMP queda a nombre de quien se conectó, así que hay que volver a
+   * conectar para que la cola de notificaciones sea la del usuario nuevo (o para dejar de recibirla).
+   */
+  public async reconectar() {
+    if (!this.client || !this.client.active) return;
+    await this.client.deactivate();
+    this.stompSubscriptions.clear();
+    this.client.activate();
+  }
+
+  private setConnected(conectado: boolean) {
+    if (this.isConnected === conectado) return;
+    this.isConnected = conectado;
+    this.estadoListeners.forEach((cb) => {
+      try {
+        cb(conectado);
+      } catch (err) {
+        console.error('Error en el aviso del estado de la conexión:', err);
+      }
+    });
+  }
+
+  /** Avisa cada vez que la conexión se cae o vuelve (HU-809). Devuelve cómo dejar de escuchar. */
+  public onEstadoConexion(cb: (conectado: boolean) => void): () => void {
+    this.estadoListeners.add(cb);
+    return () => {
+      this.estadoListeners.delete(cb);
+    };
+  }
+
   private resubscribeTopics() {
     if (!this.client || !this.client.connected) return;
 
@@ -131,6 +179,42 @@ class WebSocketService {
         this.emitRifaLocal(rifaId, payload);
       });
     }
+
+    if (this.notificacionListeners.size > 0 && getAccessToken()) {
+      this.setupStompSubscription(COLA_NOTIFICACIONES, (payload) => this.emitNotificacionLocal(payload));
+    }
+  }
+
+  /** Las notificaciones del usuario logueado en vivo (HU-808). Devuelve cómo dejar de escuchar. */
+  public subscribeToNotificaciones(onNotificacion: (notificacion: Notificacion) => void): () => void {
+    this.notificacionListeners.add(onNotificacion);
+    if (!this.isTestMode) {
+      this.activate();
+      if (this.client?.connected && getAccessToken()) {
+        this.setupStompSubscription(COLA_NOTIFICACIONES, (payload) => this.emitNotificacionLocal(payload));
+      }
+    }
+
+    return () => {
+      this.notificacionListeners.delete(onNotificacion);
+      if (this.notificacionListeners.size === 0) {
+        const sub = this.stompSubscriptions.get(COLA_NOTIFICACIONES);
+        if (sub) {
+          sub.unsubscribe();
+          this.stompSubscriptions.delete(COLA_NOTIFICACIONES);
+        }
+      }
+    };
+  }
+
+  private emitNotificacionLocal(payload: unknown) {
+    this.notificacionListeners.forEach((cb) => {
+      try {
+        cb(payload as Notificacion);
+      } catch (err) {
+        console.error('Error en el aviso de una notificación:', err);
+      }
+    });
   }
 
   private setupStompSubscription(destination: string, handler: (payload: unknown) => void) {
@@ -291,13 +375,17 @@ class WebSocketService {
     this.emitRifaLocal(rifaId, payload);
   }
 
+  public mockEmitNotificacion(notificacion: Notificacion) {
+    this.emitNotificacionLocal(notificacion);
+  }
+
   public mockDisconnect() {
-    this.isConnected = false;
+    this.setConnected(false);
     this.wasConnected = true;
   }
 
   public mockReconnect() {
-    this.isConnected = true;
+    this.setConnected(true);
     this.notifyReconnectAll();
   }
 
@@ -308,9 +396,11 @@ class WebSocketService {
   public reset() {
     this.torneoListeners.clear();
     this.rifaListeners.clear();
+    this.notificacionListeners.clear();
     this.stompSubscriptions.clear();
+    this.estadoListeners.clear();
     this.wasConnected = false;
-    this.isConnected = false;
+    this.isConnected = this.isTestMode;
   }
 }
 
@@ -325,6 +415,9 @@ export const subscribeToRifa = (
   rifaId: number,
   callbacks: RifaSubscriptionCallbacks
 ): (() => void) => websocketService.subscribeToRifa(rifaId, callbacks);
+
+export const onEstadoConexion = (cb: (conectado: boolean) => void): (() => void) =>
+  websocketService.onEstadoConexion(cb);
 
 export const mockEmitTorneoEvent = (torneoId: number, payload: unknown): void =>
   websocketService.mockEmitTorneoEvent(torneoId, payload);

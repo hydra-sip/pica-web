@@ -17,7 +17,9 @@ export type AccionAuditoria =
   | 'CIERRE_VENTA'
   | 'LIQUIDACION'
   | 'CANCELACION'
-  | 'REINTEGRO';
+  | 'REINTEGRO'
+  | 'SANCION'
+  | 'CALIFICACION';
 
 /** GET /admin/auditoria: una fila del libro (HU-704). */
 export interface RegistroAuditoria {
@@ -44,7 +46,8 @@ export type EntidadAuditoria =
   | 'BILLETERA'
   | 'CARGA_CRIPTO'
   | 'USUARIO'
-  | 'PARAMETRO';
+  | 'PARAMETRO'
+  | 'ALERTA_FRAUDE';
 
 /**
  * Los filtros se combinan. `entidad` sin `entidadId` trae todas las de ese tipo; con TORNEO trae además lo suyo
