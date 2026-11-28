@@ -49,6 +49,7 @@ import { NotificacionesPage } from '../notificaciones/pages/NotificacionesPage';
 import { MisInscripcionesPage } from '../inscripciones/pages/MisInscripcionesPage';
 import { MiBilleteraPage } from '../billetera/pages/MiBilleteraPage';
 import { PerfilOrganizadorPage } from '../reputacion/pages/PerfilOrganizadorPage';
+import { PerfilJugadorPage } from '../reputacion/pages/PerfilJugadorPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -60,6 +61,8 @@ export const AppRoutes: React.FC = () => {
         <Route path="torneos/:slug" element={<TorneoDetallePage />} />
         {/* HU-806 / PICA-430: Perfil público del organizador */}
         <Route path="organizadores/:id" element={<PerfilOrganizadorPage />} />
+        {/* HU-801 / PICA-420: Perfil público del jugador */}
+        <Route path="jugadores/:id" element={<PerfilJugadorPage />} />
         {/* HU-306 / T306-2: Pronósticos y ranking */}
         <Route path="pronosticos" element={<PronosticosPage />} />
         {/* Rifas para quien compra (PICA-221): públicas, sin login */}
